@@ -22,54 +22,6 @@
     });
   })();
 </script>
-// FINAL VERIFIED CODE BLOCK (HANDLES GESTURES, SIDE-SWIPES, SINGLE-LINE SEARCH, AND TAB COLORS)
-
-import { useEffect, useState } from 'react';
-
-// Inside your main App component:
-const [activeTab, setActiveTab] = useState('home'); // 'home', 'live', 'downloads'
-const [searchQuery, setSearchQuery] = useState('');
-const [showSearchResults, setShowSearchResults] = useState(false);
-
-// UNIVERSAL BACK NAVIGATION (WORKS FOR BUTTONS, SIDE SWIPES, AND IPHONE GESTURES)
-useEffect(() => {
-  // Push state to enable gesture intercepting immediately
-  window.history.pushState({ page: 'home' }, '');
-
-  const handlePopState = (event) => {
-    // 1. If looking at search results, swipe/back clears the search
-    if (showSearchResults) {
-      window.history.pushState({ page: 'home' }, '');
-      setShowSearchResults(false);
-      setSearchQuery('');
-      return;
-    }
-
-    // 2. If on Live or Downloads, swipe/back returns cleanly to Home
-    if (activeTab === 'live' || activeTab === 'downloads') {
-      window.history.pushState({ page: 'home' }, '');
-      setActiveTab('home');
-      return;
-    }
-
-    // 3. If already on Home tab, swipe/back brings up safe exit prompt
-    if (activeTab === 'home' && !showSearchResults) {
-      const confirmExit = window.confirm("Press OK to exit app");
-      if (confirmExit) {
-        window.history.back();
-      } else {
-        window.history.pushState({ page: 'home' }, '');
-      }
-    }
-  };
-
-  window.addEventListener('popstate', handlePopState);
-  return () => window.removeEventListener('popstate', handlePopState);
-}, [activeTab, showSearchResults]);
-
-
-// COMPACT COMPATIBLE SEARCH LINE (ALL ON ONE ROW)
-{/* Replace your old separate top input boxes with this unified row */}
 <div style={{
   display: 'flex',
   alignItems: 'center',
