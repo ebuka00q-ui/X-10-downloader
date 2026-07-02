@@ -1,3 +1,27 @@
+<script>
+  (function() {
+    window.history.pushState({ page: 'home' }, '');
+    window.addEventListener('popstate', function(event) {
+      var activeTabElement = document.querySelector('[data-active-tab]');
+      var currentTab = activeTabElement ? activeTabElement.getAttribute('data-active-tab') : 'home';
+      
+      if (currentTab === 'live' || currentTab === 'downloads') {
+        window.history.pushState({ page: 'home' }, '');
+        var homeBtn = document.querySelector('#home-tab-button');
+        if (homeBtn) homeBtn.click();
+        return;
+      }
+      
+      if (currentTab === 'home') {
+        if (window.confirm("Press OK to exit app")) {
+          window.history.back();
+        } else {
+          window.history.pushState({ page: 'home' }, '');
+        }
+      }
+    });
+  })();
+</script>
 // FINAL VERIFIED CODE BLOCK (HANDLES GESTURES, SIDE-SWIPES, SINGLE-LINE SEARCH, AND TAB COLORS)
 
 import { useEffect, useState } from 'react';
