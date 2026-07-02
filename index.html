@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X10 Downloader Pro - Locked Track</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth moving lava flow animation for the background */
+        @keyframes lavaFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        body { 
+            background: linear-gradient(-45deg, #0b0813, #1a0b2e, #0d1b3e, #14051c);
+            background-size: 400% 400%;
+            animation: lavaFlow 15s ease infinite;
+            color: #ffffff; 
+            font-family: system-ui, sans-serif; 
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+        .sub-page { display: none; }
+        .sub-page.active { display: block; }
+        .tiktok-container { scroll-snap-type: y mandatory; overflow-y: scroll; height: 320px; }
+        .tiktok-card { scroll-snap-align: start; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pb-20">
+
+    <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4 flex flex-col">
+        <div class="max-w-md mx-auto w-full space-y-4 pt-10">
+            <div class="flex justify-between items-center">
+                <h2 id="search-overlay-title" class="text-sm font-bold text-indigo-400 tracking-widest uppercase">Movie Index Search</h2>
+                <button onclick="closeSearchOverlay()" class="text-xs text-red-400 font-bold hover:underline bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/40">✕ Cancel & Exit</button>
+            </div>
+            <div class="flex gap-2">
+                <input id="overlay-search-input" type="text" placeholder="Search" 
+                    class="flex-1 bg-[#130f22] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                <button onclick="processOverlaySearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-lg text-sm transition shadow-lg">
+                    Search
+                </button>
+            </div>
+
+            <div id="search-error-state" class="hidden text-center py-12 space-y-3">
+                <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+                    <svg class="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 8a4 4 0 11-8 0 4 4 0 018 0zM10 12v7M6 21h8M14 15h3M12 15l3 3"></path>
+                    </svg>
+                    <div class="absolute w-20 h-1.5 bg-red-600 rotate-45 rounded-full shadow-lg"></div>
+                </div>
+                <h3 class="text-base font-bold text-gray-400">Media File Not Found</h3>
+                <p class="text-xs text-gray-500 max-w-xs mx-auto">The link pasted could not be resolved under this layout directory rule. Verify your URL marker.</p>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
+
+        <div id="page-home" class="page active space-y-6">
+            
+            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
+                <div>
+                    <h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 HOME</h1>
+                    <p class="text-[10px] text-gray-400 tracking-wide">MOVIES & FOR YOU</p>
+                </div>
+                <button onclick="openSearchOverlay('movie')" class="bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-bold px-3 py-2 rounded-xl text-indigo-400 flex items-center gap-1 transition-all">
+                    🔍 Search Movies
+                </button>
+            </div>
+
+            <div class="flex border-b border-white/5 text-center text-sm font-bold">
+                <button id="btn-sub-foryou" onclick="switchHomeSubPage('foryou')" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white transition">For You</button>
+                <button id="btn-sub-movies" onclick="switchHomeSubPage('movies')" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400 transition">Movies</button>
+            </div>
+
+            <div id="sub-foryou" class="sub-page active space-y-2">
+                <div class="tiktok-container border border-white/5 rounded-2xl bg-[#130f22]/40 backdrop-blur-md">
+                    <div class="tiktok-card h-full p-4 flex flex-col justify-between bg-gradient-to-b from-transparent to-black/40">
+                        <div class="aspect-video bg-gray-900/60 rounded-xl flex items-center justify-center text-3xl border border-white/5 shadow-inner">📱</div>
+                        <div class="space-y-1">
+                            <h3 class="font-bold text-sm text-white">Continuous TikTok Style Snippet</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">Scroll down directly within this viewport frame to track more vertical short feeds.</p>
+                        </div>
+                    </div>
+                    <div class="tiktok-card h-full p-4 flex flex-col justify-between bg-gradient-to-b from-transparent to-black/40">
+                        <div class="aspect-video bg-gray-900/60 rounded-xl flex items-center justify-center text-3xl border border-white/5 shadow-inner">🍿</div>
+                        <div class="space-y-1">
+                            <h3 class="font-bold text-sm text-white">Secondary Horizontal Movie Segment</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">Separated cleanly from regular full length streaming catalog links.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sub-movies" class="sub-page space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center backdrop-blur-sm">
+                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl border border-white/5 mb-1">🎬</div>
+                        <p class="text-xs font-bold truncate text-gray-200">Catalog Film Alpha</p>
+                        <p class="text-[10px] text-gray-500">Duration: 2h 05m</p>
+                    </div>
+                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center backdrop-blur-sm">
+                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl border border-white/5 mb-1">🎬</div>
+                        <p class="text-xs font-bold truncate text-gray-200">Catalog Film Beta</p>
+                        <p class="text-[10px] text-gray-500">Duration: 1h 52m</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="movie-search-result" class="hidden bg-indigo-950/30 border border-indigo-500/40 rounded-2xl p-4 space-y-2 cursor-pointer shadow-xl backdrop-blur-md" onclick="openMovieWorkspace()">
+                <span class="text-[9px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Verified Movie Link Found</span>
+                <h3 id="result-movie-title" class="font-bold text-sm text-white truncate">Loaded Movie Link Asset</h3>
+                <p class="text-xs text-indigo-300">Click to enter trailer stream, documentation details, and lock actions.</p>
+            </div>
+        </div>
+
+        <div id="page-workspace" class="page space-y-4">
+            <button onclick="switchTab('home')" class="text-xs text-indigo-400 font-bold flex items-center gap-1 hover:underline bg-indigo-950/20 px-3 py-1.5 rounded-lg border border-indigo-900/30 w-max">← Back to Home Hub</button>
+            
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold tracking-widest text-purple-400 uppercase">Step 1: Preview Summary Trailer</span>
+                <div class="aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 relative shadow-2xl">
+                    <video id="trailer-player" controls class="w-full h-full object-contain"></video>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-1">
+                <button onclick="triggerFullWatch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg transition-all transform active:scale-95">
+                    <span class="text-base">▶</span>
+                    <span>Watch Full Movie</span>
+                </button>
+                <button onclick="triggerFullDownload()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg transition-all transform active:scale-95">
+                    <span class="text-base">📥</span>
+                    <span>Download Full Movie</span>
+                </button>
+            </div>
+
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-3 backdrop-blur-md">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Brief Summary & Analysis</h3>
+                    <p class="text-xs text-gray-200 leading-relaxed mt-1">
+                        High-stakes cinematic narrative focusing on survival, strategic positioning, and dynamic pacing. The plot delivers an advanced thematic sequence testing resilience against conflicting environmental elements.
+                    </p>
+                </div>
+                <div class="border-t border-white/5 pt-2">
+                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Major Cast & Actors</h3>
+                    <p class="text-xs text-indigo-400 font-semibold mt-0.5">Lead Actor, Supporting Cast Ensemble, Executive Producer Team</p>
+                </div>
+            </div>
+
+            <div id="full-theater-container" class="hidden bg-black p-3 border border-indigo-900/40 rounded-2xl space-y-2 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Streaming Full Length Track</span>
+                    <button onclick="closeFullTheater()" class="text-xs text-red-400 hover:underline">✕ Close</button>
+                </div>
+                <div class="aspect-video">
+                    <video id="full-movie-player" controls class="w-full h-full object-contain"></video>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-live" class="page space-y-4">
+            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
+                <div>
+                    <h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">X10 LIVE HUB</h1>
+                    <p class="text-[10px] text-gray-400 tracking-wide">IPTV LIVE NETWORKS</p>
+                </div>
+                <button onclick="openSearchOverlay('live')" class="bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-bold px-3 py-2 rounded-lg text-emerald-400 flex items-center gap-1 transition-all">
+                    🔍 Search Live
+                </button>
+            </div>
+
+            <div id="live-active-feed-card" class="hidden bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-4 space-y-3 backdrop-blur-md shadow-xl">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] bg-emerald-500 text-white font-bold px-2 py-0.5 rounded animate-pulse tracking-wide">LIVE BROADCAST</span>
+                    <button onclick="document.getElementById('live-active-feed-card').classList.add('hidden')" class="text-xs text-gray-400 hover:text-white">Clear</button>
+                </div>
+                <h3 id="live-stream-title" class="text-sm font-bold text-white truncate">Live Stream Channel</h3>
+                <div class="aspect-video bg-black rounded-xl overflow-hidden border border-emerald-950">
+                    <video id="live-video-player" controls class="w-full h-full object-contain"></video>
+                </div>
+            </div>
+
+            <div class="bg-[#130f22]/40 border border-white/5 rounded-2xl p-6 text-center text-xs text-gray-500 backdrop-blur-sm">
+                📡 Live feed console ready. Tap the search layout button above to process live network channels.
+            </div>
+        </div>
+
+        <div id="page-downloads" class="page space-y-3">
+            <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl backdrop-blur-md shadow-xl">
+                <h1 class="text-base font-extrabold text-gray-300">OFFLINE MANAGER</h1>
+                <p class="text-[10px] text-gray-500 tracking-wide">SECURE STORAGE ENGINE</p>
+            </div>
+            
+            <div id="downloads-list" class="space-y-2">
+                <div id="download-empty-state" class="bg-[#130f22]/40 border border-white/5 rounded-2xl p-6 text-center text-xs text-gray-500 backdrop-blur-sm">
+                    📂 Storage empty. Initiate a download query pipeline inside a searched movie hub workspace.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 border-t border-white/5 bg-[#0b0813]/90 backdrop-blur-lg py-3.5 z-40 shadow-2xl">
+        <div class="max-w-md mx-auto flex justify-around items-center">
+            <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center text-indigo-400 font-bold text-[11px] gap-0.5 transition">
+                <span class="text-xl">🏠</span>
+                <span>Home</span>
+            </button>
+            <button onclick="switchTab('live')" id="nav-live" class="flex flex-col items-center text-gray-500 font-bold text-[11px] gap-0.5 transition">
+                <span class="text-xl">📡</span>
+                <span>Live</span>
+            </button>
+            <button onclick="switchTab('downloads')" id="nav-downloads" class="flex flex-col items-center text-gray-500 font-bold text-[11px] gap-0.5 transition">
+                <span class="text-xl">📥</span>
+                <span>Downloads</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        let searchContextMode = "movie"; 
+        let currentTargetUrl = "";
+
+        // Hardware Back Button Sync Functionality
+        window.addEventListener('popstate', function(event) {
+            const overlay = document.getElementById('search-overlay');
+            if (!overlay.classList.includes('hidden')) {
+                overlay.classList.add('hidden');
+            }
+        });
+
+        function openSearchOverlay(mode) {
+            searchContextMode = mode;
+            document.getElementById('search-error-state').classList.add('hidden');
+            document.getElementById('overlay-search-input').value = "";
+            
+            const titleNode = document.getElementById('search-overlay-title');
+            if(mode === 'movie') {
+                titleNode.innerText = "Movie Index Search Router";
+                titleNode.className = "text-sm font-bold text-indigo-400 tracking-widest uppercase";
+            } else {
+                titleNode.innerText = "Live Stream Broadcast Router";
+                titleNode.className = "text-sm font-bold text-emerald-400 tracking-widest uppercase";
+            }
+            
+            // Push history state to intercept hardware back button click
+            history.pushState({overlayOpen: true}, '');
+            document.getElementById('search-overlay').classList.remove('hidden');
+        }
+
+        function closeSearchOverlay() {
+            document.getElementById('search-overlay').classList.add('hidden');
+            if(history.state && history.state.overlayOpen) {
+                history.back();
+            }
+        }
+
+        function processOverlaySearch() {
+            const query = document.getElementById('overlay-search-input').value.trim();
+            document.getElementById('search-error-state').classList.add('hidden');
+
+            if(!query || !query.includes('http')) {
+                document.getElementById('search-error-state').classList.remove('hidden');
+                return;
+            }
+
+            currentTargetUrl = query;
+            const fallbackTitle = query.split('/').pop().split('?')[0] || "Stream_Target_Asset.mp4";
+
+            if(searchContextMode === 'movie') {
+                document.getElementById('movie-search-result').classList.remove('hidden');
+                document.getElementById('result-movie-title').innerText = fallbackTitle;
+                closeSearchOverlay();
+                switchTab('home');
+            } else if(searchContextMode === 'live') {
+                const livePlayer = document.getElementById('live-video-player');
+                document.getElementById('live-active-feed-card').classList.remove('hidden');
+                document.getElementById('live-stream-title').innerText = fallbackTitle;
+                
+                livePlayer.src = query;
+                livePlayer.load();
+                closeSearchOverlay();
+                switchTab('live');
+            }
+        }
+
+        function openMovieWorkspace() {
+            switchTab('workspace');
+            const trailer = document.getElementById('trailer-player');
+            trailer.src = currentTargetUrl;
+            trailer.load();
+        }
+
+        function triggerFullWatch() {
+            document.getElementById('trailer-player').pause();
+            const container = document.getElementById('full-theater-container');
+            const player = document.getElementById('full-movie-player');
+            container.classList.remove('hidden');
+            player.src = currentTargetUrl;
+            player.load();
+            player.play();
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeFullTheater() {
+            const player = document.getElementById('full-movie-player');
+            player.pause();
+            player.src = "";
+            document.getElementById('full-theater-container').classList.add('hidden');
+        }
+
+        function triggerFullDownload() {
+            if(!currentTargetUrl) return;
+            const filename = currentTargetUrl.split('/').pop().split('?')[0] || 'Saved_Movie.mp4';
+            
+            const dlNode = document.createElement('a');
+            dlNode.href = currentTargetUrl;
+            dlNode.download = filename;
+            document.body.appendChild(dlNode);
+            dlNode.click();
+            document.body.removeChild(dlNode);
+
+            document.getElementById('download-empty-state').classList.add('hidden');
+            const list = document.getElementById('downloads-list');
+            list.innerHTML = `
+                <div class="bg-[#130f22]/60 border border-emerald-500/30 rounded-2xl p-4 flex flex-col space-y-2 backdrop-blur-sm shadow-md">
+                    <div class="flex items-center justify-between">
+                        <div class="truncate pr-2">
+                            <p class="text-xs font-bold text-gray-200 truncate">${filename}</p>
+                            <p class="text-[10px] text-emerald-400">Offline Registry Synced</p>
+                        </div>
+                        <span class="text-emerald-500 text-xs font-extrabold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ready</span>
+                    </div>
+                </div>
+            ` + list.innerHTML;
+            alert("Download route synced successfully.");
+        }
+
+        function switchHomeSubPage(subTarget) {
+            document.querySelectorAll('.sub-page').forEach(sp => sp.classList.remove('active'));
+            document.getElementById('btn-sub-foryou').className = "flex-1 pb-2 border-b-2 border-transparent text-gray-500 transition";
+            document.getElementById('btn-sub-movies').className = "flex-1 pb-2 border-b-2 border-transparent text-gray-500 transition";
+            
+            document.getElementById('sub-' + subTarget).classList.add('active');
+            document.getElementById('btn-sub-' + subTarget).className = "flex-1 pb-2 border-b-2 border-indigo-500 text-white transition";
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('nav-home').className = "flex flex-col items-center text-gray-500 font-bold text-[11px] gap-0.5 transition";
+            document.getElementById('nav-live').className = "flex flex-col items-center text-gray-500 font-bold text-[11px] gap-0.5 transition";
+            document.getElementById('nav-downloads').className = "flex flex-col items-center text-gray-500 font-bold text-[11px] gap-0.5 transition";
+            
+            if(tab === 'home' || tab === 'workspace') {
+                document.getElementById('page-' + tab).classList.add('active');
+                document.getElementById('nav-home').className = "flex flex-col items-center text-indigo-400 font-bold text-[11px] gap-0.5 transition";
+            } else {
+                document.getElementById('page-' + tab).classList.add('active');
+                document.getElementById('nav-' + tab).className = "flex flex-col items-center text-indigo-400 font-bold text-[11px] gap-0.5 transition";
+            }
+        }
+    </script>
+</body>
+</html>
