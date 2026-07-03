@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10</title><script src="https://cdn.tailwindcss.com"></script>
+    <title>X10 Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body{background:linear-gradient(-45deg,#0b0813,#1a0b2e,#0d1b3e,#14051c);background-size:400% 400%;animation:L 8s infinite;color:#fff;font-family:sans-serif}
-        @keyframes L{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-        .P{display:none}.P.active{display:block}
-        .S{display:none}.S.active{display:block}
-        .movie-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:10px;}
-        .cube-img{aspect-ratio:1/1; width:100%; object-fit:cover; border-radius:10px; background:#1e1b4b;}
-        .tab-btn.active{border-bottom:2px solid #6366f1; color:#fff;}
-        .nav-btn.active{color:#818cf8; font-weight:bold;}
+        body { background: radial-gradient(circle at top, #1e053d, #0b0813); color: white; font-family: sans-serif; overflow-x: hidden; }
+        .page { display: none; } .page.active { display: block; }
+        .section { display: none; } .section.active { display: block; }
+        .movie-card { background: linear-gradient(145deg, #2a1b4d, #130f22); border: 1px solid #ffffff10; border-radius: 20px; padding: 15px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px; }
+        .nav-item { opacity: 0.5; transition: 0.3s; } .nav-item.active { opacity: 1; border-top: 2px solid #ef4444; }
+        .tab-indicator { border-bottom: 2px solid #ef4444; color: white !important; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen pb-20 select-none">
+<body class="pb-24">
 
     <div id="exit-modal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6">
         <div class="bg-[#130f22] border border-white/10 p-6 rounded-2xl w-full max-w-xs text-center space-y-6">
@@ -26,89 +26,78 @@
         </div>
     </div>
 
-    <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 z-50 p-4">
-        <div class="max-w-md mx-auto pt-10 space-y-4">
-            <h2 class="text-xs font-bold text-indigo-400">SEARCH</h2>
-            <div class="flex gap-2">
-                <input id="search-input" type="text" class="flex-1 bg-[#130f22] p-2 rounded text-xs text-white border border-gray-700">
-                <button onclick="executeSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold">SEARCH</button>
-            </div>
-            <button onclick="hideSearch()" class="text-[10px] text-gray-500 underline">Cancel</button>
-            <div id="search-results" class="grid grid-cols-3 gap-2 pt-4"></div>
-        </div>
+    <div id="search-view" class="hidden p-4 pt-8">
+        <h2 class="text-lg font-bold mb-4">Search Results</h2>
+        <div id="results-list" class="grid-container"></div>
+        <button onclick="clearSearch()" class="mt-4 w-full py-2 bg-gray-800 rounded-lg text-xs">Back to Home</button>
     </div>
 
-    <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
-        <div id="page-home" class="P active">
-            <div class="flex justify-between items-center bg-[#130f22]/60 p-4 rounded-2xl mb-4 border border-white/5">
-                <h1 class="text-sm font-black text-indigo-400">X10 DOWNLOADER</h1>
-                <button onclick="showSearch()" class="bg-indigo-500/20 text-xs px-3 py-1 rounded-xl text-indigo-400 border border-indigo-500/30">🔍 Search</button>
+    <div id="main-app-content">
+        <div class="p-4 pt-8">
+            <h1 class="text-2xl font-bold">X10 Downloader</h1>
+            <p class="text-xs text-gray-400">Extender Loader · MovieBox sync</p>
+            <div class="mt-4 bg-[#1a1625] p-3 rounded-2xl border border-white/10 flex items-center gap-2">
+                <span>🔍</span>
+                <input id="search-input" type="text" placeholder="Search movies, shows, links..." class="bg-transparent w-full focus:outline-none text-white">
+                <button onclick="performSearch()" class="bg-red-600 px-3 py-1 rounded-lg text-xs font-bold">Search</button>
             </div>
-            <div class="flex text-center text-xs font-bold border-b border-white/5 mb-4">
-                <button id="btn-sub-foryou" class="tab-btn active flex-1 pb-2 border-b-2 border-transparent text-gray-400">For You</button>
-                <button id="btn-sub-movies" class="tab-btn flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
-            </div>
-            <div id="sub-foryou" class="S active"><p class="text-center text-gray-500 py-10">FYP Feed</p></div>
-            <div id="sub-movies" class="S"><div class="movie-grid" id="movie-gallery"></div></div>
         </div>
 
-        <div id="page-live" class="P text-center py-20 font-bold">LIVE SPORTS HUB</div>
-        <div id="page-downloads" class="P text-center py-20 font-bold">OFFLINE STORAGE</div>
-    </main>
+        <main id="page-home" class="page active">
+            <div class="flex px-4 gap-4 mb-4 font-bold text-sm">
+                <button onclick="showSection('fyp')" id="btn-fyp" class="pb-1 tab-indicator">For You</button>
+                <button onclick="showSection('movies')" id="btn-movies" class="pb-1 border-b-2 border-transparent text-gray-500">Movies</button>
+            </div>
+            <div id="sec-fyp" class="section active p-4">
+                <p class="text-gray-500 text-center pt-20">FYP Content Feed</p>
+            </div>
+            <div id="sec-movies" class="section grid-container p-4">
+                <div class="movie-card"><div class="bg-indigo-900/50 h-24 rounded-lg mb-2"></div><h3 class="font-bold">Shadow Protocol</h3></div>
+                <div class="movie-card"><div class="bg-indigo-900/50 h-24 rounded-lg mb-2"></div><h3 class="font-bold">Neon Skyline</h3></div>
+            </div>
+        </main>
+    </div>
 
-    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 border-t border-white/5 py-3 flex justify-around z-40">
-        <button onclick="switchTab('home', this)" class="nav-btn active text-sm">Home</button>
-        <button onclick="switchTab('live', this)" class="nav-btn text-gray-400 text-sm">Live</button>
-        <button onclick="switchTab('downloads', this)" class="nav-btn text-gray-400 text-sm">Downloads</button>
+    <nav class="fixed bottom-0 w-full bg-[#0b0813] border-t border-white/10 flex justify-around p-4">
+        <div onclick="showPage('home')" class="nav-item active text-center text-xs">🏠<br>Home</div>
+        <div onclick="showPage('live')" class="nav-item text-center text-xs">📡<br>Live</div>
+        <div onclick="showPage('downloads')" class="nav-item text-center text-xs">⬇️<br>Downloads</div>
     </nav>
 
     <script>
         let exitCount = 0;
-        
-        // Navigation Logic
-        function switchTab(t, btn) {
-            document.querySelectorAll('.P').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-'+t).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('sec-' + id).classList.add('active');
+            document.getElementById('btn-fyp').className = id === 'fyp' ? 'pb-1 tab-indicator' : 'pb-1 border-b-2 border-transparent text-gray-500';
+            document.getElementById('btn-movies').className = id === 'movies' ? 'pb-1 tab-indicator' : 'pb-1 border-b-2 border-transparent text-gray-500';
             exitCount = 0;
         }
-
-        // Search Handlers
-        function showSearch() { document.getElementById('search-overlay').classList.remove('hidden'); exitCount = 0; }
-        function hideSearch() { document.getElementById('search-overlay').classList.add('hidden'); }
-        function executeSearch() { document.getElementById('search-results').innerHTML = '<p class="col-span-3 text-center text-xs">Searching...</p>'; }
-
-        // Back Button Logic
-        window.addEventListener('popstate', handleBack);
-        function handleBack() {
-            const home = document.getElementById('page-home');
-            const moviesSub = document.getElementById('sub-movies');
-            const fypSub = document.getElementById('sub-foryou');
-            const search = document.getElementById('search-overlay');
-
-            if (!search.classList.contains('hidden')) {
-                hideSearch();
-            } else if (!home.classList.contains('active')) {
-                switchTab('home', document.querySelector('.nav-btn'));
-            } else if (moviesSub.classList.contains('active')) {
-                document.getElementById('btn-sub-foryou').click();
-            } else {
-                exitCount++;
-                if(exitCount >= 2) document.getElementById('exit-modal').classList.remove('hidden');
-            }
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + id).classList.add('active');
+            exitCount = 0;
+        }
+        function performSearch() {
+            const query = document.getElementById('search-input').value;
+            if(!query) return;
+            document.getElementById('main-app-content').classList.add('hidden');
+            document.getElementById('search-view').classList.remove('hidden');
+            document.getElementById('results-list').innerHTML = `<p class="text-xs text-gray-400">Searching for: ${query}...</p>`;
+            setTimeout(() => { document.getElementById('results-list').innerHTML = `<div class="movie-card"><h3 class="font-bold">Result: ${query}</h3></div>`; }, 800);
+        }
+        function clearSearch() {
+            document.getElementById('main-app-content').classList.remove('hidden');
+            document.getElementById('search-view').classList.add('hidden');
         }
         function closeExit() { document.getElementById('exit-modal').classList.add('hidden'); exitCount = 0; }
-
-        // Tabs
-        document.querySelectorAll('.tab-btn').forEach(tab => {
-            tab.onclick = () => {
-                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active', 'text-white'));
-                tab.classList.add('active', 'text-white');
-                document.querySelectorAll('.S').forEach(s => s.classList.remove('active'));
-                document.getElementById(tab.id === 'btn-sub-movies' ? 'sub-movies' : 'sub-foryou').classList.add('active');
-            };
+        
+        window.addEventListener('popstate', () => {
+            if(!document.getElementById('search-view').classList.contains('hidden')) { clearSearch(); }
+            else if(exitCount >= 1) { document.getElementById('exit-modal').classList.remove('hidden'); }
+            else { exitCount++; setTimeout(() => exitCount = 0, 2000); }
         });
+        history.pushState(null, null, location.href);
     </script>
 </body>
 </html>
