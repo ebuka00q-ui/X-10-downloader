@@ -10,7 +10,11 @@
         .S{display:none}.S.active{display:block}
         .movie-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:10px;}
         .cube-img{aspect-ratio:1/1; width:100%; object-fit:cover; border-radius:10px; background:#000;}
-        .nav-btn.active-tab{color:#818cf8; border-bottom:2px solid #818cf8;}
+       const myMovies = [
+    {title: "Movie Name", poster: "url_to_image"},
+    {title: "Movie Two", poster: "url_to_image"}
+];
+ .nav-btn.active-tab{color:#818cf8; border-bottom:2px solid #818cf8;}
     </style>
 </head>
 <body class="flex flex-col min-h-screen pb-20">
