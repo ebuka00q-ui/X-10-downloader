@@ -20,19 +20,19 @@
         <div class="bg-[#130f22] border border-white/10 p-6 rounded-2xl w-full max-w-xs text-center space-y-6">
             <p class="text-sm font-bold">Exit App?</p>
             <div class="flex gap-4">
-                <button onclick="closeExit()" class="flex-1 py-2 bg-gray-800 rounded-lg text-xs">Cancel</button>
+                <button onclick="document.getElementById('exit-modal').classList.add('hidden')" class="flex-1 py-2 bg-gray-800 rounded-lg text-xs">Cancel</button>
                 <button onclick="window.close()" class="flex-1 py-2 bg-red-600 rounded-lg text-xs">OK</button>
             </div>
         </div>
     </div>
 
-    <div id="app-container">
+    <div id="app-wrapper">
         <div class="p-4 pt-8">
             <h1 class="text-2xl font-bold">X10 Downloader</h1>
             <p class="text-xs text-gray-400">Extender Loader · MovieBox sync</p>
             <div class="mt-4 bg-[#1a1625] p-3 rounded-2xl border border-white/10 flex items-center gap-2">
                 <span>🔍</span>
-                <input id="search-input" type="text" placeholder="Search movies, shows, links..." class="bg-transparent w-full focus:outline-none text-white">
+                <input id="search-input" type="text" placeholder="Search movies..." class="bg-transparent w-full focus:outline-none text-white">
                 <button onclick="performSearch()" class="bg-red-600 px-3 py-1 rounded-lg text-xs font-bold">Search</button>
             </div>
         </div>
@@ -43,25 +43,26 @@
             <button onclick="clearSearch()" class="mt-4 w-full py-2 bg-gray-800 rounded-lg text-xs">Back to Home</button>
         </div>
 
-        <main id="main-pages">
+        <main id="main-content">
             <div id="page-home" class="page active">
                 <div class="flex px-4 gap-4 mb-4 font-bold text-sm">
                     <button onclick="showSection('fyp')" id="btn-fyp" class="pb-1 tab-indicator">For You</button>
                     <button onclick="showSection('movies')" id="btn-movies" class="pb-1 border-b-2 border-transparent text-gray-500">Movies</button>
                 </div>
-                <div id="sec-fyp" class="section active p-4 text-center text-gray-500 pt-20">FYP Content Feed</div>
-                <div id="sec-movies" class="section grid-container p-4">
-                    <div class="movie-card"><div class="bg-indigo-900/50 h-24 rounded-lg mb-2"></div><h3 class="font-bold">Shadow Protocol</h3></div>
-                    <div class="movie-card"><div class="bg-indigo-900/50 h-24 rounded-lg mb-2"></div><h3 class="font-bold">Neon Skyline</h3></div>
+                <div id="swipe-zone">
+                    <div id="sec-fyp" class="section active p-4 text-center text-gray-500 pt-20">FYP Feed (Swipe Left to Movies)</div>
+                    <div id="sec-movies" class="section grid-container p-4">
+                        <div class="movie-card"><h3 class="font-bold">Shadow Protocol</h3></div>
+                        <div class="movie-card"><h3 class="font-bold">Neon Skyline</h3></div>
+                    </div>
                 </div>
             </div>
-
             <div id="page-live" class="page text-center py-20 font-bold">LIVE SPORTS HUB</div>
             <div id="page-downloads" class="page text-center py-20 font-bold">OFFLINE STORAGE</div>
         </main>
     </div>
 
-    <nav class="fixed bottom-0 w-full bg-[#0b0813] border-t border-white/10 flex justify-around p-4 z-50">
+    <nav class="fixed bottom-0 w-full bg-[#0d091a] border-t border-white/10 flex justify-around p-4 z-50">
         <div onclick="showPage('home', this)" class="nav-item active text-center text-xs">🏠<br>Home</div>
         <div onclick="showPage('live', this)" class="nav-item text-center text-xs">📡<br>Live</div>
         <div onclick="showPage('downloads', this)" class="nav-item text-center text-xs">⬇️<br>Downloads</div>
@@ -69,14 +70,21 @@
 
     <script>
         let exitCount = 0;
+        let touchStartX = 0;
+
+        // Swipe Logic
+        document.getElementById('swipe-zone').addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        document.getElementById('swipe-zone').addEventListener('touchend', e => {
+            let diff = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diff) > 50) showSection(diff > 0 ? 'movies' : 'fyp');
+        });
 
         function showPage(id, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
             if(el) el.classList.add('active');
-            document.getElementById('search-view').classList.add('hidden');
-            document.getElementById('main-pages').classList.remove('hidden');
+            clearSearch();
         }
 
         function showSection(id) {
@@ -89,58 +97,22 @@
         function performSearch() {
             const query = document.getElementById('search-input').value;
             if(!query) return;
-            document.getElementById('main-pages').classList.add('hidden');
+            document.getElementById('main-content').classList.add('hidden');
             document.getElementById('search-view').classList.remove('hidden');
-            document.getElementById('results-list').innerHTML = `<p class="text-xs text-gray-400">Searching: ${query}...</p>`;
-            setTimeout(() => { document.getElementById('results-list').innerHTML = `<div class="movie-card"><h3 class="font-bold">Result: ${query}</h3></div>`; }, 500);
+            document.getElementById('results-list').innerHTML = `<p class="text-xs">Searching: ${query}...</p>`;
+            setTimeout(() => { document.getElementById('results-list').innerHTML = `<div class="movie-card"><h3 class="font-bold text-sm">Result: ${query}</h3></div>`; }, 500);
         }
 
         function clearSearch() {
-            document.getElementById('main-pages').classList.remove('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('search-view').classList.add('hidden');
         }
 
-        function closeExit() { document.getElementById('exit-modal').classList.add('hidden'); exitCount = 0; }
-
         window.onpopstate = () => {
-            if(!document.getElementById('search-view').classList.contains('hidden')) { clearSearch(); }
-            else if(exitCount >= 1) { document.getElementById('exit-modal').classList.remove('hidden'); }
+            if(!document.getElementById('search-view').classList.contains('hidden')) clearSearch();
+            else if(exitCount >= 1) document.getElementById('exit-modal').classList.remove('hidden');
             else { exitCount++; setTimeout(() => exitCount = 0, 2000); }
-        };<script>
-    // This extension manages the search data results
-    function performSearch() {
-        const query = document.getElementById('search-input').value;
-        if(!query) return;
-
-        // 1. Hide main UI and show results
-        document.getElementById('main-pages').classList.add('hidden');
-        document.getElementById('search-view').classList.remove('hidden');
-        
-        // 2. Prepare the result container
-        const list = document.getElementById('results-list');
-        list.innerHTML = `<p class="col-span-2 text-xs text-gray-400">Loading results for "${query}"...</p>`;
-
-        // 3. Simulated "Server Response"
-        // This array holds the movie data structure you will eventually get from your server
-        const mockResults = [
-            { title: "Shadow Protocol", year: "2026", type: "4K", poster: "https://images.unsplash.com/photo-1596727147705-61053258597e?w=200" },
-            { title: "Neon Skyline", year: "2025", type: "1080p", poster: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200" },
-            { title: "Quantum Drift", year: "2026", type: "4K", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200" }
-        ];
-
-        // 4. Update the DOM with the "Results"
-        setTimeout(() => {
-            list.innerHTML = mockResults.map(m => `
-                <div class="movie-card">
-                    <img src="${m.poster}" class="w-full h-24 object-cover rounded-lg mb-2">
-                    <h3 class="font-bold text-sm">${m.title}</h3>
-                    <p class="text-[10px] text-gray-400">${m.year} · ${m.type}</p>
-                </div>
-            `).join('');
-        }, 600);
-    }
-</script>
-    
+        };
     </script>
 </body>
 </html>
