@@ -4,53 +4,41 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X10</title><script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body{background:linear-gradient(-45deg,#0b0813,#1a0b2e,#0d1b3e,#14051c);background-size:400% 400%;animation:L 8s infinite;color:#fff;font-family:sans-serif}
-        @keyframes L{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        body{background:#0b0813;color:#fff;font-family:sans-serif}
         .P,.S{display:none}.P.active,.S.active{display:block}
-        .F{scroll-snap-type:y mandatory;overflow-y:scroll;height:calc(100vh - 240px);scrollbar-width:none}
-        .F::-webkit-scrollbar{display:none}.C{scroll-snap-align:start;height:100%;position:relative}
-        /* FIXED: Ensuring video displays */
-        .vid-box{display:block !important; width:100%; height:auto; background:black;}
-        /* FIXED: Cube Grid */
-        .cube-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; padding:10px;}
-        .cube-item{background:#130f22; border:1px solid #ffffff10; padding:8px; border-radius:12px; text-align:center;}
-        .cube-img{aspect-ratio:1/1; width:100%; object-fit:cover; border-radius:8px;}
+        .video-player{width:100%;height:auto;display:block;background:black}
+        .movie-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;padding:10px}
+        .movie-card{background:#130f22;border:1px solid #ffffff10;padding:8px;border-radius:12px;text-align:center}
+        .cube-img{aspect-ratio:1/1;width:100%;object-fit:cover;border-radius:8px}
     </style>
 </head>
-<body class="flex flex-col min-h-screen pb-20 select-none">
-    <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4 flex flex-col">
-        <div class="max-w-md mx-auto w-full space-y-4 pt-10">
-            <div class="flex justify-between items-center"><h2 class="text-xs font-bold text-indigo-400 uppercase">Search</h2><button id="btn-close-search" class="text-xs text-red-400 bg-red-950/40 px-2 py-1 rounded">✕ Close</button></div>
-            <div class="flex gap-2"><input id="overlay-search-input" type="text" class="flex-1 bg-[#130f22] border border-gray-700 rounded p-2 text-xs text-white"><button id="btn-submit-search" class="bg-indigo-600 px-4 rounded text-xs">Find</button></div>
-            <div id="search-results-viewport" class="space-y-2 overflow-y-auto max-h-[60vh]"></div>
-        </div>
-    </div>
-
-    <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
+<body class="pb-20">
+    <main class="max-w-md mx-auto w-full p-4">
         <div id="page-home" class="P active space-y-4">
-            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl shadow-xl">
-                <h1 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
-                <button id="btn-trigger-search" class="bg-indigo-500/10 text-xs px-3 py-1.5 rounded-xl text-indigo-400">🔍 Search</button>
-            </div>
             <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
                 <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You</button>
                 <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
             </div>
-            <div id="sub-foryou" class="S active"><div class="F border border-white/5 rounded-2xl bg-black"></div></div>
-            <div id="sub-movies" class="S"><div class="cube-grid" id="movie-gallery"></div></div>
+            <div id="sub-foryou" class="S active">
+                <div class="text-gray-500 text-center py-10">FYP Content Loading...</div>
+            </div>
+            <div id="sub-movies" class="S">
+                <div class="movie-grid" id="movie-gallery"></div>
+            </div>
         </div>
-        </main>
-
-    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 backdrop-blur-md border-t border-white/5 py-2.5 flex justify-around items-center z-40">
-        <button onclick="switchTab('home')" class="text-indigo-400 font-bold text-sm">Home</button>
-        <button onclick="switchTab('live')" class="text-gray-400 text-sm">Live</button>
-        <button onclick="switchTab('downloads')" class="text-gray-400 text-sm">Downloads</button>
+    </main>
+    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a] p-4 flex justify-around border-t border-white/5">
+        <button onclick="switchTab('home')" class="text-indigo-400 font-bold">Home</button>
+        <button onclick="switchTab('live')" class="text-gray-400">Live</button>
+        <button onclick="switchTab('downloads')" class="text-gray-400">Downloads</button>
     </nav>
-
     <script>
-        const catalogMovies = [{title:'Avatar',year:'2026',poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'},{title:'Ocean',year:'2025',poster:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200'}];
-        
-        function switchTab(t) {
+        const catalogMovies=[
+            {title:'Avatar',year:'2026',poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'},
+            {title:'Ocean Rise',year:'2025',poster:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200'}
+        ];
+
+        function switchTab(t){
             document.querySelectorAll('.P').forEach(p=>p.classList.remove('active'));
             document.getElementById('page-'+t).classList.add('active');
         }
@@ -69,15 +57,12 @@
         function renderMovies(){
             const g = document.getElementById('movie-gallery');
             g.innerHTML = catalogMovies.map(m => `
-                <div class="cube-item">
+                <div class="movie-card">
                     <img src="${m.poster}" class="cube-img">
                     <p class="text-[10px] mt-2 font-bold">${m.title}</p>
                 </div>
             `).join('');
         }
-        
-        document.getElementById('btn-trigger-search').onclick = () => document.getElementById('search-overlay').classList.remove('hidden');
-        document.getElementById('btn-close-search').onclick = () => document.getElementById('search-overlay').classList.add('hidden');
     </script>
 </body>
 </html>
