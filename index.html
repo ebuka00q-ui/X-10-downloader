@@ -1,56 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>X10 DOWNLOADER</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X10 DOWNLOADER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white p-4">
+<body class="bg-black text-white min-h-screen">
+    <header class="p-4 border-b border-gray-800">
+        <h1 class="text-xl font-bold text-indigo-500">X10 DOWNLOADER</h1>
+    </header>
 
-<h1 class="text-xl font-bold text-indigo-500 mb-4">X10 DOWNLOADER</h1>
+    <main class="p-4">
+        <div class="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+            <video id="main-player" class="w-full h-full" controls playsinline></video>
+        </div>
+        <p id="now-playing" class="mt-2 text-sm text-gray-400">Select a video to begin</p>
 
-<div class="bg-gray-900 p-2 rounded-lg">
-<video id="v" class="w-full aspect-video" controls playsinline></video>
-<p id="t" class="mt-2 text-xs text-gray-400">Ready</p>
-</div>
+        <div class="flex gap-2 mt-6 mb-4">
+            <button onclick="renderSection('fyp')" class="bg-gray-800 px-4 py-2 rounded text-sm hover:bg-gray-700">FYP</button>
+            <button onclick="renderSection('live')" class="bg-gray-800 px-4 py-2 rounded text-sm hover:bg-gray-700">LIVE</button>
+            <button onclick="renderSection('downloads')" class="bg-gray-800 px-4 py-2 rounded text-sm hover:bg-gray-700">DOWNLOADS</button>
+        </div>
 
-<div class="flex gap-2 mt-6 mb-4">
-<button onclick="show('fyp')" class="bg-gray-800 p-2 rounded text-xs">FYP</button>
-<button onclick="show('live')" class="bg-gray-800 p-2 rounded text-xs">LIVE</button>
-<button onclick="show('dwn')" class="bg-gray-800 p-2 rounded text-xs">DWN</button>
-</div>
+        <div id="content-area" class="space-y-3"></div>
+    </main>
 
-<div id="content" class="space-y-3"></div>
+    <script>
+        const library = {
+            fyp: [
+                { title: 'Big Buck Bunny', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' },
+                { title: 'Sintel', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4' }
+            ],
+            live: [
+                { title: 'Live Relay A', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' },
+                { title: 'Live Relay B', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4' }
+            ],
+            downloads: []
+        };
 
-<script>
-const data = {
-fyp: [
-{t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
-{t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
-],
-live: [
-{t:'Live Relay A',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'}
-],
-dwn: []
-};
+        const player = document.getElementById('main-player');
+        const nowPlayingText = document.getElementById('now-playing');
+        const contentArea = document.getElementById('content-area');
 
-const v = document.getElementById('v');
-const t = document.getElementById('t');
-const c = document.getElementById('content');
+        function renderSection(section) {
+            contentArea.innerHTML = '';
+            library[section].forEach(item => {
+                const button = document.createElement('button');
+                button.className = 'w-full p-4 bg-gray-900 border border-gray-700 rounded-lg text-left text-sm hover:border-indigo-500 transition';
+                button.innerHTML = `<span class="text-indigo-400 mr-2">▶</span> ${item.title}`;
+                button.onclick = () => {
+                    player.src = item.src;
+                    player.play();
+                    nowPlayingText.innerText = 'Now Playing: ' + item.title;
+                };
+                contentArea.appendChild(button);
+            });
+        }
 
-function show(type) {
-c.innerHTML = '';
-data[type].forEach(i => {
-let b = document.createElement('button');
-b.className = 'w-full p-4 bg-gray-900 border border-gray-700 rounded text-left text-xs';
-b.innerHTML = '▶ ' + i.t;
-b.onclick = () => { v.src = i.s; v.play(); t.innerText = i.t; };
-c.appendChild(b);
-});
-}
-// Init
-show('fyp');
-</script>
+        // Initialize
+        renderSection('fyp');
+    </script>
 </body>
 </html>
