@@ -10,23 +10,22 @@
         .S{display:none}.S.active{display:block}
         .movie-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:10px;}
         .cube-img{aspect-ratio:1/1; width:100%; object-fit:cover; border-radius:10px; background:#000;}
-       const myMovies = [
-    {title: "Movie Name", poster: "url_to_image"},
-    {title: "Movie Two", poster: "url_to_image"}
-];
- .nav-btn.active-tab{color:#818cf8; border-bottom:2px solid #818cf8;}
+        /* Active States */
+        .tab-btn.active{border-bottom:2px solid #6366f1; color:#fff;}
+        .nav-btn.active{color:#818cf8; font-weight:bold;}
     </style>
 </head>
-<body class="flex flex-col min-h-screen pb-20">
+<body class="flex flex-col min-h-screen pb-20 select-none">
 
     <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 z-50 p-4">
         <div class="max-w-md mx-auto pt-10 space-y-4">
-            <h2 class="text-xs font-bold text-indigo-400">SEARCH MOVIES</h2>
+            <h2 class="text-xs font-bold text-indigo-400">FIND CONTENT</h2>
             <div class="flex gap-2">
                 <input id="search-input" type="text" class="flex-1 bg-[#130f22] p-2 rounded text-xs text-white" placeholder="Type movie name...">
-                <button onclick="document.getElementById('search-overlay').classList.add('hidden')" class="bg-red-900/50 px-4 rounded text-xs">Cancel</button>
+                <button onclick="executeSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold">SEARCH</button>
             </div>
-            <div id="search-results" class="text-xs text-gray-400">Type to search...</div>
+            <button onclick="document.getElementById('search-overlay').classList.add('hidden')" class="text-[10px] text-gray-500">Cancel</button>
+            <div id="search-results" class="text-xs text-gray-400 pt-4">Searching results will appear here...</div>
         </div>
     </div>
 
@@ -37,52 +36,61 @@
                 <button onclick="document.getElementById('search-overlay').classList.remove('hidden')" class="bg-indigo-500/20 text-xs px-3 py-1 rounded-xl text-indigo-400">🔍 Search</button>
             </div>
             <div class="flex text-center text-xs font-bold border-b border-white/5 mb-4">
-                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You</button>
-                <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
+                <button id="btn-sub-foryou" class="tab-btn active flex-1 pb-2 border-b-2 border-transparent text-gray-400">For You</button>
+                <button id="btn-sub-movies" class="tab-btn flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
             </div>
-            <div id="sub-foryou" class="S active"><p class="text-center text-gray-500 py-10">Add your video links in the code to see them here.</p></div>
+            <div id="sub-foryou" class="S active"><p class="text-center text-gray-500 py-10">FYP Content Loading...</p></div>
             <div id="sub-movies" class="S"><div class="movie-grid" id="movie-gallery"></div></div>
         </div>
 
-        <div id="page-live" class="P text-center py-20">LIVE SPORTS HUB</div>
-
-        <div id="page-downloads" class="P text-center py-20">OFFLINE STORAGE</div>
+        <div id="page-live" class="P text-center py-20 font-bold">LIVE SPORTS HUB</div>
+        <div id="page-downloads" class="P text-center py-20 font-bold">OFFLINE STORAGE</div>
     </main>
 
     <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 border-t border-white/5 py-3 flex justify-around z-40">
-        <button onclick="switchTab('home', this)" class="nav-btn active-tab text-sm">Home</button>
+        <button onclick="switchTab('home', this)" class="nav-btn active text-sm">Home</button>
         <button onclick="switchTab('live', this)" class="nav-btn text-gray-400 text-sm">Live</button>
         <button onclick="switchTab('downloads', this)" class="nav-btn text-gray-400 text-sm">Downloads</button>
     </nav>
 
     <script>
-        // Tab Switcher
+        // Main Tab Switcher
         function switchTab(t, btn) {
             document.querySelectorAll('.P').forEach(p => p.classList.remove('active'));
             document.getElementById('page-'+t).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-            btn.classList.add('active-tab');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         }
 
-        // Sub-Tab Switcher
-        document.getElementById('btn-sub-movies').onclick = () => {
-            document.getElementById('sub-foryou').classList.remove('active');
-            document.getElementById('sub-movies').classList.add('active');
-            renderMovies();
-        };
-        document.getElementById('btn-sub-foryou').onclick = () => {
-            document.getElementById('sub-movies').classList.remove('active');
-            document.getElementById('sub-foryou').classList.add('active');
-        };
+        // Home Sub-Tab Logic
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(tab => {
+            tab.onclick = () => {
+                tabs.forEach(t => t.classList.remove('active', 'text-white'));
+                tab.classList.add('active', 'text-white');
+                document.querySelectorAll('.S').forEach(s => s.classList.remove('active'));
+                if(tab.id === 'btn-sub-movies') {
+                    document.getElementById('sub-movies').classList.add('active');
+                    renderMovies();
+                } else {
+                    document.getElementById('sub-foryou').classList.add('active');
+                }
+            };
+        });
 
         function renderMovies(){
             const g = document.getElementById('movie-gallery');
             g.innerHTML = Array(6).fill(0).map(() => `
                 <div class="text-center">
                     <div class="cube-img bg-indigo-900/30"></div>
-                    <p class="text-[9px] mt-1 font-bold">Movie Title</p>
+                    <p class="text-[9px] mt-1 font-bold">Movie</p>
                 </div>
             `).join('');
+        }
+
+        function executeSearch(){
+            const q = document.getElementById('search-input').value;
+            if(q) document.getElementById('search-results').innerText = "Searching for: " + q + "...";
         }
     </script>
 </body>
