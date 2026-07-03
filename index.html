@@ -8,15 +8,15 @@
     <style>
         .page { display: none; }
         .page.active { display: block; }
-        .sub-tab { display: none; }
-        .sub-tab.active { display: block; }
+        .feed { height: 75vh; overflow-y: auto; scrollbar-width: none; }
+        .feed::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-[#0b0813] text-white min-h-screen pb-20">
+<body class="bg-[#0b0813] text-white font-sans min-h-screen pb-20">
 
-    <div id="search-zone" class="p-4 bg-[#130f22] border-b border-white/10">
+    <div id="search-zone" class="p-4 bg-[#130f22] border-b border-white/10 sticky top-0 z-50">
         <div class="flex gap-2">
-            <input id="search-input" type="text" placeholder="Search..." class="flex-1 bg-black p-2 rounded text-xs border border-white/10">
+            <input id="search-input" type="text" placeholder="Search movie..." class="flex-1 bg-black p-2 rounded text-xs border border-white/10">
             <button onclick="runSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold">GO</button>
         </div>
     </div>
@@ -27,9 +27,8 @@
                 <button onclick="switchSub('fyp')" class="text-xs font-bold text-indigo-400">FYP</button>
                 <button onclick="switchSub('movies')" class="text-xs font-bold text-gray-400">MOVIES</button>
             </div>
-            <video id="main-video" class="w-full aspect-video bg-black rounded-lg" controls playsinline></video>
-            <div id="fyp-list" class="sub-tab active mt-4 space-y-2"></div>
-            <div id="movies-list" class="sub-tab mt-4 space-y-2"></div>
+            <div id="fyp-list" class="feed space-y-4"></div>
+            <div id="movies-list" class="feed space-y-4 hidden"></div>
         </div>
 
         <div id="page-live" class="page">
@@ -39,18 +38,23 @@
 
         <div id="page-downloads" class="page">
             <h2 class="text-indigo-400 text-xs font-bold mb-4">MY LIBRARY</h2>
-            <div class="mb-6"><p class="text-[10px] text-gray-500 mb-2">DOWNLOADED</p><div id="dwn-list" class="space-y-2"></div></div>
-            <div><p class="text-[10px] text-gray-500 mb-2">PINNED</p><div id="pin-list" class="space-y-2"></div></div>
+            <p class="text-[10px] text-gray-500 mb-2">OFFLINE STORAGE</p>
+            <div id="dwn-list" class="space-y-2"></div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-black p-4 flex justify-around text-[10px] font-bold border-t border-white/5">
+    <nav class="fixed bottom-0 w-full bg-black p-4 flex justify-around text-[10px] font-bold border-t border-white/5 z-50">
         <button onclick="nav('home')">HOME</button>
         <button onclick="nav('live')">LIVE</button>
         <button onclick="nav('downloads')">DOWNLOADS</button>
     </nav>
 
     <script>
+        const data = [
+            {t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
+            {t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
+        ];
+
         function nav(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
@@ -58,8 +62,8 @@
         }
 
         function switchSub(id) {
-            document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(id + '-list').classList.add('active');
+            document.getElementById('fyp-list').classList.toggle('hidden', id !== 'fyp');
+            document.getElementById('movies-list').classList.toggle('hidden', id !== 'movies');
         }
 
         function runSearch() {
@@ -69,18 +73,32 @@
             document.getElementById('search-input').value = '';
         }
 
-        // Logic for lists and video play
-        const videos = [
-            {t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
-            {t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
-        ];
+        function download(item) {
+            let saved = JSON.parse(localStorage.getItem('x10_dwn') || '[]');
+            saved.push(item);
+            localStorage.setItem('x10_dwn', JSON.stringify(saved));
+            renderDownloads();
+            alert("Saved to Offline Storage");
+        }
 
-        videos.forEach(v => {
-            let b = document.createElement('div');
-            b.className = 'p-3 bg-[#130f22] rounded flex justify-between items-center text-xs';
-            b.innerHTML = `${v.t} <button onclick="document.getElementById('main-video').src='${v.s}'; document.getElementById('main-video').play();" class="bg-indigo-600 px-2 py-1 rounded">▶</button>`;
-            document.getElementById('fyp-list').appendChild(b);
+        function renderDownloads() {
+            const list = document.getElementById('dwn-list');
+            const saved = JSON.parse(localStorage.getItem('x10_dwn') || '[]');
+            list.innerHTML = saved.map(i => `<div class="p-3 bg-[#130f22] rounded text-xs">✅ ${i.t}</div>`).join('');
+        }
+
+        // Initialize Feed
+        const fyp = document.getElementById('fyp-list');
+        data.forEach(v => {
+            let div = document.createElement('div');
+            div.className = 'bg-black rounded-lg overflow-hidden border border-white/10';
+            div.innerHTML = `<video class="w-full aspect-video" controls src="${v.s}"></video>
+                             <div class="p-2 flex justify-between items-center"><span class="text-xs">${v.t}</span>
+                             <button onclick='download(${JSON.stringify(v)})' class="bg-emerald-600 px-3 py-1 rounded text-[10px]">SAVE</button></div>`;
+            fyp.appendChild(div);
         });
+
+        renderDownloads();
     </script>
 </body>
 </html>
