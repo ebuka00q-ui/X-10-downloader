@@ -4,51 +4,55 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X10</title><script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body{background:#0b0813;color:#fff;font-family:sans-serif}
+        body{background:linear-gradient(-45deg,#0b0813,#1a0b2e,#0d1b3e,#14051c);background-size:400% 400%;animation:L 8s infinite;color:#fff;font-family:sans-serif}
+        @keyframes L{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
         .P,.S{display:none}.P.active,.S.active{display:block}
-        .video-player{width:100%;height:auto;display:block;background:black}
-        .movie-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;padding:10px}
-        .movie-card{background:#130f22;border:1px solid #ffffff10;padding:8px;border-radius:12px;text-align:center}
-        .cube-img{aspect-ratio:1/1;width:100%;object-fit:cover;border-radius:8px}
+        .F{scroll-snap-type:y mandatory;overflow-y:scroll;height:calc(100vh - 240px);scrollbar-width:none}
+        .F::-webkit-scrollbar{display:none}.C{scroll-snap-align:start;height:100%;position:relative}
+        /* 3-Column Grid for Movies */
+        .movie-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; padding:10px;}
+        .cube-img{aspect-ratio:1/1; width:100%; object-fit:cover; border-radius:10px; background:#000;}
     </style>
 </head>
-<body class="pb-20">
-    <main class="max-w-md mx-auto w-full p-4">
+<body class="flex flex-col min-h-screen pb-20 select-none">
+    <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
         <div id="page-home" class="P active space-y-4">
             <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
-                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You</button>
+                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You (FYP)</button>
                 <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
             </div>
-            <div id="sub-foryou" class="S active">
-                <div class="text-gray-500 text-center py-10">FYP Content Loading...</div>
-            </div>
-            <div id="sub-movies" class="S">
-                <div class="movie-grid" id="movie-gallery"></div>
-            </div>
+            <div id="sub-foryou" class="S active"><div class="F border border-white/5 rounded-2xl bg-black overflow-hidden"></div></div>
+            <div id="sub-movies" class="S"><div class="movie-grid" id="movie-gallery"></div></div>
         </div>
     </main>
-    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a] p-4 flex justify-around border-t border-white/5">
-        <button onclick="switchTab('home')" class="text-indigo-400 font-bold">Home</button>
-        <button onclick="switchTab('live')" class="text-gray-400">Live</button>
-        <button onclick="switchTab('downloads')" class="text-gray-400">Downloads</button>
+
+    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 backdrop-blur-md border-t border-white/5 py-3 flex justify-around z-40">
+        <button onclick="switchTab('home')" class="text-indigo-400 font-bold text-sm">Home</button>
+        <button onclick="switchTab('live')" class="text-gray-400 text-sm">Live</button>
+        <button onclick="switchTab('downloads')" class="text-gray-400 text-sm">Downloads</button>
     </nav>
+
     <script>
-        const catalogMovies=[
-            {title:'Avatar',year:'2026',poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'},
-            {title:'Ocean Rise',year:'2025',poster:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200'}
+        const catalogMovies = [
+            {title:'Action 2026',poster:'https://images.unsplash.com/photo-1596727147705-61053258597e?w=200'},
+            {title:'Sci-Fi 2026',poster:'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200'},
+            {title:'Thriller 2025',poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'},
+            {title:'Drama 2025',poster:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200'},
+            {title:'Comedy 2026',poster:'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=200'},
+            {title:'Horror 2026',poster:'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=200'}
         ];
 
-        function switchTab(t){
+        function switchTab(t) {
             document.querySelectorAll('.P').forEach(p=>p.classList.remove('active'));
             document.getElementById('page-'+t).classList.add('active');
         }
 
+        // Logic for Home Sub-Tabs
         document.getElementById('btn-sub-movies').onclick = () => {
             document.getElementById('sub-foryou').classList.remove('active');
             document.getElementById('sub-movies').classList.add('active');
             renderMovies();
         };
-
         document.getElementById('btn-sub-foryou').onclick = () => {
             document.getElementById('sub-movies').classList.remove('active');
             document.getElementById('sub-foryou').classList.add('active');
@@ -57,9 +61,9 @@
         function renderMovies(){
             const g = document.getElementById('movie-gallery');
             g.innerHTML = catalogMovies.map(m => `
-                <div class="movie-card">
+                <div class="text-center">
                     <img src="${m.poster}" class="cube-img">
-                    <p class="text-[10px] mt-2 font-bold">${m.title}</p>
+                    <p class="text-[9px] mt-1 font-bold truncate">${m.title}</p>
                 </div>
             `).join('');
         }
