@@ -62,11 +62,50 @@
         </main>
     </div>
 
-    <nav class="fixed bottom-0 w-full bg-[#0d091a] border-t border-white/10 flex justify-around p-4 z-50">
-        <div onclick="showPage('home', this)" class="nav-item active text-center text-xs">🏠<br>Home</div>
-        <div onclick="showPage('live', this)" class="nav-item text-center text-xs">📡<br>Live</div>
-        <div onclick="showPage('downloads', this)" class="nav-item text-center text-xs">⬇️<br>Downloads</div>
+<body style="margin: 0; font-family: sans-serif; background-color: #0f0f0f; color: white;">
+
+    <header style="padding: 20px; text-align: center; border-bottom: 1px solid #333;">
+        <h1 style="margin: 0; font-size: 20px;">X10 Downloader</h1>
+    </header>
+
+    <div id="view-home" class="view" style="padding: 20px;">
+        <input type="text" id="home-search" placeholder="Search movies..." style="width: 70%; padding: 10px;">
+        <button onclick="handleSearch('home-search')">Search</button>
+    </div>
+
+    <div id="view-live" class="view" style="display:none; padding: 20px;">
+        <div id="live-stream-container">
+            <video id="live-stream-player" controls width="100%" style="background: #000;">
+                <source id="live-source" src="" type="application/x-mpegURL">
+                <track kind="captions" src="subtitles.vtt" srclang="en" label="English" default>
+            </video>
+        </div>
+    </div>
+
+    <div id="view-downloads" class="view" style="display:none; padding: 20px;">
+        <h3 id="download-status">No downloads yet</h3>
+        <div id="download-queue"></div>
+    </div>
+
+    <nav style="position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; background: #1a1a1a; padding: 15px;">
+        <button onclick="showView('view-home')">Home</button>
+        <button onclick="showView('view-live')">Live</button>
+        <button onclick="showView('view-downloads')">Downloads</button>
     </nav>
+
+    <script>
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+            document.getElementById(viewId).style.display = 'block';
+        }
+        
+        // This function will eventually pull data from your server
+        function connectToServer() {
+            console.log("Waiting for server light... Ready to sync Live streams and Download queues.");
+        }
+    </script>
+</body>
+
 
     <script>
         let exitCount = 0;
