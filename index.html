@@ -218,9 +218,12 @@
     </nav>
 
     <script>
-        let currentTab = 'home';
-        let currentSubPage = 'fyp'; 
-        let currentMovieContext = '';
+    let currentTab = 'home';
+    const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IUlSZQ_1LLxmVSE";
+    let currentSubPage = 'fyp';
+    let currentMovieContext = '';
+        
 
         const liveYear = new Date().getFullYear();
         document.getElementById('rolling-date-header').innerText = `Latest Releases (${liveYear} - ${liveYear - 1})`;
