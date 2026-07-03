@@ -106,7 +106,41 @@
             if(!document.getElementById('search-view').classList.contains('hidden')) { clearSearch(); }
             else if(exitCount >= 1) { document.getElementById('exit-modal').classList.remove('hidden'); }
             else { exitCount++; setTimeout(() => exitCount = 0, 2000); }
-        };
+        };<script>
+    // This extension manages the search data results
+    function performSearch() {
+        const query = document.getElementById('search-input').value;
+        if(!query) return;
+
+        // 1. Hide main UI and show results
+        document.getElementById('main-pages').classList.add('hidden');
+        document.getElementById('search-view').classList.remove('hidden');
+        
+        // 2. Prepare the result container
+        const list = document.getElementById('results-list');
+        list.innerHTML = `<p class="col-span-2 text-xs text-gray-400">Loading results for "${query}"...</p>`;
+
+        // 3. Simulated "Server Response"
+        // This array holds the movie data structure you will eventually get from your server
+        const mockResults = [
+            { title: "Shadow Protocol", year: "2026", type: "4K", poster: "https://images.unsplash.com/photo-1596727147705-61053258597e?w=200" },
+            { title: "Neon Skyline", year: "2025", type: "1080p", poster: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200" },
+            { title: "Quantum Drift", year: "2026", type: "4K", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200" }
+        ];
+
+        // 4. Update the DOM with the "Results"
+        setTimeout(() => {
+            list.innerHTML = mockResults.map(m => `
+                <div class="movie-card">
+                    <img src="${m.poster}" class="w-full h-24 object-cover rounded-lg mb-2">
+                    <h3 class="font-bold text-sm">${m.title}</h3>
+                    <p class="text-[10px] text-gray-400">${m.year} · ${m.type}</p>
+                </div>
+            `).join('');
+        }, 600);
+    }
+</script>
+    
     </script>
 </body>
 </html>
