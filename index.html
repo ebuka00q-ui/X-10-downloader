@@ -6,48 +6,65 @@
     <style>
         body{background:linear-gradient(-45deg,#0b0813,#1a0b2e,#0d1b3e,#14051c);background-size:400% 400%;animation:L 8s infinite;color:#fff;font-family:sans-serif}
         @keyframes L{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-        .P,.S{display:none}.P.active,.S.active{display:block}
-        .F{scroll-snap-type:y mandatory;overflow-y:scroll;height:calc(100vh - 240px);scrollbar-width:none}
-        .F::-webkit-scrollbar{display:none}.C{scroll-snap-align:start;height:100%;position:relative}
-        /* 3-Column Grid for Movies */
-        .movie-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; padding:10px;}
+        /* Page switching classes */
+        .P{display:none}.P.active{display:block}
+        .S{display:none}.S.active{display:block}
+        /* Grid and Video */
+        .movie-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:10px;}
         .cube-img{aspect-ratio:1/1; width:100%; object-fit:cover; border-radius:10px; background:#000;}
+        /* Active Tab Shine Effect */
+        .tab-active{color: #818cf8 !important; font-weight: bold; border-bottom: 2px solid #6366f1;}
     </style>
 </head>
 <body class="flex flex-col min-h-screen pb-20 select-none">
+
+    <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4">
+        <div class="max-w-md mx-auto pt-10 space-y-4">
+            <h2 class="text-xs font-bold text-indigo-400">SEARCH</h2>
+            <div class="flex gap-2"><input type="text" class="flex-1 bg-[#130f22] p-2 rounded text-xs text-white" placeholder="Find movies...">
+            <button onclick="document.getElementById('search-overlay').classList.add('hidden')" class="bg-red-900 px-4 rounded text-xs">Close</button></div>
+        </div>
+    </div>
+
     <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
-        <div id="page-home" class="P active space-y-4">
-            <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
-                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You (FYP)</button>
+        <div id="page-home" class="P active">
+            <div class="flex justify-between items-center bg-[#130f22]/60 p-4 rounded-2xl mb-4">
+                <h1 class="text-sm font-black text-indigo-400">X10 DOWNLOADER</h1>
+                <button onclick="document.getElementById('search-overlay').classList.remove('hidden')" class="bg-indigo-500/20 text-xs px-3 py-1 rounded-xl text-indigo-400">🔍 Search</button>
+            </div>
+            <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase mb-4">
+                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You</button>
                 <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
             </div>
-            <div id="sub-foryou" class="S active"><div class="F border border-white/5 rounded-2xl bg-black overflow-hidden"></div></div>
+            <div id="sub-foryou" class="S active"><div class="text-center text-gray-500 pt-10">FYP Content...</div></div>
             <div id="sub-movies" class="S"><div class="movie-grid" id="movie-gallery"></div></div>
+        </div>
+
+        <div id="page-live" class="P">
+            <h2 class="text-center font-bold text-emerald-400 py-10">LIVE SPORTS HUB</h2>
+        </div>
+
+        <div id="page-downloads" class="P">
+            <h2 class="text-center font-bold text-gray-300 py-10">LOCAL STORAGE</h2>
         </div>
     </main>
 
     <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 backdrop-blur-md border-t border-white/5 py-3 flex justify-around z-40">
-        <button onclick="switchTab('home')" class="text-indigo-400 font-bold text-sm">Home</button>
-        <button onclick="switchTab('live')" class="text-gray-400 text-sm">Live</button>
-        <button onclick="switchTab('downloads')" class="text-gray-400 text-sm">Downloads</button>
+        <button onclick="switchTab('home', this)" class="nav-btn tab-active text-sm">Home</button>
+        <button onclick="switchTab('live', this)" class="nav-btn text-gray-400 text-sm">Live</button>
+        <button onclick="switchTab('downloads', this)" class="nav-btn text-gray-400 text-sm">Downloads</button>
     </nav>
 
     <script>
-        const catalogMovies = [
-            {title:'Action 2026',poster:'https://images.unsplash.com/photo-1596727147705-61053258597e?w=200'},
-            {title:'Sci-Fi 2026',poster:'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200'},
-            {title:'Thriller 2025',poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'},
-            {title:'Drama 2025',poster:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200'},
-            {title:'Comedy 2026',poster:'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=200'},
-            {title:'Horror 2026',poster:'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=200'}
-        ];
-
-        function switchTab(t) {
-            document.querySelectorAll('.P').forEach(p=>p.classList.remove('active'));
+        // Tab Switching
+        function switchTab(t, btn) {
+            document.querySelectorAll('.P').forEach(p => p.classList.remove('active'));
             document.getElementById('page-'+t).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('tab-active', 'text-indigo-400'), b.classList.add('text-gray-400'));
+            btn.classList.add('tab-active', 'text-indigo-400');
         }
 
-        // Logic for Home Sub-Tabs
+        // Sub-Tab Logic
         document.getElementById('btn-sub-movies').onclick = () => {
             document.getElementById('sub-foryou').classList.remove('active');
             document.getElementById('sub-movies').classList.add('active');
@@ -60,10 +77,10 @@
 
         function renderMovies(){
             const g = document.getElementById('movie-gallery');
-            g.innerHTML = catalogMovies.map(m => `
+            g.innerHTML = Array(9).fill(0).map(() => `
                 <div class="text-center">
-                    <img src="${m.poster}" class="cube-img">
-                    <p class="text-[9px] mt-1 font-bold truncate">${m.title}</p>
+                    <div class="cube-img bg-indigo-900/30"></div>
+                    <p class="text-[9px] mt-1 font-bold">Movie Title</p>
                 </div>
             `).join('');
         }
