@@ -1,259 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10 DOWNLOADER</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            background: linear-gradient(-45deg, #0b0813, #1a0b2e, #0d1b3e, #14051c);
-            background-size: 400% 400%;
-            animation: GradientLayout 8s ease infinite;
-            color: #fff;
-            font-family: sans-serif;
-        }
-        @keyframes GradientLayout {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        .app-page, .sub-section, .download-section { 
-            display: none !important; 
-        }
-        .app-page.active, .sub-section.active, .download-section.active { 
-            display: block !important; 
-        }
-        .fyp-scroll-container {
-            overflow-y: auto;
-            height: calc(100vh - 240px);
-            scrollbar-width: none;
-        }
-        .fyp-scroll-container::-webkit-scrollbar { 
-            display: none; 
-        }
-        #subtitles-text {
-            text-shadow: 2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-        }
-    </style>
+<title>X10 DOWNLOADER</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="flex flex-col min-h-screen pb-20 select-none">
-
-    <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4 flex flex-col">
-        <div class="max-w-md mx-auto w-full space-y-4 pt-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xs font-bold text-indigo-400 uppercase">Search Engine</h2>
-                <button id="btn-close-search" class="text-xs text-red-400 bg-red-950/40 px-2 py-1 rounded">✕ Close</button>
-            </div>
-            <div class="flex gap-2">
-                <input 
-                    id="overlay-search-input" 
-                    type="text" 
-                    placeholder="Search movies..." 
-                    class="flex-1 bg-[#130f22] border border-gray-700 rounded p-2 text-xs text-white focus:outline-none"
-                >
-                <button id="btn-submit-search" class="bg-indigo-600 px-3 rounded text-xs font-bold whitespace-nowrap">Go</button>
-            </div>
-            <div class="space-y-1">
-                <p class="text-[9px] text-gray-400 uppercase font-bold">History</p>
-                <div id="search-history-tags" class="flex flex-wrap gap-1.5"></div>
-            </div>
-            <div id="search-results-viewport" class="space-y-2 overflow-y-auto max-h-[50vh]"></div>
-        </div>
-    </div>
-
-    <div id="comment-overlay" class="hidden fixed inset-x-0 bottom-0 bg-[#0d091a] border-t border-white/10 rounded-t-2xl z-50 p-4 max-w-md mx-auto">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-xs font-bold text-gray-300">Comments Feed</h3>
-            <button id="btn-close-comments" class="text-gray-500 text-xs">✕ Close</button>
-        </div>
-        <div id="comments-list-box" class="space-y-2 max-h-[30vh] overflow-y-auto mb-3 text-xs text-gray-400"></div>
-        <div class="flex gap-2">
-            <input 
-                id="comment-input-field" 
-                type="text" 
-                placeholder="Type a comment..." 
-                class="flex-1 bg-[#130f22] border border-gray-700 rounded p-2 text-xs text-white focus:outline-none"
-            >
-            <button id="btn-submit-comment" class="bg-indigo-600 px-3 rounded text-xs font-bold">Post</button>
-        </div>
-    </div>
-
-    <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
-        
-        <div id="page-home" class="app-page active space-y-4">
-            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl shadow-xl">
-                <h1 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
-                <button id="btn-trigger-search" class="bg-indigo-500/10 text-xs px-3 py-1.5 rounded-xl text-indigo-400">🔍 Search</button>
-            </div>
-            <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
-                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold">For You (FYP)</button>
-                <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
-            </div>
-            <div id="sub-foryou" class="sub-section active">
-                <div class="fyp-scroll-container space-y-4 flex flex-col"></div>
-            </div>
-            <div id="sub-movies" class="sub-section">
-                <div class="grid grid-cols-2 gap-3 overflow-y-auto max-h-[calc(100vh-240px)]"></div>
-            </div>
-        </div>
-
-        <div id="page-workspace" class="app-page space-y-4">
-            <div class="space-y-2">
-                <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 flex flex-col justify-end">
-                    <video id="workspace-video-player" controls playsinline crossorigin="anonymous" class="w-full h-full object-contain"></video>
-                    <div id="subtitles-container" class="absolute bottom-4 inset-x-0 text-center pointer-events-none px-4 hidden z-30">
-                        <span id="subtitles-text" class="text-white text-xs font-bold tracking-wide inline-block max-w-[90%]"></span>
-                    </div>
-                </div>
-                <div class="flex justify-between items-center">
-                    <h2 id="workspace-preview-title" class="text-xs font-bold text-gray-300 px-1"></h2>
-                    <button id="btn-workspace-pin" class="text-xs text-indigo-400 bg-indigo-950/40 px-3 py-1 rounded-xl border border-indigo-500/20">📌 Pin Video</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-watch-now" class="bg-indigo-600 font-bold py-2 rounded-xl text-xs uppercase shadow-lg shadow-indigo-600/20">▶ Watch</button>
-                <button id="btn-download-now" class="bg-emerald-600 font-bold py-2 rounded-xl text-xs uppercase shadow-lg shadow-emerald-600/20">📥 Download</button>
-            </div>
-            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-3 space-y-1">
-                <h3 class="text-[9px] font-bold text-indigo-400 uppercase">Cast Members</h3>
-                <div id="workspace-actor-cast-row" class="flex gap-2 overflow-x-auto"></div>
-            </div>
-            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-3 space-y-1">
-                <p id="workspace-movie-desc" class="text-xs text-gray-300 font-light"></p>
-            </div>
-        </div>
-
-        <div id="page-live" class="app-page space-y-4">
-            <div class="bg-[#130f22]/60 p-3 border border-white/5 rounded-2xl flex justify-between items-center shadow-md">
-                <h1 class="text-xs font-bold text-emerald-400">LIVE RELAYS</h1>
-                <button id="btn-trigger-live-search" class="bg-emerald-500/10 text-xs px-2 py-1 rounded-xl text-emerald-400">🔍 Live Search</button>
-            </div>
-            <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-                <video id="live-video-player" controls playsinline class="w-full h-full object-cover"></video>
-            </div>
-            <div id="live-feed-directory-scroller" class="space-y-2 max-h-[40vh] overflow-y-auto"></div>
-        </div>
-
-        <div id="page-downloads" class="app-page space-y-4">
-            <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
-                <button id="btn-dwn-offline" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold">📥 Offline Storage</button>
-                <button id="btn-dwn-pinned" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">📌 Pinned Items</button>
-            </div>
-            <div id="dwn-offline" class="download-section active space-y-3">
-                <div class="bg-[#130f22]/60 p-3 border border-white/5 rounded-2xl flex justify-between items-center">
-                    <h1 class="text-xs font-bold text-gray-300">LOCAL DATA FILES</h1>
-                    <button id="btn-clear-downloads" class="text-[9px] bg-red-950/40 text-red-400 px-2 py-1 rounded">Purge All</button>
-                </div>
-                <div id="downloads-list" class="grid grid-cols-1 gap-2 overflow-y-auto max-h-[55vh]"></div>
-            </div>
-            <div id="dwn-pinned" class="download-section space-y-3">
-                <div id="pinned-list" class="grid grid-cols-2 gap-3 overflow-y-auto max-h-[60vh]"></div>
-            </div>
-        </div>
-
-    </main>
-
-    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 backdrop-blur-md border-t border-white/5 py-2.5 flex justify-around items-center z-40">
-        <button id="nav-home" class="text-indigo-400 font-bold text-sm">Home</button>
-        <button id="nav-live" class="text-gray-400 text-sm">Live</button>
-        <button id="nav-downloads" class="text-gray-400 text-sm">Downloads</button>
-    </nav>
-
-    <script>
-        let tab = 'home';
-        let subTab = 'foryou';
-        let dwnSubTab = 'offline';
-        let sel = null;
-        let ovr = false;
-        let lastB = 0;
-        let curCmtFeedIdx = null;
-        
-        const key = '5dcf7f28a88be0edc01bbbde06f024ab';
-        const curY = String(new Date().getFullYear());
-        let history = JSON.parse(localStorage.getItem('x10_hist') || '[]');
-
-        const catalogMovies = [
-            { 
-                id: 82825, 
-                title: 'Big Buck Bunny', 
-                year: curY, 
-                desc: 'Classic open source test animation.', 
-                video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 
-                poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200' 
-            },
-            { 
-                id: 49017, 
-                title: 'Sintel Stream', 
-                year: curY, 
-                desc: 'Durian project production open media video sample.', 
-                video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', 
-                poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200' 
-            }
-        ];
-
-        const fypFeeds = [
-            { 
-                id: 'fyp_1', 
-                acct: '@bunny_loops', 
-                title: 'Big Buck Bunny High Definition Preview Clip', 
-                src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 
-                likes: 0, 
-                liked: false, 
-                comments: [] 
-            },
-            { 
-                id: 'fyp_2', 
-                acct: '@sintel_cinematic', 
-                title: 'Official Open Media Short Film Clip Loop', 
-                src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', 
-                likes: 0, 
-                liked: false, 
-                comments: [] 
-            }
-        ];
-
-        const liveDirectory = [
-            { 
-                title: 'Live Sample Broadcast Node A', 
-                src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' 
-            },
-            { 
-                title: 'Live Sample Broadcast Node B', 
-                src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4' 
-            }
-        ];
-        
-        window.switchTab = function(t) {
-            tab = t;
-            document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
-            document.getElementById(`page-${t}`).classList.add('active');
-            ['home', 'live', 'downloads'].forEach(b => {
-                document.getElementById(`nav-${b}`).className = (t === b) ? "text-indigo-400 font-bold text-sm" : "text-gray-400 text-sm";
-            });
-            document.querySelectorAll('video').forEach(v => v.pause());
-            if (t === 'downloads') { rDwn(); rPinned(); }
-            if (t === 'live') { 
-                rLive(); 
-                let p = document.getElementById('live-video-player'); 
-                if (liveDirectory.length > 0) { p.src = liveDirectory[0].src; p.load(); } 
-            }
-            if (t === 'home' && subTab === 'foryou') rFyp();
-        };
-
-        window.switchHomeSubPage = function(s) {
-            subTab = s;
-            document.querySelectorAll('.sub-section').forEach(p => p.classList.remove('active'));
-            document.getElementById(`sub-${s}`).classList.add('active');
-            document.getElementById('btn-sub-foryou').className = s === 'foryou' ? 'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold' : 'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
-            document.getElementById('btn-sub-movies').className = s === 'movies' ? 'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold' : 'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
-            document.querySelectorAll('video').forEach(v => v.pause());
-            if (s === 'foryou') rFyp(); else rCat();
-        };
-
-        window.switchDwnSubPage = function(d) {
-            dwnSubTab = d;
-            document.querySelectorAll('.download-section').forEach(p => p.classList.remove('active'));
-            document.getElementById(`dwn-${d}`).classList.add('active');
-            document.getElementById('btn-dwn-offline').className = d === 'offline' ? 'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold' : 'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
-            document.getElementById('btn-dwn-pinned').className = d === 'pinned' ? 'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold' : 'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
-            if (d === '
+<body class="bg-black text-white p-4">
+<h1 class="text-xl font-bold text-indigo-500">X10 DOWNLOADER</h1>
+<div id="player-zone" class="mt-4">
+<video id="v" class="w-full aspect-video bg-gray-900" controls playsinline></video>
+<p id="t" class="mt-2 text-sm text-gray-400">Select a video to begin</p>
+</div>
+<div id="list" class="mt-6 space-y-3"></div>
+<script>
+const data = [
+{t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
+{t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
+];
+const l = document.getElementById('list');
+const v = document.getElementById('v');
+const t = document.getElementById('t');
+data.forEach(i => {
+let b = document.createElement('button');
+b.className = 'w-full p-4 bg-gray-900 rounded-lg border border-gray-700 text-left hover:border-indigo-500 transition';
+b.innerHTML = '<span class="text-indigo-400">▶</span> ' + i.t;
+b.onclick = () => { v.src = i.s; v.play(); t.innerText = 'Now Playing: ' + i.t; };
+l.appendChild(b);
+});
+</script>
+</body>
+</html>
