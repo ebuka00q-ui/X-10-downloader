@@ -8,70 +8,85 @@
     <style>
         .page { display: none; }
         .page.active { display: block; }
+        /* Endless scroll area */
+        .scroll-list { max-height: 60vh; overflow-y: auto; }
     </style>
 </head>
-<body class="bg-[#0b0813] text-white min-h-screen pb-20">
+<body class="bg-[#0b0813] text-white min-h-screen pb-24">
 
-    <header class="p-4 bg-[#130f22]/60 border-b border-white/5">
-        <h1 class="text-sm font-black text-indigo-400 mb-2">X10 DOWNLOADER</h1>
+    <div class="p-4 bg-[#130f22] border-b border-white/10 sticky top-0 z-50">
         <div class="flex gap-2">
             <input id="search-input" type="text" placeholder="Search..." class="flex-1 bg-black p-2 rounded text-xs border border-white/10">
-            <button onclick="performSearch()" class="bg-indigo-600 px-4 py-1 rounded text-xs font-bold">GO</button>
+            <button onclick="runSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold">GO</button>
         </div>
-        <div id="search-history" class="mt-2 flex gap-1 overflow-x-auto text-[9px] text-gray-500"></div>
-    </header>
+    </div>
 
     <main class="p-4">
         <div id="page-home" class="page active">
-            <div id="fyp-list" class="space-y-4"></div>
+            <video id="main-video" class="w-full aspect-video bg-black rounded-lg mb-4" controls playsinline></video>
+            <h2 class="text-indigo-400 text-xs font-bold mb-2 uppercase">For You</h2>
+            <div id="fyp-list" class="scroll-list space-y-3"></div>
         </div>
 
         <div id="page-live" class="page">
-            <h2 class="text-emerald-400 text-xs font-bold mb-3">LIVE RELAYS</h2>
-            <div id="live-list" class="space-y-3"></div>
+            <h2 class="text-emerald-400 text-xs font-bold mb-2 uppercase">Live Relays</h2>
+            <div id="live-list" class="scroll-list space-y-3"></div>
         </div>
 
         <div id="page-downloads" class="page">
-            <h2 class="text-indigo-400 text-xs font-bold mb-3">LIBRARY</h2>
-            <div id="dwn-list" class="space-y-2"></div>
+            <h2 class="text-purple-400 text-xs font-bold mb-2 uppercase">Downloads</h2>
+            <div id="dwn-list" class="scroll-list space-y-3 min-h-[100px] border-b border-white/5 pb-4"></div>
+            <h2 class="text-yellow-500 text-xs font-bold mt-4 mb-2 uppercase">Pinned</h2>
+            <div id="pin-list" class="scroll-list space-y-3 min-h-[100px]"></div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-[#0d091a] border-t border-white/5 p-4 flex justify-between text-[10px] font-bold">
-        <button onclick="showPage('home')">HOME</button>
-        <button onclick="showPage('live')">LIVE</button>
-        <button onclick="showPage('downloads')">DOWNLOADS</button>
+    <nav class="fixed bottom-0 w-full bg-black p-4 flex justify-around text-[10px] font-bold border-t border-white/5">
+        <button onclick="nav('home')">HOME</button>
+        <button onclick="nav('live')">LIVE</button>
+        <button onclick="nav('downloads')">DOWNLOADS</button>
     </nav>
 
     <script>
-        // PAGE SWITCHING
-        function showPage(id) {
+        const videos = [
+            {t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
+            {t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
+        ];
+
+        function nav(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
         }
 
-        // SEARCH HISTORY
-        let history = JSON.parse(localStorage.getItem('x10_hist') || '[]');
-        function performSearch() {
+        function runSearch() {
             let q = document.getElementById('search-input').value;
             if(!q) return;
-            if(!history.includes(q)) history.unshift(q);
-            if(history.length > 5) history.pop();
-            localStorage.setItem('x10_hist', JSON.stringify(history));
-            renderHistory();
-            alert("Searching for: " + q);
+            alert("Searching: " + q);
+            document.getElementById('search-input').value = ''; // Clears history/input
         }
 
-        function renderHistory() {
-            const hDiv = document.getElementById('search-history');
-            hDiv.innerHTML = history.map(item => `<span class="bg-white/5 px-2 py-1 rounded">${item}</span>`).join('');
+        // Render List
+        const fyp = document.getElementById('fyp-list');
+        videos.forEach(v => {
+            let b = document.createElement('div');
+            b.className = 'p-3 bg-[#130f22] rounded flex justify-between items-center';
+            b.innerHTML = `<span class="text-xs">${v.t}</span>
+                           <div class="flex gap-2">
+                            <button onclick="playV('${v.s}')" class="bg-indigo-600 px-2 py-1 rounded text-[9px]">▶</button>
+                            <button onclick="pin('${v.t}')" class="bg-yellow-600 px-2 py-1 rounded text-[9px]">📌</button>
+                           </div>`;
+            fyp.appendChild(b);
+        });
+
+        function playV(src) { 
+            let v = document.getElementById('main-video'); 
+            v.src = src; v.play(); 
         }
 
-        // INITIALIZE
-        renderHistory();
-        document.getElementById('fyp-list').innerHTML = '<div class="w-full aspect-video bg-gray-900 flex items-center justify-center rounded-xl">Video Content</div>';
-        document.getElementById('live-list').innerHTML = '<div class="p-4 bg-gray-900 rounded-xl text-xs">Live Stream 1</div>';
-        document.getElementById('dwn-list').innerHTML = '<div class="p-4 bg-gray-900 rounded-xl text-xs">No Downloads yet.</div>';
+        function pin(t) {
+            let p = document.getElementById('pin-list');
+            p.innerHTML += `<div class="p-2 bg-yellow-900/20 rounded text-[10px]">${t}</div>`;
+        }
     </script>
 </body>
 </html>
