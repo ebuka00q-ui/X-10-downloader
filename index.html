@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10</title>
+    <title>X10 DOWNLOADER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -82,7 +82,7 @@
         
         <div id="page-home" class="app-page active space-y-4">
             <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl shadow-xl">
-                <h1 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 FRAMEWORK</h1>
+                <h1 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
                 <button id="btn-trigger-search" class="bg-indigo-500/10 text-xs px-3 py-1.5 rounded-xl text-indigo-400">🔍 Search</button>
             </div>
             <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
@@ -172,7 +172,6 @@
         const curY = String(new Date().getFullYear());
         let history = JSON.parse(localStorage.getItem('x10_hist') || '[]');
 
-        // HIGHLY-COMPATIBLE HLS / MP4 DIRECT STREAMS THAT WORK IN ALL MOBILE BROWSERS
         const catalogMovies = [
             { 
                 id: 82825, 
@@ -257,96 +256,4 @@
             document.getElementById(`dwn-${d}`).classList.add('active');
             document.getElementById('btn-dwn-offline').className = d === 'offline' ? 'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold' : 'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
             document.getElementById('btn-dwn-pinned').className = d === 'pinned' ? 'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold' : 'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
-            if (d === 'offline') rDwn(); else rPinned();
-        };
-
-        function rCat() {
-            let g = document.querySelector('#sub-movies .grid');
-            g.innerHTML = '';
-            catalogMovies.forEach(m => {
-                let c = document.createElement('div');
-                c.className = "bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer shadow-md";
-                c.innerHTML = `<div class="aspect-video bg-black rounded-xl overflow-hidden mb-1"><img class="w-full h-full object-cover" src="${m.poster}"/></div><p class="text-[10px] font-bold truncate text-white">${m.title}</p><p class="text-[8px] text-indigo-400 font-mono">${m.year}</p>`;
-                c.addEventListener('click', () => { sel = m; openW(); });
-                g.appendChild(c);
-            });
-        }
-
-        // NEATLY FORMATTED VERTICAL ENGINE FOR FYP ELEMENT SETUP
-        function rFyp() {
-            let c = document.querySelector('.fyp-scroll-container');
-            c.innerHTML = '';
-            fypFeeds.forEach((f, idx) => {
-                let i = document.createElement('div');
-                i.className = "w-full aspect-video bg-black relative rounded-xl overflow-hidden flex-shrink-0 mb-3";
-                
-                // Stacked vertical structure avoids code line stretching to the right
-                let htmlStr = '';
-                htmlStr += '<video class="w-full h-full object-cover" loop playsinline src="' + f.src + '"></video>';
-                htmlStr += '<div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer z-10">';
-                htmlStr += '<span class="text-3xl bg-indigo-600/90 p-3 rounded-full text-white shadow-lg">▶</span></div>';
-                htmlStr += '<div class="absolute right-3 bottom-4 flex flex-col items-center space-y-3 z-20 p-1.5 rounded-full bg-black/40">';
-                
-                let activeHeart = f.liked ? 'text-red-500' : 'text-white';
-                htmlStr += '<button class="btn-like text-base ' + activeHeart + '">❤️<span class="block text-[8px] text-white text-center">' + f.likes + '</span></button>';
-                htmlStr += '<button class="btn-cmt text-base text-white">💬<span class="block text-[8px] text-center">' + f.comments.length + '</span></button>';
-                htmlStr += '<button class="btn-pin text-base text-white">📌</button></div>';
-                htmlStr += '<div class="absolute left-3 bottom-3 right-14 bg-gradient-to-t from-black/80 to-transparent p-2 rounded-xl z-20">';
-                htmlStr += '<p class="text-[9px] font-bold text-indigo-400 font-mono">' + f.acct + '</p>';
-                htmlStr += '<p class="text-[8px] text-gray-200 truncate font-light">' + f.title + '</p></div>';
-                
-                i.innerHTML = htmlStr;
-                c.appendChild(i);
-                
-                let v = i.querySelector('video');
-                let ovl = i.querySelector('.play-overlay');
-
-                ovl.addEventListener('click', () => {
-                    if (v.paused) {
-                        document.querySelectorAll('video').forEach(vid => {
-                            vid.pause();
-                            let p = vid.parentNode.querySelector('.play-overlay');
-                            if (p) p.classList.remove('hidden');
-                        });
-                        v.play();
-                        ovl.classList.add('hidden');
-                    } else {
-                        v.pause();
-                        ovl.classList.remove('hidden');
-                    }
-                });
-
-                i.querySelector('.btn-like').addEventListener('click', (e) => { e.stopPropagation(); f.liked = !f.liked; f.likes += f.liked ? 1 : -1; rFyp(); });
-                i.querySelector('.btn-cmt').addEventListener('click', (e) => { e.stopPropagation(); curCmtFeedIdx = idx; openCmtPanel(); });
-                i.querySelector('.btn-pin').addEventListener('click', (e) => { e.stopPropagation(); pinItem({ id: f.id, title: f.title, poster: '', desc: f.title, video: f.src, year: 'FYP' }); alert("Pinned!"); });
-            });
-        }
-
-        function openCmtPanel() {
-            let f = fypFeeds[curCmtFeedIdx];
-            document.getElementById('comment-overlay').classList.remove('hidden');
-            let b = document.getElementById('comments-list-box');
-            b.innerHTML = f.comments.length ? f.comments.map(c => `<div class="bg-white/5 p-1.5 rounded">✍️ ${c}</div>`).join('') : '<p class="text-center py-2 text-[10px]">No interactions yet.</p>';
-        }
-
-        function rLive() {
-            let s = document.getElementById('live-feed-directory-scroller');
-            s.innerHTML = '';
-            liveDirectory.forEach(ch => {
-                let c = document.createElement('div');
-                c.className = "bg-[#130f22]/70 border border-white/5 p-2.5 rounded-xl flex justify-between items-center cursor-pointer text-xs";
-                c.innerHTML = `<p class="font-bold text-white truncate flex-1">${ch.title}</p><span class="text-[10px] text-emerald-500 ml-2">Stream ▶</span>`;
-                c.addEventListener('click', () => { let p = document.getElementById('live-video-player'); p.src = ch.src; p.load(); p.play(); });
-                s.appendChild(c);
-            });
-        }
-
-        function pinItem(item) {
-            let p = JSON.parse(localStorage.getItem('x10_p') || '[]');
-            if (!p.some(x => x.id === item.id)) { p.push(item); localStorage.setItem('x10_p', JSON.stringify(p)); }
-        }
-
-        function saveOff() {
-            if (!sel) return;
-            let c = JSON.parse(localStorage.getItem('x10_c') || '[]');
-            if (!c.some(x => x.id === sel.id)) { c.push(sel); localStorage.set
+            if (d === '
