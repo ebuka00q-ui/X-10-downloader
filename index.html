@@ -195,6 +195,19 @@
             ];
             binds.forEach(b=>{let el=document.getElementById(b.id);if(el){el.addEventListener('click',b.act);el.addEventListener('touchstart',b.act,{passive:true});}});
         });
+    window.switchTab = function(t) {
+    // START OF YOUR NEW COMMANDS (THE PATCH)
+    document.querySelectorAll('video').forEach(v => {
+        v.pause();
+        v.currentTime = 0;
+    });
+    // END OF YOUR NEW COMMANDS
+
+    // YOUR OLD CODE STARTS HERE (Don't delete this)
+    tab = t;
+    document.querySelectorAll('.P').forEach(p => p.classList.remove('active'));
+    // ... all your other old lines of code ...
+} // <--- THIS IS THE CLOSING BRACKET. LEAVE IT ALONE.
     </script>
 </body>
 </html>
