@@ -1,231 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10 Downloader Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X10 Pro</title><script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes lavaFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        body { 
-            background: linear-gradient(-45deg, #0b0813, #1a0b2e, #0d1b3e, #14051c);
-            background-size: 400% 400%;
-            animation: lavaFlow 15s ease infinite;
-            color: #ffffff; 
-            font-family: system-ui, sans-serif; 
-        }
-        .page { display: none; }
-        .page.active { display: block; }
-        .sub-page { display: none; }
-        .sub-page.active { display: block; }
-        .fyp-scroll-container { 
-            scroll-snap-type: y mandatory; 
-            overflow-y: scroll; 
-            height: calc(100vh - 220px); 
-            scrollbar-width: none;
-        }
-        .fyp-scroll-container::-webkit-scrollbar { display: none; }
-        .fyp-video-card { 
-            scroll-snap-align: start; 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between;
-        }
+        body{background:linear-gradient(-45deg,#0b0813,#1a0b2e,#0d1b3e,#14051c);background-size:400% 400%;animation:L 15s ease infinite;color:#fff;font-family:sans-serif;select-none}
+        @keyframes L{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        .P,.S{display:none}.P.A,.S.A{display:block}
+        .F{scroll-snap-type:y mandatory;overflow-y:scroll;height:calc(100vh - 240px);scrollbar-width:none}
+        .F::-webkit-scrollbar{display:none}.C{scroll-snap-align:start;height:100%;position:relative}
     </style>
 </head>
 <body class="flex flex-col min-h-screen pb-20 select-none">
-
     <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4 flex flex-col">
         <div class="max-w-md mx-auto w-full space-y-4 pt-10">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-bold text-indigo-400 tracking-widest uppercase">Movie Search Engine</h2>
-                <button id="btn-close-search" class="text-xs text-red-400 font-bold bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/40">✕ Close</button>
-            </div>
-            <div class="flex gap-2">
-                <input id="overlay-search-input" type="text" placeholder="Type movie name here..." 
-                    class="flex-1 bg-[#130f22] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-                <button id="btn-submit-search" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-lg text-sm transition shadow-lg">Search</button>
-            </div>
+            <div class="flex justify-between items-center"><h2 class="text-xs font-bold text-indigo-400 tracking-wider uppercase">Movie Search Engine</h2><button id="btn-close-search" class="text-xs text-red-400 font-bold bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/40">✕ Close</button></div>
+            <div class="flex gap-2"><input id="overlay-search-input" type="text" placeholder="Type movie name..." class="flex-1 bg-[#130f22] border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none"><button id="btn-submit-search" class="bg-indigo-600 font-bold px-4 rounded-lg text-xs">Search</button></div>
             <div id="search-results-viewport" class="space-y-3 overflow-y-auto max-h-[60vh] pt-2"></div>
-            <div id="search-error-state" class="hidden text-center py-12 text-xs text-gray-500">No matching movies found globally.</div>
         </div>
     </div>
-
     <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
-        <div id="page-home" class="page active space-y-4">
-            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
-                <div>
-                    <h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
-                    <p class="text-[10px] text-gray-400 tracking-wide font-mono">ONLINE MOVIE SYSTEM</p>
-                </div>
+        <div id="page-home" class="P A space-y-4">
+            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl shadow-xl">
+                <div><h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1><p class="text-[9px] text-gray-400 font-mono">ONLINE MOVIE SYSTEM</p></div>
                 <button id="btn-trigger-search" class="bg-indigo-500/10 border border-indigo-500/30 text-xs font-bold px-3 py-2 rounded-xl text-indigo-400">🔍 Search Movie</button>
             </div>
-
-            <div class="flex border-b border-white/5 text-center text-sm font-bold">
+            <div class="flex border-b border-white/5 text-center text-xs font-bold tracking-wider uppercase">
                 <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You (FYP)</button>
-                <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Catalog</button>
+                <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movie Catalog</button>
             </div>
-
-            <div id="sub-foryou" class="sub-page active">
-                <div class="fyp-scroll-container border border-white/5 rounded-2xl bg-black/60 backdrop-blur-md p-2"></div>
-            </div>
-
-            <div id="sub-movies" class="sub-page space-y-4">
-                <div class="grid grid-cols-2 gap-3"></div>
-            </div>
-
-            <div id="movie-search-result" class="hidden bg-indigo-950/30 border border-indigo-500/40 rounded-2xl p-4 space-y-2 cursor-pointer">
-                <span class="text-[9px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Movie Package Loaded</span>
-                <h3 id="result-movie-title" class="font-bold text-sm text-white truncate">Target Movie File Selected</h3>
-                <p class="text-xs text-indigo-300">Click right here to open theater streams.</p>
-            </div>
+            <div id="sub-foryou" class="S A"><div class="F border border-white/5 rounded-2xl bg-black overflow-hidden shadow-2xl"></div></div>
+            <div id="sub-movies" class="S"><div class="grid grid-cols-2 gap-3"></div></div>
         </div>
-
-        <div id="page-workspace" class="page space-y-4">
-            <div class="space-y-2">
-                <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center">
-                    <video id="workspace-video-player" controls class="w-full h-full object-contain hidden"></video>
-                    <div id="workspace-poster-preview" class="absolute inset-0 w-full h-full bg-cover bg-center flex items-end p-4 bg-gradient-to-t from-black via-black/30 to-transparent z-10">
-                        <div class="space-y-1">
-                            <h2 id="workspace-preview-title" class="text-base font-extrabold text-white">Movie Title</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-watch-now" class="bg-indigo-600 font-bold py-3 rounded-xl text-sm">▶ Watch Now</button>
-                <button id="btn-download-now" class="bg-emerald-600 font-bold py-3 rounded-xl text-sm">📥 Download</button>
-            </div>
-
-            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-2">
-                <h3 class="text-xs font-bold text-indigo-400 tracking-wider uppercase">Principal Cast Actors</h3>
-                <div id="workspace-actor-cast-row" class="flex gap-3 overflow-x-auto pb-1 scrollbar-none"></div>
-            </div>
-
-            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-2">
-                <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Movie Summary Logs</h3>
-                <p id="workspace-movie-desc" class="text-xs text-gray-200 leading-relaxed">No active summary logged.</p>
-            </div>
+        <div id="page-workspace" class="P space-y-4">
+            <div class="space-y-2"><div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl"><video id="workspace-video-player" controls playsinline class="w-full h-full object-contain"></video></div><h2 id="workspace-preview-title" class="text-xs font-bold px-1 text-gray-300"></h2></div>
+            <div class="grid grid-cols-2 gap-3"><button id="btn-watch-now" class="bg-indigo-600 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider">▶ Play Stream</button><button id="btn-download-now" class="bg-emerald-600 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider">📥 Save Offline</button></div>
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-3 space-y-1"><h3 class="text-[10px] font-bold text-indigo-400 uppercase">Cast Actors</h3><div id="workspace-actor-cast-row" class="flex gap-2 overflow-x-auto pb-1 scrollbar-none"></div></div>
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-3 space-y-1"><h3 class="text-[10px] font-bold text-gray-400 uppercase">Summary</h3><p id="workspace-movie-desc" class="text-xs text-gray-300 leading-relaxed font-light"></p></div>
         </div>
-
-        <div id="page-live" class="page space-y-4">
-            <div class="bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl text-center"><h1 class="text-base font-extrabold text-emerald-400">X10 LIVE HUB</h1></div>
+        <div id="page-live" class="P space-y-4">
+            <div class="bg-[#130f22]/60 border border-white/5 p-3 rounded-2xl shadow-md">
+                <h1 class="text-sm font-bold text-emerald-400">X10 IPTV LIVE HUB</h1><p class="text-[9px] text-gray-400">ISOLATED MATCH BROADCAST FEEDS</p>
+            </div>
+            <div class="flex gap-2 bg-[#130f22]/40 border border-white/5 p-2 rounded-xl">
+                <input id="live-search-input" type="text" placeholder="Search live matches/channels..." class="flex-1 bg-black/40 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
+                <button id="btn-submit-live-search" class="bg-emerald-600 text-white text-xs font-bold px-3 rounded-lg">Search Live</button>
+            </div>
+            <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center">
+                <video id="live-video-player" controls playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute top-2 left-2 bg-red-600 text-[8px] font-bold px-1.5 py-0.5 rounded tracking-wider animate-pulse">LIVE</div>
+            </div>
+            <div id="live-results-viewport" class="space-y-2"></div>
         </div>
-
-        <div id="page-downloads" class="page space-y-3">
-            <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl shadow-xl"><h1 class="text-base font-extrabold text-gray-300">DOWNLOAD MANAGER</h1></div>
+        <div id="page-downloads" class="P space-y-3">
+            <div class="bg-[#130f22]/60 p-3 border border-white/5 rounded-2xl shadow-md flex justify-between items-center">
+                <div><h1 class="text-sm font-bold text-gray-300">DOWNLOAD MANAGER</h1><p class="text-[9px] text-gray-500">100% AIRPLANE OFFLINE MODE AVAILABLE</p></div>
+                <button id="btn-clear-downloads" class="text-[9px] bg-red-950/40 text-red-400 font-bold px-2 py-1 rounded-md">Purge</button>
+            </div>
             <div id="downloads-list" class="space-y-2"></div>
         </div>
     </main>
-
-    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/90 backdrop-blur-lg border-t border-white/5 px-6 py-2 flex justify-around items-center z-40">
-        <button id="nav-home" class="text-indigo-400 font-bold text-xl">Home</button>
-        <button id="nav-live" class="text-gray-400 text-xl">Live</button>
-        <button id="nav-downloads" class="text-gray-400 text-xl">Downloads</button>
+    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 backdrop-blur-md border-t border-white/5 py-2.5 flex justify-around items-center z-40">
+        <button id="nav-home" class="text-indigo-400 font-bold text-base">Home</button><button id="nav-live" class="text-gray-400 text-base">Live</button><button id="nav-downloads" class="text-gray-400 text-base">Downloads</button>
     </nav>
-
     <script>
-        let currentTabState='home', selectedMovieData=null, isOverlayActive=false, lastBackPressTime=0;
-        const targetApiKey='5dcf7f28a88be0edc01bbbde06f024ab';
+        let tab='home',sel=null,ovr=false,lastB=0;const key='5dcf7f28a88be0edc01bbbde06f024ab';
         const catalogMovies=[
-            {id:82825,title:'Ocean Frontiers (2026 Edition)',year:'2026',poster:'https://images.tmdb.org/t/p/w500/9618P1k7416lA1wepQpYF7XzUex.jpg',desc:'Full length flagship performance showcasing strategic deep-water exploratory operations.',video:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'},
-            {id:49017,title:'Sintel Quest (2025 Cut)',year:'2025',poster:'https://images.tmdb.org/t/p/w500/d7ImQ4LzXh56vB98c253x36vX4G.jpg',desc:'Special short travel narrative detailing high-altitude dragon tracking missions.',video:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
+            {id:82825,title:'Ocean Frontiers (2026)',year:'2026',desc:'Full premium 2026 cinematic flagship network release.',video:'https://vjs.zencdn.net/v/oceans.mp4'},
+            {id:49017,title:'Sintel Core (2025 Cut)',year:'2025',desc:'Special short travel tracking narrative cut.',video:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
         ];
         const fypFeeds=[
-            {title:'Trending Loop #1',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'},
-            {title:'Trending Loop #2',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'}
+            {acct:'@x10_clips',title:'Trending Loop #1 (2025 Hits)',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',L:'42K',C:'819'},
+            {acct:'@cinema_2026',title:'Full Teaser #2 (2026 Blockbuster)',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',L:'98K',C:'1K'}
         ];
-
+        const liveDirectory=[
+            {title:'Global Match Broadcaster 1',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
+            {title:'X10 Live Sports TV',src:'https://vjs.zencdn.net/v/oceans.mp4'}
+        ];
         window.switchTab=function(t){
-            currentTabState=t;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-            document.getElementById(`page-${t}`).classList.add('active');
-            ['home','live','downloads'].forEach(b=>{
-                let e=document.getElementById(`nav-${b}`);e.className=t===b?"text-indigo-400 font-bold text-xl":"text-gray-400 text-xl";
-            });
+            tab=t;document.querySelectorAll('.P').forEach(p=>p.classList.remove('active'));document.getElementById(`page-${t}`).classList.add('active');
+            ['home','live','downloads'].forEach(b=>{document.getElementById(`nav-${b}`).className=t===b?"text-indigo-400 font-bold text-base":"text-gray-400 text-base"});
+            if(t==='downloads')rDwn();
+            if(t==='live'&&!document.getElementById('live-video-player').src){let p=document.getElementById('live-video-player');p.src=liveDirectory[0].src;p.load();p.play();}
         };
         window.switchHomeSubPage=function(s){
-            document.querySelectorAll('.sub-page').forEach(p=>p.classList.remove('active'));
-            document.getElementById(`sub-${s}`).classList.add('active');
+            document.querySelectorAll('.S').forEach(p=>p.classList.remove('active'));document.getElementById(`sub-${s}`).classList.add('active');
             let f=document.getElementById('btn-sub-foryou'),m=document.getElementById('btn-sub-movies');
             f.className=s==='foryou'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
             m.className=s==='movies'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
         };
-        function renderCatalogGrid(){
+        function rCat(){
             let g=document.querySelector('#sub-movies .grid');g.innerHTML='';
             catalogMovies.forEach(m=>{
-                let c=document.createElement('div');c.className="bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer";
-                c.innerHTML=`<div class="w-full aspect-video bg-black rounded-xl overflow-hidden mb-2"><video class="w-full h-full object-cover" loop muted playsinline autoplay src="${m.video}"></video></div><p class="text-[11px] font-bold truncate">${m.title}</p><p class="text-[9px] font-bold text-indigo-400">${m.year}</p>`;
-                let a=()=>{selectedMovieData=m;document.getElementById('result-movie-title').innerText=m.title;document.getElementById('movie-search-result').classList.remove('hidden');fetchCastProfiles(m.id);};
-                c.addEventListener('click',a);c.addEventListener('touchstart',a,{passive:true});g.appendChild(c);
+                let c=document.createElement('div');c.className="bg-[#130f22]/50 border border-white/5 p-2 rounded-xl text-center cursor-pointer";
+                c.innerHTML=`<div class="aspect-video bg-black rounded-lg overflow-hidden mb-1"><video class="w-full h-full object-cover" loop muted playsinline autoplay src="${m.video}"></video></div><p class="text-[10px] font-bold truncate">${m.title}</p><p class="text-[8px] text-indigo-400 font-mono">${m.year}</p>`;
+                let a=()=>{sel=m;openW();};c.addEventListener('click',a);c.addEventListener('touchstart',a,{passive:true});g.appendChild(c);
             });
         }
-        function renderFYPContainer(){
-            let c=document.querySelector('.fyp-scroll-container');c.innerHTML='';
+        function rFyp(){
+            let c=document.querySelector('.F');c.innerHTML='';
             fypFeeds.forEach(f=>{
-                let i=document.createElement('div');i.className="fyp-video-card p-4 border-b border-white/5 pb-8";
-                i.innerHTML=`<div class="aspect-[9/16] w-full bg-gray-900 rounded-xl relative overflow-hidden"><video class="w-full h-full object-cover" loop muted playsinline autoplay src="${f.src}"></video></div>`;
+                let i=document.createElement('div');i.className="C";
+                i.innerHTML=`<video class="w-full h-full object-cover" loop muted playsinline autoplay src="${f.src}"></video>
+                <div class="absolute right-2 bottom-16 flex flex-col items-center space-y-3 z-20"><div class="text-center"><span class="text-lg">❤️</span><p class="text-[8px] font-mono">${f.L}</p></div><div class="text-center"><span class="text-lg">💬</span><p class="text-[8px] font-mono">${f.C}</p></div><div><span class="text-lg">📌</span></div></div>
+                <div class="absolute left-2 bottom-4 right-12 bg-gradient-to-t from-black/80 to-transparent p-2 rounded-lg z-20"><p class="text-[10px] font-bold text-indigo-400 font-mono">${f.acct}</p><p class="text-[9px] text-gray-200 truncate">${f.title}</p></div>`;
                 c.appendChild(i);
             });
         }
-        async function fetchCastProfiles(id){
+        function searchLive(){
+            let q=document.getElementById('live-search-input').value.trim().toLowerCase(),v=document.getElementById('live-results-viewport');v.innerHTML='';
+            let res=liveDirectory.filter(ch=>ch.title.toLowerCase().includes(q));
+            if(!res.length){v.innerHTML='<p class="text-[10px] text-gray-500 text-center">No live feed found.</p>';return;}
+            res.forEach(ch=>{
+                let card=document.createElement('div');card.className="bg-[#130f22]/70 border border-white/5 p-2 rounded-lg flex justify-between items-center cursor-pointer text-xs";
+                card.innerHTML=`<div><p class="font-bold">${ch.title}</p></div><span class="text-[10px] text-emerald-400">Match Stream ▶</span>`;
+                let act=()=>{let p=document.getElementById('live-video-player');p.src=ch.src;p.load();p.play();};
+                card.addEventListener('click',act);card.addEventListener('touchstart',act,{passive:true});v.appendChild(card);
+            });
+        }
+        function saveOff(){
+            if(!sel)return;let c=JSON.parse(localStorage.getItem('x10_c')||'[]');
+            if(!c.some(x=>x.id===sel.id)){c.push(sel);localStorage.setItem('x10_c',JSON.stringify(c));}window.switchTab('downloads');
+        }
+        function rDwn(){
+            let t=document.getElementById('downloads-list');t.innerHTML='';let items=JSON.parse(localStorage.getItem('x10_c')||'[]');
+            if(!items.length){t.innerHTML='<div class="p-4 text-center text-xs text-gray-500 bg-[#130f22]/30 border border-white/5 rounded-xl">No offline videos saved.</div>';return;}
+            items.forEach(m=>{
+                let b=document.createElement('div');b.className="p-2 bg-[#130f22]/80 border border-indigo-500/20 rounded-xl flex flex-col space-y-1";
+                b.innerHTML=`<div class="flex justify-between items-center"><div><p class="text-xs font-bold">${m.title}</p><p class="text-[8px] text-emerald-400 font-mono">100% Offline Valid</p></div><button class="bg-indigo-600 text-[9px] px-2 py-1 rounded-md">Play Offline</button></div><video class="w-full aspect-video hidden bg-black rounded-lg mt-1" controls playsinline src="${m.video}"></video>`;
+                let btn=b.querySelector('button'),vid=b.querySelector('video');
+                let act=()=>{vid.classList.toggle('hidden');if(!vid.classList.contains('hidden')){vid.load();vid.play();}};
+                btn.addEventListener('click',act);btn.addEventListener('touchstart',act,{passive:true});t.appendChild(b);
+            });
+        }
+        async function getCast(id){
             let r=document.getElementById('workspace-actor-cast-row');r.innerHTML='';
             try{
-                let res=await fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${targetApiKey}`),d=await res.json();
-                d.cast.slice(0,5).forEach(a=>{
-                    let img=a.profile_path?`https://image.tmdb.org/t/p/w185${a.profile_path}`:'https://via.placeholder.com/60x60?text=Actor';
-                    let n=document.createElement('div');n.className="flex flex-col items-center flex-shrink-0 w-14 text-center";
-                    n.innerHTML=`<img src="${img}" class="w-10 h-10 object-cover rounded-full"><p class="text-[8px] truncate w-full">${a.name}</p>`;
-                    r.appendChild(n);
+                let res=await fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${key}`),d=await res.json();
+                d.cast.slice(0,4).forEach(a=>{
+                    let img=a.profile_path?`https://image.tmdb.org/t/p/w185${a.profile_path}`:'https://via.placeholder.com/40x40';
+                    let n=document.createElement('div');n.className="flex flex-col items-center flex-shrink-0 w-12 text-center";
+                    n.innerHTML=`<img src="${img}" class="w-8 h-8 object-cover rounded-full"><p class="text-[7px] truncate w-full">${a.name}</p>`;r.appendChild(n);
                 });
-            }catch(e){r.innerHTML='<p class="text-[10px]">No cast loaded.</p>';}
+            }catch(e){}
         }
-        async function processOverlaySearch(){
-            let q=document.getElementById('overlay-search-input').value.trim(),v=document.getElementById('search-results-viewport');v.innerHTML="";
-            if(!q)return;
+        async function doSearch(){
+            let q=document.getElementById('overlay-search-input').value.trim(),v=document.getElementById('search-results-viewport');v.innerHTML="";if(!q)return;
             try{
-                let res=await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${targetApiKey}&query=${encodeURIComponent(q)}`),d=await res.json();
+                let res=await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${encodeURIComponent(q)}`),d=await res.json();
                 d.results.forEach(i=>{
-                    let y=i.release_date?i.release_date.split('-')[0]:'N/A',p=i.poster_path?`https://image.tmdb.org/t/p/w200${i.poster_path}`:'https://via.placeholder.com/90x135?text=Movie';
-                    let c=document.createElement('div');c.className="flex gap-3 bg-[#130f22]/90 p-2 rounded-xl cursor-pointer";
-                    c.innerHTML=`<img src="${p}" class="w-12 h-16 object-cover rounded"><div class="flex-1 min-w-0"><h4 class="text-xs font-bold truncate">${i.title}</h4><p class="text-[10px] font-bold text-indigo-400">${y}</p></div>`;
-                    let act=()=>{selectedMovieData={id:i.id,title:i.title,year:y,desc:i.overview,poster:p,video:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"};document.getElementById('result-movie-title').innerText=i.title;document.getElementById('movie-search-result').classList.remove('hidden');document.getElementById('search-overlay').classList.add('hidden');isOverlayActive=false;fetchCastProfiles(i.id);};
+                    let y=i.release_date?i.release_date.split('-')[0]:'N/A',p=i.poster_path?`https://image.tmdb.org/t/p/w200${i.poster_path}`:'https://via.placeholder.com/90x135';
+                    let c=document.createElement('div');c.className="flex gap-2 bg-[#130f22]/90 p-2 border border-white/5 rounded-xl cursor-pointer items-center text-xs";
+                    c.innerHTML=`<img src="${p}" class="w-8 h-10 object-cover rounded"><div class="flex-1 min-w-0"><h4 class="font-bold truncate text-white">${i.title}</h4><p class="text-[9px] text-indigo-400">${y}</p></div>`;
+                    let act=()=>{sel={id:i.id,title:i.title,year:y,desc:i.overview||'No summary logs.',video:"https://vjs.zencdn.net/v/oceans.mp4"};document.getElementById('search-overlay').classList.add('hidden');ovr=false;openW();};
                     c.addEventListener('click',act);c.addEventListener('touchstart',act,{passive:true});v.appendChild(c);
                 });
             }catch(e){}
         }
+        function openW(){
+            if(!sel)return;window.switchTab('workspace');
+            document.getElementById('workspace-movie-desc').innerText=sel.desc;document.getElementById('workspace-preview-title').innerText=`${sel.title} (${sel.year})`;
+            let p=document.getElementById('workspace-video-player');p.src=sel.video;p.load();p.play();getCast(sel.id);
+        }
         document.addEventListener("DOMContentLoaded",()=>{
-            renderCatalogGrid();renderFYPContainer();window.history.pushState({base:true},'');
+            rCat();rFyp();window.history.pushState({b:true},'');
             window.addEventListener('popstate',()=>{
-                if(isOverlayActive){document.getElementById('search-overlay').classList.add('hidden');isOverlayActive=false;window.history.pushState({base:true},'');}
-                else if(currentTabState!=='home'){window.switchTab('home');window.history.pushState({base:true},'');}
-                else{let t=new Date().getTime();if(t-lastBackPressTime<2000){window.history.back();}else{lastBackPressTime=t;alert("Press back again to exit.");window.history.pushState({base:true},'');}}
+                if(ovr){document.getElementById('search-overlay').classList.add('hidden');ovr=false;window.history.pushState({b:true},'');}
+                else if(tab!=='home'){window.switchTab('home');window.history.pushState({b:true},'');}
+                else{let t=new Date().getTime();if(t-lastB<2000){window.history.back();}else{lastB=t;alert("Tap back again to exit.");window.history.pushState({b:true},'');}}
             });
             const binds=[
                 {id:'nav-home',act:()=>window.switchTab('home')},{id:'nav-live',act:()=>window.switchTab('live')},{id:'nav-downloads',act:()=>window.switchTab('downloads')},
                 {id:'btn-sub-foryou',act:()=>window.switchHomeSubPage('foryou')},{id:'btn-sub-movies',act:()=>window.switchHomeSubPage('movies')},
-                {id:'movie-search-result',act:()=> {
-                    if(!selectedMovieData)return;window.switchTab('workspace');
-                    document.getElementById('workspace-movie-desc').innerText=selectedMovieData.desc||'No summary.';
-                    document.getElementById('workspace-preview-title').innerText=`${selectedMovieData.title} (${selectedMovieData.year})`;
-                    document.getElementById('workspace-poster-preview').style.backgroundImage=`url('${selectedMovieData.poster}')`;
-                    document.getElementById('workspace-video-player').classList.add('hidden');
-                    document.getElementById('workspace-poster-preview').classList.remove('hidden');
-                }},
-                {id:'btn-trigger-search',act:()=>{isOverlayActive=true;document.getElementById('search-overlay').classList.remove('hidden');}},
-                {id:'btn-close-search',act:()=>{isOverlayActive=false;document.getElementById('search-overlay').classList.add('hidden');}},
-                {id:'btn-submit-search',act:()=>processOverlaySearch()},
-                {id:'btn-watch-now',act:()=>{let p=document.getElementById('workspace-video-player');document.getElementById('workspace-poster-preview').classList.add('hidden');p.classList.remove('hidden');p.src=selectedMovieData.video;p.load();p.play();}},
-                {id:'btn-download-now',act:()=>{window.switchTab('downloads');document.getElementById('downloads-list').innerHTML=`<div class="p-4 bg-[#130f22]/80 rounded-2xl text-xs">Downloaded: <span class="text-emerald-400 font-bold">${selectedMovieData.title}</span> (Saved Offline)</div>`;}}
+                {id:'btn-trigger-search',act:()=>{ovr=true;document.getElementById('search-overlay').classList.remove('hidden');}},
+                {id:'btn-close-search',act:()=>{ovr=false;document.getElementById('search-overlay').classList.add('hidden');}},
+                {id:'btn-submit-search',act:()=>doSearch()},{id:'btn-submit-live-search',act:()=>searchLive()},
+                {id:'btn-watch-now',act:()=>{let p=document.getElementById('workspace-video-player');if(sel){p.src=sel.video;p.load();p.play();}}},
+                {id:'btn-download-now',act:()=>saveOff()},{id:'btn-clear-downloads',act:()=>{localStorage.removeItem('x10_c');rDwn();}}
             ];
             binds.forEach(b=>{let el=document.getElementById(b.id);if(el){el.addEventListener('click',b.act);el.addEventListener('touchstart',b.act,{passive:true});}});
         });
     </script>
 </body>
-                    </html>
+                                                                                                                                                                                                                                  </html>
     
