@@ -1,78 +1,14 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        .search-container { padding: 15px; background: #333; }
-        #searchInput { width: 90%; padding: 10px; }
-        
-        nav { display: flex; background: #eee; padding: 10px; gap: 10px; }
-        button { padding: 10px; cursor: pointer; border: 1px solid #ccc; }
-        .active-btn { background: #007bff; color: white; border: none; }
-        
-        .view { padding: 20px; min-height: 400px; display: none; }
-        #view-home { display: block; }
-    </style>
-</head>
-<body>
+<html style="height: 100%;">
+<body style="height: 100%; margin: 0; display: flex; flex-direction: column; font-size: 20px;">
 
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="Search..." oninput="handleSearch()">
-</div>
-
-<nav id="navBar">
-    <button onclick="showView('view-home', this)">Home</button>
-    <button onclick="showView('view-movie', this)">Movie</button>
-    <button onclick="showView('view-live', this)">Live</button>
-    <button onclick="showView('view-download', this)">Download</button>
-</nav>
-
-<div id="view-home" class="view">
-    <h1>Home</h1>
-    <div id="results"></div>
-</div>
-<div id="view-movie" class="view">
-    <h1>Movies</h1>
-    <button onclick="showView('view-home')">Back</button>
-</div>
-<div id="view-live" class="view">
-    <h1>Live Stream</h1>
-    <button onclick="showView('view-home')">Back</button>
-</div>
-<div id="view-download" class="view">
-    <h1>Downloads</h1>
-    <button onclick="showView('view-home')">Back</button>
-</div>
-
-<script>
-    // Navigation
-    function showView(viewId, btn) {
-        document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-        document.getElementById(viewId).style.display = 'block';
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn'));
-        if(btn) btn.classList.add('active-btn');
-    }
-
-    // Search
-    function handleSearch() {
-        const q = document.getElementById('searchInput').value;
-        document.getElementById('results').innerHTML = q.length > 2 ? `<p>Results for: ${q}</p>` : '';
-    }
-
-    // UPDATE/AUDIT SECTION
-    function checkForUpdates() {
-        // EDIT THESE NUMBERS EASILY:
-        var lastUpdateDate = "2026-07-03";
-        var versionNumber = "1.0.5";
-        
-        console.log("Audit Active - Version: " + versionNumber + " | Date: " + lastUpdateDate);
-        // Your existing server-link logic continues below this
-    }
-
-    window.onload = function() {
-        checkForUpdates();
-    };
-</script>
+    <div id="test-box" style="flex-grow: 1; background-color: #ffcccc; padding: 50px; border: 5px solid red;">
+        <h1>THE WALL TEST</h1>
+        <p>If you can see this box filling your entire screen with a red border, the code is working.</p>
+        <button style="padding: 20px; font-size: 20px;" onclick="document.getElementById('test-box').style.backgroundColor = 'lightgreen';">
+            CLICK TO TRICK THE WALL
+        </button>
+    </div>
 
 </body>
 </html>
