@@ -1,92 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10 Downloader</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: radial-gradient(circle at top, #1e053d, #0b0813); color: white; font-family: sans-serif; overflow-x: hidden; }
-        .page { display: none; } .page.active { display: block; }
-        .section { display: none; } .section.active { display: block; }
-        .movie-card { background: linear-gradient(145deg, #2a1b4d, #130f22); border: 1px solid #ffffff10; border-radius: 20px; padding: 15px; }
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px; }
-        .nav-item { opacity: 0.5; transition: 0.3s; cursor: pointer; } .nav-item.active { opacity: 1; border-top: 2px solid #ef4444; }
-        .tab-indicator { border-bottom: 2px solid #ef4444; color: white !important; }
-    </style>
-</head>
-<body class="pb-24">
 
-    <div id="exit-modal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6">
-        <div class="bg-[#130f22] border border-white/10 p-6 rounded-2xl w-full max-w-xs text-center space-y-6">
-            <p class="text-sm font-bold">Exit App?</p>
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('exit-modal').classList.add('hidden')" class="flex-1 py-2 bg-gray-800 rounded-lg text-xs">Cancel</button>
-                <button onclick="window.close()" class="flex-1 py-2 bg-red-600 rounded-lg text-xs">OK</button>
-            </div>
-        </div>
-    </div>
+<div class="search-container" style="padding: 10px;">
+    <input type="text" id="searchInput" placeholder="Search for movies..." oninput="handleSearch()">
+</div>
 
-    <div id="app-wrapper">
-        <div class="p-4 pt-8">
-            <h1 class="text-2xl font-bold">X10 Downloader</h1>
-            <p class="text-xs text-gray-400">Extender Loader · MovieBox sync</p>
-            <div class="mt-4 bg-[#1a1625] p-3 rounded-2xl border border-white/10 flex items-center gap-2">
-                <span>🔍</span>
-                <input id="search-input" type="text" placeholder="Search movies..." class="bg-transparent w-full focus:outline-none text-white">
-                <button onclick="performSearch()
-            </div>
-        </div>
+<nav style="display: flex; gap: 10px; padding: 10px;">
+    <button onclick="showView('view-home')">Home</button>
+    <button onclick="showView('view-movie')">Movie</button>
+    <button onclick="showView('view-live')">Live</button>
+    <button onclick="showView('view-download')">Download</button>
+</nav>
 
-        <div id="search-view" class="hidden p-4">
-            <h2 class="text-lg font-bold mb-4">Results</h2>
-            <div id="results-list" class="grid-container"></div>
-            <button onclick="clearSearch()" class="mt-4 w-full py-2 bg-gray-800 rounded-lg text-xs">Back to Home</button>
-        </div>
+<div id="view-home" class="view" style="display:block;"><h1>Home</h1><div id="results"></div></div>
+<div id="view-movie" class="view" style="display:none;"><h1>Movies</h1></div>
+<div id="view-live" class="view" style="display:none;"><h1>Live Stream</h1></div>
+<div id="view-download" class="view" style="display:none;"><h1>Downloads</h1></div>
 
-        <main id="main-content">
-            <div id="page-home" class="page active">
-                <div class="flex px-4 gap-4 mb-4 font-bold text-sm">
-                    <button onclick="showSection('fyp')" id="btn-fyp" class="pb-1 tab-indicator">For You</button>
-                    <button onclick="showSection('movies')" id="btn-movies" class="pb-1 border-b-2 border-transparent text-gray-500">Movies</button>
-                </div>
-                <div id="swipe-zone">
-                    <div id="sec-fyp" class="section active p-4 text-center text-gray-500 pt-20">FYP Feed (Swipe Left to Movies)</div>
-                    <div id="sec-movies" class="section grid-container p-4">
-                        <div class="movie-card"><h3 class="font-bold">Shadow Protocol</h3></div>
-                        <div class="movie-card"><h3 class="font-bold">Neon Skyline</h3></div>
-                    </div>
-                </div>
-            </div>
-            <div id="page-live" class="page text-center py-20 font-bold">LIVE SPORTS HUB</div>
-            <div id="page-downloads" class="page text-center py-20 font-bold">OFFLINE STORAGE</div>
-        </main>
-    </div>
+<script>
+    // Navigation logic
+    function showView(viewId) {
+        document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
+        document.getElementById(viewId).style.display = 'block';
+    }
 
-<body style="margin: 0; font-family: sans-serif; background-color: #0f0f0f; color: white;">
+    // Search logic
+    function handleSearch() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = query.length > 2 ? 
+            `<div style="padding: 10px; border: 1px solid #ccc;">
+                <p>Found: ${query}</p>
+                <button onclick="alert('Link not connected yet!')">Play Movie</button>
+            </div>` : '';
+    }
 
-    <header style="padding: 20px; text-align: center; border-bottom: 1px solid #333;">
-        <h1 style="margin: 0; font-size: 20px;">X10 Downloader</h1>
-    </header>
+    // Page Load Initialization
+    window.onload = function() {
+        showView('view-home');
+        // This keeps your existing update function working
+        if (typeof checkForUpdates === 'function') {
+            checkForUpdates();
+        }
+    };
+</script>
 
-    <div id="view-live" class="view" style="display:none; padding: 20px;">
-        <div id="live-stream-container">
-            <video id="live-stream-player" controls width="100%" style="background: #000;">
-                <source id="live-source" src="" type="application/x-mpegURL">
-                <track kind="captions" src="subtitles.vtt" srclang="en" label="English" default>
-            </video>
-        </div>
-    </div>
-
-    <div id="view-downloads" class="view" style="display:none; padding: 20px;">
-        <h3 id="download-status">No downloads yet</h3>
-        <div id="download-queue"></div>
-    </div>
-
-    <nav style="position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; background: #1a1a1a; padding: 15px;">
-        <button onclick="showView('view-home')">Home</button>
-        <button onclick="showView('view-live')">Live</button>
-        <button onclick="showView('view-downloads')">Downloads</button>
-    </nav>
 
     <script>
         function showView(viewId) {
@@ -162,33 +118,7 @@
             <button onclick="location.reload()" class="w-full py-3 bg-red-600 rounded-xl font-bold">Install & Refresh</button>
         </div>
     </div>
-
-    <div id="app-wrapper">
-        <div class="p-4 pt-8">
-            <h1 class="text-2xl font-bold">X10 Downloader</h1>
-            <input id="search-input" type="text" placeholder="Search..." class="w-full mt-4 bg-[#1a1625] p-3 rounded-2xl border border-white/10 text-white focus:outline-none">
-            <div id="history-box" class="mt-2 text-[10px] text-gray-500 italic">Recent Searches: None</div>
-        </div>
-
-        <main id="main-content">
-            <div id="page-home" class="page active">
-                <div id="sec-movies" class="p-2">
-                    <h2 class="text-sm font-bold p-2 text-gray-400">2026 Collection</h2>
-                    <div class="movie-grid" id="movie-contaiinerner">
-                       ivv>
-               </div>
-            </div>
-        </main>
-    </div>
-
- div>
-    <script>
-        const appVebg-[#00d091ad091a] border-t border-white/10 flex justouund p-4 z-50">
-        <div clas="nav-item active text-center text-xs">🏠<br>Home</div>
-    
-
-    <script>
-        const appVersion = "1.0.0";
+       < const appVersion = "1.0.0";
         l  let searchHistory = { fyp: [], movies: [], live: [] };
 
         // 1. History Manager
