@@ -1,87 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10 DOWNLOADER</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>X10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Rich, deep color theme */
-        body { background: linear-gradient(135deg, #0b0813, #1e1b2e, #0f0b1a); color: #fff; min-height: 100vh; }
-        .page { display: none; }
-        .page.active { display: block; }
-        
-        /* Navigation Color States */
-        .nav-link { color: #818cf8; transition: all 0.3s; }
-        .nav-link.active { color: #ff007f; border-bottom: 2px solid #ff007f; font-weight: bold; }
-        
-        /* Search Bar Color */
-        .search-box { background: rgba(76, 29, 149, 0.3); border: 1px solid #6366f1; }
+        body{background:linear-gradient(-45deg,#0b0813,#1a0b2e,#0d1b3e,#14051c);background-size:400% 400%;animation:L 8s infinite;color:#fff;font-family:sans-serif;overflow:hidden}
+        @keyframes L{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        .P,.S,.D{display:none!important}.P.active,.S.active,.D.active{display:block!important}
+        .F{scroll-snap-type:y mandatory;overflow-y:scroll;height:calc(100vh - 240px);scrollbar-width:none}
+        .F::-webkit-scrollbar{display:none}.C{scroll-snap-align:start;height:100%;position:relative}
+        #subtitles-text{text-shadow:2px 2px 4px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
     </style>
 </head>
-<body class="pb-20">
-
-    <!-- SEARCH BAR WITH HISTORY -->
-    <div id="search-zone" class="p-4 border-b border-indigo-900 sticky top-0 z-50 bg-[#0b0813]/90">
-        <div class="flex gap-2">
-            <input id="search-input" type="text" placeholder="Search..." class="search-box flex-1 p-2 rounded text-xs text-white placeholder-indigo-400">
-            <button onclick="runSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold text-white shadow-[0_0_10px_#6366f1]">GO</button>
+<body class="flex flex-col min-h-screen pb-20 select-none">
+    <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4 flex flex-col">
+        <div class="max-w-md mx-auto w-full space-y-4 pt-6">
+            <div class="flex justify-between items-center"><h2 class="text-xs font-bold text-indigo-400 uppercase">Global Search</h2><button id="btn-close-search" class="text-xs text-red-400 bg-red-950/40 px-2 py-1 rounded">✕</button></div>
+            <div class="flex gap-2"><input id="overlay-search-input" type="text" placeholder="Search anything..." class="flex-1 bg-[#130f22] border border-gray-700 rounded p-2 text-xs text-white focus:outline-none"><button id="btn-submit-search" class="bg-indigo-600 px-3 rounded text-xs font-bold whitespace-nowrap">Continuous Search</button></div>
+            <div id="search-history-box" class="space-y-1"><p class="text-[9px] text-gray-400 uppercase font-bold">Recent History</p><div id="search-history-tags" class="flex flex-wrap gap-1.5"></div></div>
+            <div id="search-results-viewport" class="space-y-2 overflow-y-auto max-h-[50vh]"></div>
         </div>
-        <div id="history-list" class="mt-2 flex gap-2 overflow-x-auto text-[9px] text-indigo-400"></div>
     </div>
-
-    <main class="p-4">
-        <!-- HOME PAGE -->
-        <div id="page-home" class="page active">
-            <h2 class="text-indigo-400 font-bold mb-4 border-l-4 border-indigo-500 pl-2">HOME FEED</h2>
-            <div id="home-content" class="space-y-4"></div>
+    <div id="comment-overlay" class="hidden fixed inset-x-0 bottom-0 bg-[#0d091a] border-t border-white/10 rounded-t-2xl z-50 p-4 max-w-md mx-auto transition-transform">
+        <div class="flex justify-between items-center mb-3"><h3 class="text-xs font-bold text-gray-300">Comments Panel</h3><button id="btn-close-comments" class="text-gray-500 text-xs">✕ Close</button></div>
+        <div id="comments-list-box" class="space-y-2 max-h-[30vh] overflow-y-auto mb-3 text-xs text-gray-400"></div>
+        <div class="flex gap-2"><input id="comment-input-field" type="text" placeholder="Write a comment..." class="flex-1 bg-[#130f22] border border-gray-700 rounded p-2 text-xs text-white focus:outline-none"><button id="btn-submit-comment" class="bg-indigo-600 px-3 rounded text-xs font-bold">Post</button></div>
+    </div>
+    <main id="swipe-zone" class="flex-1 max-w-md mx-auto w-full p-4 space-y-4 overflow-hidden">
+        <div id="page-home" class="P active space-y-4">
+            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl shadow-xl">
+                <h1 class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
+                <button id="btn-trigger-search" class="bg-indigo-500/10 text-xs px-3 py-1.5 rounded-xl text-indigo-400">🔍 Search</button>
+            </div>
+            <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
+                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold">For You (FYP)</button>
+                <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
+            </div>
+            <div id="sub-foryou" class="S active"><div class="F border border-white/5 rounded-2xl bg-black overflow-hidden flex flex-col"></div></div>
+            <div id="sub-movies" class="S"><div class="grid grid-cols-2 gap-3 overflow-y-auto max-h-[calc(100vh-240px)]"></div></div>
         </div>
-
-        <!-- LIVE PAGE -->
-        <div id="page-live" class="page">
-            <h2 class="text-pink-500 font-bold mb-4 border-l-4 border-pink-500 pl-2">LIVE RELAYS</h2>
-            <div id="live-content" class="space-y-4"></div>
+        <div id="page-workspace" class="P space-y-4">
+            <div class="space-y-2">
+                <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 flex flex-col justify-end">
+                    <video id="workspace-video-player" controls playsinline crossorigin="anonymous" class="w-full h-full object-contain"></video>
+                    <div id="subtitles-container" class="absolute bottom-4 inset-x-0 text-center pointer-events-none px-4 hidden z-30"><span id="subtitles-text" class="text-white text-xs font-bold tracking-wide inline-block max-w-[90%]"></span></div>
+                </div>
+                <div class="flex justify-between items-center"><h2 id="workspace-preview-title" class="text-xs font-bold text-gray-300 px-1"></h2><button id="btn-workspace-pin" class="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded-xl">📌 Pin</button></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3"><button id="btn-watch-now" class="bg-indigo-600 font-bold py-2 rounded-xl text-xs uppercase">▶ Watch</button><button id="btn-download-now" class="bg-emerald-600 font-bold py-2 rounded-xl text-xs uppercase">📥 Download</button></div>
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-3 space-y-1"><h3 class="text-[9px] font-bold text-indigo-400 uppercase">Cast</h3><div id="workspace-actor-cast-row" class="flex gap-2 overflow-x-auto scrollbar-none"></div></div>
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-3 space-y-1"><p id="workspace-movie-desc" class="text-xs text-gray-300 font-light"></p></div>
         </div>
-
-        <!-- LIBRARY PAGE -->
-        <div id="page-downloads" class="page">
-            <h2 class="text-purple-400 font-bold mb-4 border-l-4 border-purple-500 pl-2">LIBRARY</h2>
-            <div id="dwn-content" class="space-y-4"></div>
+        <div id="page-live" class="P space-y-4">
+            <div class="bg-[#130f22]/60 p-3 border border-white/5 rounded-2xl flex justify-between items-center shadow-md"><h1 class="text-xs font-bold text-emerald-400">LIVE SPORTS</h1><button id="btn-trigger-live-search" class="bg-emerald-500/10 text-xs px-2 py-1 rounded-xl text-emerald-400">🔍 Live Search</button></div>
+            <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl"><video id="live-video-player" controls playsinline class="w-full h-full object-cover"></video></div>
+            <div id="live-feed-directory-scroller" class="space-y-2 max-h-[40vh] overflow-y-auto"></div>
+        </div>
+        <div id="page-downloads" class="P space-y-4">
+            <div class="flex text-center text-xs font-bold border-b border-white/5 uppercase">
+                <button id="btn-dwn-offline" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold">📥 Offline</button>
+                <button id="btn-dwn-pinned" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">📌 Pinned</button>
+            </div>
+            <div id="dwn-offline" class="D active space-y-3"><div class="bg-[#130f22]/60 p-3 border border-white/5 rounded-2xl flex justify-between items-center"><h1 class="text-xs font-bold text-gray-300">LOCAL STORAGE</h1><button id="btn-clear-downloads" class="text-[9px] bg-red-950/40 text-red-400 px-2 py-1 rounded">Purge</button></div><div id="downloads-list" class="grid grid-cols-1 gap-2 overflow-y-auto max-h-[55vh]"></div></div>
+            <div id="dwn-pinned" class="D space-y-3"><div id="pinned-list" class="grid grid-cols-2 gap-3 overflow-y-auto max-h-[60vh]"></div></div>
         </div>
     </main>
-
-    <!-- COLORFUL NAVIGATION -->
-    <nav class="fixed bottom-0 w-full bg-[#130f22] p-4 flex justify-around text-[10px] border-t border-indigo-900 z-50">
-        <button id="btn-home" onclick="nav('home')" class="nav-link active">HOME</button>
-        <button id="btn-live" onclick="nav('live')" class="nav-link">LIVE</button>
-        <button id="btn-downloads" onclick="nav('downloads')" class="nav-link">LIBRARY</button>
+    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 backdrop-blur-md border-t border-white/5 py-2.5 flex justify-around items-center z-40">
+        <button id="nav-home" class="text-indigo-400 font-bold text-sm">Home</button><button id="nav-live" class="text-gray-400 text-sm">Live</button><button id="nav-downloads" class="text-gray-400 text-sm">Downloads</button>
     </nav>
-
     <script>
-        function nav(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-            document.getElementById('page-' + id).classList.add('active');
-            document.getElementById('btn-' + id).classList.add('active');
-            document.getElementById('search-zone').style.display = (id === 'downloads') ? 'none' : 'block';
+        let tab='home',subTab='foryou',dwnSubTab='offline',sel=null,ovr=false,lastB=0,curCmtFeedIdx=null;const key='5dcf7f28a88be0edc01bbbde06f024ab',curY=new Date().getFullYear();
+        let history=JSON.parse(localStorage.getItem('x10_hist')||'[]');
+        const catalogMovies=[
+            {id:82825,title:'Ocean Frontiers',year:String(curY),desc:'Cinematic environment tracks.',video:'https://vjs.zencdn.net/v/oceans.mp4',poster:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200'},
+            {id:49017,title:'Sintel Cut',year:String(curY),desc:'Narrative stream system logs.',video:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',poster:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'}
+        ];
+        const fypFeeds=[
+            {id:'fyp_1',acct:'@scroll_clip',title:'Trending Clip Loop Feed',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',likes:0,liked:false,comments:[]},
+            {id:'fyp_2',acct:'@space_nature',title:'Environment Horizon Track',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',likes:0,liked:false,comments:[]}
+        ];
+        const liveDirectory=[{title:'Live Football Relay',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},{title:'Batman Broadcast',src:'https://vjs.zencdn.net/v/oceans.mp4'}];
+        
+        window.switchTab=function(t){
+            tab=t;document.querySelectorAll('.P').forEach(p=>p.classList.remove('active'));document.getElementById(`page-${t}`).classList.add('active');
+            ['home','live','downloads'].forEach(b=>document.getElementById(`nav-${b}`).className=t===b?"text-indigo-400 font-bold text-sm":"text-gray-400 text-sm");
+            document.querySelectorAll('video').forEach(v=>v.pause());
+            if(t==='downloads'){rDwn();rPinned();}
+            if(t==='live'){rLive();let p=document.getElementById('live-video-player');if(liveDirectory.length>0){p.src=liveDirectory[0].src;p.load();p.play();}}
+            if(t==='home'&&subTab==='foryou')rFyp();
+        };
+        window.switchHomeSubPage=function(s){
+            subTab=s;document.querySelectorAll('.S').forEach(p=>p.classList.remove('active'));document.getElementById(`sub-${s}`).classList.add('active');
+            document.getElementById('btn-sub-foryou').className=s==='foryou'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
+            document.getElementById('btn-sub-movies').className=s==='movies'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
+            document.querySelectorAll('video').forEach(v=>v.pause());if(s==='foryou')rFyp();else rCat();
+        };
+        window.switchDwnSubPage=function(d){
+            dwnSubTab=d;document.querySelectorAll('.D').forEach(p=>p.classList.remove('active'));document.getElementById(`dwn-${d}`).classList.add('active');
+            document.getElementById('btn-dwn-offline').className=d==='offline'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
+            document.getElementById('btn-dwn-pinned').className=d==='pinned'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
+            if(d==='offline')rDwn();else rPinned();
+        };
+        function rCat(){
+            let g=document.querySelector('#sub-movies .grid');g.innerHTML='';
+            let flt=catalogMovies.filter(m=>m.year===String(curY)||m.year===String(curY-1));if(!flt.length)flt=catalogMovies;
+            flt.forEach(m=>{
+                let c=document.createElement('div');c.className="bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer shadow-md";
+                c.innerHTML=`<div class="aspect-video bg-black rounded-xl overflow-hidden mb-1"><img class="w-full h-full object-cover" src="${m.poster}"/></div><p class="text-[10px] font-bold truncate text-white">${m.title}</p><p class="text-[8px] text-indigo-400 font-mono">${m.year}</p>`;
+                let a=()=>{sel=m;openW();};c.addEventListener('click',a);c.addEventListener('touchstart',a,{passive:true});g.appendChild(c);
+            });
         }
-
-        function runSearch() {
-            let q = document.getElementById('search-input').value;
-            if(!q) return;
-            let hist = JSON.parse(localStorage.getItem('x10_h') || '[]');
-            if(!hist.includes(q)) hist.push(q);
-            localStorage.setItem('x10_h', JSON.stringify(hist.slice(-5)));
-            renderHistory();
-            document.getElementById('search-input').value = '';
+        function rFyp(){
+            let c=document.querySelector('.F');c.innerHTML='';
+            fypFeeds.forEach((f,idx)=>{
+                let i=document.createElement('div');i.className="C w-full min-h-[50vh] bg-black relative mb-4 rounded-xl overflow-hidden";
+                i.innerHTML=`<video class="w-full h-full object-cover" loop playsinline controls autoplay src="${f.src}"></video>
+                <div class="absolute right-3 bottom-16 flex flex-col items-center space-y-4 z-20 bg-black/40 p-2 rounded-full backdrop-blur-sm">
+                    <button class="btn-like text-lg ${f.liked?'text-red-500':'text-white'}">❤️<span class="block text-[8px] text-white text-center">${f.likes}</span></button>
+                    <button class="btn-cmt text-lg text-white">💬<span class="block text-[8px] text-center">${f.comments.length}</span></button>
+                    <button class="btn-pin text-lg text-white">📌</button>
+                </div>
+                <div class="absolute left-3 bottom-4 right-16 bg-gradient-to-t from-black/80 to-transparent p-2 rounded-xl z-20"><p class="text-[10px] font-bold text-indigo-400 font-mono">${f.acct}</p><p class="text-[9px] text-gray-200 truncate font-light">${f.title}</p></div>`;
+                c.appendChild(i);let v=i.querySelector('video');v.load();v.play().catch(()=>{v.muted=true;v.play();});
+                i.querySelector('.btn-like').addEventListener('click',()=>{f.liked=!f.liked;f.likes+=f.liked?1:-1;rFyp();});
+                i.querySelector('.btn-cmt').addEventListener('click',()=>{curCmtFeedIdx=idx;openCmtPanel();});
+                i.querySelector('.btn-pin').addEventListener('click',()=>{pinItem({id:f.id,title:f.title,poster:'',desc:f.title,video:f.src,year:'FYP'});alert("Pinned to profile folder!");});
+            });
         }
-
-        function renderHistory() {
-            document.getElementById('history-list').innerHTML = 
-                JSON.parse(localStorage.getItem('x10_h') || '[]').map(h => `<span>${h}</span>`).join(' | ');
+        function openCmtPanel(){
+            let f=fypFeeds[curCmtFeedIdx];document.getElementById('comment-overlay').classList.remove('hidden');
+            let b=document.getElementById('comments-list-box');b.innerHTML=f.comments.length?f.comments.map(c=>`<div class="bg-white/5 p-1.5 rounded">✍️ ${c}</div>`).join(''):'<p class="text-center py-2 text-[10px]">No interactions yet.</p>';
         }
-
-        renderHistory();
-    </script>
-</body>
-</html>
+        function rLive(){
+            let s=document.getElementById('live-feed-directory-scroller');s.innerHTML='';
+            liveDirectory.forEach(ch=>{
+                let c=document.createElement('div');c.className="bg-[#130f22]/70 border border-white/5 p-2.5 rounded-xl flex justify-between items-center cursor-pointer text-xs";
+                c.innerHTML=`<p class="font-bold text-white truncate flex-1">${ch.title}</p><span class="text-[10px] text-emerald-500 ml-2">Stream ▶</span>`;
+                let a=()=>{let p=document.getElementById('live-video-player');p.src=ch.src;p.load();p.play();};
+                c.addEventListener('click',a);c.addEventListener('touchstart',a,{passive:true});s.appendChild(c);
+            });
+        }
+        function pinItem(item){
+            let p=JSON.parse(localStorage.getItem('x10_p')||'[]');
+            if(!p.some(x=>x.id===item.id)){p.push(item);localStorage.setItem('x10_p',JSON.stringify(p));}
+        }
+        function saveOff(){
+            if(!sel)return;let c=JSON.parse(localStorage.getItem('x10_c')||'[]');
+            if(!c.some(x=>x.id===sel.id)){c.push(sel);localStorage.setItem('x10_c',JSON.stringify(c));}window.switchTab('downloads');
+        }
+        function rDwn(){
+            let t=document.getElementById('downloads-list');t.innerHTML='';let items=JSON.parse(localStorage.getItem('x10_c')||'[]');
+            if(!items.length){t.innerHTML='<div class="p-4 text-center text-xs text-gray-500 bg-[#130f22]/30 border border-white/5 rounded-xl">Storage Empty</div>';return;}
+            items.forEach(m=>{
+                let b=document.createElement('div');b.className="p-2 bg-[#130f22]/80 border border-white/5 rounded-xl flex flex-col space-y-2 shadow-xl";
+                b.innerHTML=`<div class="flex items-center gap-3"><img src="${m.poster||''}" class="w-10 h-14 object-cover rounded-lg"><div class="flex-1 min-w-0"><p class="text-xs font-bold text-white truncate">${m.title}</p></div><button class="bg-indigo-600 font-bold text-[9px] px-2 py-1.5 rounded-lg">PLAY</button></div><video class="w-full aspect-video hidden bg-black rounded-lg mt-1" controls playsinline src="${m.video}"></video>`;
+                let btn=b.querySelector('button'),vid=b.querySelector('video');
+                let act=()=>{document.querySelectorAll('#downloads-list video').forEach(v=>{if(v!==vid){v.classList.add('hidden');v.pause();}});vid.classList.toggle('hidden');if(!vid.classList.contains('hidden')){vid.load();vid.play();}};
+                btn.addEventListener('click',act);btn.addEventListener('touchstart',act,{passive:true});t.appendChild(b);
+            });
+        }
+        function rPinned(){
+            let g=document.getElementById('pinned-list');g.innerHTML='';let items=JSON.parse(localStorage.getItem('x10_p')||'[]');
+            if(!items.length){g.innerHTML='<div class="col-span-2 p-4 text-center text-xs text-gray-500 bg-[#130f22]/30 border border-white/5 rounded-xl">No Pinned Items</div>';return;}
+            items.forEach(m=>{
+                let c=document.createElement('div');c.className="bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer shadow-md";
+                c.innerHTML=`<div class="aspect-video bg-black rounded-xl overflow-hidden mb-1">${m.poster?`<img class='w-full h-full object-cover' src='${m.poster}'/>`:`<div class='w-full h-full flex items-center justify-center text-xs text-indigo-400'>📌 FYP Clip</div>`}</div><p class="text-[10px] font-bold truncate text-white">${m.title}</p>`;
+                let a=()=>{sel=m;openW();};c.addEventListener('click',a);c.addEventListener('touchstart',a,{passive:true});g.appendChild(c);
+            });
+        }
+        function renderHistory(){
+            let container=document.getElementById('search-history-tags');container.innerHTML=history.length?history.map(h=>`<button class="bg-white/10 text-gray-300 text-[10px] px-2 py-0.5 rounded-full hover:bg-indigo-600">${h}</button>`).join(''):'<span class="text-[9px] text-gray-600">No past logs</span>';
+            container.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('overlay-search-input').value=btn.innerText;executeContextSearch();}));
+        }
+        function updateHistory(q){
+            if(!q||history.includes(q))return;history.unshift(q);if(history.length>5)history.pop();
+            localStorage.setItem('x10_hist',JSON.stringify(history));renderHistory();
+        }
+        function setupNativeTracks(v,title){
+            let container=document.getElementById('subtitles-container'),textEl=document.getElementById('subtitles-text');
+            v.onplay=()=>{container.classList.remove('hidden');};
+            v.ontimeupdate=()=>{
+                if(v.currentTime>1&&v.currentTime<7){textEl.innerText=`Streaming: ${title}`;container.classList.remove('hidden');}else{container.classList.add('hidden');}
+            };
+        }
+        function executeContextSearch(){
+            let q=document.getElementById('overlay-search-input').value.trim().toLowerCase(),v=document.getElementById('search-results-viewport');v.innerHTML="";if(!q)return;
+            updateHistory(document.getElementById('overlay-search-input').value.trim());
+            if(tab==='live'){
+                let res=liveDirectory.filter(ch=>ch.title.toLowerCase().includes(q));
+                res.forEach(ch=>{
+                    let c=
