@@ -113,6 +113,86 @@
             else if(exitCount >= 1) document.getElementById('exit-modal').classList.remove('hidden');
             else { exitCount++; setTimeout(() => exitCount = 0, 2000); }
         };
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X10 Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: radial-gradient(circle at top, #1e053d, #0b0813); color: white; font-family: sans-serif; overflow-x: hidden; }
+        .page { display: none; } .page.active { display: block; }
+        .movie-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; }
+        .nav-item { opacity: 0.5; transition: 0.3s; cursor: pointer; } 
+        .nav-item.active { opacity: 1; border-top: 2px solid #ef4444; }
+    </style>
+</head>
+<body class="pb-24">
+
+    <div id="update-modal" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6">
+        <div class="bg-[#1a1625] p-6 rounded-3xl text-center border border-red-500">
+            <h2 class="text-xl font-bold mb-2">Update Available!</h2>
+            <button onclick="location.reload()" class="w-full py-3 bg-red-600 rounded-xl font-bold">Install & Refresh</button>
+        </div>
+    </div>
+
+    <div id="app-wrapper">
+        <div class="p-4 pt-8">
+            <h1 class="text-2xl font-bold">X10 Downloader</h1>
+            <input id="search-input" type="text" placeholder="Search..." class="w-full mt-4 bg-[#1a1625] p-3 rounded-2xl border border-white/10 text-white focus:outline-none">
+            <div id="history-box" class="mt-2 text-[10px] text-gray-500 italic">Recent Searches: None</div>
+        </div>
+
+        <main id="main-content">
+            <div id="page-home" class="page active">
+                <div id="sec-movies" class="p-2">
+                    <h2 class="text-sm font-bold p-2 text-gray-400">2026 Collection</h2>
+                    <div class="movie-grid" id="movie-container">
+                        </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <nav class="fixed bottom-0 w-full bg-[#0d091a] border-t border-white/10 flex justify-around p-4 z-50">
+        <div class="nav-item active text-center text-xs">🏠<br>Home</div>
+        <div class="nav-item text-center text-xs">📡<br>Live</div>
+        <div class="nav-item text-center text-xs">⬇️<br>Downloads</div>
+    </nav>
+
+    <script>
+        const appVersion = "1.0.0";
+        let searchHistory = { fyp: [], movies: [], live: [] };
+
+        // 1. History Manager
+        function updateHistory(category, query) {
+            let list = searchHistory[category];
+            if (!list.includes(query)) {
+                list.unshift(query);
+                if (list.length > 5) list.pop();
+            }
+            document.getElementById('history-box').innerText = "Recent: " + list.join(", ");
+        }
+
+        // 2. Main Search Entry Point
+        function performSearch() {
+            const query = document.getElementById('search-input').value;
+            const category = "movies"; // This will be dynamic later
+            if(query) {
+                updateHistory(category, query);
+                console.log("Routing search to server for: " + query);
+                // THE PLUG: This is where we will call your server API soon
+            }
+        }
+
+        // 3. Version Checker
+        function checkForUpdates() {
+            const serverVersion = "1.0.1";
+            if(serverVersion !== appVersion) document.getElementById('update-modal').classList.remove('hidden');
+        }
+
+        window.onload = checkForUpdates;
     </script>
 </body>
 </html>
