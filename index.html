@@ -77,36 +77,18 @@
             </div>
 
             <div class="flex border-b border-white/5 text-center text-sm font-bold">
-                <button id="btn-sub-foryou" onclick="switchHomeSubPage('foryou')" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white transition">For You (FYP)</button>
-                <button id="btn-sub-movies" onclick="switchHomeSubPage('movies')" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400 transition">Catalog</button>
+                <button id="btn-sub-foryou" onclick="switchHomeSubPage('foryou')" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white transition-all duration-200">For You (FYP)</button>
+                <button id="btn-sub-movies" onclick="switchHomeSubPage('movies')" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400 transition-all duration-200">Catalog</button>
             </div>
 
             <div id="sub-foryou" class="sub-page active">
                 <div class="fyp-scroll-container border border-white/5 rounded-2xl bg-black/60 backdrop-blur-md p-2">
-                    <div class="fyp-video-card p-4 border-b border-white/5 pb-8">
-                        <div class="aspect-[9/16] w-full bg-gray-900 rounded-xl flex items-center justify-center text-4xl border border-white/10 shadow-inner relative overflow-hidden">
-                            🎬
-                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-indigo-400 font-mono">Stream Feed #1</div>
-                        </div>
-                        <div class="space-y-1 mt-2">
-                            <h3 class="font-bold text-sm text-white">Continuous Movie Clip</h3>
-                            <p class="text-xs text-gray-400">Swipe up directly inside this viewport block frame layout to view more endless streaming content sequences.</p>
-                        </div>
                     </div>
-                </div>
             </div>
 
             <div id="sub-movies" class="sub-page space-y-4">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center cursor-pointer hover:border-indigo-500" onclick="selectMovieStatic('Catalog Movie Alpha')">
-                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl mb-1">🎥</div>
-                        <p class="text-xs font-bold truncate text-gray-200">Catalog Movie Alpha</p>
                     </div>
-                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center cursor-pointer hover:border-indigo-500" onclick="selectMovieStatic('Catalog Movie Beta')">
-                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl mb-1">🎥</div>
-                        <p class="text-xs font-bold truncate text-gray-200">Catalog Movie Beta</p>
-                    </div>
-                </div>
             </div>
 
             <div id="movie-search-result" class="hidden bg-indigo-950/30 border border-indigo-500/40 rounded-2xl p-4 space-y-2 cursor-pointer shadow-xl backdrop-blur-md" onclick="openMovieWorkspace()">
@@ -117,31 +99,33 @@
         </div>
 
         <div id="page-workspace" class="page space-y-4">
-            <div class="space-y-1">
-                <span class="text-[10px] font-bold tracking-widest text-purple-400 uppercase">Movie Video Theater Sandbox</span>
-                <div class="aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center text-xs text-gray-400">
-                    Ready to stream selected cinematic node...
+            <div class="space-y-2">
+                <span class="text-[10px] font-bold tracking-widest text-purple-400 uppercase">Movie Video Theater</span>
+                
+                <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center">
+                    <video id="workspace-video-player" controls class="w-full h-full object-contain hidden"></video>
+                    
+                    <div id="workspace-poster-preview" class="absolute inset-0 w-full h-full bg-cover bg-center flex items-end p-4 bg-gradient-to-t from-black via-black/30 to-transparent z-10 transition-all duration-300">
+                        <div class="space-y-1">
+                            <span class="text-[9px] bg-indigo-600 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Ready to Play</span>
+                            <h2 id="workspace-preview-title" class="text-base font-extrabold text-white drop-shadow-md">Movie Title</h2>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <button onclick="triggerFullWatch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg active:scale-95 transition">
-                    <span class="text-base">▶</span>
-                    <span>Watch Movie Now</span>
+                    <span class="text-base">▶ Watch Movie Now</span>
                 </button>
                 <button onclick="triggerFullDownload()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg active:scale-95 transition">
-                    <span class="text-base">📥</span>
-                    <span>Download Movie</span>
+                    <span class="text-base">📥 Download Movie</span>
                 </button>
             </div>
 
             <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-2">
                 <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Movie Summary Logs</h3>
                 <p id="workspace-movie-desc" class="text-xs text-gray-200 leading-relaxed">No tracking video catalog file active yet.</p>
-            </div>
-
-            <div id="full-theater-container" class="hidden bg-black p-3 border border-indigo-900/40 rounded-2xl text-center text-xs text-indigo-300">
-                Media pipeline active. Direct link loaded into internal browser framework window sandbox context.
             </div>
         </div>
 
@@ -158,7 +142,7 @@
         <div id="page-downloads" class="page space-y-3">
             <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl backdrop-blur-md shadow-xl">
                 <h1 class="text-base font-extrabold text-gray-300">DOWNLOAD MANAGER</h1>
-                <p class="text-[10px] text-gray-500">OFFLINE DATA STORAGE STORAGE FILES</p>
+                <p class="text-[10px] text-gray-500">OFFLINE DATA STORAGE FILES</p>
             </div>
             <div id="downloads-list" class="space-y-2">
                 <div class="p-4 bg-[#130f22]/30 border border-white/5 rounded-xl text-center text-xs text-gray-500">
@@ -169,13 +153,13 @@
     </main>
 
     <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/90 backdrop-blur-lg border-t border-white/5 px-6 py-2 flex justify-around items-center z-40">
-        <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400 transition">
+        <button id="nav-home" onclick="window.switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400 font-bold transition">
             <span class="text-xl">Home</span>
         </button>
-        <button id="nav-live" onclick="switchTab('live')" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition">
+        <button id="nav-live" onclick="window.switchTab('live')" class="flex flex-col items-center gap-1 text-gray-400 transition">
             <span class="text-xl">Live</span>
         </button>
-        <button id="nav-downloads" onclick="switchTab('downloads')" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition">
+        <button id="nav-downloads" onclick="window.switchTab('downloads')" class="flex flex-col items-center gap-1 text-gray-400 transition">
             <span class="text-xl">Downloads</span>
         </button>
     </nav>
@@ -185,7 +169,26 @@
         let selectedMovieData = null;
         let isOverlayActive = false;
 
-        // Hijack hardware device phone back keys
+        const catalogMovies = [
+            {
+                title: 'Sintel Quest',
+                poster: 'https://images.tmdb.org/t/p/w500/d7ImQ4LzXh56vB98c253x36vX4G.jpg',
+                desc: 'Grand open-source narrative tracing a young woman\'s journey to track down her missing companion dragon across vast scenic biomes.',
+                video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+            },
+            {
+                title: 'Tears of Steel',
+                poster: 'https://images.tmdb.org/t/p/w500/9618P1k7416lA1wepQpYF7XzUex.jpg',
+                desc: 'Sci-fi robotic dystopia project exploring high-stakes global technologies and dynamic tactical resilience matrices set in an alternate future city landscape.',
+                video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+            }
+        ];
+
+        const fypFeeds = [
+            { title: 'Trending Preview #1', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' },
+            { title: 'Trending Preview #2', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4' }
+        ];
+
         function setupHardwareBackInterceptor() {
             window.history.pushState({ base: true }, '');
             window.addEventListener('popstate', function () {
@@ -195,7 +198,7 @@
                     return;
                 }
                 if (currentTabState !== 'home') {
-                    switchTab('home');
+                    window.switchTab('home');
                     window.history.pushState({ base: true }, '');
                 } else {
                     window.history.back(); 
@@ -205,40 +208,93 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             setupHardwareBackInterceptor();
+            renderCatalogGrid();
+            renderFYPContainer();
         });
 
-        // Tab switches handling framework elements accurately
-        function switchTab(tabId) {
+        // Safe Clean Window-Scoped Tab Swapping Engine
+        window.switchTab = function(tabId) {
             currentTabState = tabId;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById(`page-${tabId}`);
             if (targetPage) targetPage.classList.add('active');
 
-            const tabIds = ['home', 'live', 'downloads'];
-            tabIds.forEach(t => {
+            ['home', 'live', 'downloads'].forEach(t => {
                 const btn = document.getElementById(`nav-${t}`);
                 if (!btn) return;
+                
+                btn.className = "flex flex-col items-center gap-1 transition-all duration-200";
+                
                 if (t === tabId) {
-                    btn.classList.remove('text-gray-400');
-                    btn.classList.add('text-indigo-400');
+                    btn.classList.add('text-indigo-400', 'font-bold');
                 } else {
-                    btn.classList.remove('text-indigo-400');
                     btn.classList.add('text-gray-400');
                 }
             });
+        };
+
+        // Safe Clean Window-Scoped Sub-Tab Swapping Engine
+        window.switchHomeSubPage = function(subId) {
+            document.querySelectorAll('.sub-page').forEach(sp => sp.classList.remove('active'));
+            const targetSub = document.getElementById(`sub-${subId}`);
+            if (targetSub) targetSub.classList.add('active');
+
+            const fypBtn = document.getElementById('btn-sub-foryou');
+            const moviesBtn = document.getElementById('btn-sub-movies');
+
+            if (fypBtn && moviesBtn) {
+                fypBtn.className = "flex-1 pb-2 border-b-2 text-center transition-all duration-200";
+                moviesBtn.className = "flex-1 pb-2 border-b-2 text-center transition-all duration-200";
+
+                if (subId === 'foryou') {
+                    fypBtn.classList.add('border-indigo-500', 'text-white', 'font-bold');
+                    moviesBtn.classList.add('border-transparent', 'text-gray-400');
+                } else {
+                    moviesBtn.classList.add('border-indigo-500', 'text-white', 'font-bold');
+                    fypBtn.classList.add('border-transparent', 'text-gray-400');
+                }
+            }
+        };
+
+        function renderCatalogGrid() {
+            const container = document.getElementById('sub-movies');
+            if (!container) return;
+            const grid = container.querySelector('.grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            catalogMovies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = "bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer hover:border-indigo-500 transition shadow-lg";
+                card.innerHTML = `
+                    <img src="${movie.poster}" class="h-40 w-full object-cover rounded-xl border border-white/5 mb-2 shadow-inner">
+                    <p class="text-xs font-bold truncate text-gray-200">${movie.title}</p>
+                `;
+                card.onclick = () => selectMovieStatic(movie);
+                grid.appendChild(card);
+            });
         }
 
-        function switchHomeSubPage(subId) {
-            document.querySelectorAll('.sub-page').forEach(sp => sp.classList.remove('active'));
-            document.getElementById(`sub-${subId}`).classList.add('active');
+        function renderFYPContainer() {
+            const container = document.querySelector('.fyp-scroll-container');
+            if (!container) return;
+            container.innerHTML = '';
 
-            if (subId === 'foryou') {
-                document.getElementById('btn-sub-foryou').className = "flex-1 pb-2 border-b-2 border-indigo-500 text-white transition";
-                document.getElementById('btn-sub-movies').className = "flex-1 pb-2 border-b-2 border-transparent text-gray-400 transition";
-            } else {
-                document.getElementById('btn-sub-foryou').className = "flex-1 pb-2 border-b-2 border-transparent text-gray-400 transition";
-                document.getElementById('btn-sub-movies').className = "flex-1 pb-2 border-b-2 border-indigo-500 text-white transition";
-            }
+            fypFeeds.forEach(feed => {
+                const item = document.createElement('div');
+                item.className = "fyp-video-card p-4 border-b border-white/5 pb-8";
+                item.innerHTML = `
+                    <div class="aspect-[9/16] w-full bg-gray-900 rounded-xl flex items-center justify-center border border-white/10 shadow-inner relative overflow-hidden">
+                        <video class="w-full h-full object-cover" loop muted playsinline autoplay src="${feed.src}"></video>
+                        <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-indigo-400 font-mono">${feed.title}</div>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        <h3 class="font-bold text-sm text-white">Continuous Movie Clip</h3>
+                        <p class="text-xs text-gray-400">Swipe up inside this view to track endless trending live cinematic video sequences.</p>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
         }
 
         function openSearchOverlay() {
@@ -280,11 +336,12 @@
                     if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
                     const name = item.title || item.name;
                     const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/90x135?text=Movie';
+                    const streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
                     
                     const card = document.createElement('div');
                     card.className = "flex gap-3 bg-[#130f22]/90 border border-white/5 p-2 rounded-xl cursor-pointer hover:border-indigo-500 transition";
                     
-                    const payload = btoa(encodeURIComponent(JSON.stringify({ title: name, desc: item.overview || 'No overview summary logs inside directory.' })));
+                    const payload = btoa(encodeURIComponent(JSON.stringify({ title: name, desc: item.overview || 'No overview summary logs inside directory.', poster: poster, video: streamUrl })));
                     card.setAttribute('onclick', `selectMovieFromSearch('${payload}')`);
                     
                     card.innerHTML = `
@@ -297,7 +354,7 @@
                     view.appendChild(card);
                 });
             } catch (e) {
-                view.innerHTML = '<p class="text-xs text-center text-yellow-500 py-2">Network timeout error code synchronization lag.</p>';
+                view.innerHTML = '<p class="text-xs text-center text-yellow-500 py-2">Network timeout error synchronization lag.</p>';
             }
         }
 
@@ -309,32 +366,4 @@
             closeSearchOverlay();
         }
 
-        function selectMovieStatic(title) {
-            selectedMovieData = { title: title, desc: "High stakes movie streaming asset file parsed safely from catalog arrays." };
-            document.getElementById('result-movie-title').innerText = title;
-            document.getElementById('movie-search-result').classList.remove('hidden');
-        }
-
-        function openMovieWorkspace() {
-            if (!selectedMovieData) return;
-            switchTab('workspace');
-            document.getElementById('workspace-movie-desc').innerText = selectedMovieData.desc;
-            document.getElementById('full-theater-container').classList.add('hidden');
-        }
-
-        function triggerFullWatch() {
-            document.getElementById('full-theater-container').classList.remove('hidden');
-        }
-
-        function triggerFullDownload() {
-            if (!selectedMovieData) return;
-            switchTab('downloads');
-            document.getElementById('downloads-list').innerHTML = `
-                <div class="p-4 bg-[#130f22]/80 border border-indigo-500/30 rounded-2xl text-xs text-white">
-                    Downloading package: <span class="text-emerald-400 font-bold">${selectedMovieData.title}</span>
-                </div>
-            `;
-        }
-    </script>
-</body>
-</html>
+        function selectMovieStatic(mo
