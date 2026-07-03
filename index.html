@@ -8,13 +8,13 @@
     <style>
         .page { display: none; }
         .page.active { display: block; }
-        /* Endless scroll area */
-        .scroll-list { max-height: 60vh; overflow-y: auto; }
+        .sub-tab { display: none; }
+        .sub-tab.active { display: block; }
     </style>
 </head>
-<body class="bg-[#0b0813] text-white min-h-screen pb-24">
+<body class="bg-[#0b0813] text-white min-h-screen pb-20">
 
-    <div class="p-4 bg-[#130f22] border-b border-white/10 sticky top-0 z-50">
+    <div id="search-zone" class="p-4 bg-[#130f22] border-b border-white/10">
         <div class="flex gap-2">
             <input id="search-input" type="text" placeholder="Search..." class="flex-1 bg-black p-2 rounded text-xs border border-white/10">
             <button onclick="runSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold">GO</button>
@@ -23,21 +23,24 @@
 
     <main class="p-4">
         <div id="page-home" class="page active">
-            <video id="main-video" class="w-full aspect-video bg-black rounded-lg mb-4" controls playsinline></video>
-            <h2 class="text-indigo-400 text-xs font-bold mb-2 uppercase">For You</h2>
-            <div id="fyp-list" class="scroll-list space-y-3"></div>
+            <div class="flex gap-4 mb-4 border-b border-white/10 pb-2">
+                <button onclick="switchSub('fyp')" class="text-xs font-bold text-indigo-400">FYP</button>
+                <button onclick="switchSub('movies')" class="text-xs font-bold text-gray-400">MOVIES</button>
+            </div>
+            <video id="main-video" class="w-full aspect-video bg-black rounded-lg" controls playsinline></video>
+            <div id="fyp-list" class="sub-tab active mt-4 space-y-2"></div>
+            <div id="movies-list" class="sub-tab mt-4 space-y-2"></div>
         </div>
 
         <div id="page-live" class="page">
-            <h2 class="text-emerald-400 text-xs font-bold mb-2 uppercase">Live Relays</h2>
-            <div id="live-list" class="scroll-list space-y-3"></div>
+            <h2 class="text-emerald-400 text-xs font-bold mb-4">LIVE RELAYS</h2>
+            <div id="live-list" class="space-y-3"></div>
         </div>
 
         <div id="page-downloads" class="page">
-            <h2 class="text-purple-400 text-xs font-bold mb-2 uppercase">Downloads</h2>
-            <div id="dwn-list" class="scroll-list space-y-3 min-h-[100px] border-b border-white/5 pb-4"></div>
-            <h2 class="text-yellow-500 text-xs font-bold mt-4 mb-2 uppercase">Pinned</h2>
-            <div id="pin-list" class="scroll-list space-y-3 min-h-[100px]"></div>
+            <h2 class="text-indigo-400 text-xs font-bold mb-4">MY LIBRARY</h2>
+            <div class="mb-6"><p class="text-[10px] text-gray-500 mb-2">DOWNLOADED</p><div id="dwn-list" class="space-y-2"></div></div>
+            <div><p class="text-[10px] text-gray-500 mb-2">PINNED</p><div id="pin-list" class="space-y-2"></div></div>
         </div>
     </main>
 
@@ -48,45 +51,36 @@
     </nav>
 
     <script>
-        const videos = [
-            {t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
-            {t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
-        ];
-
         function nav(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
+            document.getElementById('search-zone').style.display = (id === 'downloads') ? 'none' : 'block';
+        }
+
+        function switchSub(id) {
+            document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(id + '-list').classList.add('active');
         }
 
         function runSearch() {
             let q = document.getElementById('search-input').value;
             if(!q) return;
             alert("Searching: " + q);
-            document.getElementById('search-input').value = ''; // Clears history/input
+            document.getElementById('search-input').value = '';
         }
 
-        // Render List
-        const fyp = document.getElementById('fyp-list');
+        // Logic for lists and video play
+        const videos = [
+            {t:'Big Buck Bunny',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
+            {t:'Sintel',s:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
+        ];
+
         videos.forEach(v => {
             let b = document.createElement('div');
-            b.className = 'p-3 bg-[#130f22] rounded flex justify-between items-center';
-            b.innerHTML = `<span class="text-xs">${v.t}</span>
-                           <div class="flex gap-2">
-                            <button onclick="playV('${v.s}')" class="bg-indigo-600 px-2 py-1 rounded text-[9px]">▶</button>
-                            <button onclick="pin('${v.t}')" class="bg-yellow-600 px-2 py-1 rounded text-[9px]">📌</button>
-                           </div>`;
-            fyp.appendChild(b);
+            b.className = 'p-3 bg-[#130f22] rounded flex justify-between items-center text-xs';
+            b.innerHTML = `${v.t} <button onclick="document.getElementById('main-video').src='${v.s}'; document.getElementById('main-video').play();" class="bg-indigo-600 px-2 py-1 rounded">▶</button>`;
+            document.getElementById('fyp-list').appendChild(b);
         });
-
-        function playV(src) { 
-            let v = document.getElementById('main-video'); 
-            v.src = src; v.play(); 
-        }
-
-        function pin(t) {
-            let p = document.getElementById('pin-list');
-            p.innerHTML += `<div class="p-2 bg-yellow-900/20 rounded text-[10px]">${t}</div>`;
-        }
     </script>
 </body>
 </html>
