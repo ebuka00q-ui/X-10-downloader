@@ -16,15 +16,24 @@
 </head>
 <body class="flex flex-col min-h-screen pb-20 select-none">
 
+    <div id="exit-modal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6">
+        <div class="bg-[#130f22] border border-white/10 p-6 rounded-2xl w-full max-w-xs text-center space-y-6">
+            <p class="text-sm font-bold">Exit App?</p>
+            <div class="flex gap-4">
+                <button onclick="closeExit()" class="flex-1 py-2 bg-gray-800 rounded-lg text-xs">Cancel</button>
+                <button onclick="window.close()" class="flex-1 py-2 bg-red-600 rounded-lg text-xs">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 z-50 p-4">
         <div class="max-w-md mx-auto pt-10 space-y-4">
-            <h2 class="text-xs font-bold text-indigo-400">SEARCH DATABASE</h2>
+            <h2 class="text-xs font-bold text-indigo-400">SEARCH</h2>
             <div class="flex gap-2">
-                <input id="search-input" type="text" class="flex-1 bg-[#130f22] p-2 rounded text-xs text-white border border-gray-700" placeholder="Enter movie title...">
-                <button onclick="executeSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold hover:bg-indigo-500">SEARCH</button>
+                <input id="search-input" type="text" class="flex-1 bg-[#130f22] p-2 rounded text-xs text-white border border-gray-700">
+                <button onclick="executeSearch()" class="bg-indigo-600 px-4 rounded text-xs font-bold">SEARCH</button>
             </div>
-            <button onclick="document.getElementById('search-overlay').classList.add('hidden')" class="text-[10px] text-gray-500 underline">Close Search</button>
-            
+            <button onclick="hideSearch()" class="text-[10px] text-gray-500 underline">Cancel</button>
             <div id="search-results" class="grid grid-cols-3 gap-2 pt-4"></div>
         </div>
     </div>
@@ -33,64 +42,73 @@
         <div id="page-home" class="P active">
             <div class="flex justify-between items-center bg-[#130f22]/60 p-4 rounded-2xl mb-4 border border-white/5">
                 <h1 class="text-sm font-black text-indigo-400">X10 DOWNLOADER</h1>
-                <button onclick="document.getElementById('search-overlay').classList.remove('hidden')" class="bg-indigo-500/20 text-xs px-3 py-1 rounded-xl text-indigo-400 border border-indigo-500/30">🔍 Search</button>
+                <button onclick="showSearch()" class="bg-indigo-500/20 text-xs px-3 py-1 rounded-xl text-indigo-400 border border-indigo-500/30">🔍 Search</button>
             </div>
             <div class="flex text-center text-xs font-bold border-b border-white/5 mb-4">
                 <button id="btn-sub-foryou" class="tab-btn active flex-1 pb-2 border-b-2 border-transparent text-gray-400">For You</button>
                 <button id="btn-sub-movies" class="tab-btn flex-1 pb-2 border-b-2 border-transparent text-gray-400">Movies</button>
             </div>
-            <div id="sub-foryou" class="S active"><p class="text-center text-gray-500 py-10">Waiting for data connection...</p></div>
+            <div id="sub-foryou" class="S active"><p class="text-center text-gray-500 py-10">FYP Feed</p></div>
             <div id="sub-movies" class="S"><div class="movie-grid" id="movie-gallery"></div></div>
         </div>
+
+        <div id="page-live" class="P text-center py-20 font-bold">LIVE SPORTS HUB</div>
+        <div id="page-downloads" class="P text-center py-20 font-bold">OFFLINE STORAGE</div>
     </main>
 
-    <script>
-        // Search Simulation
-        function executeSearch(){
-            const container = document.getElementById('search-results');
-            const query = document.getElementById('search-input').value;
-            
-            if(!query) return;
+    <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/95 border-t border-white/5 py-3 flex justify-around z-40">
+        <button onclick="switchTab('home', this)" class="nav-btn active text-sm">Home</button>
+        <button onclick="switchTab('live', this)" class="nav-btn text-gray-400 text-sm">Live</button>
+        <button onclick="switchTab('downloads', this)" class="nav-btn text-gray-400 text-sm">Downloads</button>
+    </nav>
 
-            // Show loading state
-            container.innerHTML = `<p class="text-xs text-indigo-400 col-span-3">Searching for "${query}"...</p>`;
-            
-            // Simulate server delay (connection)
-            setTimeout(() => {
-                container.innerHTML = Array(3).fill(0).map(() => `
-                    <div class="text-center">
-                        <div class="cube-img"></div>
-                        <p class="text-[9px] mt-1 text-white">Result Title</p>
-                    </div>
-                `).join('');
-            }, 800);
+    <script>
+        let exitCount = 0;
+        
+        // Navigation Logic
+        function switchTab(t, btn) {
+            document.querySelectorAll('.P').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-'+t).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            exitCount = 0;
         }
 
-        // Sub-Tab Switcher logic
-        const tabs = document.querySelectorAll('.tab-btn');
-        tabs.forEach(tab => {
+        // Search Handlers
+        function showSearch() { document.getElementById('search-overlay').classList.remove('hidden'); exitCount = 0; }
+        function hideSearch() { document.getElementById('search-overlay').classList.add('hidden'); }
+        function executeSearch() { document.getElementById('search-results').innerHTML = '<p class="col-span-3 text-center text-xs">Searching...</p>'; }
+
+        // Back Button Logic
+        window.addEventListener('popstate', handleBack);
+        function handleBack() {
+            const home = document.getElementById('page-home');
+            const moviesSub = document.getElementById('sub-movies');
+            const fypSub = document.getElementById('sub-foryou');
+            const search = document.getElementById('search-overlay');
+
+            if (!search.classList.contains('hidden')) {
+                hideSearch();
+            } else if (!home.classList.contains('active')) {
+                switchTab('home', document.querySelector('.nav-btn'));
+            } else if (moviesSub.classList.contains('active')) {
+                document.getElementById('btn-sub-foryou').click();
+            } else {
+                exitCount++;
+                if(exitCount >= 2) document.getElementById('exit-modal').classList.remove('hidden');
+            }
+        }
+        function closeExit() { document.getElementById('exit-modal').classList.add('hidden'); exitCount = 0; }
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(tab => {
             tab.onclick = () => {
-                tabs.forEach(t => t.classList.remove('active', 'text-white'));
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active', 'text-white'));
                 tab.classList.add('active', 'text-white');
                 document.querySelectorAll('.S').forEach(s => s.classList.remove('active'));
-                if(tab.id === 'btn-sub-movies') {
-                    document.getElementById('sub-movies').classList.add('active');
-                    renderMovies();
-                } else {
-                    document.getElementById('sub-foryou').classList.add('active');
-                }
+                document.getElementById(tab.id === 'btn-sub-movies' ? 'sub-movies' : 'sub-foryou').classList.add('active');
             };
         });
-
-        function renderMovies(){
-            const g = document.getElementById('movie-gallery');
-            g.innerHTML = Array(9).fill(0).map(() => `
-                <div class="text-center">
-                    <div class="cube-img"></div>
-                    <p class="text-[9px] mt-1 text-white">Movie</p>
-                </div>
-            `).join('');
-        }
     </script>
 </body>
 </html>
