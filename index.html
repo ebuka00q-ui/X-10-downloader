@@ -124,22 +124,15 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById('sec-' + id).classList.add('active');
             document.getElementById('btn-fyp').className = id === 'fyp' ? 'pb-1 tab-indicator' : 'pb-1 border-b-2 border-transparent text-gray-500';
-            document.getElementById('btn-movies').className = id === 'movies' ? 'pb-1 tab-indicator' : 'pb-1 border-b-2 border-transparent text-gray-500';
-        }
-
+      document.getElementById('btn-movies').className = id === 'movies' ? 'pb-1 tab-indicator' : 'pb-1 border-b-2 border-transparent text-gray-500';
+       l }
         function performSearch() {
             const query = document.getElementById('search-input').value;
             if(!query) return;
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('search-view').classList.remove('hidden');
             document.getElementById('results-list').innerHTML = `<p class="text-xs">Searching: ${query}...</p>`;
-            setTimeout(() => { document.getElementById('results-list').innerHTML = `<div class="movie-card"><h3 class="font-bold text-sm">Result: ${query}</h3></div>`; }, 500);
-        }
-
-        function clearSearch() {
-            document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('search-view').classList.add('hidden');
-        }
+            setTimeout(() => { document.getElementById('results-list').innerHTML = `<div class="movie-card"><h3 class="font-bold text-sm">Result: ${query}</h3></div>`; }, 50}
 
         window.onpopstate = () => {
             if(!document.getElementById('search-view').classList.contains('hidden')) clearSearch();
@@ -181,22 +174,22 @@
             <div id="page-home" class="page active">
                 <div id="sec-movies" class="p-2">
                     <h2 class="text-sm font-bold p-2 text-gray-400">2026 Collection</h2>
-                    <div class="movie-grid" id="movie-container">
-                        </div>
-                </div>
+                    <div class="movie-grid" id="movie-contaiinerner">
+                       ivv>
+               </div>
             </div>
         </main>
     </div>
 
-    <nav class="fixed bottom-0 w-full bg-[#0d091a] border-t border-white/10 flex justify-around p-4 z-50">
-        <div class="nav-item active text-center text-xs">🏠<br>Home</div>
-        <div class="nav-item text-center text-xs">📡<br>Live</div>
-        <div class="nav-item text-center text-xs">⬇️<br>Downloads</div>
-    </nav>
+ div>
+    <script>
+        const appVebg-[#00d091ad091a] border-t border-white/10 flex justouund p-4 z-50">
+        <div clas="nav-item active text-center text-xs">🏠<br>Home</div>
+    
 
     <script>
         const appVersion = "1.0.0";
-        let searchHistory = { fyp: [], movies: [], live: [] };
+        l  let searchHistory = { fyp: [], movies: [], live: [] };
 
         // 1. History Manager
         function updateHistory(category, query) {
@@ -205,19 +198,7 @@
                 list.unshift(query);
                 if (list.length > 5) list.pop();
             }
-            document.getElementById('history-box').innerText = "Recent: " + list.join(", ");
-        }
-
-        // 2. Main Search Entry Point
-        function performSearch() {
-            const query = document.getElementById('search-input').value;
-            const category = "movies"; // This will be dynamic later
-            if(query) {
-                updateHistory(category, query);
-                console.log("Routing search to server for: " + query);
-                // THE PLUG: This is where we will call your server API soon
-            }
-        }
+            document.getElementById('history-box').innerText = "Recent: " + list.join(>
 
         // 3. Version Checker
         function checkForUpdates() {
