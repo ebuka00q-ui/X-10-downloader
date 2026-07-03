@@ -10,65 +10,68 @@
         .page.active { display: block; }
     </style>
 </head>
-<body class="bg-black text-white min-h-screen pb-20">
+<body class="bg-[#0b0813] text-white min-h-screen pb-20">
 
-    <header class="p-4 border-b border-gray-800">
-        <h1 class="text-xl font-bold text-indigo-500">X10 DOWNLOADER</h1>
+    <header class="p-4 bg-[#130f22]/60 border-b border-white/5">
+        <h1 class="text-sm font-black text-indigo-400 mb-2">X10 DOWNLOADER</h1>
+        <div class="flex gap-2">
+            <input id="search-input" type="text" placeholder="Search..." class="flex-1 bg-black p-2 rounded text-xs border border-white/10">
+            <button onclick="performSearch()" class="bg-indigo-600 px-4 py-1 rounded text-xs font-bold">GO</button>
+        </div>
+        <div id="search-history" class="mt-2 flex gap-1 overflow-x-auto text-[9px] text-gray-500"></div>
     </header>
 
-    <main id="app-main" class="p-4">
-        
+    <main class="p-4">
         <div id="page-home" class="page active">
-            <div class="flex gap-2 mb-4">
-                <button onclick="renderList('fyp')" class="bg-indigo-900 px-4 py-1 rounded text-xs">For You</button>
-                <button onclick="renderList('movies')" class="bg-gray-800 px-4 py-1 rounded text-xs">Movies</button>
-            </div>
-            <div id="list-home" class="space-y-3"></div>
+            <div id="fyp-list" class="space-y-4"></div>
         </div>
 
         <div id="page-live" class="page">
-            <h2 class="text-emerald-400 text-xs mb-2 uppercase">Live Relays</h2>
-            <div id="list-live" class="space-y-3"></div>
+            <h2 class="text-emerald-400 text-xs font-bold mb-3">LIVE RELAYS</h2>
+            <div id="live-list" class="space-y-3"></div>
         </div>
 
         <div id="page-downloads" class="page">
-            <h2 class="text-indigo-400 text-xs mb-2 uppercase">My Library</h2>
-            <div class="bg-gray-900 p-4 rounded-lg mb-4">
-                <h3 class="text-[10px] text-gray-400 uppercase">Downloaded</h3>
-                <div id="list-dwn" class="mt-2 space-y-2"></div>
-            </div>
-            <div class="bg-gray-900 p-4 rounded-lg">
-                <h3 class="text-[10px] text-gray-400 uppercase">Pinned</h3>
-                <div id="list-pin" class="mt-2 space-y-2"></div>
-            </div>
+            <h2 class="text-indigo-400 text-xs font-bold mb-3">LIBRARY</h2>
+            <div id="dwn-list" class="space-y-2"></div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-black border-t border-gray-800 p-4 flex justify-around text-xs font-bold">
-        <button onclick="switchTab('home')">HOME</button>
-        <button onclick="switchTab('live')">LIVE</button>
-        <button onclick="switchTab('downloads')">DOWNLOADS</button>
+    <nav class="fixed bottom-0 w-full bg-[#0d091a] border-t border-white/5 p-4 flex justify-between text-[10px] font-bold">
+        <button onclick="showPage('home')">HOME</button>
+        <button onclick="showPage('live')">LIVE</button>
+        <button onclick="showPage('downloads')">DOWNLOADS</button>
     </nav>
 
     <script>
-        function switchTab(id) {
+        // PAGE SWITCHING
+        function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
         }
 
-        function renderList(type) {
-            const container = document.getElementById('list-home');
-            container.innerHTML = '<p class="text-[10px] text-gray-500">Loading ' + type + '...</p>';
+        // SEARCH HISTORY
+        let history = JSON.parse(localStorage.getItem('x10_hist') || '[]');
+        function performSearch() {
+            let q = document.getElementById('search-input').value;
+            if(!q) return;
+            if(!history.includes(q)) history.unshift(q);
+            if(history.length > 5) history.pop();
+            localStorage.setItem('x10_hist', JSON.stringify(history));
+            renderHistory();
+            alert("Searching for: " + q);
         }
 
-        // Initial setup for the Download/Pin section
-        function loadStorage() {
-            // Logic to fetch from LocalStorage for Pinned and Downloaded items
-            document.getElementById('list-dwn').innerHTML = '<p class="text-xs">No downloads yet.</p>';
-            document.getElementById('list-pin').innerHTML = '<p class="text-xs">No pins yet.</p>';
+        function renderHistory() {
+            const hDiv = document.getElementById('search-history');
+            hDiv.innerHTML = history.map(item => `<span class="bg-white/5 px-2 py-1 rounded">${item}</span>`).join('');
         }
 
-        loadStorage();
+        // INITIALIZE
+        renderHistory();
+        document.getElementById('fyp-list').innerHTML = '<div class="w-full aspect-video bg-gray-900 flex items-center justify-center rounded-xl">Video Content</div>';
+        document.getElementById('live-list').innerHTML = '<div class="p-4 bg-gray-900 rounded-xl text-xs">Live Stream 1</div>';
+        document.getElementById('dwn-list').innerHTML = '<div class="p-4 bg-gray-900 rounded-xl text-xs">No Downloads yet.</div>';
     </script>
 </body>
 </html>
