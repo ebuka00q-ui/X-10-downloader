@@ -1,49 +1,50 @@
 <body>
 
-<div class="search-container" style="padding: 10px;">
+<div class="search-container" style="padding: 10px; background: #e0e0e0;">
     <input type="text" id="searchInput" placeholder="Search for movies..." oninput="handleSearch()">
 </div>
 
-<nav style="display: flex; gap: 10px; padding: 10px;">
+<nav style="display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #ccc;">
     <button onclick="showView('view-home')">Home</button>
     <button onclick="showView('view-movie')">Movie</button>
     <button onclick="showView('view-live')">Live</button>
     <button onclick="showView('view-download')">Download</button>
 </nav>
 
-<div id="view-home" class="view" style="display:block;"><h1>Home</h1><div id="results"></div></div>
-<div id="view-movie" class="view" style="display:none;"><h1>Movies</h1></div>
-<div id="view-live" class="view" style="display:none;"><h1>Live Stream</h1></div>
-<div id="view-download" class="view" style="display:none;"><h1>Downloads</h1></div>
+<div id="view-home" class="view" style="display:block; padding: 10px;">
+    <h1>Home</h1>
+    <div id="results"></div>
+</div>
+<div id="view-movie" class="view" style="display:none; padding: 10px;"><h1>Movies</h1></div>
+<div id="view-live" class="view" style="display:none; padding: 10px;"><h1>Live Stream</h1></div>
+<div id="view-download" class="view" style="display:none; padding: 10px;"><h1>Downloads</h1><p>Status: Ready</p></div>
 
 <script>
-    // Navigation logic
+    // Navigation Logic
     function showView(viewId) {
-        document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
-        document.getElementById(viewId).style.display = 'block';
+        document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+        const target = document.getElementById(viewId);
+        if (target) target.style.display = 'block';
     }
 
-    // Search logic
+    // Search Logic
     function handleSearch() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = query.length > 2 ? 
-            `<div style="padding: 10px; border: 1px solid #ccc; margin-top: 10px;">
-                <p>Found: ${query}</p>
-                <button onclick="alert('Link not connected yet!')">Play Movie</button>
-            </div>` : '';
+        const query = document.getElementById('searchInput').value;
+        const res = document.getElementById('results');
+        res.innerHTML = query.length > 2 ? `<p>Search: ${query}</p><button onclick="alert('Not linked')">Play</button>` : '';
     }
 
-    // Your Update logic
+    // Update Logic (Place your specific code inside here)
     function checkForUpdates() {
-        // [YOUR EXISTING UPDATE CODE GOES INSIDE HERE]
-        console.log("Update check running...");
+        console.log("Checking for updates...");
+        // INSERT YOUR UPDATE CODE BELOW THIS LINE
+        
     }
 
-    // Combined initialization
+    // Initialization
     window.onload = function() {
-        showView('view-home'); // Set default view
-        checkForUpdates();     // Run your update function
+        showView('view-home');
+        checkForUpdates();
     };
 </script>
 
