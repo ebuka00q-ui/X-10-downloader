@@ -1,77 +1,67 @@
 <!DOCTYPE html>
-<html style="height: 100%;">
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>X10 Downloader</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        /* Layout Configuration */
-        body { font-family: sans-serif; margin: 0; height: 100%; display: flex; flex-direction: column; background: #121212; color: white; }
-        .view { flex: 1; overflow-y: auto; display: none; padding: 20px; }
-        #view-home { display: block; }
+        :root { --accent: #ff007f; --bg: #0a0a0a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Navigation Styling */
-        nav { background: #1f1f1f; padding: 15px; display: flex; justify-content: space-around; border-top: 1px solid #333; }
-        .nav-btn { color: #aaa; cursor: pointer; font-weight: bold; }
-        .nav-btn.active { color: #007bff; }
+        /* Tactical Feedback Styles */
+        .nav-btn { color: #555; transition: 0.3s; cursor: pointer; }
+        .nav-btn.active { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
         
-        /* Search & Elements */
-        .search-container { padding: 15px; background: #1f1f1f; }
-        input { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 5px; border: none; }
-        .video-box { width: 100%; height: 250px; background: #000; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 2px solid #333; }
+        #view-container { flex: 1; overflow-y: auto; }
+        .view { display: none; padding: 20px; }
+        
+        nav { background: #151515; padding: 15px; display: flex; justify-content: space-around; border-top: 1px solid #333; }
+        .search-trigger { background: #222; padding: 12px; border-radius: 8px; margin: 10px; border: 1px solid #444; }
     </style>
 </head>
 <body>
 
-    <div class="search-container">
-        <input type="text" id="search" placeholder="Search for movies..." oninput="handleSearch()">
-    </div>
+    <div id="view-container">
+        <div id="home" class="view" style="display:block;">
+            <div class="search-trigger" onclick="openSearch()">Search Movies, Shows, Links...</div>
+            <div id="fyp-feed"></div>
+        </div>
+        </div>
 
-    <div id="view-home" class="view">
-        <h1>FYP Feed</h1>
-        <div id="results"></div>
-    </div>
-    
-    <div id="view-movie" class="view">
-        <h1>Movie Player</h1>
-        <div class="video-box" id="player">VIDEO PLAYER AREA</div>
-        <button onclick="show('view-home')" style="margin-top: 10px;">Back to Feed</button>
-    </div>
-
-    <div id="view-live" class="view"><h1>Live Stream</h1><div class="video-box">LIVE STREAM</div></div>
-
-    <nav id="navBar">
-        <div class="nav-btn active" onclick="show('view-home', this)">Home</div>
-        <div class="nav-btn" onclick="show('view-movie', this)">Movie</div>
-        <div class="nav-btn" onclick="show('view-live', this)">Live</div>
+    <nav>
+        <div class="nav-btn active" onclick="switchTab(this, 'home')">Home</div>
+        <div class="nav-btn" onclick="switchTab(this, 'live')">Live</div>
+        <div class="nav-btn" onclick="switchTab(this, 'download')">Downloads</div>
     </nav>
 
     <script>
-        // Navigation Logic
-        function show(id, btn) {
-            document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-            document.getElementById(id).style.display = 'block';
+        // Double-Back Exit Logic
+        let backCount = 0;
+        document.addEventListener('backbutton', () => {
+            if (backCount === 0) {
+                backCount++;
+                alert("Press back again to exit");
+                setTimeout(() => backCount = 0, 2000);
+            } else {
+                navigator.app.exitApp();
+            }
+        });
+
+        // Tab Switching with Tactile Feedback
+        function switchTab(el, tabId) {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
+            el.classList.add('active');
+            // ... logic to show/hide views
         }
 
-        // Search Logic
-        function handleSearch() {
-            const q = document.getElementById('search').value;
-            document.getElementById('results').innerHTML = q.length > 2 ? 
-                `<div style="padding:10px; background:#222; margin-top:10px;">
-                    <p>Results for: ${q}</p>
-                    <button onclick="show('view-movie')">Watch Now</button>
-                 </div>` : '';
+        // Logic for Rolling Year Feed (2026+)
+        function loadFeed() {
+            const currentYear = new Date().getFullYear();
+            // Server call logic here
         }
 
-        // Audit/Update System
-        function checkForUpdates() {
-            var version = "1.0.5";
-            var lastUpdate = "2026-07-03";
-            console.log("Audit Active | Version: " + version + " | Last Update: " + lastUpdate);
-            // Link your server status logic here
-        }
-
-        window.onload = checkForUpdates;
+        window.onload = loadFeed;
     </script>
 </body>
 </html>
