@@ -199,3 +199,30 @@
 </body>
         </html>
         
+// --- GLOBAL VIDEO/AUDIO SYNC & TAB CLEANUP ---
+(function() {
+    // This function monitors tab switching and stops all video/audio tracks
+    const originalSwitchTab = window.switchTab;
+    window.switchTab = function(t) {
+        // Stop all videos in the entire document whenever a tab is switched
+        document.querySelectorAll('video').forEach(v => {
+            v.pause();
+            v.currentTime = 0; // Resets the video/audio sync
+            v.muted = true;    // Ensures no sound bleeds through
+        });
+        
+        // Execute original tab switching logic
+        originalSwitchTab(t);
+    };
+
+    // Force synchronization of FYP tracks
+    setInterval(() => {
+        if(tab === 'home' && subTab === 'foryou') {
+            document.querySelectorAll('.C video').forEach(v => {
+                if(v.paused && v.getBoundingClientRect().top === 0) {
+                    v.play().catch(()=>{});
+                }
+            });
+        }
+    }, 500);
+})();
