@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10 Downloader Pro - Locked Track</title>
+    <title>X10 Downloader Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes lavaFlow {
@@ -23,11 +23,11 @@
         .sub-page { display: none; }
         .sub-page.active { display: block; }
         
-        /* Smooth Endless Vertical Video Scrolling for FYP */
+        /* Continuous Vertical Video Scrolling Layout for FYP */
         .fyp-scroll-container { 
             scroll-snap-type: y mandatory; 
             overflow-y: scroll; 
-            height: calc(100vh - 180px); 
+            height: calc(100vh - 220px); 
             scrollbar-width: none;
         }
         .fyp-scroll-container::-webkit-scrollbar { display: none; }
@@ -45,11 +45,11 @@
     <div id="search-overlay" class="hidden fixed inset-0 bg-[#0b0813]/95 backdrop-blur-md z-50 p-4 flex flex-col">
         <div class="max-w-md mx-auto w-full space-y-4 pt-10">
             <div class="flex justify-between items-center">
-                <h2 id="search-overlay-title" class="text-sm font-bold text-indigo-400 tracking-widest uppercase">Movie Index Search</h2>
+                <h2 class="text-sm font-bold text-indigo-400 tracking-widest uppercase">Movie Search Engine</h2>
                 <button onclick="closeSearchOverlay()" class="text-xs text-red-400 font-bold bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/40">✕ Close</button>
             </div>
             <div class="flex gap-2">
-                <input id="overlay-search-input" type="text" placeholder="Search global database..." 
+                <input id="overlay-search-input" type="text" placeholder="Type movie name here..." 
                     class="flex-1 bg-[#130f22] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
                 <button onclick="processOverlaySearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-lg text-sm transition shadow-lg">
                     Search
@@ -57,16 +57,8 @@
             </div>
 
             <div id="search-results-viewport" class="space-y-3 overflow-y-auto max-h-[60vh] pt-2"></div>
-
-            <div id="search-error-state" class="hidden text-center py-12 space-y-3">
-                <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
-                    <svg class="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M14 8a4 4 0 11-8 0 4 4 0 018 0zM10 12v7M6 21h8M14 15h3M12 15l3 3"></path>
-                    </svg>
-                    <div class="absolute w-20 h-1.5 bg-red-600 rotate-45 rounded-full shadow-lg"></div>
-                </div>
-                <h3 class="text-base font-bold text-gray-400">Media File Not Found</h3>
-                <p class="text-xs text-gray-500 max-w-xs mx-auto">No global matches or streaming addresses found. Check query details.</p>
+            <div id="search-error-state" class="hidden text-center py-12 text-xs text-gray-500">
+                No matching movies found globally. Please recheck the text.
             </div>
         </div>
     </div>
@@ -74,14 +66,13 @@
     <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
 
         <div id="page-home" class="page active space-y-4">
-            
             <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
                 <div>
                     <h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
-                    <p class="text-[10px] text-gray-400 tracking-wide">MOVIES & STREAM ENGINE</p>
+                    <p class="text-[10px] text-gray-400 tracking-wide font-mono">ONLINE MOVIE SYSTEM</p>
                 </div>
-                <button onclick="openSearchOverlay('movie')" class="bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-bold px-3 py-2 rounded-xl text-indigo-400 flex items-center gap-1 transition-all">
-                    🔍 Search Movies
+                <button onclick="openSearchOverlay()" class="bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-bold px-3 py-2 rounded-xl text-indigo-400 flex items-center gap-1 transition-all">
+                    🔍 Search Movie
                 </button>
             </div>
 
@@ -94,22 +85,12 @@
                 <div class="fyp-scroll-container border border-white/5 rounded-2xl bg-black/60 backdrop-blur-md p-2">
                     <div class="fyp-video-card p-4 border-b border-white/5 pb-8">
                         <div class="aspect-[9/16] w-full bg-gray-900 rounded-xl flex items-center justify-center text-4xl border border-white/10 shadow-inner relative overflow-hidden">
-                            📱
-                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-emerald-400 font-mono">Stream Live #1</div>
+                            🎬
+                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-indigo-400 font-mono">Stream Feed #1</div>
                         </div>
                         <div class="space-y-1 mt-2">
-                            <h3 class="font-bold text-sm text-white">@Trending_Cinematics</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">Endless scrolling active. Drag up directly inside this box to skip to the next global movie clip video feed.</p>
-                        </div>
-                    </div>
-                    <div class="fyp-video-card p-4 border-b border-white/5 pb-8">
-                        <div class="aspect-[9/16] w-full bg-gray-900 rounded-xl flex items-center justify-center text-4xl border border-white/10 shadow-inner relative overflow-hidden">
-                            🍿
-                            <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-purple-400 font-mono">Stream Live #2</div>
-                        </div>
-                        <div class="space-y-1 mt-2">
-                            <h3 class="font-bold text-sm text-white">@X10_Blockbusters</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">Secondary structural clip parsed cleanly directly from our background multi-language servers.</p>
+                            <h3 class="font-bold text-sm text-white">Continuous Movie Clip</h3>
+                            <p class="text-xs text-gray-400">Swipe up directly inside this viewport block frame layout to view more endless streaming content sequences.</p>
                         </div>
                     </div>
                 </div>
@@ -117,174 +98,132 @@
 
             <div id="sub-movies" class="sub-page space-y-4">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center backdrop-blur-sm cursor-pointer hover:border-indigo-500/50" onclick="simulateSelectMovie('Catalog Film Alpha')">
-                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl border border-white/5 mb-1">🎬</div>
-                        <p class="text-xs font-bold truncate text-gray-200">Catalog Film Alpha</p>
-                        <p class="text-[10px] text-gray-500">Duration: 2h 05m</p>
+                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center cursor-pointer hover:border-indigo-500" onclick="selectMovieStatic('Catalog Movie Alpha')">
+                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl mb-1">🎥</div>
+                        <p class="text-xs font-bold truncate text-gray-200">Catalog Movie Alpha</p>
                     </div>
-                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center backdrop-blur-sm cursor-pointer hover:border-indigo-500/50" onclick="simulateSelectMovie('Catalog Film Beta')">
-                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl border border-white/5 mb-1">🎬</div>
-                        <p class="text-xs font-bold truncate text-gray-200">Catalog Film Beta</p>
-                        <p class="text-[10px] text-gray-500">Duration: 1h 52m</p>
+                    <div class="bg-[#130f22]/50 border border-white/5 p-3 rounded-2xl text-center cursor-pointer hover:border-indigo-500" onclick="selectMovieStatic('Catalog Movie Beta')">
+                        <div class="h-20 bg-gray-900/60 rounded-xl flex items-center justify-center text-2xl mb-1">🎥</div>
+                        <p class="text-xs font-bold truncate text-gray-200">Catalog Movie Beta</p>
                     </div>
                 </div>
             </div>
 
             <div id="movie-search-result" class="hidden bg-indigo-950/30 border border-indigo-500/40 rounded-2xl p-4 space-y-2 cursor-pointer shadow-xl backdrop-blur-md" onclick="openMovieWorkspace()">
-                <span class="text-[9px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Asset Package Found</span>
-                <h3 id="result-movie-title" class="font-bold text-sm text-white truncate">Loaded Movie Link Asset</h3>
-                <p class="text-xs text-indigo-300">Click to load sandbox theater streams and video downloader targets.</p>
+                <span class="text-[9px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Movie Package Loaded</span>
+                <h3 id="result-movie-title" class="font-bold text-sm text-white truncate">Target Movie File Selected</h3>
+                <p class="text-xs text-indigo-300">Click right here to open theater streams and download manager choices.</p>
             </div>
         </div>
 
         <div id="page-workspace" class="page space-y-4">
             <div class="space-y-1">
-                <span class="text-[10px] font-bold tracking-widest text-purple-400 uppercase">Interactive Video Sandbox Preview</span>
-                <div class="aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 relative shadow-2xl">
-                    <div class="absolute inset-0 flex items-center justify-center bg-gray-900/80 text-xs text-gray-400">No Streaming Preview Loaded</div>
+                <span class="text-[10px] font-bold tracking-widest text-purple-400 uppercase">Movie Video Theater Sandbox</span>
+                <div class="aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center text-xs text-gray-400">
+                    Ready to stream selected cinematic node...
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 pt-1">
-                <button onclick="triggerFullWatch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg transition transform active:scale-95">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="triggerFullWatch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg active:scale-95 transition">
                     <span class="text-base">▶</span>
-                    <span>Watch Full Movie</span>
+                    <span>Watch Movie Now</span>
                 </button>
-                <button onclick="triggerFullDownload()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg transition transform active:scale-95">
+                <button onclick="triggerFullDownload()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg active:scale-95 transition">
                     <span class="text-base">📥</span>
-                    <span>Download Video</span>
+                    <span>Download Movie</span>
                 </button>
             </div>
 
-            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-3 backdrop-blur-md">
-                <div>
-                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Brief Summary & Analysis</h3>
-                    <p id="workspace-movie-desc" class="text-xs text-gray-200 leading-relaxed mt-1">Select a video asset sequence from search catalog layout to stream or download.</p>
-                </div>
-                <div class="border-t border-white/5 pt-2">
-                    <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Production Trace Maps</h3>
-                    <p id="workspace-movie-cast" class="text-xs text-indigo-400 font-semibold mt-0.5">International Multilingual Content Delivery Node</p>
-                </div>
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-2">
+                <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Movie Summary Logs</h3>
+                <p id="workspace-movie-desc" class="text-xs text-gray-200 leading-relaxed">No tracking video catalog file active yet.</p>
             </div>
 
-            <div id="full-theater-container" class="hidden bg-black p-3 border border-indigo-900/40 rounded-2xl space-y-2 shadow-2xl">
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Direct Content Stream</span>
-                    <button onclick="closeFullTheater()" class="text-xs text-red-400 hover:underline">✕ Close</button>
-                </div>
-                <div class="aspect-video bg-gray-900 flex items-center justify-center text-xs text-gray-400">
-                    Initializing direct media stream pipeline from app engine core...
-                </div>
+            <div id="full-theater-container" class="hidden bg-black p-3 border border-indigo-900/40 rounded-2xl text-center text-xs text-indigo-300">
+                Media pipeline active. Direct link loaded into internal browser framework window sandbox context.
             </div>
         </div>
 
         <div id="page-live" class="page space-y-4">
-            <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
-                <div>
-                    <h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">X10 LIVE HUB</h1>
-                    <p class="text-[10px] text-gray-400 tracking-wide">IPTV LIVE REPO</p>
-                </div>
-                <button onclick="openSearchOverlay('live')" class="bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-bold px-3 py-2 rounded-lg text-emerald-400 flex items-center gap-1 transition-all">
-                    🔍 Connect Live Node
-                </button>
+            <div class="bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
+                <h1 class="text-base font-extrabold text-emerald-400">X10 LIVE HUB</h1>
+                <p class="text-[10px] text-gray-400">IPTV ACTIVE BROADCAST FEEDS</p>
             </div>
-
-            <div id="live-active-feed-card" class="hidden bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-4 space-y-3 backdrop-blur-md shadow-xl">
-                <h3 id="live-stream-title" class="text-sm font-bold text-white truncate">Live Channel Node</h3>
-                <div class="aspect-video bg-black rounded-xl border border-emerald-950 flex items-center justify-center text-xs text-emerald-400 animate-pulse">
-                    Parsing direct IPTV live video protocol feed...
-                </div>
-            </div>
-
-            <div class="bg-[#130f22]/40 border border-white/5 rounded-2xl p-6 text-center text-xs text-gray-500 backdrop-blur-sm">
-                📡 System live console. Tap the search layout button above to process network address queries.
+            <div class="bg-[#130f22]/40 border border-white/5 rounded-2xl p-6 text-center text-xs text-gray-400">
+                📡 Live IPTV channels status verified. Use the search index tracker button from the main Home dashboard menu to target custom network stream nodes.
             </div>
         </div>
 
         <div id="page-downloads" class="page space-y-3">
-            <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl backdrop-blur-md shadow-xl flex justify-between items-center">
-                <div>
-                    <h1 class="text-base font-extrabold text-gray-300">OFFLINE MANAGER</h1>
-                    <p class="text-[10px] text-gray-500 tracking-wide">SECURE CACHE MATRIX</p>
-                </div>
-                <button onclick="openSearchOverlay('download')" class="bg-emerald-600 hover:bg-emerald-700 text-xs font-bold px-3 py-2 rounded-xl text-white shadow-md transition">
-                    + Add Url Link
-                </button>
+            <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl backdrop-blur-md shadow-xl">
+                <h1 class="text-base font-extrabold text-gray-300">DOWNLOAD MANAGER</h1>
+                <p class="text-[10px] text-gray-500">OFFLINE DATA STORAGE STORAGE FILES</p>
             </div>
-            
             <div id="downloads-list" class="space-y-2">
                 <div class="p-4 bg-[#130f22]/30 border border-white/5 rounded-xl text-center text-xs text-gray-500">
-                    No active offline download files listed. Paste target URL links to process video pipelines.
+                    No active offline cache download paths running background network transfers.
                 </div>
             </div>
         </div>
     </main>
 
     <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/90 backdrop-blur-lg border-t border-white/5 px-6 py-2 flex justify-around items-center z-40">
-        <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400">
-            <span class="text-xl">🏠</span>
-            <span class="text-[10px] font-bold">Home</span>
+        <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400 transition">
+            <span class="text-xl">Home</span>
         </button>
         <button id="nav-live" onclick="switchTab('live')" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition">
-            <span class="text-xl">📡</span>
-            <span class="text-[10px] font-bold">Live</span>
+            <span class="text-xl">Live</span>
         </button>
         <button id="nav-downloads" onclick="switchTab('downloads')" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition">
-            <span class="text-xl">📥</span>
-            <span class="text-[10px] font-bold">Downloads</span>
+            <span class="text-xl">Downloads</span>
         </button>
     </nav>
 
     <script>
         let currentTabState = 'home';
-        let currentSearchMode = 'movie'; 
         let selectedMovieData = null;
-        let isOverlayOpen = false;
+        let isOverlayActive = false;
 
-        // Force browser to register history entries so we can catch and hijack the phone's physical back key
+        // Hijack hardware device phone back keys
         function setupHardwareBackInterceptor() {
-            window.history.pushState({ role: 'home_base' }, '');
-            
-            window.addEventListener('popstate', function (event) {
-                // If search input modal overlay panel is active layout view, back button closes it
-                if (isOverlayOpen) {
+            window.history.pushState({ base: true }, '');
+            window.addEventListener('popstate', function () {
+                if (isOverlayActive) {
                     closeSearchOverlay();
-                    window.history.pushState({ role: 'home_base' }, '');
+                    window.history.pushState({ base: true }, '');
                     return;
                 }
-
-                // If app is anywhere besides Home page, back button forces navigation back to home page view
                 if (currentTabState !== 'home') {
                     switchTab('home');
-                    window.history.pushState({ role: 'home_base' }, '');
+                    window.history.pushState({ base: true }, '');
                 } else {
-                    // If user is already on Home view state, let them exit app completely
-                    alert("Exiting Application Pipeline Context...");
                     window.history.back(); 
                 }
             });
         }
 
-        // Initialize state engine on file load execution
         document.addEventListener("DOMContentLoaded", () => {
             setupHardwareBackInterceptor();
         });
 
-        // Tab Switching Logic Route Maps
+        // Tab switches handling framework elements accurately
         function switchTab(tabId) {
             currentTabState = tabId;
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById(`page-${tabId}`);
             if (targetPage) targetPage.classList.add('active');
 
-            const tabs = ['home', 'live', 'downloads'];
-            tabs.forEach(t => {
-                const navBtn = document.getElementById(`nav-${t}`);
-                if (!navBtn) return;
+            const tabIds = ['home', 'live', 'downloads'];
+            tabIds.forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (!btn) return;
                 if (t === tabId) {
-                    navBtn.classList.replace('text-gray-400', 'text-indigo-400');
+                    btn.classList.remove('text-gray-400');
+                    btn.classList.add('text-indigo-400');
                 } else {
-                    navBtn.classList.replace('text-indigo-400', 'text-gray-400');
+                    btn.classList.remove('text-indigo-400');
+                    btn.classList.add('text-gray-400');
                 }
             });
         }
@@ -302,36 +241,100 @@
             }
         }
 
-        // Search Engine Modal Controllers
-        function openSearchOverlay(mode) {
-            currentSearchMode = mode;
-            isOverlayOpen = true;
-            const overlay = document.getElementById('search-overlay');
-            const title = document.getElementById('search-overlay-title');
-            const input = document.getElementById('overlay-search-input');
-            const resultsViewport = document.getElementById('search-results-viewport');
-            
-            resultsViewport.innerHTML = "";
+        function openSearchOverlay() {
+            isOverlayActive = true;
+            document.getElementById('search-results-viewport').innerHTML = "";
             document.getElementById('search-error-state').classList.add('hidden');
-            input.value = "";
-            overlay.classList.remove('hidden');
-
-            if (mode === 'movie') {
-                title.innerText = "Global Movie Network Index Search";
-                input.placeholder = "Type global movie name (e.g. Batman, Jawan, Sholay)...";
-            } else if (mode === 'live') {
-                title.innerText = "IPTV Stream Router Console";
-                input.placeholder = "Enter custom live stream URL protocol network link...";
-            } else if (mode === 'download') {
-                title.innerText = "Video Downloader Pipeline Parser";
-                input.placeholder = "Paste target video resource download link here...";
-            }
-            input.focus();
+            document.getElementById('overlay-search-input').value = "";
+            document.getElementById('search-overlay').classList.remove('hidden');
+            document.getElementById('overlay-search-input').focus();
         }
 
         function closeSearchOverlay() {
-            isOverlayOpen = false;
+            isOverlayActive = false;
             document.getElementById('search-overlay').classList.add('hidden');
         }
 
-     
+        async function processOverlaySearch() {
+            const query = document.getElementById('overlay-search-input').value.trim();
+            const view = document.getElementById('search-results-viewport');
+            const err = document.getElementById('search-error-state');
+
+            view.innerHTML = "";
+            err.classList.add('hidden');
+            if (!query) return;
+
+            view.innerHTML = '<p class="text-xs text-center text-indigo-400 animate-pulse py-4">Searching Global Databases...</p>';
+
+            try {
+                const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=5dcf7f28a88be0edc01bbbde06f024ab&query=${encodeURIComponent(query)}&include_adult=false`);
+                const data = await res.json();
+                view.innerHTML = "";
+
+                if (!data.results || data.results.length === 0) {
+                    err.classList.remove('hidden');
+                    return;
+                }
+
+                data.results.forEach(item => {
+                    if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
+                    const name = item.title || item.name;
+                    const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/90x135?text=Movie';
+                    
+                    const card = document.createElement('div');
+                    card.className = "flex gap-3 bg-[#130f22]/90 border border-white/5 p-2 rounded-xl cursor-pointer hover:border-indigo-500 transition";
+                    
+                    const payload = btoa(encodeURIComponent(JSON.stringify({ title: name, desc: item.overview || 'No overview summary logs inside directory.' })));
+                    card.setAttribute('onclick', `selectMovieFromSearch('${payload}')`);
+                    
+                    card.innerHTML = `
+                        <img src="${poster}" class="w-12 h-16 object-cover rounded bg-gray-800 flex-shrink-0">
+                        <div class="flex-1 min-w-0 flex flex-col justify-center">
+                            <h4 class="text-xs font-bold text-white truncate">${name}</h4>
+                            <p class="text-[10px] text-gray-400 line-clamp-1 mt-0.5">${item.overview || ''}</p>
+                        </div>
+                    `;
+                    view.appendChild(card);
+                });
+            } catch (e) {
+                view.innerHTML = '<p class="text-xs text-center text-yellow-500 py-2">Network timeout error code synchronization lag.</p>';
+            }
+        }
+
+        function selectMovieFromSearch(encoded) {
+            const data = JSON.parse(decodeURIComponent(atob(encoded)));
+            selectedMovieData = data;
+            document.getElementById('result-movie-title').innerText = data.title;
+            document.getElementById('movie-search-result').classList.remove('hidden');
+            closeSearchOverlay();
+        }
+
+        function selectMovieStatic(title) {
+            selectedMovieData = { title: title, desc: "High stakes movie streaming asset file parsed safely from catalog arrays." };
+            document.getElementById('result-movie-title').innerText = title;
+            document.getElementById('movie-search-result').classList.remove('hidden');
+        }
+
+        function openMovieWorkspace() {
+            if (!selectedMovieData) return;
+            switchTab('workspace');
+            document.getElementById('workspace-movie-desc').innerText = selectedMovieData.desc;
+            document.getElementById('full-theater-container').classList.add('hidden');
+        }
+
+        function triggerFullWatch() {
+            document.getElementById('full-theater-container').classList.remove('hidden');
+        }
+
+        function triggerFullDownload() {
+            if (!selectedMovieData) return;
+            switchTab('downloads');
+            document.getElementById('downloads-list').innerHTML = `
+                <div class="p-4 bg-[#130f22]/80 border border-indigo-500/30 rounded-2xl text-xs text-white">
+                    Downloading package: <span class="text-emerald-400 font-bold">${selectedMovieData.title}</span>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
