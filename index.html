@@ -22,8 +22,6 @@
         .page.active { display: block; }
         .sub-page { display: none; }
         .sub-page.active { display: block; }
-        
-        /* Continuous Vertical Video Scrolling Layout for FYP */
         .fyp-scroll-container { 
             scroll-snap-type: y mandatory; 
             overflow-y: scroll; 
@@ -46,327 +44,188 @@
         <div class="max-w-md mx-auto w-full space-y-4 pt-10">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-bold text-indigo-400 tracking-widest uppercase">Movie Search Engine</h2>
-                <button onclick="closeSearchOverlay()" class="text-xs text-red-400 font-bold bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/40">✕ Close</button>
+                <button id="btn-close-search" class="text-xs text-red-400 font-bold bg-red-950/40 px-3 py-1.5 rounded-lg border border-red-900/40">✕ Close</button>
             </div>
             <div class="flex gap-2">
                 <input id="overlay-search-input" type="text" placeholder="Type movie name here..." 
                     class="flex-1 bg-[#130f22] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-                <button onclick="processOverlaySearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-lg text-sm transition shadow-lg">
-                    Search
-                </button>
+                <button id="btn-submit-search" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 rounded-lg text-sm transition shadow-lg">Search</button>
             </div>
-
             <div id="search-results-viewport" class="space-y-3 overflow-y-auto max-h-[60vh] pt-2"></div>
-            <div id="search-error-state" class="hidden text-center py-12 text-xs text-gray-500">
-                No matching movies found globally. Please recheck the text.
-            </div>
+            <div id="search-error-state" class="hidden text-center py-12 text-xs text-gray-500">No matching movies found globally.</div>
         </div>
     </div>
 
     <main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
-
         <div id="page-home" class="page active space-y-4">
             <div class="flex justify-between items-center bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
                 <div>
                     <h1 class="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">X10 DOWNLOADER</h1>
                     <p class="text-[10px] text-gray-400 tracking-wide font-mono">ONLINE MOVIE SYSTEM</p>
                 </div>
-                <button onclick="openSearchOverlay()" class="bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-bold px-3 py-2 rounded-xl text-indigo-400 flex items-center gap-1 transition-all">
-                    🔍 Search Movie
-                </button>
+                <button id="btn-trigger-search" class="bg-indigo-500/10 border border-indigo-500/30 text-xs font-bold px-3 py-2 rounded-xl text-indigo-400">🔍 Search Movie</button>
             </div>
 
             <div class="flex border-b border-white/5 text-center text-sm font-bold">
-                <button id="btn-sub-foryou" onclick="switchHomeSubPage('foryou')" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white transition-all duration-200">For You (FYP)</button>
-                <button id="btn-sub-movies" onclick="switchHomeSubPage('movies')" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400 transition-all duration-200">Catalog</button>
+                <button id="btn-sub-foryou" class="flex-1 pb-2 border-b-2 border-indigo-500 text-white">For You (FYP)</button>
+                <button id="btn-sub-movies" class="flex-1 pb-2 border-b-2 border-transparent text-gray-400">Catalog</button>
             </div>
 
             <div id="sub-foryou" class="sub-page active">
-                <div class="fyp-scroll-container border border-white/5 rounded-2xl bg-black/60 backdrop-blur-md p-2">
-                    </div>
+                <div class="fyp-scroll-container border border-white/5 rounded-2xl bg-black/60 backdrop-blur-md p-2"></div>
             </div>
 
             <div id="sub-movies" class="sub-page space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    </div>
+                <div class="grid grid-cols-2 gap-3"></div>
             </div>
 
-            <div id="movie-search-result" class="hidden bg-indigo-950/30 border border-indigo-500/40 rounded-2xl p-4 space-y-2 cursor-pointer shadow-xl backdrop-blur-md" onclick="openMovieWorkspace()">
+            <div id="movie-search-result" class="hidden bg-indigo-950/30 border border-indigo-500/40 rounded-2xl p-4 space-y-2 cursor-pointer">
                 <span class="text-[9px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Movie Package Loaded</span>
                 <h3 id="result-movie-title" class="font-bold text-sm text-white truncate">Target Movie File Selected</h3>
-                <p class="text-xs text-indigo-300">Click right here to open theater streams and download manager choices.</p>
+                <p class="text-xs text-indigo-300">Click right here to open theater streams.</p>
             </div>
         </div>
 
         <div id="page-workspace" class="page space-y-4">
             <div class="space-y-2">
-                <span class="text-[10px] font-bold tracking-widest text-purple-400 uppercase">Movie Video Theater</span>
-                
-                <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center">
+                <div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center">
                     <video id="workspace-video-player" controls class="w-full h-full object-contain hidden"></video>
-                    
-                    <div id="workspace-poster-preview" class="absolute inset-0 w-full h-full bg-cover bg-center flex items-end p-4 bg-gradient-to-t from-black via-black/30 to-transparent z-10 transition-all duration-300">
+                    <div id="workspace-poster-preview" class="absolute inset-0 w-full h-full bg-cover bg-center flex items-end p-4 bg-gradient-to-t from-black via-black/30 to-transparent z-10">
                         <div class="space-y-1">
-                            <span class="text-[9px] bg-indigo-600 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Ready to Play</span>
-                            <h2 id="workspace-preview-title" class="text-base font-extrabold text-white drop-shadow-md">Movie Title</h2>
+                            <h2 id="workspace-preview-title" class="text-base font-extrabold text-white">Movie Title</h2>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="triggerFullWatch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg active:scale-95 transition">
-                    <span class="text-base">▶ Watch Movie Now</span>
-                </button>
-                <button onclick="triggerFullDownload()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm flex flex-col items-center justify-center shadow-lg active:scale-95 transition">
-                    <span class="text-base">📥 Download Movie</span>
-                </button>
+                <button id="btn-watch-now" class="bg-indigo-600 font-bold py-3 rounded-xl text-sm">▶ Watch Now</button>
+                <button id="btn-download-now" class="bg-emerald-600 font-bold py-3 rounded-xl text-sm">📥 Download</button>
+            </div>
+
+            <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-2">
+                <h3 class="text-xs font-bold text-indigo-400 tracking-wider uppercase">Principal Cast Actors</h3>
+                <div id="workspace-actor-cast-row" class="flex gap-3 overflow-x-auto pb-1 scrollbar-none"></div>
             </div>
 
             <div class="bg-[#130f22]/60 border border-white/5 rounded-2xl p-4 space-y-2">
                 <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase">Movie Summary Logs</h3>
-                <p id="workspace-movie-desc" class="text-xs text-gray-200 leading-relaxed">No tracking video catalog file active yet.</p>
+                <p id="workspace-movie-desc" class="text-xs text-gray-200 leading-relaxed">No active summary logged.</p>
             </div>
         </div>
 
         <div id="page-live" class="page space-y-4">
-            <div class="bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl backdrop-blur-md shadow-xl">
-                <h1 class="text-base font-extrabold text-emerald-400">X10 LIVE HUB</h1>
-                <p class="text-[10px] text-gray-400">IPTV ACTIVE BROADCAST FEEDS</p>
-            </div>
-            <div class="bg-[#130f22]/40 border border-white/5 rounded-2xl p-6 text-center text-xs text-gray-400">
-                📡 Live IPTV channels status verified. Use the search index tracker button from the main Home dashboard menu to target custom network stream nodes.
-            </div>
+            <div class="bg-[#130f22]/60 border border-white/5 p-4 rounded-2xl text-center"><h1 class="text-base font-extrabold text-emerald-400">X10 LIVE HUB</h1></div>
         </div>
 
         <div id="page-downloads" class="page space-y-3">
-            <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl backdrop-blur-md shadow-xl">
-                <h1 class="text-base font-extrabold text-gray-300">DOWNLOAD MANAGER</h1>
-                <p class="text-[10px] text-gray-500">OFFLINE DATA STORAGE FILES</p>
-            </div>
-            <div id="downloads-list" class="space-y-2">
-                <div class="p-4 bg-[#130f22]/30 border border-white/5 rounded-xl text-center text-xs text-gray-500">
-                    No active offline cache download paths running background network transfers.
-                </div>
-            </div>
+            <div class="bg-[#130f22]/60 p-4 border border-white/5 rounded-2xl shadow-xl"><h1 class="text-base font-extrabold text-gray-300">DOWNLOAD MANAGER</h1></div>
+            <div id="downloads-list" class="space-y-2"></div>
         </div>
     </main>
 
     <nav class="fixed bottom-0 inset-x-0 bg-[#0d091a]/90 backdrop-blur-lg border-t border-white/5 px-6 py-2 flex justify-around items-center z-40">
-        <button id="nav-home" onclick="window.switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400 font-bold transition">
-            <span class="text-xl">Home</span>
-        </button>
-        <button id="nav-live" onclick="window.switchTab('live')" class="flex flex-col items-center gap-1 text-gray-400 transition">
-            <span class="text-xl">Live</span>
-        </button>
-        <button id="nav-downloads" onclick="window.switchTab('downloads')" class="flex flex-col items-center gap-1 text-gray-400 transition">
-            <span class="text-xl">Downloads</span>
-        </button>
+        <button id="nav-home" class="text-indigo-400 font-bold text-xl">Home</button>
+        <button id="nav-live" class="text-gray-400 text-xl">Live</button>
+        <button id="nav-downloads" class="text-gray-400 text-xl">Downloads</button>
     </nav>
 
     <script>
-        let currentTabState = 'home';
-        let selectedMovieData = null;
-        let isOverlayActive = false;
-
-        const catalogMovies = [
-            {
-                title: 'Sintel Quest',
-                poster: 'https://images.tmdb.org/t/p/w500/d7ImQ4LzXh56vB98c253x36vX4G.jpg',
-                desc: 'Grand open-source narrative tracing a young woman\'s journey to track down her missing companion dragon across vast scenic biomes.',
-                video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
-            },
-            {
-                title: 'Tears of Steel',
-                poster: 'https://images.tmdb.org/t/p/w500/9618P1k7416lA1wepQpYF7XzUex.jpg',
-                desc: 'Sci-fi robotic dystopia project exploring high-stakes global technologies and dynamic tactical resilience matrices set in an alternate future city landscape.',
-                video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
-            }
+        let currentTabState='home', selectedMovieData=null, isOverlayActive=false, lastBackPressTime=0;
+        const targetApiKey='5dcf7f28a88be0edc01bbbde06f024ab';
+        const catalogMovies=[
+            {id:82825,title:'Ocean Frontiers (2026 Edition)',year:'2026',poster:'https://images.tmdb.org/t/p/w500/9618P1k7416lA1wepQpYF7XzUex.jpg',desc:'Full length flagship performance showcasing strategic deep-water exploratory operations.',video:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'},
+            {id:49017,title:'Sintel Quest (2025 Cut)',year:'2025',poster:'https://images.tmdb.org/t/p/w500/d7ImQ4LzXh56vB98c253x36vX4G.jpg',desc:'Special short travel narrative detailing high-altitude dragon tracking missions.',video:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'}
+        ];
+        const fypFeeds=[
+            {title:'Trending Loop #1',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'},
+            {title:'Trending Loop #2',src:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'}
         ];
 
-        const fypFeeds = [
-            { title: 'Trending Preview #1', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' },
-            { title: 'Trending Preview #2', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4' }
-        ];
-
-        function setupHardwareBackInterceptor() {
-            window.history.pushState({ base: true }, '');
-            window.addEventListener('popstate', function () {
-                if (isOverlayActive) {
-                    closeSearchOverlay();
-                    window.history.pushState({ base: true }, '');
-                    return;
-                }
-                if (currentTabState !== 'home') {
-                    window.switchTab('home');
-                    window.history.pushState({ base: true }, '');
-                } else {
-                    window.history.back(); 
-                }
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            setupHardwareBackInterceptor();
-            renderCatalogGrid();
-            renderFYPContainer();
-        });
-
-        // Safe Clean Window-Scoped Tab Swapping Engine
-        window.switchTab = function(tabId) {
-            currentTabState = tabId;
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById(`page-${tabId}`);
-            if (targetPage) targetPage.classList.add('active');
-
-            ['home', 'live', 'downloads'].forEach(t => {
-                const btn = document.getElementById(`nav-${t}`);
-                if (!btn) return;
-                
-                btn.className = "flex flex-col items-center gap-1 transition-all duration-200";
-                
-                if (t === tabId) {
-                    btn.classList.add('text-indigo-400', 'font-bold');
-                } else {
-                    btn.classList.add('text-gray-400');
-                }
+        window.switchTab=function(t){
+            currentTabState=t;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+            document.getElementById(`page-${t}`).classList.add('active');
+            ['home','live','downloads'].forEach(b=>{
+                let e=document.getElementById(`nav-${b}`);e.className=t===b?"text-indigo-400 font-bold text-xl":"text-gray-400 text-xl";
             });
         };
-
-        // Safe Clean Window-Scoped Sub-Tab Swapping Engine
-        window.switchHomeSubPage = function(subId) {
-            document.querySelectorAll('.sub-page').forEach(sp => sp.classList.remove('active'));
-            const targetSub = document.getElementById(`sub-${subId}`);
-            if (targetSub) targetSub.classList.add('active');
-
-            const fypBtn = document.getElementById('btn-sub-foryou');
-            const moviesBtn = document.getElementById('btn-sub-movies');
-
-            if (fypBtn && moviesBtn) {
-                fypBtn.className = "flex-1 pb-2 border-b-2 text-center transition-all duration-200";
-                moviesBtn.className = "flex-1 pb-2 border-b-2 text-center transition-all duration-200";
-
-                if (subId === 'foryou') {
-                    fypBtn.classList.add('border-indigo-500', 'text-white', 'font-bold');
-                    moviesBtn.classList.add('border-transparent', 'text-gray-400');
-                } else {
-                    moviesBtn.classList.add('border-indigo-500', 'text-white', 'font-bold');
-                    fypBtn.classList.add('border-transparent', 'text-gray-400');
-                }
-            }
+        window.switchHomeSubPage=function(s){
+            document.querySelectorAll('.sub-page').forEach(p=>p.classList.remove('active'));
+            document.getElementById(`sub-${s}`).classList.add('active');
+            let f=document.getElementById('btn-sub-foryou'),m=document.getElementById('btn-sub-movies');
+            f.className=s==='foryou'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
+            m.className=s==='movies'?'flex-1 pb-2 border-b-2 border-indigo-500 text-white font-bold':'flex-1 pb-2 border-b-2 border-transparent text-gray-400';
         };
-
-        function renderCatalogGrid() {
-            const container = document.getElementById('sub-movies');
-            if (!container) return;
-            const grid = container.querySelector('.grid');
-            if (!grid) return;
-
-            grid.innerHTML = '';
-            catalogMovies.forEach(movie => {
-                const card = document.createElement('div');
-                card.className = "bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer hover:border-indigo-500 transition shadow-lg";
-                card.innerHTML = `
-                    <img src="${movie.poster}" class="h-40 w-full object-cover rounded-xl border border-white/5 mb-2 shadow-inner">
-                    <p class="text-xs font-bold truncate text-gray-200">${movie.title}</p>
-                `;
-                card.onclick = () => selectMovieStatic(movie);
-                grid.appendChild(card);
+        function renderCatalogGrid(){
+            let g=document.querySelector('#sub-movies .grid');g.innerHTML='';
+            catalogMovies.forEach(m=>{
+                let c=document.createElement('div');c.className="bg-[#130f22]/50 border border-white/5 p-2 rounded-2xl text-center cursor-pointer";
+                c.innerHTML=`<div class="w-full aspect-video bg-black rounded-xl overflow-hidden mb-2"><video class="w-full h-full object-cover" loop muted playsinline autoplay src="${m.video}"></video></div><p class="text-[11px] font-bold truncate">${m.title}</p><p class="text-[9px] font-bold text-indigo-400">${m.year}</p>`;
+                let a=()=>{selectedMovieData=m;document.getElementById('result-movie-title').innerText=m.title;document.getElementById('movie-search-result').classList.remove('hidden');fetchCastProfiles(m.id);};
+                c.addEventListener('click',a);c.addEventListener('touchstart',a,{passive:true});g.appendChild(c);
             });
         }
-
-        function renderFYPContainer() {
-            const container = document.querySelector('.fyp-scroll-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            fypFeeds.forEach(feed => {
-                const item = document.createElement('div');
-                item.className = "fyp-video-card p-4 border-b border-white/5 pb-8";
-                item.innerHTML = `
-                    <div class="aspect-[9/16] w-full bg-gray-900 rounded-xl flex items-center justify-center border border-white/10 shadow-inner relative overflow-hidden">
-                        <video class="w-full h-full object-cover" loop muted playsinline autoplay src="${feed.src}"></video>
-                        <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-indigo-400 font-mono">${feed.title}</div>
-                    </div>
-                    <div class="space-y-1 mt-2">
-                        <h3 class="font-bold text-sm text-white">Continuous Movie Clip</h3>
-                        <p class="text-xs text-gray-400">Swipe up inside this view to track endless trending live cinematic video sequences.</p>
-                    </div>
-                `;
-                container.appendChild(item);
+        function renderFYPContainer(){
+            let c=document.querySelector('.fyp-scroll-container');c.innerHTML='';
+            fypFeeds.forEach(f=>{
+                let i=document.createElement('div');i.className="fyp-video-card p-4 border-b border-white/5 pb-8";
+                i.innerHTML=`<div class="aspect-[9/16] w-full bg-gray-900 rounded-xl relative overflow-hidden"><video class="w-full h-full object-cover" loop muted playsinline autoplay src="${f.src}"></video></div>`;
+                c.appendChild(i);
             });
         }
-
-        function openSearchOverlay() {
-            isOverlayActive = true;
-            document.getElementById('search-results-viewport').innerHTML = "";
-            document.getElementById('search-error-state').classList.add('hidden');
-            document.getElementById('overlay-search-input').value = "";
-            document.getElementById('search-overlay').classList.remove('hidden');
-            document.getElementById('overlay-search-input').focus();
-        }
-
-        function closeSearchOverlay() {
-            isOverlayActive = false;
-            document.getElementById('search-overlay').classList.add('hidden');
-        }
-
-        async function processOverlaySearch() {
-            const query = document.getElementById('overlay-search-input').value.trim();
-            const view = document.getElementById('search-results-viewport');
-            const err = document.getElementById('search-error-state');
-
-            view.innerHTML = "";
-            err.classList.add('hidden');
-            if (!query) return;
-
-            view.innerHTML = '<p class="text-xs text-center text-indigo-400 animate-pulse py-4">Searching Global Databases...</p>';
-
-            try {
-                const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=5dcf7f28a88be0edc01bbbde06f024ab&query=${encodeURIComponent(query)}&include_adult=false`);
-                const data = await res.json();
-                view.innerHTML = "";
-
-                if (!data.results || data.results.length === 0) {
-                    err.classList.remove('hidden');
-                    return;
-                }
-
-                data.results.forEach(item => {
-                    if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
-                    const name = item.title || item.name;
-                    const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/90x135?text=Movie';
-                    const streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-                    
-                    const card = document.createElement('div');
-                    card.className = "flex gap-3 bg-[#130f22]/90 border border-white/5 p-2 rounded-xl cursor-pointer hover:border-indigo-500 transition";
-                    
-                    const payload = btoa(encodeURIComponent(JSON.stringify({ title: name, desc: item.overview || 'No overview summary logs inside directory.', poster: poster, video: streamUrl })));
-                    card.setAttribute('onclick', `selectMovieFromSearch('${payload}')`);
-                    
-                    card.innerHTML = `
-                        <img src="${poster}" class="w-12 h-16 object-cover rounded bg-gray-800 flex-shrink-0">
-                        <div class="flex-1 min-w-0 flex flex-col justify-center">
-                            <h4 class="text-xs font-bold text-white truncate">${name}</h4>
-                            <p class="text-[10px] text-gray-400 line-clamp-1 mt-0.5">${item.overview || ''}</p>
-                        </div>
-                    `;
-                    view.appendChild(card);
+        async function fetchCastProfiles(id){
+            let r=document.getElementById('workspace-actor-cast-row');r.innerHTML='';
+            try{
+                let res=await fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${targetApiKey}`),d=await res.json();
+                d.cast.slice(0,5).forEach(a=>{
+                    let img=a.profile_path?`https://image.tmdb.org/t/p/w185${a.profile_path}`:'https://via.placeholder.com/60x60?text=Actor';
+                    let n=document.createElement('div');n.className="flex flex-col items-center flex-shrink-0 w-14 text-center";
+                    n.innerHTML=`<img src="${img}" class="w-10 h-10 object-cover rounded-full"><p class="text-[8px] truncate w-full">${a.name}</p>`;
+                    r.appendChild(n);
                 });
-            } catch (e) {
-                view.innerHTML = '<p class="text-xs text-center text-yellow-500 py-2">Network timeout error synchronization lag.</p>';
-            }
+            }catch(e){r.innerHTML='<p class="text-[10px]">No cast loaded.</p>';}
         }
-
-        function selectMovieFromSearch(encoded) {
-            const data = JSON.parse(decodeURIComponent(atob(encoded)));
-            selectedMovieData = data;
-            document.getElementById('result-movie-title').innerText = data.title;
-            document.getElementById('movie-search-result').classList.remove('hidden');
-            closeSearchOverlay();
+        async function processOverlaySearch(){
+            let q=document.getElementById('overlay-search-input').value.trim(),v=document.getElementById('search-results-viewport');v.innerHTML="";
+            if(!q)return;
+            try{
+                let res=await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${targetApiKey}&query=${encodeURIComponent(q)}`),d=await res.json();
+                d.results.forEach(i=>{
+                    let y=i.release_date?i.release_date.split('-')[0]:'N/A',p=i.poster_path?`https://image.tmdb.org/t/p/w200${i.poster_path}`:'https://via.placeholder.com/90x135?text=Movie';
+                    let c=document.createElement('div');c.className="flex gap-3 bg-[#130f22]/90 p-2 rounded-xl cursor-pointer";
+                    c.innerHTML=`<img src="${p}" class="w-12 h-16 object-cover rounded"><div class="flex-1 min-w-0"><h4 class="text-xs font-bold truncate">${i.title}</h4><p class="text-[10px] font-bold text-indigo-400">${y}</p></div>`;
+                    let act=()=>{selectedMovieData={id:i.id,title:i.title,year:y,desc:i.overview,poster:p,video:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"};document.getElementById('result-movie-title').innerText=i.title;document.getElementById('movie-search-result').classList.remove('hidden');document.getElementById('search-overlay').classList.add('hidden');isOverlayActive=false;fetchCastProfiles(i.id);};
+                    c.addEventListener('click',act);c.addEventListener('touchstart',act,{passive:true});v.appendChild(c);
+                });
+            }catch(e){}
         }
-
-        function selectMovieStatic(mo    </script>
+        document.addEventListener("DOMContentLoaded",()=>{
+            renderCatalogGrid();renderFYPContainer();window.history.pushState({base:true},'');
+            window.addEventListener('popstate',()=>{
+                if(isOverlayActive){document.getElementById('search-overlay').classList.add('hidden');isOverlayActive=false;window.history.pushState({base:true},'');}
+                else if(currentTabState!=='home'){window.switchTab('home');window.history.pushState({base:true},'');}
+                else{let t=new Date().getTime();if(t-lastBackPressTime<2000){window.history.back();}else{lastBackPressTime=t;alert("Press back again to exit.");window.history.pushState({base:true},'');}}
+            });
+            const binds=[
+                {id:'nav-home',act:()=>window.switchTab('home')},{id:'nav-live',act:()=>window.switchTab('live')},{id:'nav-downloads',act:()=>window.switchTab('downloads')},
+                {id:'btn-sub-foryou',act:()=>window.switchHomeSubPage('foryou')},{id:'btn-sub-movies',act:()=>window.switchHomeSubPage('movies')},
+                {id:'movie-search-result',act:()=> {
+                    if(!selectedMovieData)return;window.switchTab('workspace');
+                    document.getElementById('workspace-movie-desc').innerText=selectedMovieData.desc||'No summary.';
+                    document.getElementById('workspace-preview-title').innerText=`${selectedMovieData.title} (${selectedMovieData.year})`;
+                    document.getElementById('workspace-poster-preview').style.backgroundImage=`url('${selectedMovieData.poster}')`;
+                    document.getElementById('workspace-video-player').classList.add('hidden');
+                    document.getElementById('workspace-poster-preview').classList.remove('hidden');
+                }},
+                {id:'btn-trigger-search',act:()=>{isOverlayActive=true;document.getElementById('search-overlay').classList.remove('hidden');}},
+                {id:'btn-close-search',act:()=>{isOverlayActive=false;document.getElementById('search-overlay').classList.add('hidden');}},
+                {id:'btn-submit-search',act:()=>processOverlaySearch()},
+                {id:'btn-watch-now',act:()=>{let p=document.getElementById('workspace-video-player');document.getElementById('workspace-poster-preview').classList.add('hidden');p.classList.remove('hidden');p.src=selectedMovieData.video;p.load();p.play();}},
+                {id:'btn-download-now',act:()=>{window.switchTab('downloads');document.getElementById('downloads-list').innerHTML=`<div class="p-4 bg-[#130f22]/80 rounded-2xl text-xs">Downloaded: <span class="text-emerald-400 font-bold">${selectedMovieData.title}</span> (Saved Offline)</div>`;}}
+            ];
+            binds.forEach(b=>{let el=document.getElementById(b.id);if(el){el.addEventListener('click',b.act);el.addEventListener('touchstart',b.act,{passive:true});}});
+        });
+    </script>
 </body>
-</html>
-
+                    </html>
+    
