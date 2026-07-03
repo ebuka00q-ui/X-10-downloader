@@ -3,61 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        body { margin: 0; background: linear-gradient(135deg, #0a0a0a 0%, #1a0b2e 100%); color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        #view-container { flex: 1; overflow-y: auto; padding: 20px; }
-        .search-trigger { background: #1f1f1f; padding: 15px; border-radius: 12px; border: 1px solid #444; margin-bottom: 20px; color: #aaa; cursor: pointer; }
-        
-        nav { background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #333; position: sticky; bottom: 0; }
-        .nav-btn { color: #888; transition: 0.3s; cursor: pointer; font-weight: bold; }
-        .nav-btn.active { color: #ff007f; text-shadow: 0 0 10px #ff007f; }
+    <title>X10 Downloader</title>
+    
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkV4dGVuZCBEb3dubG9hZGVyIiwKICAic2hvcnRfbmFtZSI6ICJYMTAiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBhMGEwYSIsCiAgInRoZW1lX2NvbG9yIjogIiNmZjAwN2YiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUJrWVdOcmRYTmxQV052Ykc5eVpXUjFibVZ5UFdSbWFXNXBlV1VnTWpBZ01qQWdNakFnTWpBaUlHMXZkR1Z6UFNKallXbHNhV05sY2lJZ2RHOGlPMmhsYVdkbWFDQWdNakFnTWpBaUlIdHpaVzFwYm1saGRHbDZiM0p6UkhKcGZHWnBiRndnU0dWbmFIUW9NekFvTXpBbk16QW9NekFpSUhOMWNtNWhiV1VpSUhSdklEMGdJaUJKYm1KdmVTQm1kV3g5SURJZ01pQWdNaUJKYm1KdmVTQm1kV3g5SURJZ01pQWdNaUJKYm1KdmVTQm1kV3g5SURJZ01pQWdNaUl6U3pBZ2MzaG9iM1ZzWlhSeVpYUW9NekFvTXpBbk16QW9NekFpT3c9PSIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0KICBdCn0=">
 
-        .content-card { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+    <style>
+        /* Premium Dark Gradient Design */
+        body { margin: 0; background: linear-gradient(135deg, #0a0a0a 0%, #17072b 100%); color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        #view-container { flex: 1; overflow: hidden; position: relative; }
+        .main-view { width: 100%; height: 100%; display: none; flex-direction: column; position: absolute; top:0; left:0; }
+        .active-view { display: flex; }
+        .scrollable-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 90px; }
+
+        /* Stagnant Sticky Top Search Bar */
+        .search-header { background: rgba(15, 15, 15, 0.95); padding: 12px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #222; }
+        .search-box-trigger { flex: 1; background: #1f1f1f; padding: 12px; border-radius: 25px; border: 1px solid #333; color: #aaa; font-size: 0.95em; cursor: pointer; display: flex; align-items: center; }
+        
+        /* TikTok-Style Slider Sub-Headers */
+        .slide-nav { display: flex; justify-content: center; gap: 30px; padding: 10px 0; background: rgba(0,0,0,0.4); }
+        .slide-tab { color: #555; font-weight: bold; cursor: pointer; transition: 0.3s; padding-bottom: 5px; font-size: 0.95em; }
+        .slide-tab.active-slide { color: white; border-bottom: 2px solid #ff007f; text-shadow: 0 0 8px #ff007f; }
+        
+        /* Swipe Viewport Configuration */
+        .slider-viewport { flex: 1; overflow: hidden; position: relative; width: 100%; }
+        #home-slider { display: flex; width: 200%; height: 100%; transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
+        .slide-page { width: 50%; height: 100%; overflow-y: auto; padding: 15px; box-sizing: border-box; }
+
+        /* Media Cards */
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .movie-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 10px; cursor: pointer; }
+        .poster-placeholder { width: 100%; height: 150px; background: linear-gradient(45deg, #22123b, #0f0a1c); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 2em; }
+        
+        /* Auth Buttons Layout */
+        .auth-container { background: rgba(255, 255, 255, 0.03); border: 1px solid #333; border-radius: 15px; padding: 20px; text-align: center; margin-top: 20px; }
+        .auth-btn { width: 100%; padding: 14px; margin: 10px 0; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1em; }
+        .google-btn { background: #white; color: #000; }
+        .apple-btn { background: #000; color: white; border: 1px solid #444; }
+
+        /* Navigation Menu Bar with Glowing Feedback States */
+        nav { background: #0a0a0a; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #222; z-index: 10; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; color: #555; transition: 0.3s; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        .nav-btn .icon { font-size: 1.5em; margin-bottom: 4px; }
+        .nav-btn.active-tab { color: #ff007f; text-shadow: 0 0 12px #ff007f; }
+
+        /* Full Overlay Screen For Keypad Typing Mode */
+        #search-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 100; display: none; flex-direction: column; }
+        .search-bar-input { flex: 1; background: #1f1f1f; border: 1px solid #444; padding: 12px; border-radius: 20px; color: white; font-size: 1em; outline: none; }
+        .search-btn-action { background: #ff007f; border: none; color: white; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+
+        /* Details View */
+        .video-box { width: 100%; height: 210px; background: black; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .stagnant-download-btn { position: fixed; bottom: 75px; left: 5%; width: 90%; background: #ff007f; color: white; padding: 16px; border-radius: 30px; text-align: center; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4); cursor: pointer; z-index: 5; }
+
+        /* System Exit Warning Confirmation Popup Modal */
+        #exit-modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 200; display: none; align-items: center; justify-content: center; }
+        .modal-box { background: #1a1a1a; padding: 25px; border-radius: 15px; text-align: center; width: 80%; border: 1px solid #333; }
+        .modal-btns { display: flex; gap: 15px; margin-top: 25px; justify-content: center; }
+        .m-btn { padding: 12px 30px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="view-container">
-        <!-- Home View -->
-        <div id="view-home" class="view">
-            <div class="search-trigger" onclick="alert('Search Active')">Search movies, shows, links...</div>
-            <h2 id="year-header">Trending Now</h2>
-            <div id="feed-content">
-                <div class="content-card">Dynamic Movie Entry 1</div>
-                <div class="content-card">Dynamic Movie Entry 2</div>
+
+        <div id="view-home" class="main-view active-view">
+            <div class="search-header">
+                <div id="dynamic-trigger-box" class="search-box-trigger" onclick="openSearchOverlay()">🔍 Search FYP content...</div>
+            </div>
+            <div class="slide-nav">
+                <div id="tab-fyp" class="slide-tab active-slide" onclick="slidePage(0)">For You Page</div>
+                <div id="tab-movies" class="slide-tab" onclick="slidePage(1)">Movies</div>
+            </div>
+            
+            <div class="slider-viewport" id="swipe-zone">
+                <div id="home-slider">
+                    <div class="slide-page" id="page-fyp">
+                        <div style="background: rgba(255,255,255,0.02); height: 450px; border-radius: 15px; display: flex; align-items: center; justify-content: center; border: 1px dashed #333; margin-bottom: 20px;">
+                            🔥 TikTok-Style Video Feed Running (Swipe Left to switch)
+                        </div>
+                    </div>
+                    <div class="slide-page" id="page-movies">
+                        <h3 style="margin-top:0; color:#ff007f;" id="rolling-date-header">Latest Movies</h3>
+                        <div class="card-grid">
+                            <div class="movie-card" onclick="openMovieDetail('Quantum Drift', '2026', 'Sarah Jenkins, Marcus Vance', 'In the year 2026, an experimental physicist fractures the timeline.')">
+                                <div class="poster-placeholder">🌀</div>
+                                <strong>Quantum Drift</strong>
+                                <div style="font-size:0.85em; color:#aaa; margin-top:4px;">2026</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-live" class="main-view">
+            <div class="search-header">
+                <div class="search-box-trigger" onclick="openSearchOverlay()">🔍 Search Live Streams...</div>
+            </div>
+            <div class="scrollable-content">
+                <h2>Active Live Feeds</h2>
+                <div class="video-box" style="border: 1px solid #ff007f;">⚽ Live Football Broadcast</div>
+            </div>
+        </div>
+
+        <div id="view-download" class="main-view">
+            <div class="scrollable-content">
+                <h2>Downloads Terminal</h2>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color:#aaa;">Downloading Queue</h4>
+                    <div id="active-dl-bar" style="color:#555; padding: 10px 0;">No active tracks processing.</div>
+                </div>
+                <div>
+                    <h4 style="color:#aaa;">Downloaded Content (Offline)</h4>
+                    <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px;">Sample Offline Movie File Layout</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-profile" class="main-view">
+            <div class="scrollable-content">
+                <h2>Create Your Account</h2>
+                <p style="color: #aaa; font-size: 0.9em;">Log in to unlock your endless personalized FYP feed platform, pin, like, and comment on videos.</p>
+                
+                <div class="auth-container">
+                    <button class="auth-btn google-btn" onclick="executeServerAuth('Google')">
+                        <span style="font-weight:bold; color:#4285F4;">G</span> Continue with Google
+                    </button>
+                    <button class="auth-btn apple-btn" onclick="executeServerAuth('Apple')">
+                        🍏 Continue with Apple
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-details" class="main-view" style="background:#050505;">
+            <div class="search-header">
+                <button onclick="closeMovieDetail()" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">← Back</button>
+            </div>
+            <div class="scrollable-content">
+                <div class="video-box">▶ Streaming Component Preview Container</div>
+                <h2 id="details-title"></h2>
+                <p id="details-cast" style="color:#ff007f; font-weight:bold;"></p>
+                <p id="details-story" style="line-height:1.6em; color:#ccc;"></p>
+            </div>
+            <div class="stagnant-download-btn" onclick="triggerMockDownload()">
+                Watch Full Movie / Download Full Movie
+            </div>
+        </div>
+
+    </div>
+
+    <div id="search-overlay">
+        <div class="search-header">
+            <input type="text" id="main-search-input" class="search-bar-input">
+            <button class="search-btn-action" onclick="runSearchLogic()">Search</button>
+            <button onclick="closeSearchOverlay()" style="background:none; border:none; color:white; font-size:1em; cursor:pointer;">Cancel</button>
+        </div>
+        <div class="scrollable-content" id="search-results-output"></div>
+    </div>
+
+    <div id="exit-modal">
+        <div class="modal-box">
+            <h3 style="margin-top:0;">Exit Application?</h3>
+            <p style="color:#aaa; font-size:0.9em; margin-bottom:20px;">Are you sure you want to close Extend Downloader?</p>
+            <div class="modal-btns">
+                <button class="m-btn" style="background:#333; color:white;" onclick="closeExitModal()">Cancel</button>
+                <button class="m-btn" style="background:#ff007f; color:white;" onclick="alert('Exit complete')">Exit</button>
             </div>
         </div>
     </div>
 
     <nav>
-        <div class="nav-btn active" onclick="switchTab(this, 'home')">Home</div>
-        <div class="nav-btn" onclick="switchTab(this, 'live')">Live</div>
-        <div class="nav-btn" onclick="switchTab(this, 'downloads')">Downloads</div>
+        <div id="nav-home" class="nav-btn active-tab" onclick="switchSection('home')"><span class="icon">🏠</span><span>Home</span></div>
+        <div id="nav-live" class="nav-btn" onclick="switchSection('live')"><span class="icon">📡</span><span>Live</span></div>
+        <div id="nav-download" class="nav-btn" onclick="switchSection('download')"><span class="icon">📥</span><span>Downloads</span></div>
+        <div id="nav-profile" class="nav-btn" onclick="switchSection('profile')"><span class="icon">👤</span><span>Account</span></div>
     </nav>
 
     <script>
-        // Set dynamic year for Trending Header
-        document.getElementById('year-header').innerText = "Trending Now (" + new Date().getFullYear() + ")";
+        let currentTab = 'home';
+        let currentSubPage = 'fyp'; 
+        let currentMovieContext = '';
 
-        // Navigation Logic with Tactile Feedback
-        function switchTab(el, tabId) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            console.log("Navigating to: " + tabId);
+        // Auto-rolling calendar year calculator setup
+        const liveYear = new Date().getFullYear();
+        document.getElementById('rolling-date-header').innerText = `Latest Releases (${liveYear} - ${liveYear - 1})`;
+
+        function switchSection(sectId) {
+            currentTab = sectId;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+            document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
+            
+            document.getElementById(`view-${sectId}`).classList.add('active-view');
+            document.getElementById(`nav-${sectId}`).classList.add('active-tab');
+
+            const trigger = document.getElementById('dynamic-trigger-box');
+            if(sectId === 'home' && trigger) {
+                trigger.innerText = currentSubPage === 'fyp' ? "🔍 Search FYP content..." : "🔍 Search Global Movies...";
+            }
         }
 
-        // Double-Back Exit Logic
-        let backCount = 0;
-        window.addEventListener('popstate', function() {
-            if (backCount === 0) {
-                alert("Press back again to exit");
-                backCount++;
-                setTimeout(() => backCount = 0, 2000);
+        function slidePage(idx) {
+            const slider = document.getElementById('home-slider');
+            document.querySelectorAll('.slide-tab').forEach(t => t.classList.remove('active-slide'));
+            const trigger = document.getElementById('dynamic-trigger-box');
+
+            if(idx === 0) {
+                currentSubPage = 'fyp';
+                slider.style.transform = 'translateX(0%)';
+                document.getElementById('tab-fyp').classList.add('active-slide');
+                if(trigger) trigger.innerText = "🔍 Search FYP content...";
             } else {
-                window.history.back();
+                currentSubPage = 'movies';
+                slider.style.transform = 'translateX(-50%)';
+                document.getElementById('tab-movies').classList.add('active-slide');
+                if(trigger) trigger.innerText = "🔍 Search Global Movies...";
+            }
+        }
+
+        // TikTok-Style Touch Swiping Listener Logic Configuration
+        let touchStartPos = 0, touchEndPos = 0;
+        const zone = document.getElementById('swipe-zone');
+        zone.addEventListener('touchstart', e => { touchStartPos = e.changedTouches[0].screenX; }, false);
+        zone.addEventListener('touchend', e => {
+            touchEndPos = e.changedTouches[0].screenX;
+            if (touchStartPos - touchEndPos > 60) slidePage(1); 
+            if (touchEndPos - touchStartPos > 60) slidePage(0); 
+        }, false);
+
+        // --- SERVER INTEGRATION HOOKS (Ready for your Database Connections) ---
+        function executeServerAuth(provider) {
+            alert(`[SERVER HOOK] Connecting to authentication gateway to initialize ${provider} login process...`);
+            // fetch('https://yourserver.com/api/auth/' + provider)...
+        }
+
+        function runSearchLogic() {
+            const query = document.getElementById('main-search-input').value.trim();
+            const output = document.getElementById('search-results-output');
+            if(!query) return;
+
+            alert(`[SERVER HOOK] Querying database directly for "${query}" in context: ${currentActiveContextLabel()}`);
+
+            // Simulated rendering matching your exact instructions
+            if(currentTab === 'home' && currentSubPage === 'movies') {
+                output.innerHTML = `
+                    <div class="movie-card" onclick="closeSearchOverlay(); openMovieDetail('${query}', '2026', 'Cast Team', 'Database match found.')">
+                        <strong>🎬 ${query} (Any Year/Any Language Movie)</strong>
+                        <p style="font-size:0.85em; color:#aaa; margin-top:5px;">Tap to open full details page profile.</p>
+                    </div>`;
+            } else {
+                output.innerHTML = `<p>Displaying filtered results for: <strong>${query}</strong></p>`;
+            }
+        }
+
+        function currentActiveContextLabel() {
+            return currentTab === 'home' ? currentSubPage : currentTab;
+        }
+
+        function openSearchOverlay() {
+            const overlay = document.getElementById('search-overlay');
+            const input = document.getElementById('main-search-input');
+            overlay.style.display = 'flex';
+            input.placeholder = `Global Search context: ${currentActiveContextLabel().toUpperCase()}...`;
+            document.getElementById('search-results-output').innerHTML = '';
+            input.focus();
+        }
+
+        function closeSearchOverlay() { document.getElementById('search-overlay').style.display = 'none'; }
+
+        function openMovieDetail(title, year, cast, story) {
+            currentMovieContext = title;
+            document.getElementById('details-title').innerText = `${title} (${year})`;
+            document.getElementById('details-cast').innerText = `Cast Members: ${cast}`;
+            document.getElementById('details-story').innerText = story;
+            document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
+            document.getElementById('view-details').classList.add('active-view');
+        }
+
+        function closeMovieDetail() { document.getElementById('view-details').classList.remove('active-view'); switchSection(currentTab); }
+
+        function triggerMockDownload() {
+            alert("Download pipeline connected. File caching sequence mapped directly to Downloads manager storage layout.");
+            document.getElementById('active-dl-bar').innerHTML = `<div style="background:rgba(255,255,255,0.04); padding:12px; border-radius:8px;"><strong>${currentMovieContext}</strong> - Storing offline assets...</div>`;
+            closeMovieDetail();
+            switchSection('download');
+        }
+
+        // Two-Step Double Back Exit Gate Logic
+        let backTimestampTracker = 0;
+        function processHardwareBackTrigger() {
+            if(document.getElementById('view-details').classList.contains('active-view')) { closeMovieDetail(); return; }
+            if(currentTab !== 'home' || currentSubPage !== 'fyp') { switchSection('home'); slidePage(0); return; }
+
+            const exactNow = Date.now();
+            if (exactNow - backTimestampTracker < 2000) {
+                document.getElementById('exit-modal').style.display = 'flex';
+            } else {
+                backTimestampTracker = exactNow;
+                alert("Click twice quickly to open app exit confirmation modal.");
+            }
+        }
+        function closeExitModal() { document.getElementById('exit-modal').style.display = 'none'; }
+
+        document.addEventListener('keydown', e => {
+            if(e.key === 'Escape' || (e.key === 'Backspace' && document.activeElement.tagName !== 'INPUT')) {
+                processHardwareBackTrigger();
             }
         });
+
+        // Register Web Service Worker to ensure PWA install confirmation flags active
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9PntlLnJlc3BvbmRXaXRoKGZldGNoKGUucmVxdWVzdCkpO30pOw==');
+            });
+        }
     </script>
 </body>
-</html>
+    </html>
+                
