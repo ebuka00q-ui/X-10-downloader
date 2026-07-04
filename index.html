@@ -223,7 +223,7 @@
     const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IUlSZQ_1LLxmVSE";
     let currentSubPage = 'fyp';
     let currentMovieContext = '';
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function loadVideos() {
     try {
