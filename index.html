@@ -307,9 +307,19 @@ setTimeout(loadVideos, 1000);
             if (touchEndPos - touchStartPos > 60) slidePage(0); 
         }, false);
 
-        function executeServerAuth(provider) {
-            alert(`[SERVER HOOK] Opening Auth interface gateway for ${provider}...`);
-        }
+        async function executeServerAuth() {
+    try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google'
+        });
+        
+        if (error) throw error;
+    } catch (error) {
+        console.error("Authentication error:", error.message);
+        alert("Login failed: " + error.message);
+    }
+}
+
 
         // Search Engine with Direct, Full Movie Result Cards
         function runSearchLogic() {
