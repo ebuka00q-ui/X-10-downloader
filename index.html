@@ -238,11 +238,8 @@ async function loadVideos() {
         if (!container) return;
 
         container.innerHTML = videos.map(video => {
-            // Monetization: Calculate earnings ($0.01 per view)
-            const views = video.views || 0;
-            const earnings = (views * 0.01).toFixed(2);
+            // Monetization: Calculate earnings ($0.01 per view
 
-            return `
                 <div class="video-card" style="margin-bottom: 30px; background: #111; padding: 15px; border-radius: 12px; color: white;">
                     <video src="${video.url}" controls style="width: 100%; border-radius: 8px; max-height: 400px; background: black;"></video>
                     
