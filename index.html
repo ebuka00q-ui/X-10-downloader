@@ -33,34 +33,48 @@
     </style>
 </head>
 <body>
-
-    <div id="view-container">
+ 
+  <div id="view-container">
     <div id="view-home" class="main-view active-view">
-        <div class="search-header"><input type="text" placeholder="Search FYP/Movies..."></div>
+        <div class="search-header">
+            <input type="text" id="home-search" placeholder="Search For You / Movies...">
+            <button onclick="performSearch('home')">Search</button>
+        </div>
         <div class="slide-nav">
             <div id="nav-fyp" class="nav-btn active-tab" onclick="switchSlide(0)">For You</div>
             <div id="nav-movies" class="nav-btn" onclick="switchSlide(1)">Movies</div>
         </div>
         <div id="home-content">
-            <div id="page-fyp" class="content-page active-page">... FYP Content ...</div>
-            <div id="page-movies" class="content-page">... Movies Content ...</div>
+            <div id="page-fyp" class="content-page active-page"></div>
+            <div id="page-movies" class="content-page"></div>
         </div>
     </div>
 
     <div id="view-live" class="main-view">
-        <div class="search-header"><input type="text" placeholder="Search Live Matches..."></div>
-        <div class="content-area">... Live Content ...</div>
+        <div class="search-header">
+            <input type="text" id="live-search" placeholder="Search Live Matches...">
+            <button onclick="performSearch('live')">Search</button>
+        </div>
+        <div class="content-area"></div>
     </div>
 
     <div id="view-downloads" class="main-view">
-        <div class="search-header"><input type="text" placeholder="Search Downloads..."></div>
-        <div class="content-area">... Downloads Content ...</div>
+        <div class="search-header">
+            <input type="text" id="dl-search" placeholder="Search Downloads...">
+            <button onclick="performSearch('downloads')">Search</button>
+        </div>
+        <div class="content-area"></div>
     </div>
 
     <div id="view-account" class="main-view">
-        <div class="content-area">... Account Content ...</div>
+        <div class="search-header">
+            <h2 class="section-title">Account</h2>
+        </div>
+        <div class="content-area">
+            <div class="profile-placeholder">User Profile Details</div>
+        </div>
     </div>
-    </div>
+  </div>
     
 
     <div id="view-live" class="main-view">... Live Content ...</div>
