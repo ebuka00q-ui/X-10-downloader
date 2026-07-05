@@ -120,17 +120,8 @@
     const targetNav = document.getElementById('nav-' + sectId);
 
     if (targetView) targetView.classList.add('active-view');
-    if (targetNav) targetNav.classList.add('active-tab');
-}
- 
-
-    // 2. Add 'active' status to the specific button and view
-    const targetView = document.getElementById('view-' + sectId);
-    const targetNav = document.getElementById('nav-' + sectId);
-    
-    if (targetView) targetView.classList.add('active-view');
-    if (targetNav) targetNav.classList.add('active-tab');
-
+    if (targetNav) targetNav.classList.add('active-tab'); }
+                    
     // 3. DYNAMIC SEARCH BAR UPDATE
     const searchBar = document.getElementById('main-search-bar');
     if (searchBar) {
