@@ -129,11 +129,11 @@
 
                 // Global Feed Database Stream Fetcher 
 function loadVideos() {
-    const CURRENT_APP_VERSION = 2;
+    // 1. Update Engine
+    const CURRENT_APP_VERSION = 3; 
     const savedVersion = localStorage.getItem('app_version') || 1;
-
     if (savedVersion < CURRENT_APP_VERSION) {
-        if (confirm("New Update Available! Click OK to update.")) {
+        if (confirm("New Update Available! Click OK to sync.")) {
             localStorage.setItem('app_version', CURRENT_APP_VERSION);
             window.location.reload();
         }
@@ -142,36 +142,43 @@ function loadVideos() {
     const container = document.getElementById('page-fyp');
     if (!container) return;
 
-    const fallbackVideos = [
-        { id: "v1", title: "Global CDN Test Node Stream", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", views: 1420 },
-        { id: "v2", title: "Secondary Storage Verification", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", views: 9310 }
+    const contentData = [
+        { id: "v1", username: "JohnDoe", views: 1420, followers: 850, following: 120 },
+        { id: "v2", username: "Alice_Pro", views: 9310, followers: 2100, following: 450 }
     ];
 
-    container.innerHTML = fallbackVideos.map(video => {
-        const earnings = (video.views * 0.01).toFixed(2);
+    container.innerHTML = contentData.map(item => {
+        // Earnings are private: Visible in browser console only (F12)
+        console.log(`Creator View - Earnings for @${item.username}: $${(item.views * 0.01).toFixed(2)}`);
+
         return `
-            <div class="video-card" style="margin-bottom:20px; padding:10px; border-bottom:1px solid #333;">
-                <video src="${video.url}" controls style="width:100%; border-radius:10px;"></video>
-                <h3 style="color:white; margin:10px 0;">${video.title}</h3>
-                <p style="color:#4CAF50;">💰 Earnings: $${earnings}</p>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="handleLike('${video.id}')" style="color:#ff4757;">❤️ Like</button>
-                    <button onclick="handleComment('${video.id}')" style="color:#1e90ff;">💬 Comment</button>
-                    <button onclick="handlePin('${video.id}')" style="color:#ffa500;">📌 Pin</button>
+            <div class="content-card" style="position:relative; width:100%; height:85vh; background:black; margin-bottom:20px; overflow:hidden;" data-username="${item.username.toLowerCase()}">
+                <div style="width:100%; height:100%; background:#111; display:flex; align-items:center; justify-content:center; color:white;">
+                    Content: @${item.username}
+                </div>
+                
+                <div style="position:absolute; right:15px; bottom:100px; display:flex; flex-direction:column; gap:20px; align-items:center; z-index:10;">
+                    <div onclick="enterAccount('${item.username}')" style="cursor:pointer; text-align:center;">
+                        <div style="width:40px; height:40px; border-radius:50%; background:#555; border:2px solid white;"></div>
+                    </div>
+                    <button onclick="handleLike('${item.id}')" style="background:none; border:none; color:white;">❤️ Like</button>
+                    <button onclick="handleComment('${item.id}')" style="background:none; border:none; color:white;">💬 Comment</button>
+                    <button onclick="handlePin('${item.id}')" style="background:none; border:none; color:white;">📌 Pin</button>
+                    <button onclick="handleShare('${item.id}')" style="background:none; border:none; color:white;">↗️ Share</button>
+                </div>
+
+                <div style="position:absolute; bottom:20px; left:15px; color:white; z-index:10;">
+                    <h3 style="margin:0;">@${item.username}</h3>
+                    <div style="display:flex; gap:15px; font-size:12px; margin-top:5px;">
+                        <span>Followers: ${item.followers}</span>
+                        <span>Following: ${item.following}</span>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
 }
-            ;
-            } catch (err) {
-                console.error(err);
-            }
-        }
-                setTimeout(() => {
-            loadVideos();
-            switchSection('fyp');
-        }, 300);
+    
             
        </script>
 </body>
