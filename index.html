@@ -165,7 +165,12 @@
                 console.error(err);
             }
         }
-        setTimeout(loadVideos, 300);
+                setTimeout(() => {
+            loadVideos();
+            switchSection('home');
+        }, 300);
+            
+        
             
     </script>
 </body>
