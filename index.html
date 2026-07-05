@@ -110,12 +110,19 @@
         document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
         
         // 2. Add 'active' status to the specific button and view you tapped
-        function switchSection(sectId) {
-            alert("Test: The script is working!");
-            
+       function switchSection(sectId) {
     // 1. Remove 'active' status from all buttons and views
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
     document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
+
+    // 2. Add 'active' status to the specific button and view
+    const targetView = document.getElementById('view-' + sectId);
+    const targetNav = document.getElementById('nav-' + sectId);
+
+    if (targetView) targetView.classList.add('active-view');
+    if (targetNav) targetNav.classList.add('active-tab');
+}
+ 
 
     // 2. Add 'active' status to the specific button and view
     const targetView = document.getElementById('view-' + sectId);
