@@ -129,26 +129,38 @@
 
                 // Global Feed Database Stream Fetcher 
                 function loadVideos() {
-            const container = document.getElementById('page-fyp');
-            if (!container) return;
+    const APP_VERSION = 1; 
+    const container = document.getElementById('page-fyp');
+    if (!container) return;
 
-            let error = true; 
-            let videos = null;
-                    
-                
-                // Backup videos if your database table happens to be empty
-                if (error || !videos || videos.length === 0) {
-                    videos = [
-                        { id: "v1", title: "Global CDN Test Node Stream", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", views: 1420 },
-                        { id: "v2", title: "Secondary Storage Verification Stream", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", views: 9310 }
-                    ];
+    const fallbackVideos = [
+        { 
+            id: "v1", 
+            title: "Global CDN Test Node Stream", 
+            url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", 
+            views: 1420 
+        },
+        { 
+            id: "v2", 
+            title: "Secondary Storage Verification Stream", 
+            url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", 
+            views: 9310 
+        }
+    ];
+
+    container.innerHTML = fallbackVideos.map(video => {
+        const views = video.views || 0;
+        const earnings = (views * 0.01).toFixed(2);
+        return `
+            <div style="background:#111; margin:10px; padding:15px; border-radius:10px; border:1px solid #222;">
+                <video src="${video.url}" controls style="width:100%; border-radius:8px;"></video>
+                <h3 style="color:#fff; margin:10px 0 5px 0; font-size:16px;">${video.title}</h3>
+                <p style="color:#888; font-size:12px; margin:0;">👁️ ${views} views | 💰 $${earnings} earned</p>
+            </div>
+        `;
+    }).join('');
                 }
-
-                // Render cards dynamically with earnings tracking
-                container.innerHTML = videos.map(video => {
-                    const views = video.views || 0;
-                    const earnings = (views * 0.01).toFixed(2);
-                    return `
+            
                         <div class="video-card">
                             <video src="${video.url}" controls style="width: 100%; border-radius: 12px; background: black;"></video>
                             <h3 style="margin: 12px 0 6px 0;">${video.title || 'Untitled'}</h3>
