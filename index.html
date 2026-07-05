@@ -109,7 +109,7 @@
 
         function switchSection(sectId) {
             currentTab = sectId;
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
             document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
             document.getElementById(`view-${sectId}`).classList.add('active-view');
             document.getElementById(`nav-${sectId}`).classList.add('active-tab');
