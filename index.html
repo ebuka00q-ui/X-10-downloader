@@ -128,13 +128,13 @@
         }
 
                 // Global Feed Database Stream Fetcher 
-        async function loadVideos() {
-            try {
-                const container = document.getElementById('page-fyp');
-                if (!container) return;
+                function loadVideos() {
+            const container = document.getElementById('page-fyp');
+            if (!container) return;
 
-                // Fetch data from your live Supabase video cluster
-                let { data: videos, error } = await supabase.from('videos').select('*');
+            let error = true; 
+            let videos = null;
+                    
                 
                 // Backup videos if your database table happens to be empty
                 if (error || !videos || videos.length === 0) {
