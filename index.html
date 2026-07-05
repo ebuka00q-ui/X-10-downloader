@@ -40,11 +40,20 @@
                 <div id="dynamic-trigger-box" class="search-box-trigger">🔍 Search FYP content...</div>
             </div>
             <div class="slide-nav">
-                <div id="nav-home" class="nav-btn active-tab" onclick="switchSection('home')">For You</div>
-<div id="nav-movies" class="nav-btn" onclick="switchSection('movies')">Movies</div>
-<div id="nav-live" class="nav-btn" onclick="switchSection('live')">Live</div>
-<div id="nav-downloads" class="nav-btn" onclick="switchSection('downloads')">Downloads</div>
-<div id="nav-account" class="nav-btn" onclick="switchSection('account')">Account</div>
+                <div id="view-container">
+    <div id="view-home" class="main-view active-view">
+        <div class="slide-nav">
+            <div id="tab-fyp" class="nav-btn active-tab" onclick="switchSlide(0)">For You</div>
+            <div id="tab-movies" class="nav-btn" onclick="switchSlide(1)">Movies</div>
+        </div>
+        <div id="home-content">... content ...</div>
+    </div>
+
+    <div id="view-live" class="main-view">... Live Content ...</div>
+    <div id="view-downloads" class="main-view">... Downloads ...</div>
+    <div id="view-account" class="main-view">... Account ...</div>
+                </div>
+                
                 
             </div>
             <div class="slider-viewport">
