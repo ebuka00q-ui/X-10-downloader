@@ -3,90 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <title>X10 Downloader</title>
-    <link rel="manifest" href='data:application/json,{"name":"X10 Downloader","short_name":"X10","start_url":"/","display":"standalone","background_color":"#0a0a0a"}'>
+    <link rel="manifest" href='data:application/json,{"name":"X10 Downloader","short_name":"X10","start_url":"/","display":"standalone","background_color":"#0a0a0a","icons":[{"src":"https://via.placeholder.com/192x192.png?text=X10","sizes":"192x192","type":"image/png"}]}'>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        :root { --primary: #ff007f; --bg: #0a0a0a; }
-        body { margin: 0; background: var(--bg); color: white; font-family: -apple-system, sans-serif; overflow: hidden; }
-        #app { height: 100vh; display: flex; flex-direction: column; }
-        
-        #view-feed, #view-profile, #view-upload { display: none; height: 100vh; }
-        #view-feed { display: block; }
-        #feed-container { flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; background: #000; }
-        .video-slide { height: 100vh; scroll-snap-align: start; position: relative; background: #111; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-        
-        .social-stack { position: absolute; right: 4vw; bottom: 12vh; display: flex; flex-direction: column; gap: 3vh; z-index: 10; }
+        :root { --primary: #ff007f; --bg: #0a0a0a; --neutral: #ffffff; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; height: 100vh; }
+        #app { display: flex; flex-direction: column; height: 100%; }
+        #search-container { flex: 0 0 8vh; background: #111; padding: 1vh 4vw; display: flex; align-items: center; border-bottom: 1px solid #333; }
+        #search-input { width: 100%; background: #222; border: none; padding: 1.5vh; color: white; border-radius: 5px; }
+        .panel { display: none; flex: 1; overflow-y: auto; width: 100%; padding: 2vh; }
+        .panel.active { display: block; }
+        /* Interactive Social Stack */
+        .social-stack { position: absolute; right: 4vw; bottom: 12vh; display: flex; flex-direction: column; gap: 3vh; z-index: 5; }
         .stack-item { cursor: pointer; font-size: 8vw; text-align: center; }
-        .stack-text { font-size: 2.5vw; display: block; margin-top: 2px; }
-
-        #dl-panel { position: absolute; bottom: 8vh; left: 0; width: 100%; height: 0; overflow: hidden; transition: height 0.3s; background: #1a0a2e; z-index: 20; border-top: 2px solid var(--primary); }
-        #dl-panel.active { height: 75vh; }
-        
-        nav { height: 8vh; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 100; position: absolute; bottom: 0; left: 0; width: 100%; }
-        .nav-btn { cursor: pointer; font-size: 4vw; }
-        .nav-btn.active { color: var(--primary); }
+        .stack-text { font-size: 2.5vw; display: block; color: white; margin-top: 2px; }
+        .liked { color: var(--primary); }
+        nav { flex: 0 0 8vh; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; }
+        .nav-btn { color: #888; font-size: 3.5vw; cursor: pointer; }
+        .nav-btn.active { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="view-feed">
-        <div id="feed-container">
-            <!-- Videos will load here automatically -->
+    <div id="search-container"><input type="text" id="search-input" placeholder="Search For You..."></div>
+
+    <div id="home-panel" class="panel active">
+        <div style="display:flex; justify-content:center; gap:5vw; padding-bottom:2vh; font-size: 4vw;">
+            <span onclick="updateSearch('fy')">For You</span> | <span onclick="updateSearch('mv')">Movies</span>
         </div>
         <div class="social-stack">
-            <div class="stack-item" onclick="alert('Liked')">❤️<span class="stack-text">Like</span></div>
-            <div class="stack-item" onclick="alert('Comment')">💬<span class="stack-text">Comment</span></div>
-            <div class="stack-item" onclick="handleShare()">➤<span class="stack-text">Share</span></div>
-            <div class="stack-item" onclick="showProfile()">👤<span class="stack-text">Me</span></div>
+            <div class="stack-item" onclick="toggleLike(this)" id="like-btn">❤️<span class="stack-text" id="like-count">1200</span></div>
+            <div class="stack-item" onclick="alert('Comment section')">💬<span class="stack-text">Comment</span></div>
+            <div class="stack-item" onclick="alert('Pinned')">📌<span class="stack-text">Pin</span></div>
+            <div class="stack-item" onclick="alert('Sharing...')">➤<span class="stack-text">Share</span></div>
         </div>
     </div>
 
-    <div id="view-upload"><div style="padding: 20vw; text-align: center;"><h1>＋ Gallery Upload</h1></div></div>
-    <div id="view-profile"><div style="padding: 20vw; text-align: center;"><h2>X10 Profile</h2></div></div>
-    <div id="dl-panel"><div style="padding: 2vh;"><h3>Downloads</h3><h3 onclick="toggleDownloads()">×</h3></div></div>
+    <div id="live-panel" class="panel"><div style="display:flex; justify-content:center; gap:5vw; font-size: 4vw;"><span onclick="updateLive('live')">Live Now</span> | <span onclick="updateLive('catch')">Previously Shown</span></div></div>
+    <div id="dl-panel" class="panel"><h3>Downloads Manager</h3></div>
+    <div id="acc-panel" class="panel"><h2>Account</h2><p>Chat & Profile Module</p></div>
 
     <nav>
-        <div class="nav-btn" onclick="showFeed()">Feed</div>
-        <div class="nav-btn" onclick="showUpload()">＋</div>
-        <div class="nav-btn" onclick="toggleDownloads()">DL</div>
-        <div class="nav-btn" onclick="showProfile()">Account</div>
+        <div class="nav-btn active" onclick="switchPanel('home', this)">Home</div>
+        <div class="nav-btn" onclick="switchPanel('live', this)">Live</div>
+        <div class="nav-btn" onclick="switchPanel('dl', this)">Download</div>
+        <div class="nav-btn" onclick="switchPanel('acc', this)">Account</div>
     </nav>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+    // --- EASY CONFIG ZONE ---
+    const CURRENT_APP_VERSION = 4;
     const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
-    const CURRENT_APP_VERSION = 4;
-
+    // -------------------------
+    
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // The Automatic Data Loop
-    async function initFeed() {
-        const { data, error } = await supabase.from('videos').select('*');
-        if (error) {
-            console.error("Connection Error:", error);
+    // Like Toggle Logic
+    function toggleLike(el) {
+        const countEl = document.getElementById('like-count');
+        let count = parseInt(countEl.innerText);
+        if (el.classList.contains('liked')) {
+            el.classList.remove('liked');
+            countEl.innerText = count - 1;
         } else {
-            const feed = document.getElementById('feed-container');
-            data.forEach(video => {
-                const div = document.createElement('div');
-                div.className = 'video-slide';
-                div.innerHTML = `<video src="${video.url}" width="100%" height="100%" autoplay loop playsinline muted></video>`;
-                feed.appendChild(div);
-            });
+            el.classList.add('liked');
+            countEl.innerText = count + 1;
         }
     }
 
-    function showFeed() { document.getElementById('view-feed').style.display='block'; document.getElementById('view-profile').style.display='none'; document.getElementById('view-upload').style.display='none'; }
-    function showProfile() { document.getElementById('view-feed').style.display='none'; document.getElementById('view-profile').style.display='block'; document.getElementById('view-upload').style.display='none'; }
-    function showUpload() { document.getElementById('view-feed').style.display='none'; document.getElementById('view-profile').style.display='none'; document.getElementById('view-upload').style.display='block'; }
-    function toggleDownloads() { document.getElementById('dl-panel').classList.toggle('active'); }
-    function handleShare() { alert("Opening Share/Chat..."); }
+    function switchPanel(id, btn) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id + '-panel').classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function updateSearch(type) { document.getElementById('search-input').placeholder = (type === 'fy') ? 'Search For You...' : 'Search Movies...'; }
+    function updateLive(type) { document.getElementById('search-input').placeholder = (type === 'live') ? 'Search Live...' : 'Search Previously Shown...'; }
 
     window.onload = () => {
-        initFeed(); // Starts the video loop
-        if ((localStorage.getItem('ver') || 1) < CURRENT_APP_VERSION) alert("Update needed!");
+        if ((localStorage.getItem('v') || 1) < CURRENT_APP_VERSION) {
+            if(confirm("New X10 Update!")) { localStorage.setItem('v', CURRENT_APP_VERSION); window.location.reload(); }
+        }
     };
 </script>
 </body>
