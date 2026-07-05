@@ -2,247 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="manifest" href='data:application/json,{"name":"X10 Downloader","short_name":"X10","start_url":"/","display":"standalone","background_color":"#0a0a0a"}'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-/* --- MASTER CSS (Unique Colorful Style) --- */
-html, body { height: 100%; width: 100%; margin: 0; padding: 0; 
-             background: linear-gradient(135deg, #1a0a2e, #0a0a0a, #2e0a24); 
-             color: white; font-family: system-ui; overflow: hidden; }
-#app-container { width: 100%; height: 100vh; display: flex; flex-direction: column; }
-#view-container { flex: 1; position: relative; }
+        :root { --primary: #ff007f; --bg: #0a0a0a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: -apple-system, sans-serif; overflow: hidden; }
+        #app { height: 100vh; display: flex; flex-direction: column; }
+        
+        #view-feed, #view-profile, #view-upload { display: none; height: 100vh; }
+        #view-feed { display: block; }
+        #feed-container { flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; background: #000; }
+        .video-slide { height: 100vh; scroll-snap-align: start; position: relative; background: #111; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        
+        .social-stack { position: absolute; right: 4vw; bottom: 12vh; display: flex; flex-direction: column; gap: 3vh; z-index: 10; }
+        .stack-item { cursor: pointer; font-size: 8vw; text-align: center; }
+        .stack-text { font-size: 2.5vw; display: block; margin-top: 2px; }
 
-/* Views & FYP Feed */
-.main-view { display: none; height: 100%; width: 100%; flex-direction: column; }
-.main-view.active-view { display: flex; }
-#page-fyp { background: transparent; }
-.video-player { width: 100%; height: 100%; object-fit: cover; }
+        #dl-panel { position: absolute; bottom: 8vh; left: 0; width: 100%; height: 0; overflow: hidden; transition: height 0.3s; background: #1a0a2e; z-index: 20; border-top: 2px solid var(--primary); }
+        #dl-panel.active { height: 75vh; }
+        
+        nav { height: 8vh; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 100; position: absolute; bottom: 0; left: 0; width: 100%; }
+        .nav-btn { cursor: pointer; font-size: 4vw; }
+        .nav-btn.active { color: var(--primary); }
+    </style>
+</head>
+<body>
 
-/* UI Overlays */
-.video-overlay { position: absolute; right: 2%; bottom: 15%; z-index: 10; display: flex; flex-direction: column; gap: 20px; }
-.action-btn { background: rgba(0,0,0,0.4); padding: 3vw; border-radius: 50%; cursor: pointer; backdrop-filter: blur(5px); }
-
-/* Download Panel */
-.download-panel { position: absolute; bottom: 10vh; width: 100%; background: rgba(25, 25, 25, 0.85); padding: 5vw; border-top-left-radius: 20px; border-top-right-radius: 20px; box-sizing: border-box; z-index: 20; backdrop-filter: blur(10px); }
-.episode-row { display: flex; justify-content: space-between; padding: 2vw; border-bottom: 1px solid #444; }
-.circle-tick { width: 5vw; height: 5vw; border: 2px solid #ff007f; border-radius: 50%; cursor: pointer; }
-.circle-tick.checked { background: #ff007f; }
-
-/* Footer & Nav */
-nav { width: 100%; height: 10vh; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; backdrop-filter: blur(10px); }
-.nav-btn { color: #aaa; cursor: pointer; font-size: 3vw; font-weight: bold; }
-#app-footer { width: 100%; background: rgba(0, 0, 0, 0.6); color: #666; text-align: center; padding: 1vh; font-size: 2vw; }
-                      </style>
-    <div class="nav-btn active-tab" onclick="switchSlide(0)">For You</div>
-<div id="nav-movies" class="nav-btn" onclick="switchSlide(1)">Movies</div>
-    
-        <div id="home-content">
-            <div id="page-fyp" class="content-page active-page"></div>
-            <div id="page-movies" class="content-page"></div>
+<div id="app">
+    <div id="view-feed">
+        <div id="feed-container">
+            <!-- Videos will load here automatically -->
+        </div>
+        <div class="social-stack">
+            <div class="stack-item" onclick="alert('Liked')">❤️<span class="stack-text">Like</span></div>
+            <div class="stack-item" onclick="alert('Comment')">💬<span class="stack-text">Comment</span></div>
+            <div class="stack-item" onclick="handleShare()">➤<span class="stack-text">Share</span></div>
+            <div class="stack-item" onclick="showProfile()">👤<span class="stack-text">Me</span></div>
         </div>
     </div>
 
-    <div id="view-live" class="main-view">
-        <div class="search-header">
-            <input type="text" id="live-search" placeholder="Search Live Matches...">
-            <button onclick="performSearch('live')">Search</button>
-        </div>
-        <div class="content-area"></div>
-    </div>
-
-    <div id="view-downloads" class="main-view">
-        <div class="search-header">
-            <input type="text" id="dl-search" placeholder="Search Downloads...">
-            <button onclick="performSearch('downloads')">Search</button>
-        </div>
-        <div class="content-area"></div>
-    </div>
-
-    <div id="view-account" class="main-view">
-        <div class="search-header">
-            <h2 class="section-title">Account</h2>
-        </div>
-        <div class="content-area">
-            <div class="profile-placeholder">User Profile Details</div>
-        </div>
-    </div>
-  </div>
-    
-
-    <div id="view-live" class="main-view">... Live Content ...</div>
-    <div id="view-downloads" class="main-view">... Downloads ...</div>
-    <div id="view-account" class="main-view">... Account ...</div>
-</div>
- 
-                
-                
-            </div>
-            <div class="slider-viewport">
-                <div id="home-slider">
-                    <div class="slide-page" id="page-fyp"></div>
-                    <div class="slide-page" id="page-movies">
-                        <div class="scrollable-content">
-                            <h3 style="color:#ff007f;">Latest Movies</h3>
-                            <div class="card-grid">
-                                <div class="movie-card">
-                                    <div class="poster-placeholder">🌀</div>
-                                    <strong>Quantum Drift</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-live" class="main-view">
-            <div class="scrollable-content">
-                <h2>Active Live Feeds</h2>
-                <div class="video-box" style="border: 1px solid #ff007f;">⚽ Live Football Broadcast</div>
-            </div>
-        </div>
-
-        <div id="view-download" class="main-view">
-            <div class="scrollable-content">
-                <h2>Downloads Terminal</h2>
-                <div style="color:#555;">No active tracks processing.</div>
-            </div>
-        </div>
-
-        <div id="view-profile" class="main-view">
-            <div class="scrollable-content">
-                <h2>Your Account</h2>
-                <p>Sign-in options coming soon.</p>
-            </div>
-        </div>
-    </div>
+    <div id="view-upload"><div style="padding: 20vw; text-align: center;"><h1>＋ Gallery Upload</h1></div></div>
+    <div id="view-profile"><div style="padding: 20vw; text-align: center;"><h2>X10 Profile</h2></div></div>
+    <div id="dl-panel"><div style="padding: 2vh;"><h3>Downloads</h3><h3 onclick="toggleDownloads()">×</h3></div></div>
 
     <nav>
-        <div id="nav-home" class="nav-btn active-tab" onclick="switchSection('home')"><div>🏠</div><span>Home</span></div>
-        <div id="nav-live" class="nav-btn" onclick="switchSection('live')"><div>📡</div><span>Live</span></div>
-        <div id="nav-download" class="nav-btn" onclick="switchSection('download')"><div>📥</div><span>Downloads</span></div>
-        <div id="nav-profile" class="nav-btn" onclick="switchSection('profile')"><div>👤</div><span>Account</span></div>
+        <div class="nav-btn" onclick="showFeed()">Feed</div>
+        <div class="nav-btn" onclick="showUpload()">＋</div>
+        <div class="nav-btn" onclick="toggleDownloads()">DL</div>
+        <div class="nav-btn" onclick="showProfile()">Account</div>
     </nav>
+</div>
 
-           <script>
-        let currentTab = 'home';
-        let currentSubPage = 'fyp';
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+    const CURRENT_APP_VERSION = 4;
 
-        // Your Active Live Server Keys
-        const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co"; 
-        const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IUlSZQ_1LLxmVSE";
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Core Social Actions
-        async function handleLike(videoId) { alert("Like registered!"); }
-        async function handleComment(videoId) { alert("Comment posted!"); }
-        async function handlePin(videoId) { alert("Video pinned!"); }
-
-                function switchSection(sectId) {
-        // 1. Remove 'active' status from all buttons and views
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-        document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
-        
-        // 2. Add 'active' status to the specific button and view you tapped
-       function switchSection(sectId) {
-    // 1. Remove 'active' status from all buttons and views
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-    document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
-
-    // 2. Add 'active' status to the specific button and view
-    const targetView = document.getElementById('view-' + sectId);
-    const targetNav = document.getElementById('nav-' + sectId);
-
-    if (targetView) targetView.classList.add('active-view');
-    if (targetNav) targetNav.classList.add('active-tab'); }
-                    
-    // 3. DYNAMIC SEARCH BAR UPDATE
-    const searchBar = document.getElementById('main-search-bar');
-    if (searchBar) {
-        if (sectId === 'home') {
-            searchBar.placeholder = "Search for you";
-        } else if (sectId === 'movie') {
-            searchBar.placeholder = "Search movie";
-        } else if (sectId === 'live') {
-            searchBar.placeholder = "Search live";
+    // The Automatic Data Loop
+    async function initFeed() {
+        const { data, error } = await supabase.from('videos').select('*');
+        if (error) {
+            console.error("Connection Error:", error);
         } else {
-            searchBar.placeholder = "Search...";
-        }
-    }
-}
-
-        
-        if (targetView) targetView.classList.add('active-view');
-        if (targetNav) targetNav.classList.add('active-tab');
-                }
-                                              }
-               
-
-        function slidePage(idx) {
-            const slider = document.getElementById('home-slider');
-            document.querySelectorAll('.slide-tab').forEach(t => t.classList.remove('active-slide'));
-            if(idx === 0) {
-                slider.style.transform = 'translateX(0%)';
-                document.getElementById('tab-fyp').classList.add('active-slide');
-            } else {
-                slider.style.transform = 'translateX(-50%)';
-                document.getElementById('tab-movies').classList.add('active-slide');
-            }
-        }
-
-                // Global Feed Database Stream Fetcher 
-function loadVideos() {
-    // 1. Update Engine
-    const CURRENT_APP_VERSION = 3; 
-    const savedVersion = localStorage.getItem('app_version') || 1;
-    if (savedVersion < CURRENT_APP_VERSION) {
-        if (confirm("New Update Available! Click OK to sync.")) {
-            localStorage.setItem('app_version', CURRENT_APP_VERSION);
-            window.location.reload();
+            const feed = document.getElementById('feed-container');
+            data.forEach(video => {
+                const div = document.createElement('div');
+                div.className = 'video-slide';
+                div.innerHTML = `<video src="${video.url}" width="100%" height="100%" autoplay loop playsinline muted></video>`;
+                feed.appendChild(div);
+            });
         }
     }
 
-    const container = document.getElementById('page-fyp');
-    if (!container) return;
+    function showFeed() { document.getElementById('view-feed').style.display='block'; document.getElementById('view-profile').style.display='none'; document.getElementById('view-upload').style.display='none'; }
+    function showProfile() { document.getElementById('view-feed').style.display='none'; document.getElementById('view-profile').style.display='block'; document.getElementById('view-upload').style.display='none'; }
+    function showUpload() { document.getElementById('view-feed').style.display='none'; document.getElementById('view-profile').style.display='none'; document.getElementById('view-upload').style.display='block'; }
+    function toggleDownloads() { document.getElementById('dl-panel').classList.toggle('active'); }
+    function handleShare() { alert("Opening Share/Chat..."); }
 
-    const contentData = [
-        { id: "v1", username: "JohnDoe", views: 1420, followers: 850, following: 120 },
-        { id: "v2", username: "Alice_Pro", views: 9310, followers: 2100, following: 450 }
-    ];
-
-    container.innerHTML = contentData.map(item => {
-        // Earnings are private: Visible in browser console only (F12)
-        console.log(`Creator View - Earnings for @${item.username}: $${(item.views * 0.01).toFixed(2)}`);
-
-        return `
-            <div class="content-card" style="position:relative; width:100%; height:85vh; background:black; margin-bottom:20px; overflow:hidden;" data-username="${item.username.toLowerCase()}">
-                <div style="width:100%; height:100%; background:#111; display:flex; align-items:center; justify-content:center; color:white;">
-                    Content: @${item.username}
-                </div>
-                
-                <div style="position:absolute; right:15px; bottom:100px; display:flex; flex-direction:column; gap:20px; align-items:center; z-index:10;">
-                    <div onclick="enterAccount('${item.username}')" style="cursor:pointer; text-align:center;">
-                        <div style="width:40px; height:40px; border-radius:50%; background:#555; border:2px solid white;"></div>
-                    </div>
-                    <button onclick="handleLike('${item.id}')" style="background:none; border:none; color:white;">❤️ Like</button>
-                    <button onclick="handleComment('${item.id}')" style="background:none; border:none; color:white;">💬 Comment</button>
-                    <button onclick="handlePin('${item.id}')" style="background:none; border:none; color:white;">📌 Pin</button>
-                    <button onclick="handleShare('${item.id}')" style="background:none; border:none; color:white;">↗️ Share</button>
-                </div>
-
-                <div style="position:absolute; bottom:20px; left:15px; color:white; z-index:10;">
-                    <h3 style="margin:0;">@${item.username}</h3>
-                    <div style="display:flex; gap:15px; font-size:12px; margin-top:5px;">
-                        <span>Followers: ${item.followers}</span>
-                        <span>Following: ${item.following}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-      </script>
+    window.onload = () => {
+        initFeed(); // Starts the video loop
+        if ((localStorage.getItem('ver') || 1) < CURRENT_APP_VERSION) alert("Update needed!");
+    };
+</script>
 </body>
-</html>         
+</html>
