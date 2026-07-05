@@ -5,33 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkV4dGVuZCBEb3dubG9hZGVyIiwKICAic2hvcnRfbmFtZSI6ICJYMTAiLAogICxlcm9yIjogIm1hbmlmZXN0X3ZhbGlkIiwgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGEwYTBhIiwKICAidGhlbWVfY29sb3IiOiAiI2ZmMDA3ZiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QmtZV05yZHhObFBXTnZiRzl5WldSMWJtVnlQV1JtYVc1cGVXVWdNutNuIiwKICAiZXJyb3IiOiAibWFuaWZlc3RfdmFsaWQiCiAgICB9CiAgXQp9">
+    
+    <style>
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; background: #0a0a0a; overflow: hidden; }
+        body { background: linear-gradient(135deg, #0a0a0a 0%, #17072b 100%); color: white; font-family: system-ui, sans-serif; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+        #view-container { flex: 1; width: 100%; overflow: hidden; position: relative; }
+        .main-view { width: 100%; height: 100%; display: none; flex-direction: column; position: absolute; top:0; left:0; box-sizing: border-box; }
+        .main-view.active-view { display: flex !important; }
+        .scrollable-content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 160px; box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; }
+        .search-header { background: rgba(15, 15, 15, 0.95); padding: 14px 20px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #222; }
+        .search-box-trigger { flex: 1; background: #1f1f1f; padding: 12px 20px; border-radius: 25px; border: 1px solid #333; color: #aaa; font-size: 0.95em; cursor: pointer; text-align: left; }
+        .slide-nav { display: flex; justify-content: center; gap: 40px; padding: 12px 0; background: rgba(0,0,0,0.4); }
+        .slide-tab { color: #666; font-weight: 700; cursor: pointer; transition: 0.3s; padding-bottom: 5px; }
+        .slide-tab.active-slide { color: white; border-bottom: 2px solid #ff007f; text-shadow: 0 0 12px #ff007f; }
+        .slider-viewport { flex: 1; overflow: hidden; position: relative; width: 100%; }
+        #home-slider { display: flex; width: 200%; height: 100%; transition: transform 0.3s ease-in-out; }
+        .slide-page { width: 50%; height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-top: 15px; }
+        .movie-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 12px; cursor: pointer; }
+        .poster-placeholder { width: 100%; aspect-ratio: 2/3; background: #1a1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 2em; }
+        nav { background: #0f0f0f; display: flex; justify-content: space-around; align-items: center; height: 75px; border-top: 1px solid #252525; z-index: 99; width: 100%; }
+        .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; cursor: pointer; height: 100%; }
+        .nav-btn.active-tab { color: #ff007f; }
+        .video-box { width: 100%; aspect-ratio: 16/9; max-height: 450px; background: black; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .video-card { margin-bottom: 30px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 16px; border-radius: 16px; text-align: left; max-width: 600px; margin: 0 auto; }
+        .v-action-btn { background: none; border: none; font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; color: #ccc; }
+    </style>
 </head>
 <body>
 
     <div id="view-container">
         <div id="view-home" class="main-view active-view">
             <div class="search-header">
-                <div id="dynamic-trigger-box" class="search-box-trigger" onclick="openSearchOverlay()">🔍 Search FYP content...</div>
+                <div id="dynamic-trigger-box" class="search-box-trigger">🔍 Search FYP content...</div>
             </div>
             <div class="slide-nav">
                 <div id="tab-fyp" class="slide-tab active-slide" onclick="slidePage(0)">For You Page</div>
                 <div id="tab-movies" class="slide-tab" onclick="slidePage(1)">Movies</div>
             </div>
-            
-            <div class="slider-viewport" id="swipe-zone">
+            <div class="slider-viewport">
                 <div id="home-slider">
                     <div class="slide-page" id="page-fyp"></div>
-                    
                     <div class="slide-page" id="page-movies">
-                        <div class="scrollable-content" style="padding: 0;">
-                            <h3 style="margin-top:0; color:#ff007f; text-align: left;" id="rolling-date-header">Latest Movies</h3>
+                        <div class="scrollable-content">
+                            <h3 style="color:#ff007f;">Latest Movies</h3>
                             <div class="card-grid">
-                                <div class="movie-card" onclick="openMovieDetail('Quantum Drift', '2026', 'Sarah Jenkins, Marcus Vance', 'Timeline fractures.')">
+                                <div class="movie-card">
                                     <div class="poster-placeholder">🌀</div>
                                     <strong>Quantum Drift</strong>
-                                    <div style="font-size:0.85em; color:#aaa; margin-top:4px;">2026</div>
                                 </div>
                             </div>
                         </div>
@@ -41,7 +62,6 @@
         </div>
 
         <div id="view-live" class="main-view">
-            <div class="search-header"><div class="search-box-trigger" onclick="openSearchOverlay()">🔍 Search Live...</div></div>
             <div class="scrollable-content">
                 <h2>Active Live Feeds</h2>
                 <div class="video-box" style="border: 1px solid #ff007f;">⚽ Live Football Broadcast</div>
@@ -51,39 +71,15 @@
         <div id="view-download" class="main-view">
             <div class="scrollable-content">
                 <h2>Downloads Terminal</h2>
-                <div id="active-dl-bar" style="color:#555; padding: 10px 0;">No active tracks processing.</div>
+                <div style="color:#555;">No active tracks processing.</div>
             </div>
         </div>
 
         <div id="view-profile" class="main-view">
             <div class="scrollable-content">
-                <h2>Create Your Account</h2>
-                <div class="auth-container">
-                    <button class="auth-btn google-btn" onclick="executeServerAuth('Google')">Continue with Google</button>
-                    <button class="auth-btn apple-btn" onclick="executeServerAuth('Apple')">Continue with Apple</button>
-                </div>
+                <h2>Your Account</h2>
+                <p>Sign-in options coming soon.</p>
             </div>
-        </div>
-
-        <div id="view-details" class="main-view" style="background:#050505;">
-            <div class="search-header"><button onclick="closeMovieDetail()" style="background:none; border:none; color:white; font-family:inherit;">← Back</button></div>
-            <div class="scrollable-content">
-                <div class="video-box">▶ Trailer Player</div>
-                <h2 id="details-title"></h2>
-                <p id="details-cast" style="color:#ff007f; font-weight:bold;"></p>
-                <p id="details-story" style="color:#ccc;"></p>
-            </div>
-            <div class="details-action-row">
-                <button class="split-action-btn watch-btn" onclick="alert('Streaming continuous video stream matrix...')">▶ Watch</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="search-overlay">
-        <div class="search-header">
-            <input type="text" id="main-search-input" class="search-bar-input" onkeyup="if(event.key === 'Enter') runSearchLogic()">
-            <button class="search-btn-action" onclick="runSearchLogic()">Search</button>
-            <button onclick="closeSearchOverlay()" style="background:none; border:none; color:white; font-family:inherit;">Cancel</button>
         </div>
     </div>
 
@@ -94,7 +90,46 @@
         <div id="nav-profile" class="nav-btn" onclick="switchSection('profile')"><div>👤</div><span>Account</span></div>
     </nav>
 
-    <script src="app.js"></script>
+    <script>
+        let currentTab = 'home';
+        const supabase = null; 
+
+        function switchSection(sectId) {
+            currentTab = sectId;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+            document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
+            document.getElementById(`view-${sectId}`).classList.add('active-view');
+            document.getElementById(`nav-${sectId}`).classList.add('active-tab');
+        }
+
+        function slidePage(idx) {
+            const slider = document.getElementById('home-slider');
+            document.querySelectorAll('.slide-tab').forEach(t => t.classList.remove('active-slide'));
+            if(idx === 0) {
+                slider.style.transform = 'translateX(0%)';
+                document.getElementById('tab-fyp').classList.add('active-slide');
+            } else {
+                slider.style.transform = 'translateX(-50%)';
+                document.getElementById('tab-movies').classList.add('active-slide');
+            }
+        }
+
+        function loadMockVideos() {
+            const container = document.getElementById('page-fyp');
+            if (!container) return;
+            const videos = [
+                { id: "1", title: "Global CDN Test Node Stream", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", views: 1420 },
+                { id: "2", title: "Secondary Global Storage Stream", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", views: 9310 }
+            ];
+            container.innerHTML = videos.map(v => `
+                <div class="video-card">
+                    <video src="${v.url}" controls style="width: 100%; border-radius: 12px; background: black;"></video>
+                    <h3>${v.title}</h3>
+                    <p style="color: #4CAF50;">💰 Earnings: $${(v.views * 0.01).toFixed(2)}</p>
+                </div>
+            `).join('');
+        }
+        setTimeout(loadMockVideos, 300);
+    </script>
 </body>
-        </html>
-    
+</html>
