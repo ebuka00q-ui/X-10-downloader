@@ -7,29 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        html, body { height: 100%; width: 100%; margin: 0; padding: 0; background: #0a0a0a; overflow: hidden; }
-        body { background: linear-gradient(135deg, #0a0a0a 0%, #17072b 100%); color: white; font-family: system-ui, sans-serif; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
-        #view-container { flex: 1; width: 100%; overflow: hidden; position: relative; }
-        .main-view { width: 100%; height: 100%; display: none; flex-direction: column; position: absolute; top:0; left:0; box-sizing: border-box; }
-        .main-view.active-view { display: flex !important; }
-        .scrollable-content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 160px; box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; }
-        .search-header { background: rgba(15, 15, 15, 0.95); padding: 14px 20px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #222; }
-        .search-box-trigger { flex: 1; background: #1f1f1f; padding: 12px 20px; border-radius: 25px; border: 1px solid #333; color: #aaa; font-size: 0.95em; cursor: pointer; text-align: left; }
-        .slide-nav { display: flex; justify-content: center; gap: 40px; padding: 12px 0; background: rgba(0,0,0,0.4); }
-        .slide-tab { color: #666; font-weight: 700; cursor: pointer; transition: 0.3s; padding-bottom: 5px; }
-        .slide-tab.active-slide { color: white; border-bottom: 2px solid #ff007f; text-shadow: 0 0 12px #ff007f; }
-        .slider-viewport { flex: 1; overflow: hidden; position: relative; width: 100%; }
-        #home-slider { display: flex; width: 200%; height: 100%; transition: transform 0.3s ease-in-out; }
-        .slide-page { width: 50%; height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-top: 15px; }
-        .movie-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 12px; cursor: pointer; }
-        .poster-placeholder { width: 100%; aspect-ratio: 2/3; background: #1a1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 2em; }
-        nav { background: #0f0f0f; display: flex; justify-content: space-around; align-items: center; height: 75px; border-top: 1px solid #252525; z-index: 99; width: 100%; }
-        .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; cursor: pointer; height: 100%; }
-        .nav-btn.active-tab { color: #ff007f; }
-        .video-box { width: 100%; aspect-ratio: 16/9; max-height: 450px; background: black; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-        .video-card { margin-bottom: 30px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 16px; border-radius: 16px; text-align: left; max-width: 600px; margin: 0 auto; }
-        .v-action-btn { background: none; border: none; font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; color: #ccc; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; background: #0a0a0a; color: white; font-family: system-ui; }
+#view-container { flex: 1; width: 100%; position: relative; }
+.main-view { display: none; height: 100%; width: 100%; flex-direction: column; }
+.main-view.active-view { display: flex; }
+nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 100; }
+.nav-btn { color: #777; cursor: pointer; text-transform: uppercase; font-weight: bold; font-size: 12px; }
+.nav-btn.active-tab { color: #ff007f; }
+.search-header { padding: 15px; display: flex; gap: 10px; background: #111; border-bottom: 1px solid #222; }
+.search-header input { flex: 1; padding: 10px; border-radius: 20px; border: none; background: #222; color: white; outline: none; }
+.search-header button { background: #ff007f; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+.content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; }
+        background: none; border: none; font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; color: #ccc; }
     </style>
 </head>
 <body>
