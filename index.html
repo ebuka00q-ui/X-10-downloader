@@ -128,52 +128,42 @@
         }
 
                 // Global Feed Database Stream Fetcher 
-                function loadVideos() {
-    const APP_VERSION = 1; 
+function loadVideos() {
+    const CURRENT_APP_VERSION = 2;
+    const savedVersion = localStorage.getItem('app_version') || 1;
+
+    if (savedVersion < CURRENT_APP_VERSION) {
+        if (confirm("New Update Available! Click OK to update.")) {
+            localStorage.setItem('app_version', CURRENT_APP_VERSION);
+            window.location.reload();
+        }
+    }
+
     const container = document.getElementById('page-fyp');
     if (!container) return;
 
     const fallbackVideos = [
-        { 
-            id: "v1", 
-            title: "Global CDN Test Node Stream", 
-            url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", 
-            views: 1420 
-        },
-        { 
-            id: "v2", 
-            title: "Secondary Storage Verification Stream", 
-            url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", 
-            views: 9310 
-        }
+        { id: "v1", title: "Global CDN Test Node Stream", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", views: 1420 },
+        { id: "v2", title: "Secondary Storage Verification", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", views: 9310 }
     ];
 
     container.innerHTML = fallbackVideos.map(video => {
-        const views = video.views || 0;
-        const earnings = (views * 0.01).toFixed(2);
+        const earnings = (video.views * 0.01).toFixed(2);
         return `
-            <div style="background:#111; margin:10px; padding:15px; border-radius:10px; border:1px solid #222;">
-                <video src="${video.url}" controls style="width:100%; border-radius:8px;"></video>
-                <h3 style="color:#fff; margin:10px 0 5px 0; font-size:16px;">${video.title}</h3>
-                <p style="color:#888; font-size:12px; margin:0;">👁️ ${views} views | 💰 $${earnings} earned</p>
+            <div class="video-card" style="margin-bottom:20px; padding:10px; border-bottom:1px solid #333;">
+                <video src="${video.url}" controls style="width:100%; border-radius:10px;"></video>
+                <h3 style="color:white; margin:10px 0;">${video.title}</h3>
+                <p style="color:#4CAF50;">💰 Earnings: $${earnings}</p>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="handleLike('${video.id}')" style="color:#ff4757;">❤️ Like</button>
+                    <button onclick="handleComment('${video.id}')" style="color:#1e90ff;">💬 Comment</button>
+                    <button onclick="handlePin('${video.id}')" style="color:#ffa500;">📌 Pin</button>
+                </div>
             </div>
         `;
     }).join('');
-                }
-</script>
-        
-                        <div class="video-card">
-                            <video src="${video.url}" controls style="width: 100%; border-radius: 12px; background: black;"></video>
-                            <h3 style="margin: 12px 0 6px 0;">${video.title || 'Untitled'}</h3>
-                            <p style="color: #4CAF50; font-size: 14px; margin: 4px 0 14px 0; font-weight: 600;">💰 Earnings: $${earnings}</p>
-                            <div style="display: flex; gap: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-                                <button onclick="handleLike('${video.id}')" class="v-action-btn" style="color: #ff4757;">❤️ Like</button>
-                                <button onclick="handleComment('${video.id}')" class="v-action-btn" style="color: #1e90ff;">💬 Comment</button>
-                                <button onclick="handlePin('${video.id}')" class="v-action-btn" style="color: #ffa500;">📌 Pin</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+}
+            ;
             } catch (err) {
                 console.error(err);
             }
