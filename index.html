@@ -104,16 +104,45 @@
         async function handleComment(videoId) { alert("Comment posted!"); }
         async function handlePin(videoId) { alert("Video pinned!"); }
 
+                function switchSection(sectId) {
+        // 1. Remove 'active' status from all buttons and views
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+        document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
+        
+        // 2. Add 'active' status to the specific button and view you tapped
         function switchSection(sectId) {
-            
+    // 1. Remove 'active' status from all buttons and views
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+    document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
 
-        function switchSection(sectId) {
-            currentTab = sectId;
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-            document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active-view'));
-            document.getElementById(`view-${sectId}`).classList.add('active-view');
-            document.getElementById(`nav-${sectId}`).classList.add('active-tab');
+    // 2. Add 'active' status to the specific button and view
+    const targetView = document.getElementById('view-' + sectId);
+    const targetNav = document.getElementById('nav-' + sectId);
+    
+    if (targetView) targetView.classList.add('active-view');
+    if (targetNav) targetNav.classList.add('active-tab');
+
+    // 3. DYNAMIC SEARCH BAR UPDATE
+    const searchBar = document.getElementById('main-search-bar');
+    if (searchBar) {
+        if (sectId === 'home') {
+            searchBar.placeholder = "Search for you";
+        } else if (sectId === 'movie') {
+            searchBar.placeholder = "Search movie";
+        } else if (sectId === 'live') {
+            searchBar.placeholder = "Search live";
+        } else {
+            searchBar.placeholder = "Search...";
         }
+    }
+}
+
+        
+        if (targetView) targetView.classList.add('active-view');
+        if (targetNav) targetNav.classList.add('active-tab');
+                }
+                                              }
+               
 
         function slidePage(idx) {
             const slider = document.getElementById('home-slider');
