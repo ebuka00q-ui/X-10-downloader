@@ -4,66 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X10 Downloader</title>
-    <!-- Load Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
-        .nav-bar { display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid #FF00FF; background: #000; position: fixed; bottom: 0; width: 100%; }
-        .panel { display: none; height: 90vh; }
-        .panel.active { display: flex; justify-content: center; align-items: center; }
-        .admin-stat { color: #FF00FF; font-weight: bold; font-size: 24px; }
-        .red-dot { width: 10px; height: 10px; background: red; border-radius: 50%; position: absolute; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        #app-content { flex: 1; display: flex; justify-content: center; align-items: center; }
+        .nav-bar { display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid #FF00FF; background: #000; }
+        .nav-btn { color: #fff; cursor: pointer; border: 1px solid #333; padding: 5px 10px; }
+        .active-btn { border-color: #FF00FF; color: #FF00FF; }
+        .admin-stat { color: #FF00FF; font-weight: bold; font-size: 24px; text-align: center; }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <!-- Panels -->
-    <div id="HOME" class="panel active">HOME FEED</div>
-    <div id="LIVE" class="panel">LIVE MATCH FEED</div>
-    <div id="DOWNLOAD" class="panel">DOWNLOADS</div>
-    <div id="ACCOUNT" class="panel">
-        <div id="follower-display" class="admin-stat">100,000,000 Followers</div>
+    <div id="app-content">
+        <div id="HOME-panel" class="panel">HOME FEED</div>
+        <div id="LIVE-panel" class="panel" style="display:none;">LIVE: SPAIN MATCH BROADCAST</div>
+        <div id="DOWNLOAD-panel" class="panel" style="display:none;">DOWNLOADS</div>
+        <div id="ACCOUNT-panel" class="panel" style="display:none;">
+            <div id="follower-display" class="admin-stat">100,000,000 Followers</div>
+        </div>
     </div>
 
-    <!-- Nav Bar -->
     <nav class="nav-bar">
-        <button onclick="switchPanel('HOME')">HOME</button>
-        <button onclick="switchPanel('LIVE')">LIVE</button>
-        <button onclick="switchPanel('DOWNLOAD')">DOWNLOAD</button>
-        <button onclick="switchPanel('ACCOUNT')">ACCOUNT</button>
+        <button class="nav-btn" onclick="switchTab('HOME')">HOME</button>
+        <button class="nav-btn" onclick="switchTab('LIVE')">LIVE</button>
+        <button class="nav-btn" onclick="switchTab('DOWNLOAD')">DOWNLOAD</button>
+        <button class="nav-btn" onclick="switchTab('ACCOUNT')">ACCOUNT</button>
     </nav>
-</div>
 
-<script>
-    // --- SUPABASE CONFIGURATION ---
-    const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co"; 
-    const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ADMIN_UID = "YOUR_SPECIFIC_ADMIN_ID"; // Paste your ID here
-    const MONETIZATION_ACTIVE = false;
+    <script>
+        // --- 1. CONFIGURATION ---
+        const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+        const ADMIN_UID = "PASTE_YOUR_SPECIFIC_ADMIN_ID_HERE";
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- PANEL SWITCHING ENGINE ---
-    function switchPanel(id) {
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-
-    // --- AUTHORITY & FILTER LOGIC ---
-    async function initApp() {
-        const { data: { user } } = await supabase.auth.getUser();
-        // 100M Authority Check
-        if (user && user.id === ADMIN_UID) {
-            document.getElementById('follower-display').innerText = "100,000,000 Followers";
+        // --- 2. LOGIC ---
+        async function init() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && user.id === ADMIN_UID) {
+                document.getElementById('follower-display').innerText = "100,000,000 Followers";
+            }
         }
-    }
-    
-    // SAFE FEED: Automatically excludes 'ADULT' category
-    async function fetchSafeFeed() {
-        const { data } = await supabase.from('videos').select('*').neq('category', 'ADULT');
-    }
 
-    initApp();
-</script>
+        function switchTab(tab) {
+            document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+            document.getElementById(tab + '-panel').style.display = 'block';
+        }
+
+        init();
+    </script>
 </body>
 </html>
