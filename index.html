@@ -2,88 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href='data:application/json,{"name":"X10 Downloader","short_name":"X10","start_url":"/","display":"standalone","background_color":"#0a0a0a"}'>
     <style>
         :root { --primary: #ff007f; --bg: #0a0a0a; }
-        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; width: 100vw; height: 100dvh; overflow: hidden; position: fixed; }
+        #app { width: 100%; height: 100%; display: flex; flex-direction: column; }
         #search-container { flex: 0 0 8vh; background: #111; display: flex; align-items: center; padding: 0 4vw; border-bottom: 1px solid #333; }
         #search-input { flex: 1; padding: 1.2vh; border-radius: 5px; border: none; background: #222; color: white; }
-        .panel { display: none; flex: 1; overflow-y: auto; padding: 2vh; }
+        .toggle-row { text-align: center; padding: 1vh 0; font-weight: bold; color: var(--primary); font-size: 3.5vw; }
+        .panel { display: none; height: 76vh; overflow-y: auto; padding: 2vh; padding-bottom: 15vh; }
         .panel.active { display: block; }
-        .video-wrapper { position: relative; width: 100%; margin-bottom: 3vh; background: #222; border-radius: 10px; overflow: hidden; }
+        .video-wrapper { position: relative; width: 100%; margin-bottom: 3vh; background: #111; border-radius: 10px; overflow: hidden; }
         .social-stack { position: absolute; right: 2vw; bottom: 2vh; z-index: 10; display: flex; flex-direction: column; gap: 2vh; }
-        .btn { cursor: pointer; text-align: center; font-size: 7vw; color: white; }
+        .btn { cursor: pointer; text-align: center; font-size: 7vw; }
         .active-red { color: var(--primary); }
         .active-blue { color: #3498db; }
-        nav { flex: 0 0 8vh; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; }
+        nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 8vh; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
         .nav-btn { text-align: center; font-size: 3vw; cursor: pointer; color: #888; }
         .nav-btn.active { color: var(--primary); }
     </style>
 </head>
 <body>
-
-<div id="search-container">
-    <input type="text" id="search-input" placeholder="Search For You...">
-    <button onclick="performSearch()" style="background:var(--primary); color:white; border:none; padding:1vh 3vw; margin-left:2vw; border-radius:5px;">GO</button>
+<div id="app">
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search For You...">
+        <button onclick="performSearch()" style="background:var(--primary); color:white; border:none; padding:1vh 3vw; margin-left:2vw; border-radius:5px;">GO</button>
+    </div>
+    <div id="home-panel" class="panel active">
+        <div class="toggle-row">FOR YOU | MOVIES</div>
+        <div id="feed-container"></div>
+    </div>
+    <div id="live-panel" class="panel">
+        <div class="toggle-row">LIVE NOW | CATCH-UP</div>
+        <div id="live-feed"></div>
+    </div>
+    <div id="dl-panel" class="panel"><h2>Download Manager</h2></div>
+    <div id="acc-panel" class="panel">
+        <h2>Profile</h2>
+        <button id="follow-btn" onclick="this.innerText='Following'">Follow</button>
+    </div>
+    <nav>
+        <div class="nav-btn active" onclick="switchPanel('home', this)">🏠<br>HOME</div>
+        <div class="nav-btn" onclick="switchPanel('live', this)">📡<br>LIVE</div>
+        <div class="nav-btn" onclick="switchPanel('dl', this)">📥<br>DL</div>
+        <div class="nav-btn" onclick="switchPanel('acc', this)">👤<br>ACCOUNT</div>
+    </nav>
 </div>
-
-<div id="home-panel" class="panel active">
-    <div id="feed-container"></div>
-</div>
-
-<div id="live-panel" class="panel">
-    <h2>Live & Catch-Up</h2>
-    <div id="live-feed"></div>
-</div>
-
-<div id="dl-panel" class="panel"><h2>Downloads</h2></div>
-
-<div id="acc-panel" class="panel">
-    <h2>Profile</h2>
-    <button id="follow-btn" onclick="this.innerText='Following'">Follow</button>
-    <div id="chat-box" style="margin-top:2vh; padding:2vh; background:#111; border-radius:10px;">Chat with user...</div>
-</div>
-
-<nav>
-    <div class="nav-btn active" onclick="switchPanel('home', this)">🏠<br>HOME</div>
-    <div class="nav-btn" onclick="switchPanel('live', this)">📡<br>LIVE</div>
-    <div class="nav-btn" onclick="switchPanel('dl', this)">📥<br>DL</div>
-    <div class="nav-btn" onclick="switchPanel('acc', this)">👤<br>ACCOUNT</div>
-</nav>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const supabase = Supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
-    
-    // Panel Logic
     function switchPanel(id, btn) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id + '-panel').classList.add('active');
         btn.classList.add('active');
+        document.getElementById('search-input').placeholder = (id === 'live') ? 'Search Live Streams...' : 'Search For You...';
     }
-
-    // Dynamic Content Loader
     async function loadContent() {
-        const currentYear = new Date().getFullYear();
-        const { data } = await supabase.from('videos').select('*').gte('year', currentYear - 1);
+        const { data } = await supabase.from('videos').select('*').gte('year', new Date().getFullYear() - 1);
         const feed = document.getElementById('feed-container');
-        if(data) {
-            feed.innerHTML = data.map(v => `
-                <div class="video-wrapper">
-                    <video src="${v.url}" width="100%" controls></video>
-                    <div class="social-stack">
-                        <div class="btn" onclick="this.classList.toggle('active-red')">❤️</div>
-                        <div class="btn" onclick="alert('Comment box')">💬</div>
-                        <div class="btn" onclick="this.classList.toggle('active-blue')">📌</div>
-                        <div class="btn">➤</div>
-                    </div>
-                </div>`).join('');
-        }
+        if(data) feed.innerHTML = data.map(v => `
+            <div class="video-wrapper">
+                <video src="${v.url}" width="100%" controls></video>
+                <div class="social-stack">
+                    <div class="btn" onclick="this.classList.toggle('active-red')">❤️</div>
+                    <div class="btn" onclick="alert('Comment')">💬</div>
+                    <div class="btn" onclick="this.classList.toggle('active-blue')">📌</div>
+                    <div class="btn">➤</div>
+                </div>
+            </div>`).join('');
     }
     window.onload = loadContent;
+    function performSearch() { alert("Searching: " + document.getElementById('search-input').value); }
 </script>
 </body>
 </html>
