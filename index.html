@@ -3,80 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>X10 Downloader</title>
-    <link rel="manifest" href='data:application/json,{"name":"X10 Downloader","short_name":"X10","start_url":"/","display":"standalone","background_color":"#0a0a0a"}'>
+    <title>X10 Pro</title>
     <style>
-        :root { --primary: #ff007f; --bg: #0a0a0a; }
-        * { box-sizing: border-box; touch-action: manipulation; }
-        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; width: 100vw; height: 100dvh; overflow: hidden; position: fixed; }
-        #app { width: 100%; height: 100%; display: flex; flex-direction: column; }
-        #search-container { flex: 0 0 8vh; background: #111; display: flex; align-items: center; padding: 0 4vw; border-bottom: 1px solid #333; }
-        #search-input { flex: 1; padding: 1.2vh; border-radius: 5px; border: none; background: #222; color: white; }
-        .toggle-row { text-align: center; padding: 1vh 0; font-weight: bold; color: var(--primary); font-size: 3.5vw; }
-        .panel { display: none; height: 76vh; overflow-y: auto; padding: 2vh; padding-bottom: 15vh; }
+        :root { --bg: #0a0a0a; --pink: #ff007f; --blue: #3498db; --txt: #ffffff; }
+        * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: var(--txt); font-family: sans-serif; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* HEADER & SEARCH */
+        header { flex: 0 0 16vh; display: flex; flex-direction: column; padding: 1vh 4vw; border-bottom: 1px solid #222; }
+        #search-box { display: flex; gap: 2vw; }
+        input { flex: 1; padding: 1.2vh; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: white; }
+        .go-btn { background: var(--pink); border: none; padding: 1.2vh 5vw; border-radius: 8px; color: white; font-weight: bold; }
+        .tab-row { text-align: center; margin-top: 1.5vh; font-size: 3.5vw; color: var(--pink); font-weight: 700; }
+
+        /* PANELS */
+        .panel { display: none; flex: 1; overflow-y: auto; padding: 2vh 4vw; padding-bottom: 15vh; }
         .panel.active { display: block; }
-        .video-wrapper { position: relative; width: 100%; margin-bottom: 3vh; background: #111; border-radius: 10px; overflow: hidden; }
-        .social-stack { position: absolute; right: 2vw; bottom: 2vh; z-index: 10; display: flex; flex-direction: column; gap: 2vh; }
-        .btn { cursor: pointer; text-align: center; font-size: 7vw; }
-        .active-red { color: var(--primary); }
-        .active-blue { color: #3498db; }
-        nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 8vh; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-        .nav-btn { text-align: center; font-size: 3vw; cursor: pointer; color: #888; }
-        .nav-btn.active { color: var(--primary); }
+        
+        /* VIDEO & SOCIAL */
+        .video-card { position: relative; width: 100%; min-height: 50vh; background: #000; margin-bottom: 2vh; border-radius: 12px; overflow: hidden; }
+        .social-stack { position: absolute; right: 3vw; bottom: 5vh; z-index: 50; display: flex; flex-direction: column; gap: 3vh; align-items: center; }
+        .btn-icon { font-size: 8vw; cursor: pointer; }
+        .label { font-size: 2.5vw; margin-top: 0.5vh; display: block; }
+
+        /* NAV */
+        nav { position: fixed; bottom: 0; width: 100%; height: 9vh; background: #000; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-btn { text-align: center; font-size: 3vw; color: #666; cursor: pointer; }
+        .nav-btn.active { color: var(--pink); }
     </style>
 </head>
 <body>
-<div id="app">
-    <div id="search-container">
-        <input type="text" id="search-input" placeholder="Search For You...">
-        <button onclick="performSearch()" style="background:var(--primary); color:white; border:none; padding:1vh 3vw; margin-left:2vw; border-radius:5px;">GO</button>
+
+<header>
+    <div id="search-box">
+        <input type="text" id="search-input" placeholder="Search...">
+        <button class="go-btn" onclick="alert('Search Active')">GO</button>
     </div>
-    <div id="home-panel" class="panel active">
-        <div class="toggle-row">FOR YOU | MOVIES</div>
-        <div id="feed-container"></div>
+    <div class="tab-row" id="tabs">FOR YOU | MOVIES</div>
+</header>
+
+<div id="home-panel" class="panel active">
+    <div class="video-card">
+        <video width="100%" controls style="height:100%"></video>
+        <div class="social-stack">
+            <div class="btn-icon" onclick="this.style.color='red'">❤️<span class="label">1.2K</span></div>
+            <div class="btn-icon">💬<span class="label">Chat</span></div>
+            <div class="btn-icon" onclick="this.style.color='var(--blue)'">📌<span class="label">Pin</span></div>
+            <div class="btn-icon">➤<span class="label">Share</span></div>
+        </div>
     </div>
-    <div id="live-panel" class="panel">
-        <div class="toggle-row">LIVE NOW | CATCH-UP</div>
-        <div id="live-feed"></div>
-    </div>
-    <div id="dl-panel" class="panel"><h2>Download Manager</h2></div>
-    <div id="acc-panel" class="panel">
-        <h2>Profile</h2>
-        <button id="follow-btn" onclick="this.innerText='Following'">Follow</button>
-    </div>
-    <nav>
-        <div class="nav-btn active" onclick="switchPanel('home', this)">🏠<br>HOME</div>
-        <div class="nav-btn" onclick="switchPanel('live', this)">📡<br>LIVE</div>
-        <div class="nav-btn" onclick="switchPanel('dl', this)">📥<br>DL</div>
-        <div class="nav-btn" onclick="switchPanel('acc', this)">👤<br>ACCOUNT</div>
-    </nav>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<div id="live-panel" class="panel">
+    <div class="tab-row">LIVE NOW | CATCH-UP</div>
+</div>
+
+<div id="dl-panel" class="panel"><h2>Download Queue</h2></div>
+<div id="acc-panel" class="panel"><h2>Profile</h2><button onclick="this.innerText='Following'">Follow</button></div>
+
+<nav>
+    <div class="nav-btn active" onclick="switchTab('home', this)">🏠<br>HOME</div>
+    <div class="nav-btn" onclick="switchTab('live', this)">📡<br>LIVE</div>
+    <div class="nav-btn" onclick="switchTab('dl', this)">📥<br>Download</div>
+    <div class="nav-btn" onclick="switchTab('acc', this)">👤<br>ACCOUNT</div>
+</nav>
+
 <script>
-    const supabase = Supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
-    function switchPanel(id, btn) {
+    function switchTab(id, btn) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id + '-panel').classList.add('active');
         btn.classList.add('active');
-        document.getElementById('search-input').placeholder = (id === 'live') ? 'Search Live Streams...' : 'Search For You...';
+        document.getElementById('tabs').innerText = (id === 'live') ? 'LIVE NOW | CATCH-UP' : 'FOR YOU | MOVIES';
+        document.getElementById('search-input').placeholder = (id === 'live') ? 'Search Live...' : 'Search Movies...';
     }
-    async function loadContent() {
-        const { data } = await supabase.from('videos').select('*').gte('year', new Date().getFullYear() - 1);
-        const feed = document.getElementById('feed-container');
-        if(data) feed.innerHTML = data.map(v => `
-            <div class="video-wrapper">
-                <video src="${v.url}" width="100%" controls></video>
-                <div class="social-stack">
-                    <div class="btn" onclick="this.classList.toggle('active-red')">❤️</div>
-                    <div class="btn" onclick="alert('Comment')">💬</div>
-                    <div class="btn" onclick="this.classList.toggle('active-blue')">📌</div>
-                    <div class="btn">➤</div>
-                </div>
-            </div>`).join('');
-    }
-    window.onload = loadContent;
-    function performSearch() { alert("Searching: " + document.getElementById('search-input').value); }
 </script>
 </body>
 </html>
