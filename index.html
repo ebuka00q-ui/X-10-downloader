@@ -2,58 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
-        #app-content { flex: 1; display: flex; justify-content: center; align-items: center; }
-        .nav-bar { display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid #FF00FF; background: #000; }
-        .nav-btn { color: #fff; cursor: pointer; border: 1px solid #333; padding: 5px 10px; }
-        .active-btn { border-color: #FF00FF; color: #FF00FF; }
-        .admin-stat { color: #FF00FF; font-weight: bold; font-size: 24px; text-align: center; }
+        /* 1. PORTABLE RESET & STYLING */
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        #app-container { display: flex; flex-direction: column; height: 100%; }
+        
+        /* 2. PANEL SWIPE/HIDE LOGIC */
+        .panel { display: none; flex: 1; justify-content: center; align-items: center; width: 100%; height: 100%; }
+        .panel.active { display: flex; }
+        
+        /* 3. NEON PINK BRANDING */
+        .nav-bar { display: flex; justify-content: space-around; padding: 20px; border-top: 2px solid #FF00FF; background: #000; z-index: 100; }
+        .nav-btn { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; padding: 10px; }
+        .nav-btn.active { color: #FF00FF; font-weight: bold; border-top: 2px solid #FF00FF; }
+        .admin-stat { color: #FF00FF; font-size: 24px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="app-content">
-        <div id="HOME-panel" class="panel">HOME FEED</div>
-        <div id="LIVE-panel" class="panel" style="display:none;">LIVE: SPAIN MATCH BROADCAST</div>
-        <div id="DOWNLOAD-panel" class="panel" style="display:none;">DOWNLOADS</div>
-        <div id="ACCOUNT-panel" class="panel" style="display:none;">
-            <div id="follower-display" class="admin-stat">100,000,000 Followers</div>
-        </div>
+<div id="app-container">
+    <div id="HOME" class="panel active">HOME FEED: SWIPE ENABLED</div>
+    <div id="LIVE" class="panel">LIVE SPAIN MATCH: STREAMING</div>
+    <div id="DOWNLOAD" class="panel">DOWNLOADS: SYNCED</div>
+    <div id="ACCOUNT" class="panel">
+        <div id="follower-display" class="admin-stat">100,000,000 Followers</div>
     </div>
 
     <nav class="nav-bar">
-        <button class="nav-btn" onclick="switchTab('HOME')">HOME</button>
-        <button class="nav-btn" onclick="switchTab('LIVE')">LIVE</button>
-        <button class="nav-btn" onclick="switchTab('DOWNLOAD')">DOWNLOAD</button>
-        <button class="nav-btn" onclick="switchTab('ACCOUNT')">ACCOUNT</button>
+        <button class="nav-btn active" onclick="switchTab('HOME', this)">HOME</button>
+        <button class="nav-btn" onclick="switchTab('LIVE', this)">LIVE</button>
+        <button class="nav-btn" onclick="switchTab('DOWNLOAD', this)">DOWNLOAD</button>
+        <button class="nav-btn" onclick="switchTab('ACCOUNT', this)">ACCOUNT</button>
     </nav>
+</div>
 
-    <script>
-        // --- 1. CONFIGURATION ---
-        const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
-        const ADMIN_UID = "PASTE_YOUR_SPECIFIC_ADMIN_ID_HERE";
-        
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+    // --- SUPABASE SETUP ---
+    const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+    const ADMIN_UID = "PASTE_YOUR_SPECIFIC_ADMIN_ID_HERE"; // PUT YOUR ID HERE
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // --- DORMANT MONETIZATION ---
+    const IS_MONETIZATION_ACTIVE = false;
 
-        // --- 2. LOGIC ---
-        async function init() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user && user.id === ADMIN_UID) {
-                document.getElementById('follower-display').innerText = "100,000,000 Followers";
-            }
+    // --- PANEL SWITCHING & SWIPE ---
+    function switchTab(id, btn) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // --- AUTHORITY & DATA ---
+    async function init() {
+        // Authority check
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.id === ADMIN_UID) {
+            document.getElementById('follower-display').innerText = "100,000,000 Followers";
         }
+    }
+    init();
 
-        function switchTab(tab) {
-            document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-            document.getElementById(tab + '-panel').style.display = 'block';
-        }
-
-        init();
-    </script>
+    // --- SWIPE LOGIC ---
+    let touchStartY = 0;
+    document.addEventListener('touchstart', e => touchStartY = e.touches[0].clientY);
+    document.addEventListener('touchend', e => {
+        let deltaY = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(deltaY) > 100) console.log("Swipe triggered: Load next content");
+    });
+</script>
 </body>
 </html>
