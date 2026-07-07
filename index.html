@@ -4,61 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --neon-pink: #ff00ff; --deep-black: #000000; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html { width: 100%; height: 100%; background: var(--deep-black); color: #fff; font-family: sans-serif; overflow: hidden; }
-        
-        /* Layout */
-        #search-container { position: fixed; top: 0; width: 100%; height: 60px; background: #000; display: flex; align-items: center; padding: 10px; z-index: 100; border-bottom: 1px solid #333; }
-        input { flex: 1; padding: 10px; border-radius: 5px; border: none; background: #222; color: white; }
-        
-        .panel { display: none; height: calc(100vh - 120px); margin-top: 60px; overflow-y: auto; padding: 20px; }
-        .panel.active { display: block; }
-        
-        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 100; }
-        .nav-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; }
-        .nav-btn.active { color: var(--neon-pink); }
 
-        /* Live Sub-Nav */
-        .sub-nav { display: flex; gap: 20px; margin-bottom: 20px; }
-        .sub-btn { background: #222; border: none; color: white; padding: 5px 15px; border-radius: 15px; cursor: pointer; }
+        /* PERSISTENT UI */
+        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; align-items: center; padding: 0 15px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid #333; }
+        
+        /* PANELS */
+        .panel { display: none; height: 100%; width: 100%; padding-top: 60px; padding-bottom: 60px; overflow-y: auto; }
+        .panel.active { display: block; }
+
+        /* FEED & SOCIAL */
+        .video-container { height: 100%; scroll-snap-type: y mandatory; }
+        .nav-btn { color: #888; font-size: 12px; background: none; border: none; cursor: pointer; }
+        .nav-btn.active { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
-    <div id="search-container">
-        <input type="text" placeholder="Search X10...">
-        <button style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px; color:white;">GO</button>
+    <div id="search-bar" class="top-bar">
+        <input type="text" id="main-search" placeholder="Search..." style="flex:1; padding:8px; border-radius:5px;">
     </div>
 
-    <!-- Panels -->
-    <div id="home-panel" class="panel active"><h1>For You</h1><p>Movie/Feed Content Here</p></div>
-    <div id="movie-panel" class="panel"><h1>Movies</h1><p>Movie Catalog Here</p></div>
-    
+    <div id="home-panel" class="panel active">
+        <div id="video-feed" class="video-container"></div>
+    </div>
     <div id="live-panel" class="panel">
-        <div class="sub-nav">
-            <button class="sub-btn" onclick="alert('Showing Active')">Active Live</button>
-            <button class="sub-btn" onclick="alert('Showing Previous')">Previous Live</button>
+        <div style="display:flex; justify-content:center; gap:10px; margin:10px;">
+            <button onclick="console.log('Active')">Active Live</button>
+            <button onclick="console.log('Previous')">Previous Live</button>
         </div>
-        <h1>Live Streams</h1>
     </div>
+    <div id="download-panel" class="panel"><h2>Downloads</h2><div id="download-list"></div></div>
+    <div id="account-panel" class="panel"><h2>Account</h2><div id="profile-stats"></div></div>
 
-    <div id="account-panel" class="panel"><h1>Account</h1><p>User Profile</p></div>
-
-    <nav>
-        <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
-        <button class="nav-btn" onclick="switchPanel('movie-panel', this)">Movie</button>
-        <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
-        <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
+    <nav class="nav-bar">
+        <button class="nav-btn active" onclick="switchTab('home-panel', this)">Home</button>
+        <button class="nav-btn" onclick="switchTab('live-panel', this)">Live</button>
+        <button class="nav-btn" onclick="switchTab('download-panel', this)">Download</button>
+        <button class="nav-btn" onclick="switchTab('account-panel', this)">Account</button>
     </nav>
 
     <script>
-        function switchPanel(id, btn) {
+        // Supabase Init
+        const supabase = supabase.createClient("YOUR_SUPABASE_URL", "YOUR_ANON_KEY");
+        const CREATOR_ID = "YOUR_CREATOR_ID";
+
+        function switchTab(id, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
+            
+            // Logic: Hide search bar for Downloads/Account
+            document.getElementById('search-bar').style.display = (id === 'download-panel' || id === 'account-panel') ? 'none' : 'flex';
+        }
+
+        // Creator Social Proof Logic
+        async function getFollowers(actual) {
+            return 100000000 + actual;
+        }
+
+        // Deletion Engine
+        function deleteMovie(id) {
+            if(confirm("Permanently delete this movie?")) {
+                // Logic to remove from Supabase and UI
+                console.log("Movie deleted");
+            }
         }
     </script>
 </body>
