@@ -3,57 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>X10 Downloader</title>
+    <title>X10 Live</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --neon-pink: #ff00ff; --bg-black: #000000; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg-black); color: #fff; font-family: sans-serif; overflow: hidden; height: 100vh; }
-
-        /* Navigation Layout */
-        #top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 9999; display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
-        #nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 9999; border-top: 1px solid #333; }
-        
-        /* Sub-Tab Navigation */
-        .sub-nav { position: fixed; top: 60px; width: 100%; display: flex; justify-content: center; gap: 30px; background: #000; padding: 10px; z-index: 9998; border-bottom: 1px solid #222; }
-        .tab-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; padding-bottom: 5px; }
-        .tab-btn.active { color: var(--neon-pink); border-bottom: 2px solid var(--neon-pink); }
-        
-        /* Panel State */
-        .panel { display: none; width: 100%; height: 100vh; padding-top: 110px; padding-bottom: 70px; overflow-y: auto; }
+        .panel { display: none; height: 100vh; padding-top: 110px; padding-bottom: 70px; overflow-y: auto; }
         .panel.active { display: block !important; }
-        .content { display: none; }
-        .content.active { display: block; }
-        
-        .nav-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; }
+        #top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 9999; display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
+        .sub-nav { position: fixed; top: 60px; width: 100%; display: flex; justify-content: center; gap: 30px; background: #000; padding: 10px; z-index: 9998; }
+        #nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 9999; border-top: 1px solid #333; }
         .nav-btn.active { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <input type="text" id="search-input" placeholder="Search..." style="flex:1; padding:10px; background:#222; color:white; border:none; border-radius:5px;">
-        <button id="search-go" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px 15px; color:white; border-radius:5px;">GO</button>
+        <input type="text" id="search-input" placeholder="Watching Match..." style="flex:1; padding:10px; background:#222; color:white; border:none; border-radius:5px;">
+        <button id="search-go" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px; color:white;">GO</button>
     </div>
 
     <div id="home-panel" class="panel active">
         <div class="sub-nav">
-            <button class="tab-btn active" onclick="showSub('fy', this)">For You</button>
-            <button class="tab-btn" onclick="showSub('movies', this)">Movies</button>
+            <button class="nav-btn active" onclick="showContent('fy', this)">For You</button>
+            <button class="nav-btn" onclick="showContent('movies', this)">Movies</button>
         </div>
-        <div id="fy" class="content active"><h1>For You Feed</h1></div>
-        <div id="movies" class="content"><h1>Movie Catalog</h1></div>
+        <div id="fy" class="content active"><h1>Live Feed: Argentina Match</h1></div>
+        <div id="movies" class="content" style="display:none;"><h1>Movie Library</h1></div>
     </div>
 
-    <div id="live-panel" class="panel">
-        <div class="sub-nav">
-            <button class="tab-btn active" onclick="showSub('active-live', this)">Active Live</button>
-            <button class="tab-btn" onclick="showSub('prev-live', this)">Previous Live</button>
-        </div>
-        <div id="active-live" class="content active"><h1>Active Live</h1></div>
-        <div id="prev-live" class="content"><h1>Previous Live</h1></div>
-    </div>
-
+    <div id="live-panel" class="panel"><h1>Live Stream Panel</h1></div>
     <div id="download-panel" class="panel"><h1>Downloads</h1></div>
     <div id="account-panel" class="panel"><h1>Account</h1></div>
 
@@ -65,28 +44,26 @@
     </div>
 
     <script>
+        // GLOBAL SUPABASE CONNECTION
         const supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-        // Main Navigation Logic
+        // NAVIGATION ENGINE
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const target = this.getAttribute('data-target');
+                if(!target) return;
+                
                 document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                
                 document.getElementById(target).classList.add('active');
                 this.classList.add('active');
-                document.getElementById('top-bar').style.display = (target === 'download-panel' || target === 'account-panel') ? 'none' : 'flex';
-                document.querySelector('.sub-nav').style.display = (target === 'home-panel' || target === 'live-panel') ? 'flex' : 'none';
             });
         });
 
-        // Sub-Tab Logic
-        function showSub(id, btn) {
-            const parent = btn.closest('.panel');
-            parent.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
+        function showContent(id, btn) {
+            document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
         }
     </script>
 </body>
