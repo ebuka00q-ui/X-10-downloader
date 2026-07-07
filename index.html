@@ -1,54 +1,61 @@
-<!-- X10 Downloader Master Container -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // Global Configuration
-  const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
-  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>X10 Downloader</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --neon-pink: #ff00ff; --deep-black: #000000; }
+        body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; font-family: sans-serif; overflow: hidden; height: 100%; }
+        
+        .panel { display: none; width: 100%; height: 90%; overflow-y: auto; }
+        .panel.active { display: block; }
+        
+        /* Bottom Navigation Bar */
+        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-btn { background: none; border: none; color: #888; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .nav-btn.active { color: var(--neon-pink); }
+        
+        #ad-container { position: fixed; top: 0; width: 100%; height: 40px; background: #222; text-align: center; line-height: 40px; display: none; z-index: 999; }
+    </style>
+</head>
+<body>
 
-  // Unified Panel Switching Engine
-  function switchPanel(id, btn) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById(id).classList.add('active');
-    btn.classList.add('active');
-  }
+    <div id="home-panel" class="panel active"></div>
+    <div id="movie-panel" class="panel"></div>
+    <div id="live-panel" class="panel"></div>
+    <div id="account-panel" class="panel"></div>
 
-  // Monetization & Ad Logic
-  async function checkUserAccess(userId) {
-    const { data } = await supabase.from('profiles').select('is_subscribed').eq('id', userId).single();
-    
-    if (data?.is_subscribed) {
-      // Premium: No ads, Full access enabled
-      document.getElementById('ad-container').style.display = 'none';
-      enablePremiumFeatures();
-    } else {
-      // Free User: Show ads, restrict 4K/Archive
-      document.getElementById('ad-container').style.display = 'block';
-      restrictPremiumFeatures();
-    }
-  }
-</script>
-<!-- Your App Body -->
-<div id="home-panel" class="panel active"><h1>Home Screen</h1></div>
-<div id="movie-panel" class="panel"><h1>Movie Section</h1></div>
-<div id="live-panel" class="panel"><h1>Live Section</h1></div>
-<div id="account-panel" class="panel"><h1>Account Section</h1></div>
+    <div id="ad-container">ADVERTISEMENT (Subscribe to Remove)</div>
 
-<!-- Navigation Bar -->
-<nav>
-  <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
-  <button class="nav-btn" onclick="switchPanel('movie-panel', this)">Movie</button>
-  <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
-  <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
-</nav>
+    <nav>
+        <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
+        <button class="nav-btn" onclick="switchPanel('movie-panel', this)">Movie</button>
+        <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
+        <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
+    </nav>
 
-<!-- Ad Container (Must exist for the script to work) -->
-<div id="ad-container" style="display: none;">Ads will show here</div>
+    <script>
+        // Supabase Initialization with your unique keys
+        const supabase = Supabase.createClient(
+            "https://gkfivuvtpfetzatz.supabase.co", 
+            "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE"
+        );
 
-<style>
-  .panel { display: none; }
-  .panel.active { display: block; }
-  body { background-color: #000; color: #fff; }
-</style>
+        function switchPanel(id, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // Initialize App
+        async function initApp() {
+            console.log("X10 Engine Initialized");
+            // Add your content fetching and auth check logic here
+        }
+        window.onload = initApp;
+    </script>
+</body>
+</html>
