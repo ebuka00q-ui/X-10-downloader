@@ -4,70 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
-    <link rel="manifest" href="manifest.json">
-    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --neon-pink: #ff00ff; --deep-black: #000000; }
-        body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; font-family: sans-serif; height: 100%; overflow: hidden; }
+        :root { --neon-pink: #ff00ff; --bg-black: #000000; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; background: var(--bg-black); color: #fff; font-family: sans-serif; overflow: hidden; }
+
+        /* PERSISTENT UI */
+        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; align-items: center; padding: 0 15px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid #333; }
         
-        #search-container { position: fixed; top: 0; width: 100%; height: 60px; background: #000; display: flex; align-items: center; padding: 10px; z-index: 1000; }
-        input { flex: 1; padding: 10px; border-radius: 5px; border: none; background: #222; color: white; }
-        
-        .panel { display: none; height: 100vh; padding-top: 70px; padding-bottom: 70px; overflow-y: auto; }
+        /* PANELS - Fixed to fit ANY screen size */
+        .panel { display: none; width: 100%; height: 100vh; padding-top: 70px; padding-bottom: 70px; overflow-y: auto; }
         .panel.active { display: block; }
-        
-        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
-        .nav-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; }
-        .nav-btn.active { color: var(--neon-pink); }
+
+        /* TAB LOGIC */
+        .toggle-row { display: flex; justify-content: center; gap: 20px; padding: 10px; border-bottom: 1px solid #333; }
+        .nav-btn { background: none; border: none; color: #888; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        .nav-btn.active { color: var(--neon-pink); border-bottom: 2px solid var(--neon-pink); }
     </style>
 </head>
 <body>
 
-    <div id="search-container">
-        <input type="text" id="search-input" placeholder="Search...">
-        <button id="search-btn" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px 15px; color:white; border-radius:5px;">GO</button>
+    <div id="top-search" class="top-bar">
+        <input type="text" id="main-search" placeholder="Search..." style="flex:1; padding:10px; background:#222; color:white; border:none; border-radius:5px;">
+        <button onclick="alert('Searching...')" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px; color:white; border-radius:5px;">GO</button>
     </div>
 
-    <div id="home-panel" class="panel active"><h1>For You</h1></div>
+    <div id="home-panel" class="panel active">
+        <div class="toggle-row">
+            <button class="nav-btn active" onclick="showSection('fy-content', this)">For You</button>
+            <button class="nav-btn" onclick="showSection('movie-content', this)">Movies</button>
+        </div>
+        <div id="fy-content" class="content"><h1>For You Feed</h1></div>
+        <div id="movie-content" class="content" style="display:none;"><h1>Movie Catalog</h1></div>
+    </div>
+
     <div id="live-panel" class="panel"><h1>Live Streams</h1></div>
     <div id="download-panel" class="panel"><h1>Downloads</h1></div>
     <div id="account-panel" class="panel"><h1>Account</h1></div>
 
-    <nav>
-        <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
-        <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
-        <button class="nav-btn" onclick="switchPanel('download-panel', this)">Download</button>
-        <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
+    <nav class="nav-bar">
+        <button class="nav-btn active" onclick="switchTab('home-panel', this)">Home</button>
+        <button class="nav-btn" onclick="switchTab('live-panel', this)">Live</button>
+        <button class="nav-btn" onclick="switchTab('download-panel', this)">Download</button>
+        <button class="nav-btn" onclick="switchTab('account-panel', this)">Account</button>
     </nav>
 
     <script>
-        // Supabase Configuration
-        const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-        // Panel Switching Engine
-        function switchPanel(id, btn) {
+        function switchTab(id, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-bar .nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
-            
-            // Search Bar Visibility Logic
-            const searchBar = document.getElementById('search-container');
-            if(id === 'download-panel' || id === 'account-panel') {
-                searchBar.style.display = 'none';
-            } else {
-                searchBar.style.display = 'flex';
-            }
+            document.getElementById('top-search').style.display = (id === 'download-panel' || id === 'account-panel') ? 'none' : 'flex';
         }
 
-        // Search Trigger
-        document.getElementById('search-btn').addEventListener('click', () => {
-            const query = document.getElementById('search-input').value;
-            alert("Searching for: " + query);
-        });
+        function showSection(id, btn) {
+            document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+            document.querySelectorAll('#home-panel .nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            btn.classList.add('active');
+        }
     </script>
 </body>
 </html>
