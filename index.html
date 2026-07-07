@@ -30,3 +30,25 @@
     }
   }
 </script>
+<!-- Your App Body -->
+<div id="home-panel" class="panel active"><h1>Home Screen</h1></div>
+<div id="movie-panel" class="panel"><h1>Movie Section</h1></div>
+<div id="live-panel" class="panel"><h1>Live Section</h1></div>
+<div id="account-panel" class="panel"><h1>Account Section</h1></div>
+
+<!-- Navigation Bar -->
+<nav>
+  <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
+  <button class="nav-btn" onclick="switchPanel('movie-panel', this)">Movie</button>
+  <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
+  <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
+</nav>
+
+<!-- Ad Container (Must exist for the script to work) -->
+<div id="ad-container" style="display: none;">Ads will show here</div>
+
+<style>
+  .panel { display: none; }
+  .panel.active { display: block; }
+  body { background-color: #000; color: #fff; }
+</style>
