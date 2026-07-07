@@ -3,67 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>X10 Live</title>
+    <title>X10 Ecosystem</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --neon-pink: #ff00ff; --bg-black: #000000; }
-        body { background: var(--bg-black); color: #fff; font-family: sans-serif; overflow: hidden; height: 100vh; }
-        .panel { display: none; height: 100vh; padding-top: 110px; padding-bottom: 70px; overflow-y: auto; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-black); color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        
+        .panel { display: none; height: 100vh; padding: 110px 15px 70px 15px; overflow-y: auto; }
         .panel.active { display: block !important; }
-        #top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 9999; display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
-        .sub-nav { position: fixed; top: 60px; width: 100%; display: flex; justify-content: center; gap: 30px; background: #000; padding: 10px; z-index: 9998; }
-        #nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 9999; border-top: 1px solid #333; }
+        
+        #top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; display: flex; align-items: center; padding: 10px; z-index: 1000; }
+        #nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid #333; }
+        
+        .sub-nav { position: fixed; top: 60px; width: 100%; display: flex; justify-content: center; gap: 20px; background: #000; padding: 10px; z-index: 999; }
+        .tab-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; padding: 5px; }
+        .tab-btn.active { color: var(--neon-pink); border-bottom: 2px solid var(--neon-pink); }
+        
+        .content { display: none; }
+        .content.active { display: block; }
+        .nav-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <input type="text" id="search-input" placeholder="Watching Match..." style="flex:1; padding:10px; background:#222; color:white; border:none; border-radius:5px;">
-        <button id="search-go" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px; color:white;">GO</button>
+        <input type="text" id="search-input" placeholder="Search X10..." style="flex:1; padding:10px; background:#222; color:white; border:none; border-radius:5px;">
+        <button id="go-btn" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px; color:white;">GO</button>
     </div>
 
     <div id="home-panel" class="panel active">
         <div class="sub-nav">
-            <button class="nav-btn active" onclick="showContent('fy', this)">For You</button>
-            <button class="nav-btn" onclick="showContent('movies', this)">Movies</button>
+            <button class="tab-btn active" onclick="showSub('fy', this)">For You</button>
+            <button class="tab-btn" onclick="showSub('movies', this)">Movies</button>
         </div>
-        <div id="fy" class="content active"><h1>Live Feed: Argentina Match</h1></div>
-        <div id="movies" class="content" style="display:none;"><h1>Movie Library</h1></div>
+        <div id="fy" class="content active"><h1>For You Feed (Global Access)</h1></div>
+        <div id="movies" class="content"><h1>Movie Catalog: Watch & Download</h1></div>
     </div>
 
-    <div id="live-panel" class="panel"><h1>Live Stream Panel</h1></div>
-    <div id="download-panel" class="panel"><h1>Downloads</h1></div>
-    <div id="account-panel" class="panel"><h1>Account</h1></div>
+    <div id="live-panel" class="panel">
+        <div class="sub-nav">
+            <button class="tab-btn active" onclick="showSub('live-a', this)">Active Live</button>
+            <button class="tab-btn" onclick="showSub('live-p', this)">Previous Live</button>
+        </div>
+        <div id="live-a" class="content active"><h1>Active Live: Argentina Match</h1></div>
+        <div id="live-p" class="content"><h1>Previous (Last 7 Days Only)</h1></div>
+    </div>
+
+    <div id="download-panel" class="panel"><h1>Downloads: Active/Finished</h1></div>
+    <div id="account-panel" class="panel"><h1>Creator Account: 100M+ Followers</h1></div>
 
     <div id="nav-bar">
-        <button class="nav-btn active" data-target="home-panel">Home</button>
-        <button class="nav-btn" data-target="live-panel">Live</button>
-        <button class="nav-btn" data-target="download-panel">Download</button>
-        <button class="nav-btn" data-target="account-panel">Account</button>
+        <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
+        <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
+        <button class="nav-btn" onclick="switchPanel('download-panel', this)">Download</button>
+        <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
     </div>
 
     <script>
-        // GLOBAL SUPABASE CONNECTION
-        const supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
+        // GLOBAL SUPABASE KEY
+        window.supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-        // NAVIGATION ENGINE
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const target = this.getAttribute('data-target');
-                if(!target) return;
-                
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                
-                document.getElementById(target).classList.add('active');
-                this.classList.add('active');
-            });
-        });
+        function switchPanel(id, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            
+            // Search Bar & Sub-Nav visibility
+            document.getElementById('top-bar').style.display = (id === 'download-panel' || id === 'account-panel') ? 'none' : 'flex';
+            document.querySelector('.sub-nav').style.display = (id === 'home-panel' || id === 'live-panel') ? 'flex' : 'none';
+        }
 
-        function showContent(id, btn) {
-            document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
-            document.getElementById(id).style.display = 'block';
+        function showSub(id, btn) {
+            const parent = btn.closest('.panel');
+            parent.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
         }
     </script>
 </body>
