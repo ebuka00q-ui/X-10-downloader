@@ -5,78 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>X10 Downloader</title>
     <link rel="manifest" href="manifest.json">
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --neon-pink: #ff00ff; --deep-black: #000000; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; background: var(--deep-black); color: #fff; font-family: sans-serif; overflow: hidden; }
-
-        /* PERSISTENT UI */
-        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; align-items: center; padding: 0 15px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid #333; }
+        body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; font-family: sans-serif; height: 100%; overflow: hidden; }
         
-        /* PANELS */
-        .panel { display: none; height: 100%; width: 100%; padding-top: 60px; padding-bottom: 60px; overflow-y: auto; }
+        #search-container { position: fixed; top: 0; width: 100%; height: 60px; background: #000; display: flex; align-items: center; padding: 10px; z-index: 1000; }
+        input { flex: 1; padding: 10px; border-radius: 5px; border: none; background: #222; color: white; }
+        
+        .panel { display: none; height: 100vh; padding-top: 70px; padding-bottom: 70px; overflow-y: auto; }
         .panel.active { display: block; }
-
-        /* FEED & SOCIAL */
-        .video-container { height: 100%; scroll-snap-type: y mandatory; }
-        .nav-btn { color: #888; font-size: 12px; background: none; border: none; cursor: pointer; }
+        
+        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
+        .nav-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
-    <div id="search-bar" class="top-bar">
-        <input type="text" id="main-search" placeholder="Search..." style="flex:1; padding:8px; border-radius:5px;">
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search...">
+        <button id="search-btn" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px 15px; color:white; border-radius:5px;">GO</button>
     </div>
 
-    <div id="home-panel" class="panel active">
-        <div id="video-feed" class="video-container"></div>
-    </div>
-    <div id="live-panel" class="panel">
-        <div style="display:flex; justify-content:center; gap:10px; margin:10px;">
-            <button onclick="console.log('Active')">Active Live</button>
-            <button onclick="console.log('Previous')">Previous Live</button>
-        </div>
-    </div>
-    <div id="download-panel" class="panel"><h2>Downloads</h2><div id="download-list"></div></div>
-    <div id="account-panel" class="panel"><h2>Account</h2><div id="profile-stats"></div></div>
+    <div id="home-panel" class="panel active"><h1>For You</h1></div>
+    <div id="live-panel" class="panel"><h1>Live Streams</h1></div>
+    <div id="download-panel" class="panel"><h1>Downloads</h1></div>
+    <div id="account-panel" class="panel"><h1>Account</h1></div>
 
-    <nav class="nav-bar">
-        <button class="nav-btn active" onclick="switchTab('home-panel', this)">Home</button>
-        <button class="nav-btn" onclick="switchTab('live-panel', this)">Live</button>
-        <button class="nav-btn" onclick="switchTab('download-panel', this)">Download</button>
-        <button class="nav-btn" onclick="switchTab('account-panel', this)">Account</button>
+    <nav>
+        <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
+        <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
+        <button class="nav-btn" onclick="switchPanel('download-panel', this)">Download</button>
+        <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
     </nav>
 
     <script>
-        // Supabase Init
-        const supabase = supabase.createClient("YOUR_SUPABASE_URL", "YOUR_ANON_KEY");
-        const CREATOR_ID = "YOUR_CREATOR_ID";
+        // Supabase Configuration
+        const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        function switchTab(id, btn) {
+        // Panel Switching Engine
+        function switchPanel(id, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
             
-            // Logic: Hide search bar for Downloads/Account
-            document.getElementById('search-bar').style.display = (id === 'download-panel' || id === 'account-panel') ? 'none' : 'flex';
-        }
-
-        // Creator Social Proof Logic
-        async function getFollowers(actual) {
-            return 100000000 + actual;
-        }
-
-        // Deletion Engine
-        function deleteMovie(id) {
-            if(confirm("Permanently delete this movie?")) {
-                // Logic to remove from Supabase and UI
-                console.log("Movie deleted");
+            // Search Bar Visibility Logic
+            const searchBar = document.getElementById('search-container');
+            if(id === 'download-panel' || id === 'account-panel') {
+                searchBar.style.display = 'none';
+            } else {
+                searchBar.style.display = 'flex';
             }
         }
+
+        // Search Trigger
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const query = document.getElementById('search-input').value;
+            alert("Searching for: " + query);
+        });
     </script>
 </body>
 </html>
