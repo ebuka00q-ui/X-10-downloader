@@ -10,22 +10,20 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html { width: 100%; height: 100%; background: var(--bg-black); color: #fff; font-family: sans-serif; overflow: hidden; }
 
-        /* PERSISTENT UI */
-        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #333; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid #333; }
+        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 9999; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #333; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 9999; border-top: 1px solid #333; }
         
-        /* PANELS */
         .panel { display: none; width: 100%; height: 100vh; padding-top: 60px; padding-bottom: 60px; overflow-y: auto; }
-        .panel.active { display: block; }
+        .panel.active { display: block !important; }
 
-        /* INNER TAB LOGIC */
         .sub-nav { display: flex; justify-content: center; gap: 30px; padding: 15px; background: #000; }
         .tab-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; padding-bottom: 5px; }
         .tab-btn.active { color: var(--neon-pink); border-bottom: 2px solid var(--neon-pink); }
 
-        /* BUTTONS */
         .nav-btn { background: none; border: none; color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: var(--neon-pink); }
+        .content { display: none; }
+        .content.active { display: block; }
     </style>
 </head>
 <body>
@@ -37,55 +35,52 @@
 
     <div id="home-panel" class="panel active">
         <div class="sub-nav">
-            <button class="tab-btn active" onclick="showSubPanel('fy-content', this)">For You</button>
-            <button class="tab-btn" onclick="showSubPanel('movie-content', this)">Movies</button>
+            <button class="tab-btn active" onclick="showSub('fy-content', this)">For You</button>
+            <button class="tab-btn" onclick="showSub('movie-content', this)">Movies</button>
         </div>
-        <div id="fy-content" class="content"><h1>For You Feed</h1></div>
-        <div id="movie-content" class="content" style="display:none;"><h1>Movie Catalog</h1></div>
+        <div id="fy-content" class="content active"><h1>For You Feed</h1></div>
+        <div id="movie-content" class="content"><h1>Movie Catalog</h1></div>
     </div>
 
     <div id="live-panel" class="panel">
         <div class="sub-nav">
-            <button class="tab-btn active" onclick="showSubPanel('live-active', this)">Active Live</button>
-            <button class="tab-btn" onclick="showSubPanel('live-prev', this)">Previous Live</button>
+            <button class="tab-btn active" onclick="showSub('live-active', this)">Active Live</button>
+            <button class="tab-btn" onclick="showSub('live-prev', this)">Previous Live</button>
         </div>
-        <div id="live-active" class="content"><h1>Active Streams</h1></div>
-        <div id="live-prev" class="content" style="display:none;"><h1>Previous Streams</h1></div>
+        <div id="live-active" class="content active"><h1>Active Streams</h1></div>
+        <div id="live-prev" class="content"><h1>Previous Streams</h1></div>
     </div>
 
     <div id="download-panel" class="panel"><h1>Downloads</h1></div>
     <div id="account-panel" class="panel"><h1>Account</h1></div>
 
     <nav class="nav-bar">
-        <button class="nav-btn active" onclick="switchTab('home-panel', this)">Home</button>
-        <button class="nav-btn" onclick="switchTab('live-panel', this)">Live</button>
-        <button class="nav-btn" onclick="switchTab('download-panel', this)">Download</button>
-        <button class="nav-btn" onclick="switchTab('account-panel', this)">Account</button>
+        <button class="nav-btn active" onclick="switchMain('home-panel', this)">Home</button>
+        <button class="nav-btn" onclick="switchMain('live-panel', this)">Live</button>
+        <button class="nav-btn" onclick="switchMain('download-panel', this)">Download</button>
+        <button class="nav-btn" onclick="switchMain('account-panel', this)">Account</button>
     </nav>
 
     <script>
         const supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-        function switchTab(id, btn) {
+        function switchMain(id, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-bar .nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
             document.getElementById('top-search').style.display = (id === 'download-panel' || id === 'account-panel') ? 'none' : 'flex';
         }
 
-        function showSubPanel(id, btn) {
-            // Find parent panel content containers
+        function showSub(id, btn) {
             const parent = btn.closest('.panel');
-            parent.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+            parent.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
             parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).style.display = 'block';
+            document.getElementById(id).classList.add('active');
             btn.classList.add('active');
         }
 
-        document.getElementById('go-btn').addEventListener('click', () => {
-            alert("Searching: " + document.getElementById('main-search').value);
-        });
+        document.getElementById('go-btn').onclick = () => alert("Searching...");
     </script>
 </body>
 </html>
