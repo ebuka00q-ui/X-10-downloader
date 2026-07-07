@@ -7,57 +7,40 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* [High-Performance Social Shell] */
         :root { --neon-pink: #ff00ff; --deep-black: #000000; }
-        body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; font-family: sans-serif; height: 100%; overflow: hidden; }
+        body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; height: 100%; overflow: hidden; }
         
-        /* Persistent UI Elements */
-        #search-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; padding: 10px; display: flex; }
-        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; justify-content: space-around; align-items: center; }
-        
-        /* Video Container (The "Social" Feed) */
         #video-feed { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; }
-        .video-slide { height: 100vh; scroll-snap-align: start; position: relative; background: #111; }
+        .video-slide { height: 100vh; scroll-snap-align: start; position: relative; }
         
-        /* Subscription Overlay */
-        .paywall { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        /* Creator Identity Styles */
+        .follower-count { font-size: 24px; font-weight: bold; color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
-    <div id="search-bar">
-        <input type="text" placeholder="Search X10..." style="flex:1;">
-        <button>GO</button>
-    </div>
-
     <div id="video-feed">
-        <div class="video-slide">
-            <div id="social-stack" style="position: absolute; right: 10px; bottom: 100px;">
-                <button>Like</button><button>Comment</button><button>Share</button>
-            </div>
         </div>
-    </div>
-
-    <nav>
-        <button onclick="window.location.href='index.html'">Home</button>
-        <button>Movie</button>
-        <button>Live</button>
-        <button>Account</button>
-    </nav>
 
     <script>
-        // Subscription check: Only allows access if date is valid
-        function checkSubscription(user) {
-            const now = new Date();
-            const expiry = new Date(user.subscription_end);
-            return now < expiry;
+        const supabase = Supabase.createClient("YOUR_SUPABASE_URL", "YOUR_ANON_KEY");
+
+        // [CREATOR OVERRIDE LOGIC]
+        async function checkAccess(user) {
+            if (user.id === 'YOUR_CREATOR_ID_HERE') {
+                return true; // Bypass all paywalls for the Creator
+            }
+            // Check expiry for regular users
+            return new Date() < new Date(user.subscription_end);
         }
 
-        // Logic to trigger paywall
-        function requestPremiumContent() {
-            if (!checkSubscription(currentUser)) {
-                document.querySelector('.paywall').style.display = 'flex';
-            }
+        // [SOCIAL PROOF MULTIPLIER]
+        function getDisplayFollowers(actualFollowers) {
+            return 100000000 + actualFollowers;
         }
+
+        console.log("X10 Engine Initialized: Creator Mode Enabled.");
     </script>
 </body>
 </html>
