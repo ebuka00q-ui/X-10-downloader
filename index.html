@@ -8,28 +8,31 @@
         :root { --neon-pink: #ff00ff; --deep-black: #000000; }
         body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; font-family: sans-serif; height: 100%; overflow: hidden; }
         
-        /* Each panel is full screen */
-        .panel { display: none; height: 100%; width: 100%; position: absolute; top: 0; left: 0; padding-top: 70px; padding-bottom: 70px; }
+        /* SEARCH BAR: Locked to top */
+        #search-container { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 500; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid #333; }
+        input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #111; color: #fff; }
+        
+        /* PANELS: Middle area only */
+        .panel { display: none; height: calc(100% - 120px); width: 100%; position: absolute; top: 60px; overflow-y: auto; padding: 20px; }
         .panel.active { display: block; }
         
-        /* Navigation & Search */
-        #search-container { position: fixed; top: 0; width: 100%; padding: 10px; background: #000; z-index: 50; display: flex; }
-        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-btn { background: none; border: none; color: #888; cursor: pointer; padding: 10px; }
-        .nav-btn.active { color: var(--neon-pink); font-weight: bold; }
+        /* NAV BAR: Locked to bottom */
+        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 500; }
+        .nav-btn { background: none; border: none; color: #888; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .nav-btn.active { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
     <div id="search-container">
-        <input type="text" id="search-input" placeholder="Search..." style="flex:1; padding:8px;">
-        <button onclick="alert('Search: ' + document.getElementById('search-input').value)">Go</button>
+        <input type="text" id="search-input" placeholder="Search X10...">
+        <button onclick="alert('Searching...')">Go</button>
     </div>
 
-    <div id="home-panel" class="panel active"><h2>For You</h2></div>
-    <div id="movie-panel" class="panel"><h2>Movie Section</h2></div>
-    <div id="live-panel" class="panel"><h2>Live Streams</h2></div>
-    <div id="account-panel" class="panel"><h2>Account</h2></div>
+    <div id="home-panel" class="panel active"><h1>For You</h1><p>Home content loads here...</p></div>
+    <div id="movie-panel" class="panel"><h1>Movies</h1><p>Movie catalog loads here...</p></div>
+    <div id="live-panel" class="panel"><h1>Live</h1><p>Live streams load here...</p></div>
+    <div id="account-panel" class="panel"><h1>Account</h1><p>Settings & Profile...</p></div>
 
     <nav>
         <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
@@ -40,13 +43,9 @@
 
     <script>
         function switchPanel(id, btn) {
-            // Hide all panels
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            // Remove active style from all buttons
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            // Show requested panel
             document.getElementById(id).classList.add('active');
-            // Style requested button
             btn.classList.add('active');
         }
     </script>
