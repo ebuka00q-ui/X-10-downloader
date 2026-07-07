@@ -7,55 +7,61 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --neon-pink: #ff00ff; --deep-black: #000000; }
-        body, html { margin: 0; padding: 0; background: var(--deep-black); color: #fff; font-family: sans-serif; overflow: hidden; height: 100%; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; background: var(--deep-black); color: #fff; font-family: sans-serif; overflow: hidden; }
         
-        .panel { display: none; width: 100%; height: 90%; overflow-y: auto; }
-        .panel.active { display: block; }
+        .panel { display: none; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; background: #000; }
+        .panel.active { display: block; z-index: 10; }
         
-        /* Bottom Navigation Bar */
-        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-        .nav-btn { background: none; border: none; color: #888; font-size: 14px; font-weight: bold; cursor: pointer; }
-        .nav-btn.active { color: var(--neon-pink); }
-        
-        #ad-container { position: fixed; top: 0; width: 100%; height: 40px; background: #222; text-align: center; line-height: 40px; display: none; z-index: 999; }
+        /* Navigation Bar */
+        nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 100; }
+        .nav-btn { background: none; border: none; color: #888; font-size: 14px; cursor: pointer; padding: 10px; }
+        .nav-btn.active { color: var(--neon-pink); font-weight: bold; }
+
+        /* Search Panel (Initially hidden) */
+        #search-panel { z-index: 20; background: #111; }
+        .back-btn { padding: 10px; color: white; cursor: pointer; font-size: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="home-panel" class="panel active"></div>
-    <div id="movie-panel" class="panel"></div>
-    <div id="live-panel" class="panel"></div>
-    <div id="account-panel" class="panel"></div>
-
-    <div id="ad-container">ADVERTISEMENT (Subscribe to Remove)</div>
+    <div id="home-panel" class="panel active">Home Feed</div>
+    <div id="movie-panel" class="panel">Movie Section</div>
+    <div id="live-panel" class="panel">Live Section</div>
+    <div id="account-panel" class="panel">Account Section</div>
+    
+    <div id="search-panel" class="panel">
+        <div class="back-btn" onclick="hideSearch()">← Back</div>
+        <input type="text" placeholder="Search..." style="width: 80%; padding: 10px; margin: 20px;">
+    </div>
 
     <nav>
         <button class="nav-btn active" onclick="switchPanel('home-panel', this)">Home</button>
         <button class="nav-btn" onclick="switchPanel('movie-panel', this)">Movie</button>
         <button class="nav-btn" onclick="switchPanel('live-panel', this)">Live</button>
         <button class="nav-btn" onclick="switchPanel('account-panel', this)">Account</button>
+        <button class="nav-btn" onclick="showSearch()">Search</button>
     </nav>
 
     <script>
-        // Supabase Initialization with your unique keys
-        const supabase = Supabase.createClient(
-            "https://gkfivuvtpfetzatz.supabase.co", 
-            "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE"
-        );
-
+        // 1. Switching Logic (Fixes your stuck screen)
         function switchPanel(id, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
+            if (btn) btn.classList.add('active');
         }
 
-        // Initialize App
-        async function initApp() {
-            console.log("X10 Engine Initialized");
-            // Add your content fetching and auth check logic here
+        // 2. Search Navigation
+        function showSearch() {
+            document.getElementById('search-panel').classList.add('active');
         }
-        window.onload = initApp;
+        function hideSearch() {
+            document.getElementById('search-panel').classList.remove('active');
+        }
+
+        // Supabase Initialization
+        const supabase = Supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
     </script>
 </body>
 </html>
