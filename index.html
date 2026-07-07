@@ -11,36 +11,48 @@
         body, html { width: 100%; height: 100%; background: var(--bg-black); color: #fff; font-family: sans-serif; overflow: hidden; }
 
         /* PERSISTENT UI */
-        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; align-items: center; padding: 0 15px; }
+        .top-bar { position: fixed; top: 0; width: 100%; height: 60px; background: #000; z-index: 1000; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #333; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-top: 1px solid #333; }
         
-        /* PANELS - Fixed to fit ANY screen size */
-        .panel { display: none; width: 100%; height: 100vh; padding-top: 70px; padding-bottom: 70px; overflow-y: auto; }
+        /* PANELS */
+        .panel { display: none; width: 100%; height: 100vh; padding-top: 60px; padding-bottom: 60px; overflow-y: auto; }
         .panel.active { display: block; }
 
-        /* TAB LOGIC */
-        .toggle-row { display: flex; justify-content: center; gap: 20px; padding: 10px; border-bottom: 1px solid #333; }
-        .nav-btn { background: none; border: none; color: #888; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
-        .nav-btn.active { color: var(--neon-pink); border-bottom: 2px solid var(--neon-pink); }
+        /* INNER TAB LOGIC */
+        .sub-nav { display: flex; justify-content: center; gap: 30px; padding: 15px; background: #000; }
+        .tab-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; padding-bottom: 5px; }
+        .tab-btn.active { color: var(--neon-pink); border-bottom: 2px solid var(--neon-pink); }
+
+        /* BUTTONS */
+        .nav-btn { background: none; border: none; color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+        .nav-btn.active { color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
     <div id="top-search" class="top-bar">
         <input type="text" id="main-search" placeholder="Search..." style="flex:1; padding:10px; background:#222; color:white; border:none; border-radius:5px;">
-        <button onclick="alert('Searching...')" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px; color:white; border-radius:5px;">GO</button>
+        <button id="go-btn" style="margin-left:10px; background:var(--neon-pink); border:none; padding:10px 15px; color:white; border-radius:5px;">GO</button>
     </div>
 
     <div id="home-panel" class="panel active">
-        <div class="toggle-row">
-            <button class="nav-btn active" onclick="showSection('fy-content', this)">For You</button>
-            <button class="nav-btn" onclick="showSection('movie-content', this)">Movies</button>
+        <div class="sub-nav">
+            <button class="tab-btn active" onclick="showSubPanel('fy-content', this)">For You</button>
+            <button class="tab-btn" onclick="showSubPanel('movie-content', this)">Movies</button>
         </div>
         <div id="fy-content" class="content"><h1>For You Feed</h1></div>
         <div id="movie-content" class="content" style="display:none;"><h1>Movie Catalog</h1></div>
     </div>
 
-    <div id="live-panel" class="panel"><h1>Live Streams</h1></div>
+    <div id="live-panel" class="panel">
+        <div class="sub-nav">
+            <button class="tab-btn active" onclick="showSubPanel('live-active', this)">Active Live</button>
+            <button class="tab-btn" onclick="showSubPanel('live-prev', this)">Previous Live</button>
+        </div>
+        <div id="live-active" class="content"><h1>Active Streams</h1></div>
+        <div id="live-prev" class="content" style="display:none;"><h1>Previous Streams</h1></div>
+    </div>
+
     <div id="download-panel" class="panel"><h1>Downloads</h1></div>
     <div id="account-panel" class="panel"><h1>Account</h1></div>
 
@@ -62,12 +74,18 @@
             document.getElementById('top-search').style.display = (id === 'download-panel' || id === 'account-panel') ? 'none' : 'flex';
         }
 
-        function showSection(id, btn) {
-            document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
-            document.querySelectorAll('#home-panel .nav-btn').forEach(b => b.classList.remove('active'));
+        function showSubPanel(id, btn) {
+            // Find parent panel content containers
+            const parent = btn.closest('.panel');
+            parent.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+            parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).style.display = 'block';
             btn.classList.add('active');
         }
+
+        document.getElementById('go-btn').addEventListener('click', () => {
+            alert("Searching: " + document.getElementById('main-search').value);
+        });
     </script>
 </body>
 </html>
