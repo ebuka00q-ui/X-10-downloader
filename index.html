@@ -18,48 +18,60 @@
     const { createClient } = supabase;
     const supabase = createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-    const X10MovieApp = () => {
-      const [movies, setMovies] = useState([]);
-      const [search, setSearch] = useState('');
+    const MovieApp = () => {
+      const [allMovies, setAllMovies] = useState([]);
+      const [displayMovies, setDisplayMovies] = useState([]);
+      const [searchText, setSearchText] = useState('');
 
-      // Fetch movies from Supabase (Ensure your table is named 'movies')
       useEffect(() => {
         const fetchMovies = async () => {
-          const { data, error } = await supabase.from('movies').select('*');
-          if (data) setMovies(data);
+          const { data } = await supabase.from('movies').select('*');
+          if (data) {
+            setAllMovies(data);
+            setDisplayMovies(data);
+          }
         };
         fetchMovies();
       }, []);
 
-      const filteredMovies = movies.filter(m => 
-        m.title.toLowerCase().includes(search.toLowerCase())
-      );
+      // Trigger Search only when button is clicked
+      const handleSearch = () => {
+        if (!searchText.trim()) {
+          setDisplayMovies(allMovies);
+        } else {
+          setDisplayMovies(allMovies.filter(m => 
+            m.title.toLowerCase().includes(searchText.toLowerCase())
+          ));
+        }
+      };
 
       return (
-        <div className="flex flex-col h-full">
-          {/* Top Search Bar */}
-          <div className="p-4 bg-[#111111]">
+        <div className="flex flex-col h-full bg-black">
+          {/* Top Search Panel */}
+          <div className="p-4 bg-black border-b border-gray-800 flex gap-2">
             <input 
               type="text" 
-              placeholder="Search movies..." 
-              className="w-full bg-[#222222] p-3 rounded-xl text-white outline-none"
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search movie title..." 
+              className="flex-1 bg-gray-900 p-3 rounded-lg text-white"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
+            <button 
+              onClick={handleSearch}
+              className="bg-blue-600 px-6 py-2 rounded-lg font-bold"
+            >
+              SEARCH
+            </button>
           </div>
 
           {/* Scrollable Movie Grid */}
-          <main className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4">
-            {filteredMovies.map(movie => (
-              <div key={movie.id} className="bg-[#111111] p-2 rounded-xl">
-                <video 
-                  className="w-full rounded-lg mb-2" 
-                  controls 
-                  playsInline 
-                  preload="metadata"
-                >
+          <main className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayMovies.map(movie => (
+              <div key={movie.id} className="bg-[#111111] p-4 rounded-2xl border border-gray-800">
+                <video className="w-full rounded-lg bg-black" controls playsInline>
                   <source src={movie.video_url} type="video/mp4" />
                 </video>
-                <h2 className="text-sm font-bold truncate">{movie.title}</h2>
+                <h2 className="mt-3 text-lg font-bold truncate">{movie.title}</h2>
               </div>
             ))}
           </main>
@@ -68,7 +80,7 @@
     };
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<X10MovieApp />);
+    root.render(<MovieApp />);
   </script>
 </body>
 </html>
