@@ -17,7 +17,6 @@
     const { useState, useEffect } = React;
     const { createClient } = supabase;
 
-    // 1. SUPABASE INITIALIZATION
     const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -27,53 +26,50 @@
       const [showExitModal, setShowExitModal] = useState(false);
       const [isCreator] = useState(true);
 
-      // 2. BACK BUTTON PROTOCOL
+      // Back Button Protocol
       useEffect(() => {
-        let backPressCount = 0;
         const handlePopState = () => {
-          backPressCount++;
-          if (backPressCount >= 2) {
-            setShowExitModal(true);
-            backPressCount = 0;
-          } else {
-            window.history.back();
-          }
+          setShowExitModal(true);
         };
+        window.history.pushState(null, null, window.location.pathname);
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
       }, []);
 
       return (
-        <div className="w-full h-screen flex flex-col">
-          {/* 3. MAIN CONTENT AREA */}
+        <div className="w-full h-screen flex flex-col bg-black text-white">
+          {/* Main Content Area */}
           <main className="flex-1 overflow-y-auto p-4">
-            {currentTab === 'home' && <div>Home/FYP Content</div>}
+            {currentTab === 'home' && <div><h1 className="text-2xl font-bold">Home/FYP Content</h1></div>}
+            {currentTab === 'live' && <div><h1 className="text-2xl font-bold">Live Content</h1></div>}
+            {currentTab === 'downloads' && <div><h1 className="text-2xl font-bold">Downloads</h1></div>}
             {currentTab === 'account' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h1 className="text-2xl font-bold">Profile</h1>
-                  {isCreator && <button className="bg-gray-800 px-3 py-1 rounded">...</button>}
                 </div>
-                <div className="text-2xl font-bold">{isCreator ? "100,000,000+ Followers" : "Followers"}</div>
+                <div className="text-3xl font-bold mt-4">{isCreator ? "100,000,000+ Followers" : "Followers"}</div>
               </div>
             )}
           </main>
 
-          {/* 4. PERSISTENT NAVIGATION */}
-          <nav className="flex justify-around py-4 border-t border-gray-800 bg-black">
-            <button onClick={() => setCurrentTab('home')}>Home</button>
-            <button onClick={() => setCurrentTab('live')}>Live</button>
-            <button onClick={() => setCurrentTab('downloads')}>Downloads</button>
-            <button onClick={() => setCurrentTab('account')}>Account</button>
+          {/* Persistent Navigation Bar - This was missing! */}
+          <nav className="flex justify-around items-center py-4 border-t border-gray-800 bg-black">
+            <button onClick={() => setCurrentTab('home')} className={currentTab === 'home' ? 'text-white' : 'text-gray-500'}>Home</button>
+            <button onClick={() => setCurrentTab('live')} className={currentTab === 'live' ? 'text-white' : 'text-gray-500'}>Live</button>
+            <button onClick={() => setCurrentTab('downloads')} className={currentTab === 'downloads' ? 'text-white' : 'text-gray-500'}>Downloads</button>
+            <button onClick={() => setCurrentTab('account')} className={currentTab === 'account' ? 'text-white' : 'text-gray-500'}>Account</button>
           </nav>
 
-          {/* 5. EXIT MODAL */}
+          {/* Exit Modal */}
           {showExitModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
+            <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-50">
               <div className="bg-gray-900 p-6 rounded-lg text-center">
-                <p className="mb-4">Exit App?</p>
-                <button onClick={() => window.close()} className="mr-4 bg-red-600 px-4 py-2 rounded">Exit</button>
-                <button onClick={() => setShowExitModal(false)} className="bg-gray-700 px-4 py-2 rounded">Cancel</button>
+                <p className="mb-6">Do you want to exit the app?</p>
+                <div className="flex gap-4">
+                  <button onClick={() => window.close()} className="bg-red-600 px-6 py-2 rounded">Exit</button>
+                  <button onClick={() => setShowExitModal(false)} className="bg-gray-700 px-6 py-2 rounded">Cancel</button>
+                </div>
               </div>
             </div>
           )}
