@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>X10 Downloader</title>
+  <title>X10 Movies</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-black text-white h-screen overflow-hidden">
+<body class="bg-black text-white m-0 p-0 h-screen overflow-hidden">
   <div id="root" class="h-full"></div>
 
   <script type="text/babel">
@@ -18,59 +18,57 @@
     const { createClient } = supabase;
     const supabase = createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-    const X10App = () => {
-      const [currentTab, setCurrentTab] = useState('home');
-      const [subTab, setSubTab] = useState('active'); // For Live or Home segments
-      const [searchQuery, setSearchQuery] = useState('');
+    const X10MovieApp = () => {
+      const [movies, setMovies] = useState([]);
+      const [search, setSearch] = useState('');
+
+      // Fetch movies from Supabase (Ensure your table is named 'movies')
+      useEffect(() => {
+        const fetchMovies = async () => {
+          const { data, error } = await supabase.from('movies').select('*');
+          if (data) setMovies(data);
+        };
+        fetchMovies();
+      }, []);
+
+      const filteredMovies = movies.filter(m => 
+        m.title.toLowerCase().includes(search.toLowerCase())
+      );
 
       return (
         <div className="flex flex-col h-full">
-          {/* Header with Dynamic Search */}
-          <header className="p-4 border-b border-gray-800 flex justify-between items-center">
-            <h1 className="text-xl font-bold uppercase">{currentTab}</h1>
+          {/* Top Search Bar */}
+          <div className="p-4 bg-[#111111]">
             <input 
               type="text" 
-              placeholder={`Search in ${currentTab}...`}
-              className="bg-gray-900 p-2 rounded-lg text-sm w-1/2"
-              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search movies..." 
+              className="w-full bg-[#222222] p-3 rounded-xl text-white outline-none"
+              onChange={(e) => setSearch(e.target.value)}
             />
-          </header>
+          </div>
 
-          {/* Dynamic Main Content */}
-          <main className="flex-1 overflow-y-auto p-4">
-            {currentTab === 'home' && (
-              <div>
-                <div className="flex gap-4 mb-4">
-                  <button onClick={() => setSubTab('fyp')} className={subTab === 'fyp' ? 'font-bold' : 'text-gray-500'}>For You</button>
-                  <button onClick={() => setSubTab('movie')} className={subTab === 'movie' ? 'font-bold' : 'text-gray-500'}>Movies</button>
-                </div>
-                {/* Content logic: Search {searchQuery} in {subTab} */}
+          {/* Scrollable Movie Grid */}
+          <main className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4">
+            {filteredMovies.map(movie => (
+              <div key={movie.id} className="bg-[#111111] p-2 rounded-xl">
+                <video 
+                  className="w-full rounded-lg mb-2" 
+                  controls 
+                  playsInline 
+                  preload="metadata"
+                >
+                  <source src={movie.video_url} type="video/mp4" />
+                </video>
+                <h2 className="text-sm font-bold truncate">{movie.title}</h2>
               </div>
-            )}
-
-            {currentTab === 'live' && (
-              <div>
-                <div className="flex gap-4 mb-4">
-                  <button onClick={() => setSubTab('active')} className={subTab === 'active' ? 'font-bold' : 'text-gray-500'}>Active</button>
-                  <button onClick={() => setSubTab('preview')} className={subTab === 'preview' ? 'font-bold' : 'text-gray-500'}>Preview</button>
-                </div>
-                {/* Logic: If preview, filter matches < 7 days old from Supabase */}
-              </div>
-            )}
-          </main>
-
-          {/* Navigation */}
-          <nav className="h-20 bg-black border-t border-gray-800 flex justify-around items-center">
-            {['home', 'live', 'downloads', 'account'].map(tab => (
-              <button key={tab} onClick={() => setCurrentTab(tab)} className="capitalize text-xs">{tab}</button>
             ))}
-          </nav>
+          </main>
         </div>
       );
     };
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<X10App />);
+    root.render(<X10MovieApp />);
   </script>
 </body>
 </html>
