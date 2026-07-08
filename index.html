@@ -9,79 +9,62 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { background: #000000; color: #ffffff; touch-action: manipulation; }
-    .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; height: 100%; transition: all 0.2s; }
-    .active-tab { color: #ffffff; font-weight: 700; border-top: 2px solid #ffffff; }
-    .inactive-tab { color: #666666; }
-  </style>
 </head>
-<body>
-  <div id="root"></div>
+<body class="bg-black text-white h-screen overflow-hidden">
+  <div id="root" class="h-full"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
     const { createClient } = supabase;
-
-    // Backend Connection
     const supabase = createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
     const X10App = () => {
       const [currentTab, setCurrentTab] = useState('home');
-      const [showExitModal, setShowExitModal] = useState(false);
-      const [isCreator] = useState(true);
-
-      // Back Button Protocol
-      useEffect(() => {
-        const handlePopState = () => setShowExitModal(true);
-        window.history.pushState(null, null, window.location.pathname);
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-      }, []);
+      const [subTab, setSubTab] = useState('active'); // For Live or Home segments
+      const [searchQuery, setSearchQuery] = useState('');
 
       return (
-        <div className="flex flex-col h-screen w-full">
-          {/* Main Content Viewport */}
+        <div className="flex flex-col h-full">
+          {/* Header with Dynamic Search */}
+          <header className="p-4 border-b border-gray-800 flex justify-between items-center">
+            <h1 className="text-xl font-bold uppercase">{currentTab}</h1>
+            <input 
+              type="text" 
+              placeholder={`Search in ${currentTab}...`}
+              className="bg-gray-900 p-2 rounded-lg text-sm w-1/2"
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </header>
+
+          {/* Dynamic Main Content */}
           <main className="flex-1 overflow-y-auto p-4">
-            {currentTab === 'home' && <div className="text-xl font-bold">Home/FYP Content</div>}
-            {currentTab === 'live' && <div className="text-xl font-bold">Live Content</div>}
-            {currentTab === 'downloads' && <div className="text-xl font-bold">Downloads</div>}
-            {currentTab === 'account' && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h1 className="text-2xl font-bold">Profile</h1>
-                  {isCreator && <button className="p-2 border border-gray-700 rounded-lg">Settings</button>}
+            {currentTab === 'home' && (
+              <div>
+                <div className="flex gap-4 mb-4">
+                  <button onClick={() => setSubTab('fyp')} className={subTab === 'fyp' ? 'font-bold' : 'text-gray-500'}>For You</button>
+                  <button onClick={() => setSubTab('movie')} className={subTab === 'movie' ? 'font-bold' : 'text-gray-500'}>Movies</button>
                 </div>
-                <div className="text-3xl font-black text-blue-500">100,000,000+ Followers</div>
+                {/* Content logic: Search {searchQuery} in {subTab} */}
+              </div>
+            )}
+
+            {currentTab === 'live' && (
+              <div>
+                <div className="flex gap-4 mb-4">
+                  <button onClick={() => setSubTab('active')} className={subTab === 'active' ? 'font-bold' : 'text-gray-500'}>Active</button>
+                  <button onClick={() => setSubTab('preview')} className={subTab === 'preview' ? 'font-bold' : 'text-gray-500'}>Preview</button>
+                </div>
+                {/* Logic: If preview, filter matches < 7 days old from Supabase */}
               </div>
             )}
           </main>
 
-          {/* Navigation Bar - Fixed to bottom */}
-          <nav className="h-20 w-full bg-black border-t border-gray-800 flex shrink-0">
-            {['home', 'live', 'downloads', 'account'].map((tab) => (
-              <button 
-                key={tab} 
-                onClick={() => setCurrentTab(tab)} 
-                className={`nav-btn uppercase text-[10px] tracking-widest ${currentTab === tab ? 'active-tab' : 'inactive-tab'}`}
-              >
-                {tab}
-              </button>
+          {/* Navigation */}
+          <nav className="h-20 bg-black border-t border-gray-800 flex justify-around items-center">
+            {['home', 'live', 'downloads', 'account'].map(tab => (
+              <button key={tab} onClick={() => setCurrentTab(tab)} className="capitalize text-xs">{tab}</button>
             ))}
           </nav>
-
-          {/* Exit Modal - Confirmation overlay */}
-          {showExitModal && (
-            <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50">
-              <div className="bg-[#1a1a1a] p-8 rounded-3xl w-4/5 max-w-sm text-center border border-gray-800">
-                <h2 className="text-xl font-bold mb-6">Exit Application?</h2>
-                <div className="flex gap-4">
-                  <button onClick={() => window.close()} className="flex-1 bg-red-600 py-3 rounded-full font-bold">EXIT</button>
-                  <button onClick={() => setShowExitModal(false)} className="flex-1 bg-gray-700 py-3 rounded-full font-bold">CANCEL</button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       );
     };
