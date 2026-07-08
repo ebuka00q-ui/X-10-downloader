@@ -1,58 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extend Loader - Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #8b5cf6; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; }
-        .panel { display: none; }
-        .panel.active { display: block; }
-        nav { display: flex; justify-content: space-around; padding: 10px; background: var(--card); border-radius: 10px; margin-bottom: 20px; }
-        .nav-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-weight: bold; }
-        .nav-btn.active { color: var(--primary); }
-        .card { background: var(--card); padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 4px solid var(--primary); }
-    </style>
-</head>
-<body>
+import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-    <nav>
-        <button class="nav-btn active" onclick="switchTab('home', this)">Home</button>
-        <button class="nav-btn" onclick="switchTab('live', this)">Live</button>
-        <button class="nav-btn" onclick="switchTab('download', this)">Download</button>
-        <button class="nav-btn" onclick="switchTab('account', this)">Account</button>
-    </nav>
+// 1. SUPABASE INITIALIZATION
+const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <div id="home" class="panel active"><h2>Home Feed</h2><div id="feed">Loading...</div></div>
-    <div id="live" class="panel"><h2>Live Status</h2><div id="stats">Checking followers...</div></div>
-    <div id="download" class="panel"><h2>My Downloads</h2><p>Saved media appears here.</p></div>
-    <div id="account" class="panel"><h2>Admin Panel</h2><div id="admin-tools">Protected area.</div></div>
+const X10App = () => {
+  const [currentTab, setCurrentTab] = useState('home');
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [isCreator] = useState(true); // Logic to identify the creator
 
-    <script>
-        // REPLACE THESE WITH YOUR KEYS FROM SUPABASE SETTINGS > API
-        const supabase = supabase.createClient("YOUR_URL_HERE", "YOUR_ANON_KEY_HERE");
-        const MY_ID = "f05ebc04-793b-42fe-a07b-08568a9c2206";
+  // 2. BACK BUTTON PROTOCOL
+  useEffect(() => {
+    let backPressCount = 0;
+    const handlePopState = () => {
+      backPressCount++;
+      if (backPressCount >= 2) {
+        setShowExitModal(true);
+        backPressCount = 0;
+      } else {
+        window.history.back();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
-        function switchTab(id, btn) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
-        }
+  return (
+    <div className="w-full h-screen bg-black text-white flex flex-col overflow-hidden">
+      {/* 3. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentTab === 'home' && <div>Home/FYP Content</div>}
+        {currentTab === 'account' && <AccountView isCreator={isCreator} />}
+      </main>
 
-        async function init() {
-            // Load Feed
-            const { data: posts } = await supabase.from('posts').select('*');
-            document.getElementById('feed').innerHTML = posts.map(p => `<div class="card"><h3>${p.title}</h3><p>${p.category}</p></div>`).join('');
-            
-            // Load Stats (Live)
-            const { data: profile } = await supabase.from('profiles').select('actual_followers').eq('id', MY_ID).single();
-            document.getElementById('stats').innerHTML = `<div class="card">Followers: ${profile?.actual_followers || 0}</div>`;
-        }
+      {/* 4. PERSISTENT NAVIGATION */}
+      <nav className="flex justify-around py-4 border-t border-gray-800">
+        <button onClick={() => setCurrentTab('home')}>Home</button>
+        <button onClick={() => setCurrentTab('live')}>Live</button>
+        <button onClick={() => setCurrentTab('downloads')}>Downloads</button>
+        <button onClick={() => setCurrentTab('account')}>Account</button>
+      </nav>
 
-        init();
-    </script>
-</body>
-</html>
+      {/* 5. EXIT MODAL */}
+      {showExitModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/80">
+          <button onClick={() => window.close()}>Exit</button>
+          <button onClick={() => setShowExitModal(false)}>Cancel</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 6. CREATOR-GATED ACCOUNT VIEW
+const AccountView = ({ isCreator }) => (
+  <div className="p-4">
+    <div className="flex justify-between">
+      <h1>Profile</h1>
+      {isCreator && <button>...</button>} {/* Monetization/Analytics Control */}
+    </div>
+    <div className="font-bold text-2xl">
+      {isCreator ? "100,000,000+ Followers" : "Followers"}
+    </div>
+  </div>
+);
+
+export default X10App;
