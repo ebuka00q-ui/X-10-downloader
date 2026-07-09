@@ -4,84 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X10 Downloader</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --neon-pink: #ff007f;
-            --bg-dark: #0a0a0f;
-            --panel-bg: #1a1a24;
-        }
-
-        body { 
-            background-color: var(--bg-dark); 
-            color: white; 
-            font-family: sans-serif; 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-        }
-
-        .app-container { 
-            width: 100%; 
-            max-width: 500px; 
-            min-height: 100vh; 
-            padding: 20px; 
-            box-sizing: border-box;
-        }
-
-        input { 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 10px; 
-            border: 1px solid var(--neon-pink); 
-            background: #252535; 
-            color: white; 
-            margin-bottom: 20px; 
-        }
-
-        .video-card { 
-            background: var(--panel-bg); 
-            padding: 15px; 
-            margin-bottom: 10px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-        }
+        :root { --neon-pink: #ff007f; --bg-dark: #0a0a0f; }
+        body { margin: 0; background-color: var(--bg-dark); color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        
+        #content { flex: 1; padding: 20px; overflow-y: auto; }
+        .tab-content { display: none; }
+        .active { display: block; }
+        
+        .nav-bar { height: 60px; display: flex; border-top: 1px solid #333; background: #111; }
+        .nav-item { flex: 1; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        
+        .video-card { background: #1a1a24; padding: 15px; margin-bottom: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <h2>X10 Search</h2>
-    <input type="text" id="searchInput" placeholder="Search videos..." onkeyup="filterVideos()">
-    
-    <div id="videoList">
-        <div class="video-card" onclick="startDownload('Video 1')">Video 1</div>
-        <div class="video-card" onclick="startDownload('Video 2')">Video 2</div>
+<div id="content">
+    <!-- Movie Tab -->
+    <div id="movie-tab" class="tab-content active">
+        <h2>Movies</h2>
+        <div id="video-list">Loading movies from Supabase...</div>
+    </div>
+
+    <!-- Download Tab -->
+    <div id="download-tab" class="tab-content">
+        <h2>Downloads</h2>
+        <div id="download-list">No videos downloading.</div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<nav class="nav-bar">
+    <div class="nav-item" onclick="showTab('movie')">Movie</div>
+    <div class="nav-item" onclick="showTab('download')">Download</div>
+</nav>
+
 <script>
     const supabase = supabase.createClient(
         "https://gkfivuvtpfetzatz.supabase.co", 
         "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE"
     );
 
-    // Search Logic
-    function filterVideos() {
-        let input = document.getElementById('searchInput').value.toLowerCase();
-        let cards = document.getElementsByClassName('video-card');
-        
-        for (let i = 0; i < cards.length; i++) {
-            let title = cards[i].innerText.toLowerCase();
-            cards[i].style.display = title.includes(input) ? "" : "none";
+    // Fetch Videos from Supabase
+    async function fetchVideos() {
+        const { data, error } = await supabase.from('videos').select('*');
+        if (error) {
+            document.getElementById('video-list').innerText = "Error loading videos.";
+            return;
         }
+        const container = document.getElementById('video-list');
+        container.innerHTML = data.map(v => `
+            <div class="video-card" onclick="alert('Starting download: ${v.title}')">
+                ${v.title}
+            </div>
+        `).join('');
     }
 
-    // Function to handle clicks
-    function startDownload(videoName) {
-        alert("Starting download for: " + videoName);
-        // Add your download initiation code here
+    // Tab Switching
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabName + '-tab').classList.add('active');
     }
+
+    fetchVideos(); // Initialize fetch on load
 </script>
 </body>
 </html>
