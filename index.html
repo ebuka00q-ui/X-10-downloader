@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X10 Downloader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --neon-pink: #ff007f;
+            --bg-color: #0a0a0f;
+        }
+        body { margin: 0; background-color: var(--bg-color); color: white; font-family: sans-serif; }
+        
+        /* Responsive container to keep content centered on big screens */
+        .app-container { width: 100%; max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    </div>
+
+<script>
+    // 1. Supabase Initialization
+    const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 2. Back Button Logic
+    let backPressCount = 0;
+    
+    window.addEventListener('popstate', (event) => {
+        backPressCount++;
+        
+        if (backPressCount >= 2) {
+            const confirmExit = confirm("Do you want to exit the app?");
+            if (confirmExit) {
+                // In a true PWA, this closes the window
+                window.close();
+            } else {
+                backPressCount = 0; // Reset
+            }
+        } else {
+            // Take one step back
+            history.back();
+            setTimeout(() => { backPressCount = 0; }, 2000); // Reset count after 2s
+        }
+    });
+
+    // 3. Responsive Navigation Helper
+    function navigateTo(page) {
+        history.pushState({page: page}, "", "#" + page);
+        // Add your logic to swap views here
+    }
+</script>
+</body>
+</html>
