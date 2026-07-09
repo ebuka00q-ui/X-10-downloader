@@ -68,6 +68,42 @@
     }
 
     fetchVideos(); // Initialize fetch on load
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <input type="text" id="searchInput" placeholder="Search videos..." 
+           onkeydown="if(event.key === 'Enter') performSearch()">
+    
+    <button onclick="performSearch()" 
+            style="background: var(--neon-pink); border: none; padding: 10px 20px; border-radius: 10px; color: white;">
+        Search
+    </button>
+</div>
+
+<script>
+    async function performSearch() {
+        const query = document.getElementById('searchInput').value;
+        const container = document.getElementById('video-list');
+        
+        // Show loading state
+        container.innerHTML = "Searching...";
+
+        // Search Supabase 'videos' table where title matches the query
+        const { data, error } = await supabase
+            .from('videos')
+            .select('*')
+            .ilike('title', `%${query}%`); // This finds partial matches
+
+        if (error) {
+            container.innerHTML = "Error searching. Check your table setup.";
+            return;
+        }
+
+        // Display results
+        container.innerHTML = data.length > 0 
+            ? data.map(v => `<div class="video-card">${v.title}</div>`).join('')
+            : "No videos found.";
+    }
+</script>
+    
 </script>
 </body>
 </html>
