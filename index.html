@@ -4,56 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X10 Downloader</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --neon-pink: #ff007f;
-            --bg-color: #0a0a0f;
+            --bg-dark: #0a0a0f;
+            --panel-bg: #1a1a24;
         }
-        body { margin: 0; background-color: var(--bg-color); color: white; font-family: sans-serif; }
-        
-        /* Responsive container to keep content centered on big screens */
-        .app-container { width: 100%; max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+
+        body { 
+            background-color: var(--bg-dark); 
+            color: white; 
+            font-family: sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+        }
+
+        .app-container { 
+            width: 100%; 
+            max-width: 500px; 
+            min-height: 100vh; 
+            padding: 20px; 
+            box-sizing: border-box;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: 1px solid var(--neon-pink); 
+            background: #252535; 
+            color: white; 
+            margin-bottom: 20px; 
+        }
+
+        .video-card { 
+            background: var(--panel-bg); 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+        }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    </div>
-
-<script>
-    // 1. Supabase Initialization
-    const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // 2. Back Button Logic
-    let backPressCount = 0;
+    <h2>X10 Search</h2>
+    <input type="text" id="searchInput" placeholder="Search videos..." onkeyup="filterVideos()">
     
-    window.addEventListener('popstate', (event) => {
-        backPressCount++;
-        
-        if (backPressCount >= 2) {
-            const confirmExit = confirm("Do you want to exit the app?");
-            if (confirmExit) {
-                // In a true PWA, this closes the window
-                window.close();
-            } else {
-                backPressCount = 0; // Reset
-            }
-        } else {
-            // Take one step back
-            history.back();
-            setTimeout(() => { backPressCount = 0; }, 2000); // Reset count after 2s
-        }
-    });
+    <div id="videoList">
+        <div class="video-card" onclick="startDownload('Video 1')">Video 1</div>
+        <div class="video-card" onclick="startDownload('Video 2')">Video 2</div>
+    </div>
+</div>
 
-    // 3. Responsive Navigation Helper
-    function navigateTo(page) {
-        history.pushState({page: page}, "", "#" + page);
-        // Add your logic to swap views here
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const supabase = supabase.createClient(
+        "https://gkfivuvtpfetzatz.supabase.co", 
+        "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE"
+    );
+
+    // Search Logic
+    function filterVideos() {
+        let input = document.getElementById('searchInput').value.toLowerCase();
+        let cards = document.getElementsByClassName('video-card');
+        
+        for (let i = 0; i < cards.length; i++) {
+            let title = cards[i].innerText.toLowerCase();
+            cards[i].style.display = title.includes(input) ? "" : "none";
+        }
+    }
+
+    // Function to handle clicks
+    function startDownload(videoName) {
+        alert("Starting download for: " + videoName);
+        // Add your download initiation code here
     }
 </script>
 </body>
