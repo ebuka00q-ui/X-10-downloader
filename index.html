@@ -4,41 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a0f">
     <title>X10 Downloader</title>
     <style>
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #0a0a0f; color: white; overflow: hidden; /* Locks the screen */
-            font-family: sans-serif;
-        }
-        .app-shell { display: flex; flex-direction: column; height: 100vh; }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #0a0a0f; color: white; font-family: sans-serif; overflow: hidden; }
         
-        /* Fixed Header */
-        header { padding: 20px; background: #111; border-bottom: 2px solid #ff007f; }
-        input { width: 90%; padding: 12px; border-radius: 8px; border: none; background: #252535; color: white; }
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
         
-        /* Scrolling area for videos only */
-        #video-container { flex: 1; overflow-y: auto; padding: 10px; }
+        header { padding: 15px; background: #0a0a0f; border-bottom: 1px solid #ff007f; }
+        #searchInput { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ff007f; background: #1a1a24; color: white; }
         
-        /* Fixed Footer */
-        footer { height: 60px; display: flex; background: #111; border-top: 1px solid #333; }
-        .nav-btn { flex: 1; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        #main-content { flex: 1; overflow-y: auto; padding: 15px; }
+        
+        footer { height: 60px; display: flex; background: #111; border-top: 1px solid #ff007f; }
+        .nav-tab { flex: 1; display: flex; justify-content: center; align-items: center; color: #ff007f; font-weight: bold; cursor: pointer; }
+        
+        .video-item { background: #1a1a24; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #ff007f; }
     </style>
 </head>
 <body>
 
-<div class="app-shell">
+<div class="app-container">
     <header>
         <input type="text" id="searchInput" placeholder="Search movies...">
     </header>
-    
-    <div id="video-container">
-        </div>
+
+    <div id="main-content">
+        <div id="video-list"></div>
+    </div>
 
     <footer>
-        <div class="nav-btn">Movie</div>
-        <div class="nav-btn">Download</div>
+        <div class="nav-tab">MOVIE</div>
+        <div class="nav-tab">DOWNLOAD</div>
     </footer>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
+
+    async function loadVideos() {
+        const list = document.getElementById('video-list');
+        const { data, error } = await supabase.from('videos').select('*');
+        if (error) { list.innerHTML = "Error connecting to database."; return; }
+        
+        list.innerHTML = data.map(v => `
+            <div class="video-item">${v.title}</div>
+        `).join('');
+    }
+
+    loadVideos();
+</script>
 </body>
 </html>
