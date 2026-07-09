@@ -6,21 +6,20 @@
     <title>X10 Downloader</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 1. Reset everything to lock to the screen */
-        * { box-sizing: border-box; touch-action: manipulation; }
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0a0a0f; color: white; font-family: sans-serif; }
+        .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
         
-        /* 2. The App Shell Layout */
-        .app-shell { display: flex; flex-direction: column; height: 100vh; }
+        /* Pinned Header */
+        header { height: 70px; padding: 10px; border-bottom: 2px solid #ff007f; display: flex; gap: 10px; align-items: center; background: #0a0a0f; }
+        #search-input { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #1a1a24; color: white; }
+        #search-btn { padding: 12px 20px; border-radius: 8px; border: none; background: #ff007f; color: white; font-weight: bold; cursor: pointer; }
         
-        header { height: 70px; padding: 15px; border-bottom: 1px solid #ff007f; display: flex; align-items: center; }
-        #search-input { width: 100%; padding: 10px; border-radius: 5px; border: none; background: #1a1a24; color: white; }
+        /* Pinned Footer */
+        footer { height: 60px; display: flex; border-top: 2px solid #ff007f; background: #0a0a0f; }
+        .nav-btn { flex: 1; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #ff007f; }
         
+        /* Scrollable Middle Area */
         #view-area { flex: 1; overflow-y: auto; padding: 15px; }
-        
-        footer { height: 60px; display: flex; border-top: 1px solid #ff007f; background: #111; }
-        .nav-btn { flex: 1; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #ff007f; font-weight: bold; }
-        
         .card { background: #1a1a24; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
     </style>
 </head>
@@ -28,7 +27,8 @@
 
 <div class="app-shell">
     <header>
-        <input type="text" id="search-input" placeholder="Search...">
+        <input type="text" id="search-input" placeholder="Search videos...">
+        <button id="search-btn" onclick="performSearch()">GO</button>
     </header>
 
     <div id="view-area">
@@ -36,25 +36,36 @@
     </div>
 
     <footer>
-        <div class="nav-btn" onclick="render('movie')">MOVIE</div>
-        <div class="nav-btn" onclick="render('download')">DOWNLOAD</div>
+        <div class="nav-btn" onclick="loadTab('movie')">MOVIE</div>
+        <div class="nav-btn" onclick="loadTab('download')">DOWNLOAD</div>
     </footer>
 </div>
 
 <script>
     const supabase = supabase.createClient("https://gkfivuvtpfetzatz.supabase.co", "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE");
 
-    async function render(view) {
+    async function loadTab(tab) {
         const display = document.getElementById('content-display');
-        if (view === 'movie') {
-            const { data } = await supabase.from('videos').select('*');
-            display.innerHTML = data.map(v => `<div class="card">${v.title}</div>`).join('');
+        if (tab === 'movie') {
+            display.innerHTML = "Loading movies...";
+            const { data, error } = await supabase.from('videos').select('*');
+            if (error) display.innerHTML = "Error: " + error.message;
+            else display.innerHTML = data.length > 0 ? data.map(v => `<div class="card">${v.title}</div>`).join('') : "No videos.";
         } else {
             display.innerHTML = '<div class="card">No downloads yet.</div>';
         }
     }
 
-    render('movie'); // Initial load
+    async function performSearch() {
+        const query = document.getElementById('search-input').value;
+        const display = document.getElementById('content-display');
+        display.innerHTML = "Searching...";
+        const { data, error } = await supabase.from('videos').select('*').ilike('title', `%${query}%`);
+        if (error) display.innerHTML = "Search Error.";
+        else display.innerHTML = data.length > 0 ? data.map(v => `<div class="card">${v.title}</div>`).join('') : "No results.";
+    }
+
+    loadTab('movie'); // Default view
 </script>
 </body>
 </html>
