@@ -118,33 +118,172 @@
 </div>
 </div>
 <script>
-const SUPABASE_URL="https://gkfivuvtpfetzatz.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
-const supabase=Supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-const CREATOR_ID="f05ebc04-793b-42fe-a07b-08568a9c2206";
-let currentUser=null,currentTab='home',currentSubPage='fyp',isCreator=!1,monetizationOn=!1,totalUsers=0,totalSubs=0,revenue=0;
-const sampleVideos=[{id:1,user:'@x10_creator',title:'Welcome to X10!',likes:24,comments:5},{id:2,user:'@tech_fan',title:'Best movie scene',likes:18,comments:3},{id:3,user:'@movie_buff',title:'New trailer dropped',likes:42,comments:8},{id:4,user:'@live_sports',title:'Match highlights',likes:31,comments:6}];
-const sampleMovies=[{title:'Man of War',year:'2026',category:'Action'},{title:'Enola Holmes 3',year:'2026',category:'Mystery'},{title:'Phambili Nge Gwijo',year:'2026',category:'Drama'},{title:'Mortal Kombat II',year:'2025',category:'Action'},{title:'Citizen Vigilante',year:'2025',category:'Thriller'},{title:'Obsession',year:'2025',category:'Horror'},{title:'Deep Water',year:'2025',category:'Horror'},{title:'Home Breaker',year:'2026',category:'Drama'}];
-function renderVideos(){document.getElementById('videoFeed').innerHTML=sampleVideos.map(v=>`<div class="video-card"><div class="video-placeholder"><span class="play-icon">▶️</span></div><div class="video-info"><span class="video-user">${v.user}</span><div class="video-actions"><button onclick="handleLike(${v.id})">❤️ ${v.likes}</button><button onclick="handleComment(${v.id})">💬 ${v.comments}</button><button onclick="handlePin(${v.id})">📌</button><button onclick="handleShare(${v.id})">↗️</button></div></div></div>`).join('')}
-function renderMovies(){document.getElementById('movieGrid').innerHTML=sampleMovies.map(m=>`<div class="movie-item" onclick="watchMovie('${m.title}')"><div class="movie-title">${m.title}</div><div class="movie-year">${m.year} • ${m.category}</div><div style="color:#ff44cc;font-size:10px;margin-top:4px;">⬇️ DL</div></div>`).join('')}
-function handleLike(id){alert('❤️ Liked video #'+id)}
-function handleComment(id){const m=prompt('💬 Write a comment:');if(m)alert('Comment: '+m)}
-function handlePin(id){alert('📌 Video #'+id+' pinned!')}
-function handleShare(id){alert('↗️ Shared video #'+id)}
-function watchMovie(t){alert('🎬 Playing: '+t)}
-function startDownload(){const l=document.getElementById('downloadLink').value;if(!l){alert('Paste a link first.');return}alert('⬇️ Downloading: '+l);document.getElementById('downloadLink').value=''}
-function navigateTo(t){currentTab=t;document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const m={home:'page-fyp',live:'page-live',download:'page-download',account:'page-account'};const tg=document.getElementById(m[t]);if(tg)tg.classList.add('active');document.getElementById('subTabs').style.display=t==='home'?'flex':'none';if(t==='account')loadAccountData()}
-document.querySelectorAll('.sub-tab').forEach(t=>{t.addEventListener('click',function(){document.querySelectorAll('.sub-tab').forEach(s=>s.classList.remove('active'));this.classList.add('active');const p=this.dataset.page;document.querySelectorAll('.page').forEach(s=>s.classList.remove('active'));document.getElementById('page-'+p).classList.add('active')})});
-document.querySelectorAll('.nav-item').forEach(b=>{b.addEventListener('click',function(){navigateTo(this.dataset.tab)})});
-async function loadAccountData(){const{data:{user}}=await supabase.auth.getUser();if(!user){document.getElementById('profileName').textContent='Not Signed In';document.getElementById('profileId').textContent='Tap to login';document.getElementById('profileAvatar').textContent='🔒';return}currentUser=user;const c=user.id===CREATOR_ID;document.getElementById('profileName').textContent=user.user_metadata?.full_name||user.email||'User';document.getElementById('profileId').textContent='@'+(user.user_metadata?.username||'user');document.getElementById('profileAvatar').textContent=(user.user_metadata?.full_name||'U')[0].toUpperCase();if(c){document.getElementById('creatorDash').style.display='block';loadAnalytics()}else{document.getElementById('creatorDash').style.display='none'}}
-function loadAnalytics(){totalUsers=47;totalSubs=12;revenue=8400;document.getElementById('totalUsers').textContent=totalUsers;document.getElementById('totalSubs').textContent=totalSubs;document.getElementById('revenueDisplay').textContent='₦'+revenue.toLocaleString()}
-function toggleMonetization(){const t=document.getElementById('monetizeToggle'),l=document.getElementById('monetizeLabel');monetizationOn=!monetizationOn;t.classList.toggle('on',monetizationOn);l.textContent=monetizationOn?'ON':'OFF';l.style.color=monetizationOn?'#ff44cc':'#888';alert('💰 Monetization '+(monetizationOn?'ENABLED':'DISABLED'))}
-function loadLiveData(){}function loadDownloadData(){}
-renderVideos();renderMovies();
-supabase.auth.getUser().then(({data})=>{if(data.user){currentUser=data.user;if(data.user.id===CREATOR_ID){document.getElementById('creatorDash').style.display='block';loadAnalytics()}}});
-document.getElementById('headerAccount').addEventListener('click',()=>{navigateTo('account')});
-let exitTimer=0;window.addEventListener('popstate',function(e){if(exitTimer===0){exitTimer=1;setTimeout(()=>{exitTimer=0},500)}else{if(confirm('Exit X10 Downloader?')){window.close()}exitTimer=0}});history.pushState({page:'home'},'');
+const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const CREATOR_ID = "f05ebc04-793b-42fe-a07b-08568a9c2206";
+
+// ===== VERSION CONTROL =====
+const APP_VERSION = "1.0.1";
+const STORED_VERSION = localStorage.getItem('x10_version');
+
+if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
+    alert("📢 New update available! Refreshing...");
+    localStorage.setItem('x10_version', APP_VERSION);
+    location.reload();
+} else if (!STORED_VERSION) {
+    localStorage.setItem('x10_version', APP_VERSION);
+}
+console.log("✅ App Version:", APP_VERSION);
+
+// ===== REST OF YOUR CODE =====
+let currentUser = null;
+let currentTab = 'home';
+let monetizationOn = false;
+
+const sampleVideos = [
+    { id: 1, user: '@x10_creator', likes: 24, comments: 5 },
+    { id: 2, user: '@tech_fan', likes: 18, comments: 3 },
+    { id: 3, user: '@movie_buff', likes: 42, comments: 8 },
+    { id: 4, user: '@live_sports', likes: 31, comments: 6 }
+];
+
+const sampleMovies = [
+    { title: 'Man of War', year: '2026' },
+    { title: 'Enola Holmes 3', year: '2026' },
+    { title: 'Phambili Nge Gwijo', year: '2026' },
+    { title: 'Mortal Kombat II', year: '2025' },
+    { title: 'Citizen Vigilante', year: '2025' },
+    { title: 'Obsession', year: '2025' }
+];
+
+function renderVideos() {
+    const feed = document.getElementById('videoFeed');
+    feed.innerHTML = sampleVideos.map(v => `
+        <div class="video-card">
+            <div class="video-placeholder"><span class="play-icon">▶️</span></div>
+            <div class="video-info">
+                <span class="video-user">${v.user}</span>
+                <div class="video-actions">
+                    <button onclick="handleLike(${v.id})">❤️ ${v.likes}</button>
+                    <button onclick="handleComment(${v.id})">💬 ${v.comments}</button>
+                    <button onclick="handlePin(${v.id})">📌</button>
+                    <button onclick="handleShare(${v.id})">↗️</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderMovies() {
+    const grid = document.getElementById('movieGrid');
+    grid.innerHTML = sampleMovies.map(m => `
+        <div class="movie-item" onclick="watchMovie('${m.title}')">
+            <div class="movie-title">${m.title}</div>
+            <div class="movie-year">${m.year}</div>
+            <div style="color:#ff44cc;font-size:10px;margin-top:4px;">⬇️ DL</div>
+        </div>
+    `).join('');
+}
+
+function handleLike(id) { alert('❤️ Liked video #' + id); }
+function handleComment(id) { const m = prompt('💬 Comment:'); if (m) alert('Comment: ' + m); }
+function handlePin(id) { alert('📌 Pinned #' + id); }
+function handleShare(id) { alert('↗️ Shared #' + id); }
+function watchMovie(t) { alert('🎬 Playing: ' + t); }
+function startDownload() {
+    const l = document.getElementById('downloadLink').value;
+    if (!l) { alert('Paste a link first.'); return; }
+    alert('⬇️ Downloading: ' + l);
+    document.getElementById('downloadLink').value = '';
+}
+
+function navigateTo(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pageMap = { 'home': 'page-fyp', 'live': 'page-live', 'download': 'page-download', 'account': 'page-account' };
+    const target = document.getElementById(pageMap[tab]);
+    if (target) target.classList.add('active');
+    document.getElementById('subTabs').style.display = (tab === 'home') ? 'flex' : 'none';
+    if (tab === 'account') loadAccountData();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateTo(this.dataset.tab);
+        });
+    });
+    document.querySelectorAll('.sub-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const page = this.dataset.page;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+        });
+    });
+    document.getElementById('headerAccount').addEventListener('click', function() {
+        navigateTo('account');
+    });
+    renderVideos();
+    renderMovies();
+    console.log('✅ App ready!');
+});
+
+async function loadAccountData() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        document.getElementById('profileName').textContent = 'Not Signed In';
+        document.getElementById('profileId').textContent = 'Tap to login';
+        document.getElementById('profileAvatar').textContent = '🔒';
+        return;
+    }
+    currentUser = user;
+    const isCreator = user.id === CREATOR_ID;
+    document.getElementById('profileName').textContent = user.user_metadata?.full_name || user.email || 'User';
+    document.getElementById('profileId').textContent = '@' + (user.user_metadata?.username || 'user');
+    document.getElementById('profileAvatar').textContent = (user.user_metadata?.full_name || 'U')[0].toUpperCase();
+    if (isCreator) {
+        document.getElementById('creatorDash').style.display = 'block';
+        loadAnalytics();
+    } else {
+        document.getElementById('creatorDash').style.display = 'none';
+    }
+}
+
+function loadAnalytics() {
+    document.getElementById('totalUsers').textContent = '47';
+    document.getElementById('totalSubs').textContent = '12';
+    document.getElementById('revenueDisplay').textContent = '₦8,400';
+}
+
+function toggleMonetization() {
+    const toggle = document.getElementById('monetizeToggle');
+    const label = document.getElementById('monetizeLabel');
+    monetizationOn = !monetizationOn;
+    toggle.classList.toggle('on', monetizationOn);
+    label.textContent = monetizationOn ? 'ON' : 'OFF';
+    label.style.color = monetizationOn ? '#ff44cc' : '#888';
+    alert('💰 Monetization ' + (monetizationOn ? 'ENABLED' : 'DISABLED'));
+}
+
+let exitTimer = 0;
+window.addEventListener('popstate', function(e) {
+    if (exitTimer === 0) {
+        exitTimer = 1;
+        setTimeout(() => { exitTimer = 0; }, 500);
+    } else {
+        if (confirm('Exit X10 Downloader?')) { window.close(); }
+        exitTimer = 0;
+    }
+});
+history.pushState({ page: 'home' }, '');
+
 console.log('🚀 X10 Downloader ready!');
 </script>
-</body>
-                                                               </html>
+</body>                                 </html>
