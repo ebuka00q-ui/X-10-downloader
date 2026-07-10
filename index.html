@@ -1,28 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>X10 Downloader</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #1a1a2e;
+            font-family: Arial, sans-serif;
+        }
+        .icon-container {
+            background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
+            border-radius: 60px;
+            padding: 40px 30px 25px 30px;
+            box-shadow: 0 0 30px rgba(255, 50, 0, 0.5), inset 0 0 20px rgba(255, 50, 0, 0.1);
+            text-align: center;
+            width: 180px;
+            border: 2px solid #ff3d00;
+        }
+        .x10 {
+            font-size: 90px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6a00, #ff3d00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(255, 60, 0, 0.6);
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+        .x10 span {
+            font-size: 60px;
+            background: linear-gradient(135deg, #ff8c00, #ff3d00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-name {
+            color: #ff6a00;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-top: 8px;
+            text-shadow: 0 0 20px rgba(255, 60, 0, 0.4);
+            border-top: 1px solid rgba(255, 60, 0, 0.3);
+            padding-top: 10px;
+        }
+        .download-icon {
+            font-size: 24px;
+            color: #ff6a00;
+            margin-top: 2px;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-shell">
-        <header>
-            <input type="text" id="search-input" placeholder="Search videos...">
-            <button id="search-btn">GO</button>
-        </header>
-
-        <div id="view-area">
-            <div id="content-display">Connecting...</div>
-        </div>
-
-        <footer>
-            <div class="nav-btn" id="movie-tab">MOVIE</div>
-            <div class="nav-btn" id="download-tab">DOWNLOAD</div>
-        </footer>
+    <div class="icon-container">
+        <div class="x10">X<span>10</span></div>
+        <div class="app-name">DOWNLOADER</div>
+        <span class="download-icon">⬇️</span>
     </div>
-    <script src="script.js" type="module"></script>
 </body>
 </html>
