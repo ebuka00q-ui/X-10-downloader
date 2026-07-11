@@ -4,32 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>X10 Downloader</title>
-
-<!-- ===== PWA SUPPORT ===== -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- ===== SUPABASE ===== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden;user-select:none}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
 #app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
+
+/* ===== HIDE RADIO BUTTONS ===== */
+.tab-radio{display:none}
+
+/* ===== HEADER ===== */
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,0,200,0.15);flex-shrink:0}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#ff66dd,#cc00aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr-r{display:flex;align-items:center;gap:16px}
 .hdr-s{font-size:22px;color:#ff44cc;cursor:pointer;background:0;border:0;padding:4px}
 .hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff44cc,#aa00cc);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(255,0,200,0.3)}
+
+/* ===== SUB TABS ===== */
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(255,0,200,0.08);flex-shrink:0}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
 .stab.a{color:#ff44cc;border-bottom-color:#ff44cc}
+
+/* ===== CONTENT ===== */
 .cnt{flex:1;overflow:hidden;position:relative}
 .pg{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
 .pg.a{display:block}
+
+/* ===== VIDEOS ===== */
 .vf{display:flex;flex-direction:column;gap:14px;padding-bottom:80px}
 .vc{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:14px;overflow:hidden;border:1px solid rgba(255,0,200,0.1)}
 .vp{width:100%;aspect-ratio:9/16;background:linear-gradient(145deg,#1a0a2e,#0d0520);display:flex;align-items:center;justify-content:center;min-height:200px}
@@ -38,42 +43,52 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .vu{font-weight:600;color:#ff66dd;font-size:13px}
 .va{display:flex;gap:12px;align-items:center}
 .va button{background:0;border:0;color:#888;font-size:16px;cursor:pointer;padding:4px}
-.va button:hover{color:#ff44cc}
-.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);backdrop-filter:blur(20px);border-top:1px solid rgba(255,0,200,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
-.ni{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;border:0;background:0;font-family:inherit}
-.ni .nic{font-size:20px;transition:all .3s}
-.ni.a{color:#ff44cc}
-.ni.a .nic{text-shadow:0 0 30px rgba(255,0,200,0.4)}
+
+/* ===== BOTTOM NAV ===== */
+.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(255,0,200,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
+.bnav label{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;font-family:inherit}
+.bnav label .nic{font-size:20px}
+.bnav label.active{color:#ff44cc}
+
+/* ===== PAGE VISIBILITY ===== */
+#tab-home:checked ~ .cnt #page-home,
+#tab-live:checked ~ .cnt #page-live,
+#tab-watch:checked ~ .cnt #page-watch,
+#tab-account:checked ~ .cnt #page-account{display:block}
+
+/* ===== WATCH TAB ===== */
 .di{display:flex;gap:10px;margin-bottom:12px}
 .di input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,0,200,0.2);background:#12121a;color:#fff;font-size:14px;outline:0}
 .di input:focus{border-color:#ff44cc}
 .di button{padding:12px 20px;border-radius:12px;border:0;background:linear-gradient(135deg,#ff44cc,#aa00cc);color:#fff;font-weight:700;cursor:pointer;font-size:14px}
-.di button:hover{transform:scale(1.02)}
 .player-box{width:100%;border-radius:12px;margin-top:10px;background:#0d0d15;border:1px solid rgba(255,0,200,0.1);overflow:hidden;min-height:300px;display:flex;align-items:center;justify-content:center}
 .player-box video,.player-box iframe{width:100%;border:none;border-radius:10px;display:block;max-height:500px;background:#000}
 .player-box iframe{height:400px}
+
+/* ===== ACCOUNT ===== */
 .ph{text-align:center;padding:16px 0}
-.pa{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#ff44cc,#aa00cc);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;border:3px solid rgba(255,0,200,0.25);cursor:pointer;overflow:hidden;object-fit:cover}
+.pa{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#ff44cc,#aa00cc);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;border:3px solid rgba(255,0,200,0.25);cursor:pointer;overflow:hidden}
 .pa img{width:100%;height:100%;object-fit:cover}
-.pn{font-size:19px;font-weight:700;color:#ff88ee;cursor:pointer}
+.pn{font-size:19px;font-weight:700;color:#ff88ee}
 .pn input{background:#12121a;border:1px solid rgba(255,0,200,0.2);border-radius:8px;padding:6px 12px;color:#ff88ee;font-size:17px;font-weight:700;text-align:center;outline:0;width:200px}
 .pn input:focus{border-color:#ff44cc}
 .ps{display:flex;justify-content:center;gap:24px;margin:14px 0}
 .ps div{text-align:center}
 .ps .n{font-size:17px;font-weight:700;color:#ff44cc}
-.ps .lbl{font-size:10px;color:#aa66cc;text-transform:uppercase;letter-spacing:.5px}
+.ps .lbl{font-size:10px;color:#aa66cc;text-transform:uppercase}
 .cd{background:linear-gradient(145deg,#1a0a2e,#0d0520);border-radius:14px;padding:14px;margin-top:14px;border:2px solid rgba(255,0,200,0.1)}
-.cd h3{color:#ff66dd;font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.cd h3{color:#ff66dd;font-size:13px;margin-bottom:12px;text-transform:uppercase}
 .cd .sr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
 .cd .sr:last-child{border-bottom:0}
 .cd .sl{color:#aa66cc;font-size:13px}
 .cd .sv{color:#ff44cc;font-weight:700;font-size:13px}
+
+/* ===== SEARCH ===== */
 .so{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.97);z-index:100;display:none;flex-direction:column;padding:50px 24px}
 .so.s{display:flex}
 .so input{padding:18px;border-radius:14px;border:1px solid rgba(255,0,200,0.25);background:#12121a;color:#fff;font-size:18px;outline:0;margin-bottom:18px}
-.so input:focus{border-color:#ff44cc}
 .so .cb{position:absolute;top:16px;right:20px;font-size:30px;color:#ff44cc;cursor:pointer;background:0;border:0}
-.so .res{color:#aa66cc;font-size:15px;line-height:2}
+.so .res{color:#aa66cc;font-size:15px}
 ::-webkit-scrollbar{width:0}
 </style>
 </head>
@@ -81,46 +96,46 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <div id="app">
 
-<!-- HEADER -->
+<!-- ===== RADIO BUTTONS FOR NAVIGATION ===== -->
+<input type="radio" name="tab" id="tab-home" class="tab-radio" checked>
+<input type="radio" name="tab" id="tab-live" class="tab-radio">
+<input type="radio" name="tab" id="tab-watch" class="tab-radio">
+<input type="radio" name="tab" id="tab-account" class="tab-radio">
+
+<!-- ===== HEADER ===== -->
 <div class="hdr">
 <span class="hdr-t">⬇️ X10</span>
 <div class="hdr-r">
 <button class="hdr-s" id="searchBtn">🔍</button>
-<div class="hdr-a" id="headerAccount">👤</div>
+<label class="hdr-a" for="tab-account">👤</label>
 </div>
 </div>
 
-<!-- SUB TABS -->
+<!-- ===== SUB TABS ===== -->
 <div class="stabs" id="subTabs">
 <span class="stab a" data-page="fyp">For You</span>
 <span class="stab" data-page="movies">Movies</span>
 </div>
 
-<!-- CONTENT -->
+<!-- ===== CONTENT ===== -->
 <div class="cnt">
 
 <!-- HOME -->
 <div class="pg a" id="page-home">
-<div class="vf" id="videoFeed">
+<div class="vf">
 <div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@x10_creator</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 24</button><button onclick="prompt('💬 Comment:')">💬 5</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 <div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@tech_fan</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 18</button><button onclick="prompt('💬 Comment:')">💬 3</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 </div>
 </div>
 
-<!-- MOVIES -->
-<div class="pg" id="page-movies">
-<h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🎬 Movie Library</h2>
-<p style="color:#aa66cc;font-size:13px;line-height:1.8;">Coming soon - Add your videos here</p>
-</div>
-
 <!-- LIVE -->
 <div class="pg" id="page-live">
 <h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🔴 Live</h2>
-<p style="color:#aa66cc;font-size:13px;line-height:1.8;">Coming soon - Add live streams here</p>
+<p style="color:#aa66cc;font-size:13px;">Coming soon - Add live streams here</p>
 </div>
 
 <!-- WATCH -->
-<div class="pg" id="page-download">
+<div class="pg" id="page-watch">
 <h2 style="color:#ff66dd;margin-bottom:8px;font-size:17px;">▶️ Watch Any Video</h2>
 <p style="color:#aa66cc;font-size:12px;margin-bottom:12px;">Paste any link: MP4, YouTube, or website</p>
 <div class="di">
@@ -138,9 +153,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div class="pg" id="page-account">
 <div class="ph">
 <div class="pa" id="profileAvatar" onclick="uploadPhoto()">👤</div>
-<div class="pn" id="profileNameContainer">
-<input type="text" id="usernameInput" value="Creator" maxlength="20" onchange="saveUsername()">
-</div>
+<div class="pn"><input type="text" id="usernameInput" value="Creator" maxlength="20" onchange="saveUsername()"></div>
 <div style="color:#aa66cc;font-size:12px;" id="profileId">@x10_creator</div>
 </div>
 <div class="ps">
@@ -157,37 +170,29 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 </div>
 
-<!-- SEARCH -->
+<!-- ===== SEARCH OVERLAY ===== -->
 <div class="so" id="searchOverlay">
 <button class="cb" id="closeSearch">✕</button>
 <input type="text" id="searchInput" placeholder="Search videos...">
 <div class="res" id="searchResults">Type to search...</div>
 </div>
 
-<!-- BOTTOM NAV -->
-<div class="bnav" id="bottomNav">
-<button class="ni a" data-tab="home"><span class="nic">🏠</span>Home</button>
-<button class="ni" data-tab="live"><span class="nic">🔴</span>Live</button>
-<button class="ni" data-tab="download"><span class="nic">▶️</span>Watch</button>
-<button class="ni" data-tab="account"><span class="nic">👤</span>Account</button>
+<!-- ===== BOTTOM NAV ===== -->
+<div class="bnav">
+<label for="tab-home" id="nav-home"><span class="nic">🏠</span>Home</label>
+<label for="tab-live" id="nav-live"><span class="nic">🔴</span>Live</label>
+<label for="tab-watch" id="nav-watch"><span class="nic">▶️</span>Watch</label>
+<label for="tab-account" id="nav-account"><span class="nic">👤</span>Account</label>
 </div>
 
 </div>
 
 <script>
 // =============================================
-// SUPABASE SETUP
-// =============================================
-const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// =============================================
-// VERSION CONTROL (Change this number to force update)
+// VERSION CONTROL
 // =============================================
 const APP_VERSION = "1.0.0";
 const STORED_VERSION = localStorage.getItem('x10_version');
-
 if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
     alert("📢 New update available! Refreshing...");
     localStorage.setItem('x10_version', APP_VERSION);
@@ -195,8 +200,7 @@ if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
 } else if (!STORED_VERSION) {
     localStorage.setItem('x10_version', APP_VERSION);
 }
-
-console.log("✅ App Version:", APP_VERSION);
+console.log("✅ Version:", APP_VERSION);
 
 // =============================================
 // VIDEO PLAYER
@@ -204,72 +208,24 @@ console.log("✅ App Version:", APP_VERSION);
 function playVideo() {
     const link = document.getElementById('videoLink').value.trim();
     const container = document.getElementById('playerContainer');
-    
-    if (!link) {
-        alert('Please paste a link first.');
-        return;
-    }
-    
+    if (!link) { alert('Please paste a link first.'); return; }
     container.innerHTML = '';
-    
-    // YouTube
     if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
         let videoId = '';
-        if (link.includes('v=')) {
-            videoId = link.split('v=')[1].split('&')[0];
-        } else if (link.includes('youtu.be/')) {
-            videoId = link.split('youtu.be/')[1].split('?')[0];
-        }
-        if (videoId) {
-            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`;
-            return;
-        }
+        if (link.includes('v=')) videoId = link.split('v=')[1].split('&')[0];
+        else if (link.includes('youtu.be/')) videoId = link.split('youtu.be/')[1].split('?')[0];
+        if (videoId) { container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`; return; }
     }
-    
-    // Direct video file
     const videoExts = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
-    const isVideo = videoExts.some(ext => link.toLowerCase().includes(ext));
-    if (isVideo) {
+    if (videoExts.some(ext => link.toLowerCase().includes(ext))) {
         container.innerHTML = `<video controls autoplay><source src="${link}"></video>`;
         return;
     }
-    
-    // Any website
     container.innerHTML = `<iframe src="${link}" allowfullscreen></iframe>`;
 }
 
 // =============================================
-// NAVIGATION
-// =============================================
-function switchPage(tab) {
-    document.querySelectorAll('.pg').forEach(p => p.classList.remove('a'));
-    const map = {'home':'page-home','live':'page-live','download':'page-download','account':'page-account'};
-    const target = document.getElementById(map[tab]);
-    if (target) target.classList.add('a');
-    document.querySelectorAll('.ni').forEach(b => {
-        b.classList.remove('a');
-        if (b.dataset.tab === tab) b.classList.add('a');
-    });
-    document.getElementById('subTabs').style.display = (tab === 'home') ? 'flex' : 'none';
-}
-
-document.querySelectorAll('.ni').forEach(btn => {
-    btn.addEventListener('click', function() { switchPage(this.dataset.tab); });
-});
-document.getElementById('headerAccount').addEventListener('click', function() { switchPage('account'); });
-
-document.querySelectorAll('.stab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.stab').forEach(t => t.classList.remove('a'));
-        this.classList.add('a');
-        const page = this.dataset.page;
-        document.querySelectorAll('.pg').forEach(p => p.classList.remove('a'));
-        document.getElementById('pg-' + page).classList.add('a');
-    });
-});
-
-// =============================================
-// PROFILE - UPLOAD PHOTO
+// PROFILE - PHOTO
 // =============================================
 function uploadPhoto() {
     const input = document.createElement('input');
@@ -280,8 +236,7 @@ function uploadPhoto() {
         if (file) {
             const reader = new FileReader();
             reader.onload = function(ev) {
-                const avatar = document.getElementById('profileAvatar');
-                avatar.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                document.getElementById('profileAvatar').innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
                 localStorage.setItem('x10_avatar', ev.target.result);
             };
             reader.readAsDataURL(file);
@@ -299,14 +254,12 @@ function saveUsername() {
     document.getElementById('profileId').textContent = '@' + name.toLowerCase().replace(/\s/g, '_');
 }
 
-// Load saved username
+// Load saved data
 const savedName = localStorage.getItem('x10_username');
 if (savedName) {
     document.getElementById('usernameInput').value = savedName;
     document.getElementById('profileId').textContent = '@' + savedName.toLowerCase().replace(/\s/g, '_');
 }
-
-// Load saved avatar
 const savedAvatar = localStorage.getItem('x10_avatar');
 if (savedAvatar) {
     document.getElementById('profileAvatar').innerHTML = `<img src="${savedAvatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
@@ -326,8 +279,18 @@ document.getElementById('searchInput').oninput = function() {
     const q = this.value.toLowerCase();
     const res = document.getElementById('searchResults');
     if (!q) { res.innerHTML = 'Type to search...'; return; }
-    res.innerHTML = '<span style="color:#aa66cc;">🔍 Searching for: "' + q + '"</span><br><span style="color:#555;font-size:13px;">Results will appear here</span>';
+    res.innerHTML = '<span style="color:#aa66cc;">🔍 Searching for: "' + q + '"</span>';
 };
+
+// =============================================
+// SUB-TABS
+// =============================================
+document.querySelectorAll('.stab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.stab').forEach(t => t.classList.remove('a'));
+        this.classList.add('a');
+    });
+});
 
 // =============================================
 // EXIT
