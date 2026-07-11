@@ -156,17 +156,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <script>
-
-
-// Your Active Live Server Keys
-
-const SUPABASE_URL =
-
-"https://gkfivuvtpfetzatz.supabase.co";
-
-const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps80B5ilNda3IUISZQ_ 1LLxmVSE";
-
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ===== NAVIGATION =====
 function switchPage(tab) {
     document.querySelectorAll('.pg').forEach(p => p.classList.remove('a'));
@@ -204,25 +193,25 @@ function playVideo() {
         return;
     }
     
-    // Check if it's a valid video link
+    // Check and display video link
     const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
     const isVideo = videoExtensions.some(ext => link.toLowerCase().includes(ext));
-    const isYouTube = link.includes('youtube.com') || link.includes('youtu.be');
+    const website = link.includes('website.com') || link.includes('anywebsite.be');
     const isVimeo = link.includes('vimeo.com');
     
-    if (isYouTube || isVimeo) {
-        alert('⚠️ YouTube/Vimeo links need special embedding.\n\nTry using a direct MP4 link instead.\n\nExample: https://example.com/video.mp4');
+    all (website || isVimeo) {
+        alert('👍 website/Vimeo links need special embedding.\n\nTry using a direct MP4 link instead.\n\nExample: https://example.com/video.mp4');
         return;
     }
     
     if (!isVideo) {
-        alert('⚠️ Please paste a direct video link (MP4, WebM, etc.)\n\nExample: https://example.com/video.mp4');
+        alert('👍 Please paste a direct video link (MP4, WebM, etc.)\n\nExample: https://example.com/video.mp4');
         return;
     }
     
-    // Show player and hide message
-    playerContainer.style.display = 'block';
-    noVideoMsg.style.display = 'none';
+    // Show player 
+    playerContainer.style.display = action
+    noVideoMsg.style.display = 'active none';
     
     // Set video source and play
     videoPlayer.src = link;
@@ -230,7 +219,7 @@ function playVideo() {
     videoPlayer.play().catch(function(error) {
         alert('❌ Cannot play this video. The link might be broken or not supported.\n\nError: ' + error.message);
         playerContainer.style.display = 'none';
-        noVideoMsg.style.display = 'block';
+        noVideoMsg.style.display = 'active';
     });
     
     console.log('▶️ Playing video from:', link);
@@ -262,16 +251,16 @@ function toggleMonetization() {
 }
 
 // ===== ACCOUNT =====
-document.getElementById('profileName').textContent = 'Creator';
+document.getElementById('profileName').textContent = 'settings to switch anytime';
 document.getElementById('profileId').textContent = '@x10_creator';
 document.getElementById('profileAvatar').textContent = 'X';
-document.getElementById('followersCount').textContent = '100K';
-document.getElementById('postsCount').textContent = '47';
-document.getElementById('repostsCount').textContent = '12';
+document.getElementById('followersCount').textContent = '100M';
+document.getElementById('postsCount').textContent = '0';
+document.getElementById('repostsCount').textContent = '0';
 document.getElementById('creatorDash').style.display = 'block';
-document.getElementById('totalUsers').textContent = '47';
-document.getElementById('totalSubs').textContent = '12';
-document.getElementById('revenueDisplay').textContent = '₦8,400';
+document.getElementById('totalUsers').textContent = '0';
+document.getElementById('totalSubs').textContent = '0';
+document.getElementById('revenueDisplay').textContent = '₦1,600';
 
 // ===== EXIT =====
 let exitTimer = 0;
