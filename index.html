@@ -4,10 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>X10 Downloader</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden;user-select:none}
 #app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,0,200,0.15);flex-shrink:0}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#ff66dd,#cc00aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -16,9 +21,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff44cc,#aa00cc);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(255,0,200,0.3)}
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(255,0,200,0.08);flex-shrink:0}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
-.stab.a{color:#ff44cc;border-bottom-color:#ff44cc}
+.stab.a{color:#ff44cc;border-bottom-color:#ff44cc;text-shadow:0 0 20px rgba(255,0,200,0.2)}
 .cnt{flex:1;overflow:hidden;position:relative}
-.pg{display:none;height:100%;overflow-y:auto;padding:12px}
+.pg{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
 .pg.a{display:block}
 .vf{display:flex;flex-direction:column;gap:14px;padding-bottom:80px}
 .vc{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:14px;overflow:hidden;border:1px solid rgba(255,0,200,0.1)}
@@ -28,47 +33,53 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .vu{font-weight:600;color:#ff66dd;font-size:13px}
 .va{display:flex;gap:12px;align-items:center}
 .va button{background:0;border:0;color:#888;font-size:16px;cursor:pointer;padding:4px}
-.va button:hover{color:#ff44cc}
-.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(255,0,200,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
+.va button:hover{color:#ff44cc;transform:scale(1.1)}
+.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);backdrop-filter:blur(20px);border-top:1px solid rgba(255,0,200,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
 .ni{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;border:0;background:0;font-family:inherit}
-.ni .nic{font-size:20px}
+.ni .nic{font-size:20px;transition:all .3s}
 .ni.a{color:#ff44cc}
+.ni.a .nic{text-shadow:0 0 30px rgba(255,0,200,0.4)}
 .di{display:flex;gap:10px;margin-bottom:12px}
 .di input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,0,200,0.2);background:#12121a;color:#fff;font-size:14px;outline:0}
-.di input:focus{border-color:#ff44cc}
-.di button{padding:12px 20px;border-radius:12px;border:0;background:linear-gradient(135deg,#ff44cc,#aa00cc);color:#fff;font-weight:700;cursor:pointer;font-size:14px}
-.di button:hover{transform:scale(1.02)}
-.video-player{width:100%;border-radius:12px;margin-top:10px;background:#000}
-.video-player video{width:100%;border-radius:12px;max-height:400px;background:#000}
+.di input:focus{border-color:#ff44cc;box-shadow:0 0 20px rgba(255,0,200,0.05)}
+.di button{padding:12px 20px;border-radius:12px;border:0;background:linear-gradient(135deg,#ff44cc,#aa00cc);color:#fff;font-weight:700;cursor:pointer;transition:all .3s;font-size:14px}
+.di button:hover{transform:scale(1.02);box-shadow:0 0 30px rgba(255,0,200,0.2)}
+.player-box{width:100%;border-radius:12px;margin-top:10px;background:#0d0d15;border:1px solid rgba(255,0,200,0.1);overflow:hidden;min-height:300px;display:flex;align-items:center;justify-content:center}
+.player-box video,.player-box iframe{width:100%;border:none;border-radius:10px;display:block;max-height:500px;background:#000}
+.player-box iframe{height:400px}
 .ph{text-align:center;padding:16px 0}
-.pa{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ff44cc,#aa00cc);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;border:3px solid rgba(255,0,200,0.25)}
+.pa{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ff44cc,#aa00cc);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;border:3px solid rgba(255,0,200,0.25);box-shadow:0 0 30px rgba(255,0,200,0.1)}
 .pn{font-size:19px;font-weight:700;color:#ff88ee}
 .ps{display:flex;justify-content:center;gap:24px;margin:14px 0}
+.ps div{text-align:center}
 .ps .n{font-size:17px;font-weight:700;color:#ff44cc}
-.ps .lbl{font-size:10px;color:#aa66cc;text-transform:uppercase}
+.ps .lbl{font-size:10px;color:#aa66cc;text-transform:uppercase;letter-spacing:.5px}
 .cd{background:linear-gradient(145deg,#1a0a2e,#0d0520);border-radius:14px;padding:14px;margin-top:14px;border:2px solid rgba(255,0,200,0.15)}
-.cd h3{color:#ff66dd;font-size:13px;margin-bottom:12px;text-transform:uppercase}
+.cd h3{color:#ff66dd;font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
 .cd .sr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
 .cd .sr:last-child{border-bottom:0}
 .cd .sl{color:#aa66cc;font-size:13px}
 .cd .sv{color:#ff44cc;font-weight:700;font-size:13px}
 .tw{display:flex;align-items:center;gap:12px;padding:4px 0}
-.tg{width:44px;height:24px;background:#333;border-radius:12px;cursor:pointer;position:relative}
-.tg.on{background:#ff44cc}
-.tg .kb{width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:all .3s}
+.tg{width:44px;height:24px;background:#333;border-radius:12px;cursor:pointer;position:relative;transition:all .3s}
+.tg.on{background:#ff44cc;box-shadow:0 0 20px rgba(255,0,200,0.2)}
+.tg .kb{width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:all .3s;box-shadow:0 2px 4px rgba(0,0,0,0.3)}
 .tg.on .kb{left:22px}
 .so{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.97);z-index:100;display:none;flex-direction:column;padding:50px 24px}
 .so.s{display:flex}
 .so input{padding:18px;border-radius:14px;border:1px solid rgba(255,0,200,0.25);background:#12121a;color:#fff;font-size:18px;outline:0;margin-bottom:18px}
+.so input:focus{border-color:#ff44cc;box-shadow:0 0 30px rgba(255,0,200,0.05)}
 .so .cb{position:absolute;top:16px;right:20px;font-size:30px;color:#ff44cc;cursor:pointer;background:0;border:0}
-.so .res{color:#aa66cc;font-size:15px}
+.so .res{color:#aa66cc;font-size:15px;line-height:2}
 ::-webkit-scrollbar{width:0}
+@media(min-width:500px){.vp{aspect-ratio:16/9;max-height:400px}}
 </style>
 </head>
 <body>
 
 <div id="app">
 
+<!-- HEADER -->
 <div class="hdr">
 <span class="hdr-t">⬇️ X10</span>
 <div class="hdr-r">
@@ -77,53 +88,54 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 </div>
 
+<!-- SUB TABS -->
 <div class="stabs" id="subTabs">
 <span class="stab a" data-page="fyp">For You</span>
 <span class="stab" data-page="movies">Movies</span>
 </div>
 
+<!-- CONTENT -->
 <div class="cnt">
 
-<!-- HOME -->
+<!-- HOME PAGE -->
 <div class="pg a" id="page-home">
 <div class="vf" id="videoFeed">
-<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@x10_creator</span><div class="va"><button>❤️ 24</button><button>💬 5</button><button>📌</button><button>↗️</button></div></div></div>
-<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@tech_fan</span><div class="va"><button>❤️ 18</button><button>💬 3</button><button>📌</button><button>↗️</button></div></div></div>
+<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@x10_creator</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 24</button><button onclick="prompt('💬 Comment:')">💬 5</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
+<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@tech_fan</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 18</button><button onclick="prompt('💬 Comment:')">💬 3</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
+<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@movie_buff</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 42</button><button onclick="prompt('💬 Comment:')">💬 8</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 </div>
 </div>
 
-<!-- MOVIES -->
+<!-- MOVIES PAGE -->
 <div class="pg" id="page-movies">
 <h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🎬 Movie Library</h2>
-<p style="color:#aa66cc;font-size:13px;">Coming soon - Add your videos here</p>
+<p style="color:#aa66cc;font-size:13px;line-height:1.8;">Coming soon - Add your videos here</p>
+<p style="color:#555;font-size:12px;margin-top:8px;">You can upload movies later when ready</p>
 </div>
 
-<!-- LIVE -->
+<!-- LIVE PAGE -->
 <div class="pg" id="page-live">
 <h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🔴 Live</h2>
-<p style="color:#aa66cc;font-size:13px;">Coming soon - Add live streams here</p>
+<p style="color:#aa66cc;font-size:13px;line-height:1.8;">Coming soon - Add live streams here</p>
+<p style="color:#555;font-size:12px;margin-top:8px;">Live matches and streams will appear here</p>
 </div>
 
-<!-- WATCH (was DOWNLOAD) -->
+<!-- WATCH PAGE -->
 <div class="pg" id="page-download">
-<h2 style="color:#ff66dd;margin-bottom:12px;font-size:17px;">▶️ Watch Video</h2>
-<p style="color:#aa66cc;font-size:12px;margin-bottom:12px;">Paste any video link (MP4, YouTube, etc.) and watch instantly</p>
+<h2 style="color:#ff66dd;margin-bottom:8px;font-size:17px;">▶️ Watch Any Video</h2>
+<p style="color:#aa66cc;font-size:12px;margin-bottom:12px;">Paste any link: MP4, YouTube, website, or movie link</p>
 <div class="di">
-<input type="text" placeholder="Paste video link here..." id="videoLink">
+<input type="text" placeholder="Paste link here..." id="videoLink">
 <button onclick="playVideo()">▶ Watch</button>
 </div>
-<div id="playerContainer" style="display:none;margin-top:10px;">
-<div style="background:#0d0d15;border-radius:12px;padding:4px;border:1px solid rgba(255,0,200,0.1);">
-<video id="videoPlayer" controls style="width:100%;border-radius:10px;max-height:450px;background:#000;"></video>
+<div class="player-box" id="playerContainer">
+<div id="noVideoMsg" style="color:#555;font-size:14px;text-align:center;padding:20px;">
+⬇️ Paste a link and click Watch
 </div>
-<p style="color:#888;font-size:11px;margin-top:6px;text-align:center;">🎬 Video is playing</p>
-</div>
-<div id="noVideoMsg" style="color:#555;font-size:13px;text-align:center;padding:30px 0;">
-⬇️ Paste a video link above to watch
 </div>
 </div>
 
-<!-- ACCOUNT -->
+<!-- ACCOUNT PAGE -->
 <div class="pg" id="page-account">
 <div class="ph"><div class="pa" id="profileAvatar">👤</div><div class="pn" id="profileName">User</div><div style="color:#aa66cc;font-size:12px;" id="profileId">Loading...</div></div>
 <div class="ps"><div><div class="n" id="followersCount">0</div><div class="lbl">Followers</div></div><div><div class="n" id="postsCount">0</div><div class="lbl">Posts</div></div><div><div class="n" id="repostsCount">0</div><div class="lbl">Reposts</div></div></div>
@@ -138,7 +150,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 </div>
 
-<!-- SEARCH -->
+<!-- SEARCH OVERLAY -->
 <div class="so" id="searchOverlay">
 <button class="cb" id="closeSearch">✕</button>
 <input type="text" id="searchInput" placeholder="Search videos...">
@@ -146,7 +158,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <!-- BOTTOM NAV -->
-<div class="bnav">
+<div class="bnav" id="bottomNav">
 <button class="ni a" data-tab="home"><span class="nic">🏠</span>Home</button>
 <button class="ni" data-tab="live"><span class="nic">🔴</span>Live</button>
 <button class="ni" data-tab="download"><span class="nic">▶️</span>Watch</button>
@@ -156,91 +168,200 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <script>
-// ===== NAVIGATION =====
+// =============================================
+// SUPABASE SETUP
+// =============================================
+const SB_URL = "https://gkfivuvtpfetzatz.supabase.co";
+const SB_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
+const SB = Supabase.createClient(SB_URL, SB_KEY);
+const CREATOR_ID = "f05ebc04-793b-42fe-a07b-08568a9c2206";
+
+// =============================================
+// VERSION CONTROL
+// =============================================
+const APP_VERSION = "2.0.0";
+const STORED_VERSION = localStorage.getItem('x10_version');
+if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
+    alert("📢 New update available! Refreshing...");
+    localStorage.setItem('x10_version', APP_VERSION);
+    location.reload();
+} else if (!STORED_VERSION) {
+    localStorage.setItem('x10_version', APP_VERSION);
+}
+console.log("✅ Version:", APP_VERSION);
+
+// =============================================
+// NAVIGATION
+// =============================================
 function switchPage(tab) {
+    // Hide all pages
     document.querySelectorAll('.pg').forEach(p => p.classList.remove('a'));
-    const map = {'home':'page-home','live':'page-live','download':'page-download','account':'page-account'};
-    const target = document.getElementById(map[tab]);
+    
+    // Show target page
+    const pageMap = {
+        'home': 'page-home',
+        'live': 'page-live',
+        'download': 'page-download',
+        'account': 'page-account'
+    };
+    const target = document.getElementById(pageMap[tab]);
     if (target) target.classList.add('a');
+    
+    // Update nav buttons
     document.querySelectorAll('.ni').forEach(b => {
         b.classList.remove('a');
         if (b.dataset.tab === tab) b.classList.add('a');
     });
+    
+    // Show/hide sub-tabs
     document.getElementById('subTabs').style.display = (tab === 'home') ? 'flex' : 'none';
+    
+    // Load account data if needed
+    if (tab === 'account') loadAccountData();
+    
+    console.log('✅ Switched to:', tab);
 }
 
+// =============================================
+// NAVIGATION EVENT LISTENERS
+// =============================================
 document.querySelectorAll('.ni').forEach(btn => {
-    btn.addEventListener('click', function() { switchPage(this.dataset.tab); });
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchPage(this.dataset.tab);
+    });
 });
-document.getElementById('headerAccount').addEventListener('click', function() { switchPage('account'); });
+
+document.getElementById('headerAccount').addEventListener('click', function() {
+    switchPage('account');
+});
 
 document.querySelectorAll('.stab').forEach(tab => {
     tab.addEventListener('click', function() {
         document.querySelectorAll('.stab').forEach(t => t.classList.remove('a'));
         this.classList.add('a');
+        const page = this.dataset.page;
+        document.querySelectorAll('.pg').forEach(p => p.classList.remove('a'));
+        document.getElementById('pg-' + page).classList.add('a');
     });
 });
 
-// ===== VIDEO PLAYER =====
+// =============================================
+// VIDEO PLAYER - WORKS FOR ALL LINKS
+// =============================================
 function playVideo() {
     const link = document.getElementById('videoLink').value.trim();
-    const playerContainer = document.getElementById('playerContainer');
-    const videoPlayer = document.getElementById('videoPlayer');
-    const noVideoMsg = document.getElementById('noVideoMsg');
+    const container = document.getElementById('playerContainer');
     
     if (!link) {
-        alert('Please paste a video link first.');
+        alert('Please paste a link first.');
         return;
     }
     
-    // Check if it's a valid video link
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
-    const isVideo = videoExtensions.some(ext => link.toLowerCase().includes(ext));
-    const isYouTube = link.includes('youtube.com') || link.includes('youtu.be');
-    const isVimeo = link.includes('vimeo.com');
+    // Clear previous content
+    container.innerHTML = '';
     
-    if (isYouTube || isVimeo) {
-        alert('⚠️ YouTube/Vimeo links need special embedding.\n\nTry using a direct MP4 link instead.\n\nExample: https://example.com/video.mp4');
+    // ---- CHECK FOR YOUTUBE ----
+    if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
+        let videoId = '';
+        if (link.includes('v=')) {
+            videoId = link.split('v=')[1].split('&')[0];
+        } else if (link.includes('youtu.be/')) {
+            videoId = link.split('youtu.be/')[1].split('?')[0];
+        }
+        if (videoId) {
+            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`;
+            console.log('▶️ Playing YouTube:', videoId);
+            return;
+        }
+    }
+    
+    // ---- CHECK FOR DIRECT VIDEO FILE ----
+    const videoExts = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m3u8'];
+    const isVideo = videoExts.some(ext => link.toLowerCase().includes(ext));
+    
+    if (isVideo) {
+        container.innerHTML = `<video controls autoplay><source src="${link}"></video>`;
+        console.log('▶️ Playing video file:', link);
         return;
     }
     
-    if (!isVideo) {
-        alert('⚠️ Please paste a direct video link (MP4, WebM, etc.)\n\nExample: https://example.com/video.mp4');
-        return;
+    // ---- CHECK FOR VIMEO ----
+    if (link.includes('vimeo.com/')) {
+        const vimeoId = link.split('vimeo.com/')[1].split('?')[0];
+        if (vimeoId) {
+            container.innerHTML = `<iframe src="https://player.vimeo.com/video/${vimeoId}?autoplay=1" allowfullscreen></iframe>`;
+            console.log('▶️ Playing Vimeo:', vimeoId);
+            return;
+        }
     }
     
-    // Show player and hide message
-    playerContainer.style.display = 'block';
-    noVideoMsg.style.display = 'none';
-    
-    // Set video source and play
-    videoPlayer.src = link;
-    videoPlayer.load();
-    videoPlayer.play().catch(function(error) {
-        alert('❌ Cannot play this video. The link might be broken or not supported.\n\nError: ' + error.message);
-        playerContainer.style.display = 'none';
-        noVideoMsg.style.display = 'block';
-    });
-    
-    console.log('▶️ Playing video from:', link);
+    // ---- TRY TO EMBED ANY WEBSITE ----
+    container.innerHTML = `<iframe src="${link}" allowfullscreen></iframe>`;
+    console.log('▶️ Loading website:', link);
 }
 
-// ===== SEARCH =====
+// =============================================
+// SEARCH
+// =============================================
 document.getElementById('searchBtn').onclick = function() {
     document.getElementById('searchOverlay').classList.add('s');
     document.getElementById('searchInput').focus();
 };
+
 document.getElementById('closeSearch').onclick = function() {
     document.getElementById('searchOverlay').classList.remove('s');
 };
+
 document.getElementById('searchInput').oninput = function() {
-    const q = this.value.toLowerCase();
-    const res = document.getElementById('searchResults');
-    if (!q) { res.innerHTML = 'Type to search...'; return; }
-    res.innerHTML = '<span style="color:#aa66cc;">Search results for: "' + q + '"</span><br><span style="color:#555;font-size:13px;">Videos will appear here when uploaded</span>';
+    const query = this.value.toLowerCase();
+    const results = document.getElementById('searchResults');
+    if (!query) {
+        results.innerHTML = 'Type to search...';
+        return;
+    }
+    results.innerHTML = `
+        <span style="color:#aa66cc;">🔍 Searching for: "${query}"</span>
+        <br><span style="color:#555;font-size:13px;">Results will appear here</span>
+    `;
 };
 
-// ===== MONETIZATION =====
+// =============================================
+// ACCOUNT
+// =============================================
+async function loadAccountData() {
+    const { data: { user } } = await SB.auth.getUser();
+    if (!user) {
+        document.getElementById('profileName').textContent = 'Not Signed In';
+        document.getElementById('profileId').textContent = 'Tap to login';
+        document.getElementById('profileAvatar').textContent = '🔒';
+        return;
+    }
+    
+    const isCreator = user.id === CREATOR_ID;
+    document.getElementById('profileName').textContent = user.user_metadata?.full_name || user.email || 'User';
+    document.getElementById('profileId').textContent = '@' + (user.user_metadata?.username || 'user');
+    document.getElementById('profileAvatar').textContent = (user.user_metadata?.full_name || 'U')[0].toUpperCase();
+    
+    if (isCreator) {
+        document.getElementById('creatorDash').style.display = 'block';
+        document.getElementById('totalUsers').textContent = '47';
+        document.getElementById('totalSubs').textContent = '12';
+        document.getElementById('revenueDisplay').textContent = '₦8,400';
+        document.getElementById('followersCount').textContent = '100K';
+        document.getElementById('postsCount').textContent = '47';
+        document.getElementById('repostsCount').textContent = '12';
+    } else {
+        document.getElementById('creatorDash').style.display = 'none';
+        document.getElementById('followersCount').textContent = '0';
+        document.getElementById('postsCount').textContent = '0';
+        document.getElementById('repostsCount').textContent = '0';
+    }
+}
+
+// =============================================
+// MONETIZATION
+// =============================================
 function toggleMonetization() {
     const toggle = document.getElementById('monetizeToggle');
     const label = document.getElementById('monetizeLabel');
@@ -250,33 +371,40 @@ function toggleMonetization() {
     alert('💰 Monetization ' + (isOn ? 'ENABLED' : 'DISABLED'));
 }
 
-// ===== ACCOUNT =====
-document.getElementById('profileName').textContent = 'Creator';
-document.getElementById('profileId').textContent = '@x10_creator';
-document.getElementById('profileAvatar').textContent = 'X';
-document.getElementById('followersCount').textContent = '100K';
-document.getElementById('postsCount').textContent = '47';
-document.getElementById('repostsCount').textContent = '12';
-document.getElementById('creatorDash').style.display = 'block';
-document.getElementById('totalUsers').textContent = '47';
-document.getElementById('totalSubs').textContent = '12';
-document.getElementById('revenueDisplay').textContent = '₦8,400';
-
-// ===== EXIT =====
+// =============================================
+// EXIT BEHAVIOR
+// =============================================
 let exitTimer = 0;
 window.addEventListener('popstate', function() {
     if (exitTimer === 0) {
         exitTimer = 1;
         setTimeout(() => { exitTimer = 0; }, 500);
     } else {
-        if (confirm('Exit X10 Downloader?')) { window.close(); }
+        if (confirm('Exit X10 Downloader?')) {
+            window.close();
+        }
         exitTimer = 0;
     }
 });
 history.pushState({ page: 'home' }, '');
 
+// =============================================
+// PWA INSTALL PROMPT
+// =============================================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log('✅ PWA install prompt ready');
+});
+
+// =============================================
+// INIT
+// =============================================
 console.log('🚀 X10 Downloader Ready!');
+console.log('🎬 Paste any link in the Watch tab to play videos');
+console.log('📱 PWA support enabled');
 </script>
 
 </body>
-</html>
+                                                             </html>
