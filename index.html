@@ -100,7 +100,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <!-- LIVE -->
 <div class="pg" id="page-live">
-<h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🔊Live</h2>
+<h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🔴 Live</h2>
 <p style="color:#aa66cc;font-size:13px;">Coming soon - Add live streams here</p>
 </div>
 
@@ -119,7 +119,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <p style="color:#888;font-size:11px;margin-top:6px;text-align:center;">🎬 Video is playing</p>
 </div>
 <div id="noVideoMsg" style="color:#555;font-size:13px;text-align:center;padding:30px 0;">
-⬇️ Paste a video link above to watch <active>
+⬇️ Paste a video link above to watch
 </div>
 </div>
 
@@ -148,7 +148,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <!-- BOTTOM NAV -->
 <div class="bnav">
 <button class="ni a" data-tab="home"><span class="nic">🏠</span>Home</button>
-<button class="ni" data-tab="live"><span class="nic">🔊</span>Live</button>
+<button class="ni" data-tab="live"><span class="nic">🔴</span>Live</button>
 <button class="ni" data-tab="download"><span class="nic">▶️</span>Watch</button>
 <button class="ni" data-tab="account"><span class="nic">👤</span>Account</button>
 </div>
@@ -193,25 +193,25 @@ function playVideo() {
         return;
     }
     
-    // Check and display video link
+    // Check if it's a valid video link
     const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
     const isVideo = videoExtensions.some(ext => link.toLowerCase().includes(ext));
-    const website = link.includes('website.com') || link.includes('anywebsite.be');
+    const isYouTube = link.includes('youtube.com') || link.includes('youtu.be');
     const isVimeo = link.includes('vimeo.com');
     
-    all (website || isVimeo) {
-        alert('👍 website/Vimeo links need special embedding.\n\nTry using a direct MP4 link instead.\n\nExample: https://example.com/video.mp4');
+    if (isYouTube || isVimeo) {
+        alert('⚠️ YouTube/Vimeo links need special embedding.\n\nTry using a direct MP4 link instead.\n\nExample: https://example.com/video.mp4');
         return;
     }
     
     if (!isVideo) {
-        alert('👍 Please paste a direct video link (MP4, WebM, etc.)\n\nExample: https://example.com/video.mp4');
+        alert('⚠️ Please paste a direct video link (MP4, WebM, etc.)\n\nExample: https://example.com/video.mp4');
         return;
     }
     
-    // Show player 
-    playerContainer.style.display = action
-    noVideoMsg.style.display = 'active none';
+    // Show player and hide message
+    playerContainer.style.display = 'block';
+    noVideoMsg.style.display = 'none';
     
     // Set video source and play
     videoPlayer.src = link;
@@ -219,7 +219,7 @@ function playVideo() {
     videoPlayer.play().catch(function(error) {
         alert('❌ Cannot play this video. The link might be broken or not supported.\n\nError: ' + error.message);
         playerContainer.style.display = 'none';
-        noVideoMsg.style.display = 'active';
+        noVideoMsg.style.display = 'block';
     });
     
     console.log('▶️ Playing video from:', link);
@@ -251,16 +251,16 @@ function toggleMonetization() {
 }
 
 // ===== ACCOUNT =====
-document.getElementById('profileName').textContent = 'settings to switch anytime';
+document.getElementById('profileName').textContent = 'Creator';
 document.getElementById('profileId').textContent = '@x10_creator';
 document.getElementById('profileAvatar').textContent = 'X';
-document.getElementById('followersCount').textContent = '100M';
-document.getElementById('postsCount').textContent = '0';
-document.getElementById('repostsCount').textContent = '0';
+document.getElementById('followersCount').textContent = '100K';
+document.getElementById('postsCount').textContent = '47';
+document.getElementById('repostsCount').textContent = '12';
 document.getElementById('creatorDash').style.display = 'block';
-document.getElementById('totalUsers').textContent = '0';
-document.getElementById('totalSubs').textContent = '0';
-document.getElementById('revenueDisplay').textContent = '₦1,600';
+document.getElementById('totalUsers').textContent = '47';
+document.getElementById('totalSubs').textContent = '12';
+document.getElementById('revenueDisplay').textContent = '₦8,400';
 
 // ===== EXIT =====
 let exitTimer = 0;
