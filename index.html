@@ -185,12 +185,15 @@ function playVideo() {
     const link = document.getElementById('videoLink').value.trim();
     const container = document.getElementById('playerContainer');
     
+    if (!link) {
+        alert('Please paste a link first.');
+        return;
     }
     
     // Clear previous content
     container.innerHTML = '';
     
-    // ---- CHECK FOR YouTube or Chrome ----
+    // ---- CHECK FOR YOUTUBE ----
     if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
         let videoId = '';
         if (link.includes('v=')) {
