@@ -156,6 +156,18 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <script>
+    <script>
+
+
+// Your Active Live Server Keys
+
+const SUPABASE_URL =
+
+"https://gkfivuvtpfetzatz.supabase.co";
+
+const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps80B5ilNda3IUISZQ_ 1LLxmVSE";
+
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ===== NAVIGATION =====
 function switchPage(tab) {
     document.querySelectorAll('.pg').forEach(p => p.classList.remove('a'));
