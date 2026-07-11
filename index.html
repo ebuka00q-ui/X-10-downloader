@@ -14,9 +14,6 @@
 body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
 #app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
 
-/* ===== HIDE RADIO BUTTONS ===== */
-.tab-radio{display:none}
-
 /* ===== HEADER ===== */
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,0,200,0.15);flex-shrink:0}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#ff66dd,#cc00aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -26,13 +23,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 /* ===== SUB TABS ===== */
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(255,0,200,0.08);flex-shrink:0}
-.stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
-.stab.a{color:#ff44cc;border-bottom-color:#ff44cc}
+.stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase;transition:all .3s}
+.stab.active{color:#ff44cc;border-bottom-color:#ff44cc}
 
 /* ===== CONTENT ===== */
 .cnt{flex:1;overflow:hidden;position:relative}
-.pg{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
-.pg.a{display:block}
+.page{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
+.page.active{display:block}
 
 /* ===== VIDEOS ===== */
 .vf{display:flex;flex-direction:column;gap:14px;padding-bottom:80px}
@@ -45,16 +42,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .va button{background:0;border:0;color:#888;font-size:16px;cursor:pointer;padding:4px}
 
 /* ===== BOTTOM NAV ===== */
-.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(255,0,200,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
-.bnav label{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;font-family:inherit}
-.bnav label .nic{font-size:20px}
-.bnav label.active{color:#ff44cc}
-
-/* ===== PAGE VISIBILITY ===== */
-#tab-home:checked ~ .cnt #page-home,
-#tab-live:checked ~ .cnt #page-live,
-#tab-watch:checked ~ .cnt #page-watch,
-#tab-account:checked ~ .cnt #page-account{display:block}
+.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(255,0,200,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20;cursor:pointer}
+.nav-item{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;border:0;background:0;font-family:inherit;transition:all .3s}
+.nav-item .nic{font-size:20px;transition:all .3s}
+.nav-item.active{color:#ff44cc}
+.nav-item.active .nic{text-shadow:0 0 30px rgba(255,0,200,0.4)}
 
 /* ===== WATCH TAB ===== */
 .di{display:flex;gap:10px;margin-bottom:12px}
@@ -85,7 +77,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 /* ===== SEARCH ===== */
 .so{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.97);z-index:100;display:none;flex-direction:column;padding:50px 24px}
-.so.s{display:flex}
+.so.show{display:flex}
 .so input{padding:18px;border-radius:14px;border:1px solid rgba(255,0,200,0.25);background:#12121a;color:#fff;font-size:18px;outline:0;margin-bottom:18px}
 .so .cb{position:absolute;top:16px;right:20px;font-size:30px;color:#ff44cc;cursor:pointer;background:0;border:0}
 .so .res{color:#aa66cc;font-size:15px}
@@ -96,46 +88,46 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <div id="app">
 
-<!-- ===== RADIO BUTTONS FOR NAVIGATION ===== -->
-<input type="radio" name="tab" id="tab-home" class="tab-radio" checked>
-<input type="radio" name="tab" id="tab-live" class="tab-radio">
-<input type="radio" name="tab" id="tab-watch" class="tab-radio">
-<input type="radio" name="tab" id="tab-account" class="tab-radio">
-
-<!-- ===== HEADER ===== -->
+<!-- HEADER -->
 <div class="hdr">
 <span class="hdr-t">⬇️ X10</span>
 <div class="hdr-r">
 <button class="hdr-s" id="searchBtn">🔍</button>
-<label class="hdr-a" for="tab-account">👤</label>
+<div class="hdr-a" id="headerAccount">👤</div>
 </div>
 </div>
 
-<!-- ===== SUB TABS ===== -->
+<!-- SUB TABS -->
 <div class="stabs" id="subTabs">
-<span class="stab a" data-page="fyp">For You</span>
+<span class="stab active" data-page="fyp">For You</span>
 <span class="stab" data-page="movies">Movies</span>
 </div>
 
-<!-- ===== CONTENT ===== -->
+<!-- CONTENT -->
 <div class="cnt">
 
 <!-- HOME -->
-<div class="pg a" id="page-home">
+<div class="page active" id="page-home">
 <div class="vf">
 <div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@x10_creator</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 24</button><button onclick="prompt('💬 Comment:')">💬 5</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 <div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@tech_fan</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 18</button><button onclick="prompt('💬 Comment:')">💬 3</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 </div>
 </div>
 
+<!-- MOVIES -->
+<div class="page" id="page-movies">
+<h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🎬 Movie Library</h2>
+<p style="color:#aa66cc;font-size:13px;">Coming soon - Add your videos here</p>
+</div>
+
 <!-- LIVE -->
-<div class="pg" id="page-live">
+<div class="page" id="page-live">
 <h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🔴 Live</h2>
 <p style="color:#aa66cc;font-size:13px;">Coming soon - Add live streams here</p>
 </div>
 
 <!-- WATCH -->
-<div class="pg" id="page-watch">
+<div class="page" id="page-watch">
 <h2 style="color:#ff66dd;margin-bottom:8px;font-size:17px;">▶️ Watch Any Video</h2>
 <p style="color:#aa66cc;font-size:12px;margin-bottom:12px;">Paste any link: MP4, YouTube, or website</p>
 <div class="di">
@@ -150,7 +142,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <!-- ACCOUNT -->
-<div class="pg" id="page-account">
+<div class="page" id="page-account">
 <div class="ph">
 <div class="pa" id="profileAvatar" onclick="uploadPhoto()">👤</div>
 <div class="pn"><input type="text" id="usernameInput" value="Creator" maxlength="20" onchange="saveUsername()"></div>
@@ -170,19 +162,19 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 </div>
 
-<!-- ===== SEARCH OVERLAY ===== -->
+<!-- SEARCH OVERLAY -->
 <div class="so" id="searchOverlay">
 <button class="cb" id="closeSearch">✕</button>
 <input type="text" id="searchInput" placeholder="Search videos...">
 <div class="res" id="searchResults">Type to search...</div>
 </div>
 
-<!-- ===== BOTTOM NAV ===== -->
-<div class="bnav">
-<label for="tab-home" id="nav-home"><span class="nic">🏠</span>Home</label>
-<label for="tab-live" id="nav-live"><span class="nic">🔴</span>Live</label>
-<label for="tab-watch" id="nav-watch"><span class="nic">▶️</span>Watch</label>
-<label for="tab-account" id="nav-account"><span class="nic">👤</span>Account</label>
+<!-- BOTTOM NAV -->
+<div class="bnav" id="bottomNav">
+<div class="nav-item active" data-tab="home"><span class="nic">🏠</span>Home</div>
+<div class="nav-item" data-tab="live"><span class="nic">🔴</span>Live</div>
+<div class="nav-item" data-tab="watch"><span class="nic">▶️</span>Watch</div>
+<div class="nav-item" data-tab="account"><span class="nic">👤</span>Account</div>
 </div>
 
 </div>
@@ -203,24 +195,94 @@ if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
 console.log("✅ Version:", APP_VERSION);
 
 // =============================================
+// NAVIGATION - FIXED
+// =============================================
+function switchPage(tabName) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    
+    // Show target page
+    const pageMap = {
+        'home': 'page-home',
+        'live': 'page-live',
+        'watch': 'page-watch',
+        'account': 'page-account'
+    };
+    const target = document.getElementById(pageMap[tabName]);
+    if (target) target.classList.add('active');
+    
+    // Update nav buttons
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.tab === tabName) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Show/hide sub-tabs
+    document.getElementById('subTabs').style.display = (tabName === 'home') ? 'flex' : 'none';
+    
+    console.log('✅ Switched to:', tabName);
+}
+
+// ===== NAVIGATION CLICK EVENTS =====
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function() {
+        const tab = this.dataset.tab;
+        console.log('👆 Clicked:', tab);
+        switchPage(tab);
+    });
+});
+
+// ===== HEADER ACCOUNT CLICK =====
+document.getElementById('headerAccount').addEventListener('click', function() {
+    switchPage('account');
+});
+
+// ===== SUB-TAB CLICKS =====
+document.querySelectorAll('.stab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// =============================================
 // VIDEO PLAYER
 // =============================================
 function playVideo() {
     const link = document.getElementById('videoLink').value.trim();
     const container = document.getElementById('playerContainer');
-    if (!link) { alert('Please paste a link first.'); return; }
+    
+    if (!link) {
+        alert('Please paste a link first.');
+        return;
+    }
+    
     container.innerHTML = '';
+    
+    // YouTube
     if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
         let videoId = '';
-        if (link.includes('v=')) videoId = link.split('v=')[1].split('&')[0];
-        else if (link.includes('youtu.be/')) videoId = link.split('youtu.be/')[1].split('?')[0];
-        if (videoId) { container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`; return; }
+        if (link.includes('v=')) {
+            videoId = link.split('v=')[1].split('&')[0];
+        } else if (link.includes('youtu.be/')) {
+            videoId = link.split('youtu.be/')[1].split('?')[0];
+        }
+        if (videoId) {
+            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`;
+            return;
+        }
     }
+    
+    // Direct video file
     const videoExts = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
     if (videoExts.some(ext => link.toLowerCase().includes(ext))) {
         container.innerHTML = `<video controls autoplay><source src="${link}"></video>`;
         return;
     }
+    
+    // Any website
     container.innerHTML = `<iframe src="${link}" allowfullscreen></iframe>`;
 }
 
@@ -269,11 +331,11 @@ if (savedAvatar) {
 // SEARCH
 // =============================================
 document.getElementById('searchBtn').onclick = function() {
-    document.getElementById('searchOverlay').classList.add('s');
+    document.getElementById('searchOverlay').classList.add('show');
     document.getElementById('searchInput').focus();
 };
 document.getElementById('closeSearch').onclick = function() {
-    document.getElementById('searchOverlay').classList.remove('s');
+    document.getElementById('searchOverlay').classList.remove('show');
 };
 document.getElementById('searchInput').oninput = function() {
     const q = this.value.toLowerCase();
@@ -281,16 +343,6 @@ document.getElementById('searchInput').oninput = function() {
     if (!q) { res.innerHTML = 'Type to search...'; return; }
     res.innerHTML = '<span style="color:#aa66cc;">🔍 Searching for: "' + q + '"</span>';
 };
-
-// =============================================
-// SUB-TABS
-// =============================================
-document.querySelectorAll('.stab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.stab').forEach(t => t.classList.remove('a'));
-        this.classList.add('a');
-    });
-});
 
 // =============================================
 // EXIT
@@ -308,6 +360,7 @@ window.addEventListener('popstate', function() {
 history.pushState({ page: 'home' }, '');
 
 console.log('🚀 X10 Downloader Ready!');
+console.log('📌 Click Home, Live, Watch, or Account to switch pages.');
 </script>
 
 </body>
