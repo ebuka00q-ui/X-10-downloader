@@ -117,6 +117,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <input type="radio" name="tab" id="tab-watch">
 <input type="radio" name="tab" id="tab-account">
 
+<!-- ===== SUB-TAB RADIO BUTTONS ===== -->
+<input type="radio" name="subtab" id="sub-fyp" checked>
+<input type="radio" name="subtab" id="sub-movies">
 
 <!-- ===== HEADER ===== -->
 <div class="hdr">
@@ -124,7 +127,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div class="hdr-r">
 <button class="hdr-s" id="searchBtn">🔍</button>
 <label class="hdr-a" for="tab-account">👤</label>
-</div>
 </div>
 
 <!-- ===== SUB TABS ===== -->
@@ -143,11 +145,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@x10_creator</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 24</button><button onclick="prompt('💬 Comment:')">💬 5</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 <div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@tech_fan</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 18</button><button onclick="prompt('💬 Comment:')">💬 3</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
 </div>
-</div>
 <div class="pg-movies-content">
 <h2 style="color:#ff66dd;margin-bottom:14px;font-size:17px;">🎬 Movie Library</h2>
 <p style="color:#aa66cc;font-size:13px;">Coming soon - Add your videos here</p>
-</div>
 </div>
 
 <!-- LIVE -->
@@ -168,8 +168,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div id="noVideoMsg" style="color:#555;font-size:14px;text-align:center;padding:20px;">
 ⬇️ Paste a link and click Watch
 </div>
-</div>
-</div>
 
 <!-- ACCOUNT -->
 <div class="pg" id="page-account">
@@ -182,9 +180,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div class="sr"><span class="sl">Monetization</span><div class="tw"><div class="tg" id="monetizeToggle" onclick="toggleMonetization()"><div class="kb"></div></div><span style="font-size:12px;color:#aa66cc;" id="monetizeLabel">OFF</span></div></div>
 <div class="sr"><span class="sl">Revenue (₦)</span><span class="sv" id="revenueDisplay">0</span></div>
 </div>
-</div>
-
-</div>
 
 <!-- ===== SEARCH OVERLAY ===== -->
 <div class="so" id="searchOverlay">
@@ -192,9 +187,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <input type="text" id="searchInput" placeholder="Search videos...">
 <div class="res" id="searchResults">Type to search...</div>
 </div>
-<!-- ===== SUB-TAB RADIO BUTTONS ===== -->
-<input type="radio" name="subtab" id="sub-fyp" checked>
-<input type="radio" name="subtab" id="sub-movies">
+
 <!-- ===== BOTTOM NAV ===== -->
 <div class="bnav">
 <label for="tab-home"><span class="nic">🏠</span>Home</label>
@@ -302,4 +295,4 @@ console.log('🚀 X10 Downloader Ready!');
 </script>
 
 </body>
-                                                                                                                                                                                                                                                                                          </html>
+    </html>
