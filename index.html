@@ -2,62 +2,50 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>X10 Downloader</title>
-
-<!-- ===== PWA LINKS (DO NOT REMOVE) ===== -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
-#app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}#app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,136,0.15);flex-shrink:0}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#66ffaa,#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-r{display:flex;align-items:center;gap:16px}
-.hdr-s{font-size:22px;color:#00ff88;cursor:pointer;background:0;border:0;padding:4px}
+.hdr-r{display:flex;align-items:center;gap:16px}.hdr-s{font-size:22px;color:#00ff88;cursor:pointer;background:0;border:0;padding:4px}
 .hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(0,255,136,0.08);flex-shrink:0}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase;transition:all .3s}
 .stab.active{color:#00ff88;border-bottom-color:#00ff88}
-.cnt{flex:1;overflow:hidden;position:relative}
-.page{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
-.page.active{display:block}
+.cnt{flex:1;overflow:hidden;position:relative}.page{display:none;height:100%;overflow-y:auto;padding:12px}.page.active{display:block}
 .vf{display:flex;flex-direction:column;gap:14px;padding-bottom:80px}
 .vc{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:14px;overflow:hidden;border:1px solid rgba(0,255,136,0.1)}
 .vp{width:100%;aspect-ratio:9/16;background:linear-gradient(145deg,#0a1a0f,#05100a);display:flex;align-items:center;justify-content:center;min-height:200px}
 .vp .pi{font-size:48px;color:#00ff88;opacity:.5}
 .vi{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:rgba(10,10,15,0.6)}
-.vu{font-weight:600;color:#66ffaa;font-size:13px}
-.va{display:flex;gap:12px;align-items:center}
-.va button{background:0;border:0;color:#888;font-size:16px;cursor:pointer;padding:4px}
-.va button:hover{color:#00ff88}
+.vu{font-weight:600;color:#66ffaa;font-size:13px}.va{display:flex;gap:12px;align-items:center}
+.va button{background:0;border:0;color:#888;font-size:16px;cursor:pointer;padding:4px}.va button:hover{color:#00ff88}
 .bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(0,255,136,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20;cursor:pointer}
 .nav-item{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;border:0;background:0;font-family:inherit;transition:all .3s}
-.nav-item .nic{font-size:20px;transition:all .3s}
-.nav-item.active{color:#00ff88}
-.nav-item.active .nic{text-shadow:0 0 30px rgba(0,255,136,0.4)}
+.nav-item .nic{font-size:20px}.nav-item.active{color:#00ff88}.nav-item.active .nic{text-shadow:0 0 30px rgba(0,255,136,0.4)}
 .di{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .di input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,255,136,0.2);background:#12121a;color:#fff;font-size:14px;outline:0;min-width:200px}
 .di input:focus{border-color:#00ff88}
 .di button{padding:12px 20px;border-radius:12px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;font-size:14px}
 .di button:hover{transform:scale(1.02)}
 .player-box{width:100%;border-radius:12px;margin-top:10px;background:#0d0d15;border:1px solid rgba(0,255,136,0.1);overflow:hidden;min-height:300px;display:flex;align-items:center;justify-content:center;position:relative}
-.player-box video,.player-box iframe{width:100%;border:none;border-radius:10px;display:block;max-height:500px;background:#000}
-.player-box iframe{height:400px}
+.player-box video,.player-box iframe,.player-box img{width:100%;border:none;border-radius:10px;display:block;max-height:500px;background:#000}
+.player-box img{object-fit:contain;max-height:500px}.player-box iframe{height:400px}
 .fs-btn{position:absolute;bottom:20px;right:20px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:44px;height:44px;color:#00ff88;font-size:20px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center}
 .fs-btn:hover{background:rgba(0,255,136,0.2)}
 .history-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-bottom:20px}
-.history-item{background:#12121a;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.history-item{background:#12121a;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center}
 .history-item:hover{border-color:rgba(0,255,136,0.3)}
 .history-item .h-link{color:#66ffaa;font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px}
-.history-item .h-time{color:#555;font-size:10px}
-.history-item .h-play{color:#00ff88;cursor:pointer;padding:4px 8px;border:1px solid rgba(0,255,136,0.2);border-radius:6px;font-size:12px}
-.history-item .h-play:hover{background:rgba(0,255,136,0.1)}
+.history-item .h-time{color:#555;font-size:10px;margin-right:8px}
+.history-item .h-play{color:#00ff88;cursor:pointer;padding:4px 8px;border:1px solid rgba(0,255,136,0.2);border-radius:6px;font-size:12px;margin-right:4px}
+.history-item .h-delete{color:#ff4444;cursor:pointer;padding:4px 8px;border:0;background:0;font-size:16px}
 .ph{text-align:center;padding:16px 0}
 .pa{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#0a0a0f;border:3px solid rgba(0,255,136,0.25);cursor:pointer;overflow:hidden}
 .pa img{width:100%;height:100%;object-fit:cover}
@@ -65,15 +53,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .pn input{background:#12121a;border:1px solid rgba(0,255,136,0.2);border-radius:8px;padding:6px 12px;color:#66ffaa;font-size:17px;font-weight:700;text-align:center;outline:0;width:200px}
 .pn input:focus{border-color:#00ff88}
 .ps{display:flex;justify-content:center;gap:24px;margin:14px 0}
-.ps div{text-align:center}
-.ps .n{font-size:17px;font-weight:700;color:#00ff88}
+.ps div{text-align:center}.ps .n{font-size:17px;font-weight:700;color:#00ff88}
 .ps .lbl{font-size:10px;color:#66aa88;text-transform:uppercase}
 .cd{background:linear-gradient(145deg,#0a1a0f,#05100a);border-radius:14px;padding:14px;margin-top:14px;border:2px solid rgba(0,255,136,0.1)}
 .cd h3{color:#66ffaa;font-size:13px;margin-bottom:12px;text-transform:uppercase}
 .cd .sr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
-.cd .sr:last-child{border-bottom:0}
-.cd .sl{color:#66aa88;font-size:13px}
-.cd .sv{color:#00ff88;font-weight:700;font-size:13px}
+.cd .sr:last-child{border-bottom:0}.cd .sl{color:#66aa88;font-size:13px}.cd .sv{color:#00ff88;font-weight:700;font-size:13px}
 .so{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.97);z-index:100;display:none;flex-direction:column;padding:50px 24px}
 .so.show{display:flex}
 .so input{padding:18px;border-radius:14px;border:1px solid rgba(0,255,136,0.25);background:#12121a;color:#fff;font-size:18px;outline:0;margin-bottom:18px}
@@ -84,349 +69,35 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </style>
 </head>
 <body>
-
-<div id="app">
-
-<!-- HEADER -->
-<div class="hdr">
-<span class="hdr-t">⬇️ X10</span>
-<div class="hdr-r">
-<button class="hdr-s" id="searchBtn">🔍</button>
-<div class="hdr-a" id="headerAccount">👤</div>
+<div id=app>
+<div class=hdr><span class=hdr-t>⬇️ X10</span><div class=hdr-r><button class=hdr-s id=sBtn>🔍</button><div class=hdr-a id=hAcct>👤</div></div></div>
+<div class=stabs id=stabs><span class="stab active" data-page=fyp>For You</span><span class=stab data-page=movies>Movies</span></div>
+<div class=cnt>
+<div class="page active" id=pg-home><div class=vf><div class=vc><div class=vp><span class=pi>▶️</span></div><div class=vi><span class=vu>@x10_creator</span><div class=va><button onclick="alert('❤️')">❤️ 24</button><button onclick="prompt('💬:')">💬 5</button><button onclick="alert('📌')">📌</button><button onclick="alert('↗️')">↗️</button></div></div></div><div class=vc><div class=vp><span class=pi>▶️</span></div><div class=vi><span class=vu>@tech_fan</span><div class=va><button onclick="alert('❤️')">❤️ 18</button><button onclick="prompt('💬:')">💬 3</button><button onclick="alert('📌')">📌</button><button onclick="alert('↗️')">↗️</button></div></div></div></div></div>
+<div class=page id=pg-movies><h2 style=color:#66ffaa;margin-bottom:14px;font-size:17px;>🎬 Movie Library</h2><p style=color:#66aa88;font-size:13px;>Coming soon</p></div>
+<div class=page id=pg-live><h2 style=color:#66ffaa;margin-bottom:14px;font-size:17px;>🔊 Live</h2><p style=color:#66aa88;font-size:13px;>Coming soon</p></div>
+<div class=page id=pg-watch><h2 style=color:#66ffaa;margin-bottom:8px;font-size:17px;>▶️ Watch</h2><p style=color:#66aa88;font-size:12px;margin-bottom:12px;>Paste any link</p><div class=di><input type=text placeholder="Paste link..." id=vLink><button onclick=play()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:14px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;align-items:center;margin-top:16px;><h3 style=color:#66ffaa;font-size:14px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:12px;cursor:pointer;>Clear All</button></div><div class=history-list id=hList><p style=color:#555;font-size:12px;>No history</p></div></div>
+<div class=page id=pg-acct><div class=ph><div class=pa id=pAv onclick=upload()>👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange=saveName()></div><div style=color:#66aa88;font-size:12px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
+<div class=so id=sOver><button class=cb id=cSearch>✕</button><input type=text id=sInput placeholder="Search..."><div class=res id=sResults>Type to search...</div></div>
+<div class=bnav id=bNav><div class="nav-item active" data-tab=home><span class=nic>🏠</span>Home</div><div class=nav-item data-tab=live><span class=nic>🔊</span>Live</div><div class=nav-item data-tab=watch><span class=nic>▶️</span>Watch</div><div class=nav-item data-tab=acct><span class=nic>👤</span>Account</div></div>
 </div>
-
-<!-- SUB TABS -->
-<div class="stabs" id="subTabs">
-<span class="stab active" data-page="fyp">For You</span>
-<span class="stab" data-page="movies">Movies</span>
-</div>
-
-<!-- CONTENT -->
-<div class="cnt">
-
-<!-- HOME -->
-<div class="page active" id="page-home">
-<div class="vf">
-<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@x10_creator</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 24</button><button onclick="prompt('💬 Comment:')">💬 5</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
-<div class="vc"><div class="vp"><span class="pi">▶️</span></div><div class="vi"><span class="vu">@tech_fan</span><div class="va"><button onclick="alert('❤️ Liked!')">❤️ 18</button><button onclick="prompt('💬 Comment:')">💬 3</button><button onclick="alert('📌 Pinned!')">📌</button><button onclick="alert('↗️ Shared!')">↗️</button></div></div></div>
-</div>
-</div>
-
-<!-- MOVIES -->
-<div class="page" id="page-movies">
-<h2 style="color:#66ffaa;margin-bottom:14px;font-size:17px;">🎬 Movie Library</h2>
-<p style="color:#66aa88;font-size:13px;">Coming soon - Add your videos here</p>
-</div>
-
-<!-- LIVE -->
-<div class="page" id="page-live">
-<h2 style="color:#66ffaa;margin-bottom:14px;font-size:17px;">🔴 Live</h2>
-<p style="color:#66aa88;font-size:13px;">Coming soon - Add live streams here</p>
-</div>
-
-<!-- WATCH -->
-<div class="page" id="page-watch">
-<h2 style="color:#66ffaa;margin-bottom:8px;font-size:17px;">▶️ Watch Any Video</h2>
-<p style="color:#66aa88;font-size:12px;margin-bottom:12px;">Paste any link: MP4, YouTube, or website</p>
-<div class="di">
-<input type="text" placeholder="Paste link here..." id="videoLink">
-<button onclick="playVideo()">▶ Watch</button>
-</div>
-<div class="player-box" id="playerContainer">
-<div id="noVideoMsg" style="color:#555;font-size:14px;text-align:center;padding:20px;">
-⬇️ Paste a link and click Watch
-</div>
-</div>
-
-<!-- HISTORY -->
-<h3 style="color:#66ffaa;font-size:14px;margin-top:16px;">📜 Watch History</h3>
-<div class="history-list" id="historyList">
-<p style="color:#555;font-size:12px;">No history yet</p>
-</div>
-</div>
-
-<!-- ACCOUNT -->
-<div class="page" id="page-account">
-<div class="ph">
-<div class="pa" id="profileAvatar" onclick="uploadPhoto()">👤</div>
-<div class="pn"><input type="text" id="usernameInput" value="Creator" maxlength="20" onchange="saveUsername()"></div>
-<div style="color:#66aa88;font-size:12px;" id="profileId">@x10_creator</div>
-</div>
-<div class="ps">
-<div><div class="n" id="followersCount">100M</div><div class="lbl">Followers</div></div>
-<div><div class="n" id="postsCount">47</div><div class="lbl">Posts</div></div>
-<div><div class="n" id="repostsCount">12</div><div class="lbl">Reposts</div></div>
-</div>
-<div class="cd" id="creatorDash">
-<h3>📊 Dashboard</h3>
-<div class="sr"><span class="sl">Total Users</span><span class="sv" id="totalUsers">1</span></div>
-<div class="sr"><span class="sl">Total Posts</span><span class="sv" id="totalPosts">47</span></div>
-</div>
-</div>
-
-</div>
-
-<!-- SEARCH OVERLAY -->
-<div class="so" id="searchOverlay">
-<button class="cb" id="closeSearch">✕</button>
-<input type="text" id="searchInput" placeholder="Search videos...">
-<div class="res" id="searchResults">Type to search...</div>
-</div>
-
-<!-- BOTTOM NAV -->
-<div class="bnav" id="bottomNav">
-<div class="nav-item active" data-tab="home"><span class="nic">🏠</span>Home</div>
-<div class="nav-item" data-tab="live"><span class="nic">🔴</span>Live</div>
-<div class="nav-item" data-tab="watch"><span class="nic">▶️</span>Watch</div>
-<div class="nav-item" data-tab="account"><span class="nic">👤</span>Account</div>
-</div>
-
-</div>
-
 <script>
-// =============================================
-// VERSION CONTROL
-// =============================================
-const APP_VERSION = "1.0.0";
-const STORED_VERSION = localStorage.getItem('x10_version');
-if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
-    alert("📢 New update available! Refreshing...");
-    localStorage.setItem('x10_version', APP_VERSION);
-    location.reload();
-} else if (!STORED_VERSION) {
-    localStorage.setItem('x10_version', APP_VERSION);
-}
-console.log("✅ Version:", APP_VERSION);
-
-// =============================================
-// NAVIGATION
-// =============================================
-function switchPage(tabName) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const pageMap = {
-        'home': 'page-home',
-        'live': 'page-live',
-        'watch': 'page-watch',
-        'account': 'page-account'
-    };
-    const target = document.getElementById(pageMap[tabName]);
-    if (target) target.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-        if (item.dataset.tab === tabName) {
-            item.classList.add('active');
-        }
-    });
-    document.getElementById('subTabs').style.display = (tabName === 'home') ? 'flex' : 'none';
-    console.log('✅ Switched to:', tabName);
-}
-
-document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', function() {
-        const tab = this.dataset.tab;
-        console.log('👆 Clicked:', tab);
-        switchPage(tab);
-    });
-});
-
-document.getElementById('headerAccount').addEventListener('click', function() {
-    switchPage('account');
-});
-
-document.querySelectorAll('.stab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-    });
-});
-
-// =============================================
-// VIDEO PLAYER + HISTORY
-// =============================================
-function playVideo() {
-    const link = document.getElementById('videoLink').value.trim();
-    const container = document.getElementById('playerContainer');
-    if (!link) {
-        alert('Please paste a link first.');
-        return;
-    }
-    container.innerHTML = '';
-    
-    // Save to history
-    saveToHistory(link);
-    
-    // YouTube
-    if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
-        let videoId = '';
-        if (link.includes('v=')) {
-            videoId = link.split('v=')[1].split('&')[0];
-        } else if (link.includes('youtu.be/')) {
-            videoId = link.split('youtu.be/')[1].split('?')[0];
-        }
-        if (videoId) {
-            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen style="width:100%;height:400px;border:none;border-radius:10px;"></iframe>
-            <button class="fs-btn" onclick="toggleFullScreen()">⛶</button>`;
-            return;
-        }
-    }
-    
-    // Direct video file
-    const videoExts = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
-    if (videoExts.some(ext => link.toLowerCase().includes(ext))) {
-        container.innerHTML = `<video controls autoplay style="width:100%;border-radius:10px;max-height:450px;background:#000;" id="myVideo"><source src="${link}"></video>
-        <button class="fs-btn" onclick="toggleFullScreen()">⛶</button>`;
-        return;
-    }
-    
-    // Any website
-    container.innerHTML = `<iframe src="${link}" allowfullscreen style="width:100%;height:400px;border:none;border-radius:10px;"></iframe>
-    <button class="fs-btn" onclick="toggleFullScreen()">⛶</button>`;
-}
-
-// =============================================
-// FULL SCREEN
-// =============================================
-function toggleFullScreen() {
-    const container = document.getElementById('playerContainer');
-    const iframe = container.querySelector('iframe');
-    const video = container.querySelector('video');
-    
-    if (iframe) {
-        if (iframe.requestFullscreen) {
-            iframe.requestFullscreen();
-        } else if (iframe.webkitRequestFullscreen) {
-            iframe.webkitRequestFullscreen();
-        }
-    } else if (video) {
-        if (video.requestFullscreen) {
-            video.requestFullscreen();
-        } else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
-        }
-    } else {
-        if (container.requestFullscreen) {
-            container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-            container.webkitRequestFullscreen();
-        }
-    }
-}
-
-// =============================================
-// HISTORY
-// =============================================
-function saveToHistory(link) {
-    let history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    const entry = {
-        link: link,
-        time: new Date().toLocaleString(),
-        id: Date.now()
-    };
-    history.unshift(entry);
-    if (history.length > 20) history.pop();
-    localStorage.setItem('watchHistory', JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory() {
-    const history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    const list = document.getElementById('historyList');
-    if (history.length === 0) {
-        list.innerHTML = '<p style="color:#555;font-size:12px;">No history yet</p>';
-        return;
-    }
-    list.innerHTML = history.map(item => `
-        <div class="history-item">
-            <span class="h-link">${item.link}</span>
-            <span class="h-time">${item.time}</span>
-            <span class="h-play" onclick="playFromHistory('${item.link}')">▶ Play</span>
-        </div>
-    `).join('');
-}
-
-function playFromHistory(link) {
-    document.getElementById('videoLink').value = link;
-    playVideo();
-}
-
-// =============================================
-// PROFILE
-// =============================================
-function uploadPhoto() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                document.getElementById('profileAvatar').innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-                localStorage.setItem('x10_avatar', ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-
-function saveUsername() {
-    const name = document.getElementById('usernameInput').value.trim() || 'Creator';
-    localStorage.setItem('x10_username', name);
-    document.getElementById('profileId').textContent = '@' + name.toLowerCase().replace(/\s/g, '_');
-}
-
-const savedName = localStorage.getItem('x10_username');
-if (savedName) {
-    document.getElementById('usernameInput').value = savedName;
-    document.getElementById('profileId').textContent = '@' + savedName.toLowerCase().replace(/\s/g, '_');
-}
-const savedAvatar = localStorage.getItem('x10_avatar');
-if (savedAvatar) {
-    document.getElementById('profileAvatar').innerHTML = `<img src="${savedAvatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-}
-
-// =============================================
-// SEARCH
-// =============================================
-document.getElementById('searchBtn').onclick = function() {
-    document.getElementById('searchOverlay').classList.add('show');
-    document.getElementById('searchInput').focus();
-};
-document.getElementById('closeSearch').onclick = function() {
-    document.getElementById('searchOverlay').classList.remove('show');
-};
-document.getElementById('searchInput').oninput = function() {
-    const q = this.value.toLowerCase();
-    const res = document.getElementById('searchResults');
-    if (!q) { res.innerHTML = 'Type to search...'; return; }
-    res.innerHTML = '<span style="color:#66aa88;">🔍 Searching for: "' + q + '"</span>';
-};
-
-// =============================================
-// EXIT
-// =============================================
-let exitTimer = 0;
-window.addEventListener('popstate', function() {
-    if (exitTimer === 0) {
-        exitTimer = 1;
-        setTimeout(() => { exitTimer = 0; }, 500);
-    } else {
-        if (confirm('Exit X10 Downloader?')) { window.close(); }
-        exitTimer = 0;
-    }
-});
-history.pushState({ page: 'home' }, '');
-
-// =============================================
-// LOAD HISTORY ON START
-// =============================================
-renderHistory();
-
-console.log('🚀 X10 Downloader Ready! (Green Theme)');
-console.log('📜 Watch history is saved automatically');
+const V="1.0.0",SV=localStorage.getItem('x10_version');if(SV&&SV!==V){alert("📢 Update!");localStorage.setItem('x10_version',V);location.reload()}else if(!SV){localStorage.setItem('x10_version',V)}
+function switchPage(t){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const m={home:'pg-home',live:'pg-live',watch:'pg-watch',acct:'pg-acct'};const tg=document.getElementById(m[t]);if(tg)tg.classList.add('active');document.querySelectorAll('.nav-item').forEach(i=>{i.classList.remove('active');if(i.dataset.tab===t)i.classList.add('active')});document.getElementById('stabs').style.display=t==='home'?'flex':'none'}
+document.querySelectorAll('.nav-item').forEach(i=>{i.addEventListener('click',function(){switchPage(this.dataset.tab)})});document.getElementById('hAcct').addEventListener('click',function(){switchPage('acct')});document.querySelectorAll('.stab').forEach(t=>{t.addEventListener('click',function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active')})});
+function play(){const l=document.getElementById('vLink').value.trim(),c=document.getElementById('pBox');if(!l){alert('Paste a link');return}c.innerHTML='';saveHist(l);const img=[".jpg",".jpeg",".png",".gif",".webp"];if(img.some(e=>l.toLowerCase().includes(e))){c.innerHTML=`<img src="${l}" style="max-height:500px;width:100%;object-fit:contain;border-radius:10px;"><button class=fs-btn onclick=toggleFS()>⛶</button>`;return}if(l.includes('youtube.com/watch')||l.includes('youtu.be/')){let id='';if(l.includes('v='))id=l.split('v=')[1].split('&')[0];else if(l.includes('youtu.be/'))id=l.split('youtu.be/')[1].split('?')[0];if(id){c.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allowfullscreen style="width:100%;height:400px;border:none;border-radius:10px;"></iframe><button class=fs-btn onclick=toggleFS()>⛶</button>`;return}}if(l.includes('facebook.com')||l.includes('vimeo.com')||l.includes('dailymotion.com')){c.innerHTML=`<iframe src="${l}" allowfullscreen style="width:100%;height:400px;border:none;border-radius:10px;"></iframe><button class=fs-btn onclick=toggleFS()>⛶</button>`;return}const vx=['.mp4','.webm','.ogg','.mov'];if(vx.some(e=>l.toLowerCase().includes(e))){c.innerHTML=`<video controls autoplay style="width:100%;border-radius:10px;max-height:450px;background:#000;"><source src="${l}"></video><button class=fs-btn onclick=toggleFS()>⛶</button>`;return}c.innerHTML=`<iframe src="${l}" allowfullscreen style="width:100%;height:400px;border:none;border-radius:10px;"></iframe><button class=fs-btn onclick=toggleFS()>⛶</button>`}
+function toggleFS(){const c=document.getElementById('pBox'),i=c.querySelector('iframe'),v=c.querySelector('video'),im=c.querySelector('img');if(i){if(i.requestFullscreen)i.requestFullscreen();else if(i.webkitRequestFullscreen)i.webkitRequestFullscreen()}else if(v){if(v.requestFullscreen)v.requestFullscreen();else if(v.webkitRequestFullscreen)v.webkitRequestFullscreen()}else if(im){if(c.requestFullscreen)c.requestFullscreen();else if(c.webkitRequestFullscreen)c.webkitRequestFullscreen()}else{if(c.requestFullscreen)c.requestFullscreen();else if(c.webkitRequestFullscreen)c.webkitRequestFullscreen()}}
+function saveHist(l){let h=JSON.parse(localStorage.getItem('watchHistory')||'[]');h.unshift({link:l,time:new Date().toLocaleString(),id:Date.now()});if(h.length>50)h.pop();localStorage.setItem('watchHistory',JSON.stringify(h));renderHist()}
+function renderHist(){const h=JSON.parse(localStorage.getItem('watchHistory')||'[]'),list=document.getElementById('hList');if(h.length===0){list.innerHTML='<p style=color:#555;font-size:12px;>No history</p>';return}list.innerHTML=h.map(i=>`<div class=history-item><span class=h-link>${i.link}</span><span class=h-time>${i.time}</span><span class=h-play onclick="playFrom('${i.link}')">▶</span><span class=h-delete onclick="delHist(${i.id})">✕</span></div>`).join('')}
+function playFrom(l){document.getElementById('vLink').value=l;play()}function delHist(id){let h=JSON.parse(localStorage.getItem('watchHistory')||'[]');h=h.filter(i=>i.id!==id);localStorage.setItem('watchHistory',JSON.stringify(h));renderHist()}function clearAll(){if(confirm('Delete all?')){localStorage.removeItem('watchHistory');renderHist()}}
+function upload(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=function(e){const f=e.target.files[0];if(f){const r=new FileReader();r.onload=function(ev){document.getElementById('pAv').innerHTML=`<img src="${ev.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;localStorage.setItem('x10_avatar',ev.target.result)};r.readAsDataURL(f)}};i.click()}
+function saveName(){const n=document.getElementById('uName').value.trim()||'Creator';localStorage.setItem('x10_username',n);document.getElementById('pId').textContent='@'+n.toLowerCase().replace(/\s/g,'_')}
+const sn=localStorage.getItem('x10_username');if(sn){document.getElementById('uName').value=sn;document.getElementById('pId').textContent='@'+sn.toLowerCase().replace(/\s/g,'_')}const sa=localStorage.getItem('x10_avatar');if(sa){document.getElementById('pAv').innerHTML=`<img src="${sa}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`}
+document.getElementById('sBtn').onclick=function(){document.getElementById('sOver').classList.add('show');document.getElementById('sInput').focus()};document.getElementById('cSearch').onclick=function(){document.getElementById('sOver').classList.remove('show')};document.getElementById('sInput').oninput=function(){const q=this.value.toLowerCase(),res=document.getElementById('sResults');if(!q){res.innerHTML='Type to search...';return}res.innerHTML='<span style=color:#66aa88;>🔍 Searching for: "'+q+'"</span>'}
+let et=0;window.addEventListener('popstate',function(){if(et===0){et=1;setTimeout(()=>{et=0},500)}else{if(confirm('Exit?')){window.close()}et=0}});history.pushState({page:'home'},'');
+renderHist();console.log('🚀 X10 Ready!');
 </script>
 
-</body>
-</html>
+</body>   
+    </html>
