@@ -188,7 +188,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 // =============================================
 // VERSION CONTROL
 // =============================================
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.0.0";
 const STORED_VERSION = localStorage.getItem('x10_version');
 if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
     alert("📢 New update available! Refreshing...");
@@ -242,7 +242,7 @@ document.querySelectorAll('.stab').forEach(tab => {
 });
 
 // =============================================
-// VIDEO PLAYER + HISTORY + hold to delete
+// VIDEO PLAYER + HISTORY
 // =============================================
 function playVideo() {
     const link = document.getElementById('videoLink').value.trim();
@@ -253,11 +253,10 @@ function playVideo() {
     }
     container.innerHTML = '';
     
-    // Save to history if active hold to delete
+    // Save to history
     saveToHistory(link);
     
     // YouTube
-    // any link 
     if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
         let videoId = '';
         if (link.includes('v=')) {
@@ -317,8 +316,8 @@ function toggleFullScreen() {
 // =============================================
 // HISTORY
 // =============================================
-function saveToactive hold to deleteHistory(link) {
-    let history = JSON.parse(localStorage.getItem('watchHistory'active hold to delete) || '[]');
+function saveToHistory(link) {
+    let history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
     const entry = {
         link: link,
         time: new Date().toLocaleString(),
@@ -327,7 +326,7 @@ function saveToactive hold to deleteHistory(link) {
     history.unshift(entry);
     if (history.length > 20) history.pop();
     localStorage.setItem('watchHistory', JSON.stringify(history));
-    renderHistoryifholdtodelete();
+    renderHistory();
 }
 
 function renderHistory() {
@@ -346,7 +345,7 @@ function renderHistory() {
     `).join('');
 }
 
-function playFromHistory ifhold to delete(link) {
+function playFromHistory(link) {
     document.getElementById('videoLink').value = link;
     playVideo();
 }
