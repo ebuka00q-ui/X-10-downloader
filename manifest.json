@@ -1,24 +1,22 @@
 {
   "name": "X10 Downloader",
   "short_name": "X10",
-  "description": "Watch any video, anywhere",
+  "description": "Your personal video hub",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",192.png
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png", 512.png
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
