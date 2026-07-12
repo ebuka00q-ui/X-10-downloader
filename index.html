@@ -188,7 +188,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 // =============================================
 // VERSION CONTROL
 // =============================================
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 const STORED_VERSION = localStorage.getItem('x10_version');
 if (STORED_VERSION && STORED_VERSION !== APP_VERSION) {
     alert("📢 New update available! Refreshing...");
@@ -242,7 +242,7 @@ document.querySelectorAll('.stab').forEach(tab => {
 });
 
 // =============================================
-// VIDEO PLAYER + HISTORY
+// VIDEO PLAYER + HISTORY + hold to delete
 // =============================================
 function playVideo() {
     const link = document.getElementById('videoLink').value.trim();
@@ -257,6 +257,7 @@ function playVideo() {
     saveToHistory(link);
     
     // YouTube
+    // any link 
     if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
         let videoId = '';
         if (link.includes('v=')) {
