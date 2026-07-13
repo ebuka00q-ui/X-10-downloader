@@ -73,29 +73,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </head>
 <body>
 <div id=app>
-
-<!-- HEADER -->
-<div class=hdr>
-<span class=hdr-t>⬇️ X10</span>
-<div class=hdr-a id=hAcct>👤</div>
-</div>
-
-<!-- SUB TABS (only shows on Home) -->
-<div class=stabs id=stabs>
-<span class="stab active" data-gender=male>MEN</span>
-<span class=stab data-gender=female>WOMEN</span>
-</div>
-
-<!-- PAGES -->
+<div class=hdr><span class=hdr-t>⬇️ X10</span><div class=hdr-a id=hAcct>👤</div></div>
+<div class=stabs id=stabs><span class="stab active" data-gender=male>MEN</span><span class=stab data-gender=female>WOMEN</span></div>
 <div class=cnt>
-<div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
-<div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>🏟️ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
-<div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>No favorites yet</p></div></div>
-<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • MP4 • Images • Websites</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick="playVideo()">▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick="clearAll()" style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
-<div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick="uploadPhoto()">👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange="saveName()"></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div></div>
+<div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
+<div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>⚽ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
+<div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>No favorites</p></div></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch</h2><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick="playVideo()">▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick="clearAll()" style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
+<div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick="uploadPhoto()">👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange="saveName()"></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
-
-<!-- BOTTOM NAV - 5 TABS -->
 <div class=bnav id=bottomNav>
 <div class="nav-item active" data-tab="home"><span class=nic>🏠</span>Home</div>
 <div class="nav-item" data-tab="sports"><span class=nic>⚽</span>Sports</div>
@@ -107,14 +93,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <script>
 // =============================================
-// SUPABASE CONFIG
+// SUPABASE
 // =============================================
 const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // =============================================
-// SPORTS API KEY
+// SPORTS KEY (NEW)
 // =============================================
 const SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
 
@@ -124,7 +110,7 @@ const SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
 const VERSION = "3.0.5";
 const storedVer = localStorage.getItem('x10_version');
 if (storedVer && storedVer !== VERSION) {
-    alert("📢 Update available! Refreshing...");
+    alert("📢 Update available!");
     localStorage.setItem('x10_version', VERSION);
     location.reload();
 } else if (!storedVer) {
@@ -141,8 +127,47 @@ var refreshInterval = null;
 var currentTab = 'home';
 
 // =============================================
-// NAVIGATION
+// NAVIGATION - SIMPLE
 // =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("🚀 App loaded!");
+    
+    // ===== BOTTOM NAV CLICKS =====
+    var navItems = document.querySelectorAll('.nav-item');
+    for (var i = 0; i < navItems.length; i++) {
+        navItems[i].addEventListener('click', function(e) {
+            var tab = this.getAttribute('data-tab');
+            console.log("➡️ Clicked:", tab);
+            switchPage(tab);
+        });
+    }
+    
+    // ===== HEADER ACCOUNT CLICK =====
+    document.getElementById('hAcct').addEventListener('click', function() {
+        console.log("👤 Header account clicked");
+        switchPage('acct');
+    });
+    
+    // ===== SUB-TAB CLICKS =====
+    var stabs = document.querySelectorAll('.stab');
+    for (var j = 0; j < stabs.length; j++) {
+        stabs[j].addEventListener('click', function() {
+            var all = document.querySelectorAll('.stab');
+            for (var k = 0; k < all.length; k++) {
+                all[k].classList.remove('active');
+            }
+            this.classList.add('active');
+            fetchSports();
+        });
+    }
+    
+    // ===== START =====
+    fetchSports();
+    renderHistory();
+    renderFavorites();
+    console.log("✅ X10 Ready!");
+});
+
 function switchPage(tab) {
     console.log("➡️ Switching to:", tab);
     currentTab = tab;
@@ -165,7 +190,7 @@ function switchPage(tab) {
         }
     }
     
-    // Show/hide sub-tabs (only on Home and Sports)
+    // Show/hide sub-tabs
     var stabs = document.getElementById('stabs');
     if (tab === 'home' || tab === 'sports') {
         stabs.style.display = 'flex';
@@ -179,52 +204,15 @@ function switchPage(tab) {
 }
 
 // =============================================
-// SETUP NAVIGATION
-// =============================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Bottom nav clicks
-    var navItems = document.querySelectorAll('.nav-item');
-    for (var i = 0; i < navItems.length; i++) {
-        navItems[i].addEventListener('click', function(e) {
-            var tab = this.getAttribute('data-tab');
-            switchPage(tab);
-        });
-    }
-    
-    // Header account click
-    document.getElementById('hAcct').addEventListener('click', function() {
-        switchPage('acct');
-    });
-    
-    // Sub-tab clicks (Men/Women)
-    var stabs = document.querySelectorAll('.stab');
-    for (var j = 0; j < stabs.length; j++) {
-        stabs[j].addEventListener('click', function() {
-            var all = document.querySelectorAll('.stab');
-            for (var k = 0; k < all.length; k++) {
-                all[k].classList.remove('active');
-            }
-            this.classList.add('active');
-            fetchSports();
-        });
-    }
-    
-    // Start
-    fetchSports();
-    renderHistory();
-    renderFavorites();
-    console.log('🚀 X10 v3.0.4 Ready!');
-});
-
-// =============================================
 // SPORTS - FETCH
 // =============================================
 function fetchSports() {
+    console.log("⚽ Fetching sports...");
     var el1 = document.getElementById('sL');
     var el2 = document.getElementById('sL2');
-    var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
-    if (el1) el1.innerHTML = msg;
-    if (el2) el2.innerHTML = msg;
+    
+    if (el1) el1.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+    if (el2) el2.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
     
     var d = new Date();
     var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -237,18 +225,20 @@ function fetchSports() {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
+        console.log("✅ Sports data received:", data.response ? data.response.length : 0, "matches");
         if (!data.response || data.response.length === 0) {
-            var noMsg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
-            if (el1) el1.innerHTML = noMsg;
-            if (el2) el2.innerHTML = noMsg;
+            var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
+            if (el1) el1.innerHTML = msg;
+            if (el2) el2.innerHTML = msg;
             return;
         }
         renderMatches(data.response);
     })
-    .catch(function() {
-        var errMsg = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error</p>';
-        if (el1) el1.innerHTML = errMsg;
-        if (el2) el2.innerHTML = errMsg;
+    .catch(function(err) {
+        console.log("❌ Sports error:", err);
+        var msg = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error</p>';
+        if (el1) el1.innerHTML = msg;
+        if (el2) el2.innerHTML = msg;
     });
 }
 
@@ -303,10 +293,10 @@ function renderMatches(matches) {
         html += '<span style=color:#555;font-size:10px;>' + (m.fixture.date ? new Date(m.fixture.date).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '') + '</span>';
         html += '</div>';
         html += '<div class=actions>';
-        html += '<button onclick="toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')" title="Star '+m.teams.home.name+'">' + (homeFav ? '⭐' : '☆') + '</button>';
-        html += '<button onclick="toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')" title="Star '+m.teams.away.name+'">' + (awayFav ? '⭐' : '☆') + '</button>';
-        html += '<button onclick="alert(\'🔔 Alerts set for '+m.teams.home.name+' vs '+m.teams.away.name+'\')" title="Get alerts">🔔</button>';
-        html += '<button onclick="openMatchDetail('+m.fixture.id+')" title="Match details">📊</button>';
+        html += '<button onclick="toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')">' + (homeFav ? '⭐' : '☆') + '</button>';
+        html += '<button onclick="toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')">' + (awayFav ? '⭐' : '☆') + '</button>';
+        html += '<button onclick="alert(\'🔔 Alert set!\')">🔔</button>';
+        html += '<button onclick="openMatchDetail('+m.fixture.id+')">📊</button>';
         html += '</div>';
         html += '</div>';
     }
@@ -363,265 +353,4 @@ function openMatchDetail(id) {
                     html += '<span style=color:#fff;>' + e.type + ' - ' + name + '</span>';
                     html += '</div>';
                 }
-                html += '</div>';
-            }
-            
-            html += '<button onclick="fetchSports()" style=margin-top:12px;padding:8px 16px;border-radius:8px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;>⬅ Back</button>';
-            html += '</div>';
-            el.innerHTML = html;
-        }
-    })
-    .catch(function() {
-        el.innerHTML = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ Error</p>';
-    });
-}
-
-// =============================================
-// FAVORITES
-// =============================================
-function toggleFavorite(id, name, logo) {
-    var found = -1;
-    for (var i = 0; i < favorites.length; i++) {
-        if (favorites[i].id === id) {
-            found = i;
-            break;
-        }
-    }
-    if (found > -1) {
-        favorites.splice(found, 1);
-    } else {
-        favorites.push({id: id, name: name, logo: logo});
-    }
-    localStorage.setItem('x10_favorites', JSON.stringify(favorites));
-    fetchSports();
-    renderFavorites();
-}
-
-function renderFavorites() {
-    var list = document.getElementById('favList');
-    if (!list) return;
-    if (favorites.length === 0) {
-        list.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites yet</p>';
-        return;
-    }
-    var html = '';
-    for (var i = 0; i < favorites.length; i++) {
-        var f = favorites[i];
-        html += '<div class=sport-card style=border-color:rgba(255,204,0,0.3);>';
-        html += '<div class=teams><div class=team>' + (f.logo ? '<img src="'+f.logo+'">' : '') + '<span style=color:#ffcc00;>'+f.name+'</span></div><div style=color:#ffcc00;font-size:20px;>⭐</div></div>';
-        html += '</div>';
-    }
-    list.innerHTML = html;
-}
-
-// =============================================
-// VIDEO PLAYER - ANY LINK
-// =============================================
-function playVideo() {
-    var link = document.getElementById('vLink').value.trim();
-    var container = document.getElementById('pBox');
-    
-    if (!link) {
-        alert('Please paste a link');
-        return;
-    }
-    
-    currentLink = link;
-    container.innerHTML = '';
-    saveHistory(link);
-    
-    // Images
-    var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
-    var isImage = false;
-    for (var i = 0; i < imgExts.length; i++) {
-        if (link.toLowerCase().includes(imgExts[i])) { isImage = true; break; }
-    }
-    if (isImage) {
-        container.innerHTML = '<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFullscreen()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-        return;
-    }
-    
-    // YouTube
-    if (link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
-        var id = '';
-        if (link.includes('v=')) {
-            id = link.split('v=')[1].split('&')[0];
-        } else if (link.includes('youtu.be/')) {
-            id = link.split('youtu.be/')[1].split('?')[0];
-        }
-        if (id) {
-            container.innerHTML = '<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFullscreen()">⛶</button>';
-            return;
-        }
-    }
-    
-    // Social Media
-    if (link.includes('facebook.com') || link.includes('vimeo.com') || link.includes('dailymotion.com') || link.includes('twitter.com') || link.includes('instagram.com') || link.includes('tiktok.com')) {
-        container.innerHTML = '<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFullscreen()">⛶</button>';
-        return;
-    }
-    
-    // Direct Video
-    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
-    var isVideo = false;
-    for (var j = 0; j < videoExts.length; j++) {
-        if (link.toLowerCase().includes(videoExts[j])) { isVideo = true; break; }
-    }
-    if (isVideo) {
-        container.innerHTML = '<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFullscreen()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-        return;
-    }
-    
-    // Any website
-    container.innerHTML = '<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFullscreen()">⛶</button>';
-}
-
-function toggleFullscreen() {
-    var container = document.getElementById('pBox');
-    var iframe = container.querySelector('iframe');
-    var video = container.querySelector('video');
-    var img = container.querySelector('img');
-    
-    if (iframe) {
-        if (iframe.requestFullscreen) iframe.requestFullscreen();
-        else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
-    } else if (video) {
-        if (video.requestFullscreen) video.requestFullscreen();
-        else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
-    } else if (img) {
-        if (container.requestFullscreen) container.requestFullscreen();
-        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-    } else {
-        if (container.requestFullscreen) container.requestFullscreen();
-        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-    }
-}
-
-function downloadFile() {
-    if (!currentLink) {
-        alert('No video to download');
-        return;
-    }
-    var a = document.createElement('a');
-    a.href = currentLink;
-    a.target = '_blank';
-    a.download = currentLink.split('/').pop() || 'video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    alert('⬇️ Download started!');
-}
-
-// =============================================
-// HISTORY
-// =============================================
-function saveHistory(link) {
-    var history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    history.unshift({link: link, time: new Date().toLocaleString(), id: Date.now()});
-    if (history.length > 50) history.pop();
-    localStorage.setItem('watchHistory', JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory() {
-    var history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    var list = document.getElementById('hList');
-    if (!list) return;
-    if (history.length === 0) {
-        list.innerHTML = '<p style=color:#555;font-size:11px;>No history</p>';
-        return;
-    }
-    var html = '';
-    for (var i = 0; i < history.length; i++) {
-        var item = history[i];
-        html += '<div class=history-item>';
-        html += '<span class=h-link>' + item.link + '</span>';
-        html += '<span style=color:#555;font-size:9px;margin-right:6px;>' + item.time + '</span>';
-        html += '<span class=h-play onclick="playFromHistory(\''+item.link+'\')">▶</span>';
-        html += '<span class=h-delete onclick="deleteHistory('+item.id+')">✕</span>';
-        html += '</div>';
-    }
-    list.innerHTML = html;
-}
-
-function playFromHistory(link) {
-    document.getElementById('vLink').value = link;
-    playVideo();
-}
-
-function deleteHistory(id) {
-    var history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    var newHistory = [];
-    for (var i = 0; i < history.length; i++) {
-        if (history[i].id !== id) {
-            newHistory.push(history[i]);
-        }
-    }
-    localStorage.setItem('watchHistory', JSON.stringify(newHistory));
-    renderHistory();
-}
-
-function clearAll() {
-    if (confirm('Delete all history?')) {
-        localStorage.removeItem('watchHistory');
-        renderHistory();
-    }
-}
-
-// =============================================
-// PROFILE
-// =============================================
-function uploadPhoto() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (file) {
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                document.getElementById('pAv').innerHTML = '<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                localStorage.setItem('x10_avatar', ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-
-function saveName() {
-    var name = document.getElementById('uName').value.trim() || 'Creator';
-    localStorage.setItem('x10_username', name);
-    document.getElementById('pId').textContent = '@' + name.toLowerCase().replace(/\s/g, '_');
-}
-
-// Load saved data
-var savedName = localStorage.getItem('x10_username');
-if (savedName) {
-    document.getElementById('uName').value = savedName;
-    document.getElementById('pId').textContent = '@' + savedName.toLowerCase().replace(/\s/g, '_');
-}
-var savedAvatar = localStorage.getItem('x10_avatar');
-if (savedAvatar) {
-    document.getElementById('pAv').innerHTML = '<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-}
-
-// =============================================
-// EXIT
-// =============================================
-var exitTimer = 0;
-window.addEventListener('popstate', function() {
-    if (exitTimer === 0) {
-        exitTimer = 1;
-        setTimeout(function() { exitTimer = 0; }, 500);
-    } else {
-        if (confirm('Exit X10 Downloader?')) {
-            window.close();
-        }
-        exitTimer = 0;
-    }
-});
-history.pushState({page: 'home'}, '');
-</script>
-</body>
-</html>
+                html += '</di
