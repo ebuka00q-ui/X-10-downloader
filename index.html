@@ -236,6 +236,7 @@ function openMatchDetail(id){
     .catch(()=>{el.innerHTML='<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ Error</p>'});
 }
 
+
 // ===== VIDEO PLAYER - ANY LINK =====
 function play(){
     const l=document.getElementById('vLink').value.trim();
@@ -259,4 +260,90 @@ function play(){
     }
     const vx=['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
     if(vx.some(e=>l.toLowerCase().includes(e))){
-        c.innerHTML=`<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;" id="myVideo"><source src="${l}"></video><button class=fs-btn onclick=toggleFS()>⛶</button><but
+        c.innerHTML=`<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;" id="myVideo"><source src="${l}"></video><button class=fs-btn onclick=toggleFS()>⛶</button><button class=dl-btn onclick=downloadFile()>⬇️</button>`;
+        return;
+    }
+    c.innerHTML=`<iframe src="${l}" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick=toggleFS()>⛶</button>`;
+}
+
+function toggleFS(){
+    const c=document.getElementById('pBox');
+    const i=c.querySelector('iframe'),v=c.querySelector('video'),im=c.querySelector('img');
+    if(i){if(i.requestFullscreen)i.requestFullscreen();else if(i.webkitRequestFullscreen)i.webkitRequestFullscreen()}
+    else if(v){if(v.requestFullscreen)v.requestFullscreen();else if(v.webkitRequestFullscreen)v.webkitRequestFullscreen()}
+    else if(im){if(c.requestFullscreen)c.requestFullscreen();else if(c.webkitRequestFullscreen)c.webkitRequestFullscreen()}
+    else{if(c.requestFullscreen)c.requestFullscreen();else if(c.webkitRequestFullscreen)c.webkitRequestFullscreen()}
+}
+
+function downloadFile(){
+    if(!cUrl){alert('No video to download');return}
+    const a=document.createElement('a');
+    a.href=cUrl;
+    a.target='_blank';
+    a.download=cUrl.split('/').pop()||'video.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alert('⬇️ Download started!');
+}
+
+// ===== HISTORY =====
+function saveHistory(l){
+    let h=JSON.parse(localStorage.getItem('watchHistory')||'[]');
+    h.unshift({link:l,time:new Date().toLocaleString(),id:Date.now()});
+    if(h.length>50)h.pop();
+    localStorage.setItem('watchHistory',JSON.stringify(h));
+    renderHistory();
+}
+function renderHistory(){
+    const h=JSON.parse(localStorage.getItem('watchHistory')||'[]');
+    const list=document.getElementById('hList');
+    if(h.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No history</p>';return}
+    list.innerHTML=h.map(i=>`<div class=history-item><span class=h-link>${i.link}</span><span class=h-time>${i.time}</span><span class=h-play onclick="playFrom('${i.link}')">▶</span><span class=h-delete onclick="delHist(${i.id})">✕</span></div>`).join('');
+}
+function playFrom(l){document.getElementById('vLink').value=l;play()}
+function delHist(id){let h=JSON.parse(localStorage.getItem('watchHistory')||'[]');h=h.filter(i=>i.id!==id);localStorage.setItem('watchHistory',JSON.stringify(h));renderHistory()}
+function clearAll(){if(confirm('Delete all history?')){localStorage.removeItem('watchHistory');renderHistory()}}
+
+// ===== PROFILE =====
+function upload(){
+    const i=document.createElement('input');
+    i.type='file';i.accept='image/*';
+    i.onchange=function(e){
+        const f=e.target.files[0];
+        if(f){const r=new FileReader();
+        r.onload=function(ev){
+            document.getElementById('pAv').innerHTML=`<img src="${ev.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            localStorage.setItem('x10_avatar',ev.target.result);
+        };r.readAsDataURL(f)}
+    };i.click()
+}
+function saveName(){
+    const n=document.getElementById('uName').value.trim()||'Creator';
+    localStorage.setItem('x10_username',n);
+    document.getElementById('pId').textContent='@'+n.toLowerCase().replace(/\s/g,'_');
+}
+const sn=localStorage.getItem('x10_username');
+if(sn){document.getElementById('uName').value=sn;document.getElementById('pId').textContent='@'+sn.toLowerCase().replace(/\s/g,'_')}
+const sa=localStorage.getItem('x10_avatar');
+if(sa){document.getElementById('pAv').innerHTML=`<img src="${sa}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`}
+
+// ===== EXIT =====
+let et=0;
+window.addEventListener('popstate',function(){
+    if(et===0){et=1;setTimeout(()=>{et=0},500)}
+    else{if(confirm('Exit X10 Downloader?')){window.close()}et=0}
+});
+history.pushState({page:'home'},'');
+
+// ===== INIT =====
+fetchSports();
+renderHistory();
+renderFavorites();
+console.log('🚀 X10 v3.0.1 Ready!');
+console.log('⚽ Sports auto-refresh every 30s');
+console.log('⭐ Star teams to add to Favorites');
+console.log('▶️ Watch any link works!');
+</script>
+</body>
+</html>
