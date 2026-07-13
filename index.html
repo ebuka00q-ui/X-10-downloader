@@ -8,27 +8,20 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
 #app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
-
-/* HEADER */
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,136,0.15)}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#66ffaa,#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
-
-/* SUB TABS */
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(0,255,136,0.08)}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
 .stab.active{color:#00ff88;border-bottom-color:#00ff88}
-
-/* PAGES */
 .cnt{flex:1;overflow:hidden;position:relative}
 .page{display:none;height:100%;overflow-y:auto;padding:12px}
 .page.active{display:block}
-
-/* SPORTS CARDS */
 .sport-card{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(0,255,136,0.08)}
 .sport-card .teams{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
 .sport-card .team{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#fff}
@@ -43,15 +36,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .sport-card .actions{display:flex;gap:10px;margin-top:6px;justify-content:center}
 .sport-card .actions button{background:0;border:0;color:#888;font-size:18px;cursor:pointer;padding:2px 6px}
 .sport-card .actions button:hover{color:#00ff88}
-
-/* BOTTOM NAV */
 .bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(0,255,136,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
 .nav-item{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;border:0;background:0;font-family:inherit}
 .nav-item .nic{font-size:20px}
 .nav-item.active{color:#00ff88}
 .nav-item.active .nic{text-shadow:0 0 30px rgba(0,255,136,0.4)}
-
-/* WATCH */
 .di{display:flex;gap:8px;margin-bottom:10px}
 .di input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,255,136,0.2);background:#12121a;color:#fff;font-size:13px;outline:0}
 .di input:focus{border-color:#00ff88}
@@ -61,14 +50,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .player-box iframe{height:350px}
 .fs-btn{position:absolute;bottom:70px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:16px;cursor:pointer;z-index:10}
 .dl-btn{position:absolute;bottom:20px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:14px;cursor:pointer;z-index:10}
-
-/* HISTORY */
 .history-item{background:#12121a;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .history-item .h-link{color:#66ffaa;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
 .history-item .h-play{color:#00ff88;cursor:pointer;padding:2px 6px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
 .history-item .h-delete{color:#ff4444;cursor:pointer;padding:2px 6px;border:0;background:0;font-size:14px}
-
-/* ACCOUNT */
 .ph{text-align:center;padding:12px 0}
 .pa{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#0a0a0f;border:3px solid rgba(0,255,136,0.25);cursor:pointer;overflow:hidden}
 .pa img{width:100%;height:100%;object-fit:cover}
@@ -95,38 +80,51 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div class=hdr-a id=hAcct>👤</div>
 </div>
 
-<!-- SUB TABS -->
+<!-- SUB TABS (only shows on Home) -->
 <div class=stabs id=stabs>
 <span class="stab active" data-gender=male>MEN</span>
 <span class=stab data-gender=female>WOMEN</span>
 </div>
 
-<!-- CONTENT -->
+<!-- PAGES -->
 <div class=cnt>
-<div class="page active" id=pg-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
-<div class=page id=pg-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>No favorites</p></div></div>
-<div class=page id=pg-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch</h2><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
-<div class=page id=pg-acct><div class=ph><div class=pa id=pAv onclick=uploadPhoto()>👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange=saveName()></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Posts</span><span class=sv id=tPosts>47</span></div></div></div>
+<div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
+<div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>🏟️ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
+<div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>No favorites yet</p></div></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • MP4 • Images • Websites</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick="playVideo()">▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick="clearAll()" style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
+<div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick="uploadPhoto()">👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange="saveName()"></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
 
-<!-- BOTTOM NAV -->
-<div class=bnav>
-<div class="nav-item active" data-tab=home onclick="switchPage('home')"><span class=nic>⚽</span>Home</div>
-<div class=nav-item data-tab=fav onclick="switchPage('fav')"><span class=nic>⭐</span>Favs</div>
-<div class=nav-item data-tab=watch onclick="switchPage('watch')"><span class=nic>▶️</span>Watch</div>
-<div class=nav-item data-tab=acct onclick="switchPage('acct')"><span class=nic>👤</span>Account</div>
+<!-- BOTTOM NAV - 5 TABS -->
+<div class=bnav id=bottomNav>
+<div class="nav-item active" data-tab="home"><span class=nic>🏠</span>Home</div>
+<div class="nav-item" data-tab="sports"><span class=nic>⚽</span>Sports</div>
+<div class="nav-item" data-tab="fav"><span class=nic>⭐</span>Favs</div>
+<div class="nav-item" data-tab="watch"><span class=nic>▶️</span>Watch</div>
+<div class="nav-item" data-tab="acct"><span class=nic>👤</span>Account</div>
 </div>
 </div>
 
 <script>
 // =============================================
-// CONFIG
+// SUPABASE CONFIG
+// =============================================
+const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// =============================================
+// SPORTS API KEY
 // =============================================
 const SPORTS_KEY = "88c0b86bf9baffb1fdd993c275efd6a5";
-const VERSION = "3.0.2";
+
+// =============================================
+// VERSION
+// =============================================
+const VERSION = "3.0.4";
 const storedVer = localStorage.getItem('x10_version');
 if (storedVer && storedVer !== VERSION) {
-    alert("📢 Update!");
+    alert("📢 Update available! Refreshing...");
     localStorage.setItem('x10_version', VERSION);
     location.reload();
 } else if (!storedVer) {
@@ -137,66 +135,96 @@ console.log("✅ Version:", VERSION);
 // =============================================
 // STATE
 // =============================================
-let favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
-let currentLink = '';
-let refreshInterval = null;
+var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
+var currentLink = '';
+var refreshInterval = null;
+var currentTab = 'home';
 
 // =============================================
-// NAVIGATION - FIXED
+// NAVIGATION
 // =============================================
 function switchPage(tab) {
     console.log("➡️ Switching to:", tab);
+    currentTab = tab;
     
-    // Update nav
-    document.querySelectorAll('.nav-item').forEach(function(n) {
-        n.classList.remove('active');
-        if (n.dataset.tab === tab) {
-            n.classList.add('active');
+    // Update nav buttons
+    var navItems = document.querySelectorAll('.nav-item');
+    for (var i = 0; i < navItems.length; i++) {
+        navItems[i].classList.remove('active');
+        if (navItems[i].getAttribute('data-tab') === tab) {
+            navItems[i].classList.add('active');
         }
-    });
+    }
     
-    // Show page
-    document.querySelectorAll('.page').forEach(function(p) {
-        p.classList.remove('active');
-    });
-    var target = document.getElementById('pg-' + tab);
-    if (target) target.classList.add('active');
+    // Update pages
+    var pages = document.querySelectorAll('.page');
+    for (var j = 0; j < pages.length; j++) {
+        pages[j].classList.remove('active');
+        if (pages[j].id === 'page-' + tab) {
+            pages[j].classList.add('active');
+        }
+    }
     
-    // Show/hide sub-tabs
+    // Show/hide sub-tabs (only on Home and Sports)
     var stabs = document.getElementById('stabs');
-    stabs.style.display = (tab === 'home') ? 'flex' : 'none';
+    if (tab === 'home' || tab === 'sports') {
+        stabs.style.display = 'flex';
+    } else {
+        stabs.style.display = 'none';
+    }
     
     // Load data
-    if (tab === 'home') fetchSports();
+    if (tab === 'home' || tab === 'sports') fetchSports();
     if (tab === 'fav') renderFavorites();
 }
 
 // =============================================
-// HEADER ACCOUNT CLICK
+// SETUP NAVIGATION
 // =============================================
-document.getElementById('hAcct').addEventListener('click', function() {
-    switchPage('acct');
-});
-
-// =============================================
-// GENDER TOGGLE
-// =============================================
-document.querySelectorAll('.stab').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.stab').forEach(function(t) {
-            t.classList.remove('active');
+document.addEventListener('DOMContentLoaded', function() {
+    // Bottom nav clicks
+    var navItems = document.querySelectorAll('.nav-item');
+    for (var i = 0; i < navItems.length; i++) {
+        navItems[i].addEventListener('click', function(e) {
+            var tab = this.getAttribute('data-tab');
+            switchPage(tab);
         });
-        this.classList.add('active');
-        fetchSports();
+    }
+    
+    // Header account click
+    document.getElementById('hAcct').addEventListener('click', function() {
+        switchPage('acct');
     });
+    
+    // Sub-tab clicks (Men/Women)
+    var stabs = document.querySelectorAll('.stab');
+    for (var j = 0; j < stabs.length; j++) {
+        stabs[j].addEventListener('click', function() {
+            var all = document.querySelectorAll('.stab');
+            for (var k = 0; k < all.length; k++) {
+                all[k].classList.remove('active');
+            }
+            this.classList.add('active');
+            fetchSports();
+        });
+    }
+    
+    // Start
+    fetchSports();
+    renderHistory();
+    renderFavorites();
+    console.log('🚀 X10 v3.0.4 Ready!');
 });
 
 // =============================================
 // SPORTS - FETCH
 // =============================================
 function fetchSports() {
-    var el = document.getElementById('sL');
-    el.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+    var el1 = document.getElementById('sL');
+    var el2 = document.getElementById('sL2');
+    var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+    if (el1) el1.innerHTML = msg;
+    if (el2) el2.innerHTML = msg;
     
     var d = new Date();
     var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -210,21 +238,26 @@ function fetchSports() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (!data.response || data.response.length === 0) {
-            el.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
+            var noMsg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
+            if (el1) el1.innerHTML = noMsg;
+            if (el2) el2.innerHTML = noMsg;
             return;
         }
         renderMatches(data.response);
     })
     .catch(function() {
-        el.innerHTML = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error - Check Key</p>';
+        var errMsg = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error</p>';
+        if (el1) el1.innerHTML = errMsg;
+        if (el2) el2.innerHTML = errMsg;
     });
 }
 
 function renderMatches(matches) {
-    var el = document.getElementById('sL');
+    var el1 = document.getElementById('sL');
+    var el2 = document.getElementById('sL2');
     var html = '';
     
-    // Sort: LIVE first, then Finished, then Scheduled
+    // Sort: LIVE first
     matches.sort(function(a, b) {
         var order = {LIVE:0, '1H':0, '2H':0, HT:0, ET:0, P:0, FT:1, AET:1, PEN:1, NS:2};
         var sa = a.fixture.status.short || 'NS';
@@ -232,7 +265,8 @@ function renderMatches(matches) {
         return (order[sa] || 2) - (order[sb] || 2);
     });
     
-    matches.forEach(function(m) {
+    for (var i = 0; i < matches.length; i++) {
+        var m = matches[i];
         var s = m.fixture.status.short;
         var sc = 'status-scheduled';
         var st = '⏰ Scheduled';
@@ -250,8 +284,12 @@ function renderMatches(matches) {
         var homeId = m.teams.home.id;
         var awayId = m.teams.away.id;
         
-        var homeFav = favorites.some(function(f) { return f.id === homeId; });
-        var awayFav = favorites.some(function(f) { return f.id === awayId; });
+        var homeFav = false;
+        var awayFav = false;
+        for (var j = 0; j < favorites.length; j++) {
+            if (favorites[j].id === homeId) homeFav = true;
+            if (favorites[j].id === awayId) awayFav = true;
+        }
         
         html += '<div class=sport-card>';
         html += '<div class=league>🏆 ' + m.league.name + '</div>';
@@ -271,13 +309,14 @@ function renderMatches(matches) {
         html += '<button onclick="openMatchDetail('+m.fixture.id+')" title="Match details">📊</button>';
         html += '</div>';
         html += '</div>';
-    });
+    }
     
-    el.innerHTML = html;
+    if (el1) el1.innerHTML = html;
+    if (el2) el2.innerHTML = html;
 }
 
 // =============================================
-// AUTO REFRESH - EVERY 30 SECONDS
+// AUTO REFRESH
 // =============================================
 if (refreshInterval) clearInterval(refreshInterval);
 refreshInterval = setInterval(fetchSports, 30000);
@@ -287,6 +326,9 @@ refreshInterval = setInterval(fetchSports, 30000);
 // =============================================
 function openMatchDetail(id) {
     var el = document.getElementById('sL');
+    if (!el) el = document.getElementById('sL2');
+    if (!el) return;
+    
     el.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>📊 Loading...</p>';
     
     fetch('https://v3.football.api-sports.io/fixtures?id=' + id, {
@@ -313,68 +355,9 @@ function openMatchDetail(id) {
             
             if (m.events && m.events.length) {
                 html += '<div style=margin-top:10px;><h4 style=color:#66ffaa;font-size:13px;>⚡ Events</h4>';
-                m.events.forEach(function(e) {
+                for (var i = 0; i < m.events.length; i++) {
+                    var e = m.events[i];
                     var name = e.player.name || 'Unknown';
                     html += '<div style=display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.05);>';
                     html += '<span style=color:#66aa88;>' + (e.time.elapsed || '') + '\'</span>';
-                    html += '<span style=color:#fff;>' + e.type + ' - ' + name + '</span>';
-                    html += '</div>';
-                });
-                html += '</div>';
-            }
-            
-            html += '<button onclick=fetchSports() style=margin-top:12px;padding:8px 16px;border-radius:8px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;>⬅ Back</button>';
-            html += '</div>';
-            el.innerHTML = html;
-        }
-    })
-    .catch(function() {
-        el.innerHTML = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ Error</p>';
-    });
-}
-
-// =============================================
-// FAVORITES
-// =============================================
-function toggleFavorite(id, name, logo) {
-    var idx = favorites.findIndex(function(f) { return f.id === id; });
-    if (idx > -1) {
-        favorites.splice(idx, 1);
-    } else {
-        favorites.push({id: id, name: name, logo: logo});
-    }
-    localStorage.setItem('x10_favorites', JSON.stringify(favorites));
-    fetchSports();
-    renderFavorites();
-}
-
-function renderFavorites() {
-    var list = document.getElementById('favList');
-    if (favorites.length === 0) {
-        list.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p>';
-        return;
-    }
-    var html = '';
-    favorites.forEach(function(f) {
-        html += '<div class=sport-card style=border-color:rgba(255,204,0,0.3);>';
-        html += '<div class=teams><div class=team>' + (f.logo ? '<img src="'+f.logo+'">' : '') + '<span style=color:#ffcc00;>'+f.name+'</span></div><div style=color:#ffcc00;font-size:20px;>⭐</div></div>';
-        html += '</div>';
-    });
-    list.innerHTML = html;
-}
-
-// =============================================
-// VIDEO PLAYER - ANY LINK
-// =============================================
-function playVideo() {
-    var link = document.getElementById('vLink').value.trim();
-    var container = document.getElementById('pBox');
-    
-    if (!link) {
-        alert('Please paste a link');
-        return;
-    }
-    
-    currentLink = link;
-    container.innerHTML = '';
-    saveHistory(link)
+                    html += '<span styl
