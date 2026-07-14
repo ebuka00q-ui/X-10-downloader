@@ -10,12 +10,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+/* SIMPLE CLEAN STYLES */
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
 #app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,136,0.15)}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#66ffaa,#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3);cursor:pointer}
+.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(0,255,136,0.08)}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
 .stab.active{color:#00ff88;border-bottom-color:#00ff88}
@@ -76,12 +77,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <div class=hdr>
 <span class=hdr-t>⬇️ X10</span>
-<div class=hdr-a onclick="switchPage('acct')">👤</div>
+<div class=hdr-a id="headerAccount">👤</div>
 </div>
 
 <div class=stabs id=stabs>
-<span class="stab active" onclick="switchGender('male')">MEN</span>
-<span class=stab onclick="switchGender('female')">WOMEN</span>
+<span class="stab active" id="stabMale">MEN</span>
+<span class=stab id="stabFemale">WOMEN</span>
 </div>
 
 <div class=cnt>
@@ -93,447 +94,76 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <div class=bnav>
-<div class="nav-item active" data-tab=home onclick="switchPage('home')"><span class=nic>🏠</span>Home</div>
-<div class="nav-item" data-tab=sports onclick="switchPage('sports')"><span class=nic>⚽</span>Sports</div>
-<div class="nav-item" data-tab=fav onclick="switchPage('fav')"><span class=nic>⭐</span>Favs</div>
-<div class="nav-item" data-tab=watch onclick="switchPage('watch')"><span class=nic>▶️</span>Watch</div>
-<div class="nav-item" data-tab=acct onclick="switchPage('acct')"><span class=nic>👤</span>Account</div>
+<div class="nav-item active" id="navHome"><span class=nic>🏠</span>Home</div>
+<div class="nav-item" id="navSports"><span class=nic>⚽</span>Sports</div>
+<div class="nav-item" id="navFav"><span class=nic>⭐</span>Favs</div>
+<div class="nav-item" id="navWatch"><span class=nic>▶️</span>Watch</div>
+<div class="nav-item" id="navAcct"><span class=nic>👤</span>Account</div>
 </div>
 </div>
 
 <script>
-// ===== KEYS =====
-const SPORTS_KEY = "713c9fe8c287379f80d0228568cc875f";
-const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ===== VERSION =====
-const VERSION = "3.1.0";
-if(localStorage.getItem('x10_version')!==VERSION){
-    localStorage.setItem('x10_version',VERSION);
-}
-console.log("✅ Version:", VERSION);
-
-// ===== STATE =====
-var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
-var currentLink = '';
-var refreshInterval = null;
-var currentGender = 'male';
+// =============================================
+// ===== YOUR KEYS - PUT YOUR NEW KEY HERE =====
+// =============================================
+var SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";  // ← CHANGE THIS TO YOUR NEW KEY
+var SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
 
 // =============================================
-// SWITCH PAGE - DIRECT onclick
+// ===== NAVIGATION - USING IDs (ALWAYS WORKS) =====
 // =============================================
-function switchPage(tab) {
-    console.log("➡️ Switching to:", tab);
+function switchPage(tabName) {
+    console.log("➡️ SWITCHING TO:", tabName);
     
-    var items = document.querySelectorAll('.nav-item');
-    for(var i=0; i<items.length; i++) {
-        items[i].classList.remove('active');
-        if(items[i].getAttribute('data-tab') === tab) {
-            items[i].classList.add('active');
-        }
-    }
-    
+    // Get all pages and hide them
     var pages = document.querySelectorAll('.page');
-    for(var j=0; j<pages.length; j++) {
-        pages[j].classList.remove('active');
-        if(pages[j].id === 'page-' + tab) {
-            pages[j].classList.add('active');
-        }
+    for (var i = 0; i < pages.length; i++) {
+        pages[i].classList.remove('active');
     }
     
+    // Show the target page
+    var targetPage = document.getElementById('page-' + tabName);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        console.log("✅ Showing:", 'page-' + tabName);
+    } else {
+        console.log("❌ Page not found:", 'page-' + tabName);
+    }
+    
+    // Update nav buttons
+    var navItems = document.querySelectorAll('.nav-item');
+    for (var j = 0; j < navItems.length; j++) {
+        navItems[j].classList.remove('active');
+    }
+    
+    var navMap = {
+        'home': 'navHome',
+        'sports': 'navSports',
+        'fav': 'navFav',
+        'watch': 'navWatch',
+        'acct': 'navAcct'
+    };
+    
+    var targetNav = document.getElementById(navMap[tabName]);
+    if (targetNav) {
+        targetNav.classList.add('active');
+    }
+    
+    // Show/hide sub-tabs
     var stabs = document.getElementById('stabs');
-    if(tab === 'home' || tab === 'sports') {
+    if (tabName === 'home' || tabName === 'sports') {
         stabs.style.display = 'flex';
     } else {
         stabs.style.display = 'none';
     }
     
-    if(tab === 'home' || tab === 'sports') fetchSports();
-    if(tab === 'fav') renderFavorites();
-}
-
-// =============================================
-// SWITCH GENDER
-// =============================================
-function switchGender(gender) {
-    console.log("🔄 Gender:", gender);
-    currentGender = gender;
-    var stabs = document.querySelectorAll('.stab');
-    for(var i=0; i<stabs.length; i++) {
-        stabs[i].classList.remove('active');
-        if(stabs[i].getAttribute('data-gender') === gender) {
-            stabs[i].classList.add('active');
-        }
+    // Load data
+    if (tabName === 'home' || tabName === 'sports') {
+        fetchSports();
     }
-    fetchSports();
+    if (tabName === 'fav') {
+        renderFavorites();
+    }
 }
-
-// =============================================
-// FETCH SPORTS
-// =============================================
-function fetchSports() {
-    console.log("⚽ Fetching sports...");
-    var el1 = document.getElementById('sL');
-    var el2 = document.getElementById('sL2');
-    if(el1) el1.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
-    if(el2) el2.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
     
-    var d = new Date();
-    var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    
-    fetch('https://v3.football.api-sports.io/fixtures?date=' + ds, {
-        headers: {
-            'x-rapidapi-key': SPORTS_KEY,
-            'x-rapidapi-host': 'v3.football.api-sports.io'
-        }
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        console.log("✅ Data received:", data.response ? data.response.length : 0);
-        if(!data.response || data.response.length === 0) {
-            var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
-            if(el1) el1.innerHTML = msg;
-            if(el2) el2.innerHTML = msg;
-            return;
-        }
-        renderMatches(data.response);
-    })
-    .catch(function(err) {
-        console.log("❌ Error:", err);
-        var msg = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error</p>';
-        if(el1) el1.innerHTML = msg;
-        if(el2) el2.innerHTML = msg;
-    });
-}
-
-function renderMatches(matches) {
-    var el1 = document.getElementById('sL');
-    var el2 = document.getElementById('sL2');
-    var html = '';
-    
-    matches.sort(function(a, b) {
-        var order = {LIVE:0, '1H':0, '2H':0, HT:0, ET:0, P:0, FT:1, AET:1, PEN:1, NS:2};
-        var sa = a.fixture.status.short || 'NS';
-        var sb = b.fixture.status.short || 'NS';
-        return (order[sa] || 2) - (order[sb] || 2);
-    });
-    
-    for(var i=0; i<matches.length; i++) {
-        var m = matches[i];
-        var s = m.fixture.status.short;
-        var sc = 'status-scheduled';
-        var st = '⏰ Scheduled';
-        
-        if(s === 'FT' || s === 'AET' || s === 'PEN') {
-            sc = 'status-finished';
-            st = '✅ Finished';
-        } else if(s === '1H' || s === 'HT' || s === '2H' || s === 'ET' || s === 'P' || s === 'LIVE') {
-            sc = 'status-live';
-            st = '🔴 LIVE';
-        }
-        
-        var hl = m.teams.home.logo || '';
-        var al = m.teams.away.logo || '';
-        var homeId = m.teams.home.id;
-        var awayId = m.teams.away.id;
-        
-        var homeFav = false, awayFav = false;
-        for(var j=0; j<favorites.length; j++) {
-            if(favorites[j].id === homeId) homeFav = true;
-            if(favorites[j].id === awayId) awayFav = true;
-        }
-        
-        html += '<div class=sport-card>';
-        html += '<div class=league>🏆 ' + m.league.name + '</div>';
-        html += '<div class=teams>';
-        html += '<div class=team>' + (hl ? '<img src="'+hl+'">' : '') + '<span>' + m.teams.home.name + '</span></div>';
-        html += '<div class=score>' + (m.goals.home||0) + '-' + (m.goals.away||0) + '</div>';
-        html += '<div class=team>' + (al ? '<img src="'+al+'">' : '') + '<span>' + m.teams.away.name + '</span></div>';
-        html += '</div>';
-        html += '<div style=display:flex;justify-content:space-between;margin-top:4px;>';
-        html += '<span class=status style="'+sc+'">'+st+'</span>';
-        html += '<span style=color:#555;font-size:10px;>' + (m.fixture.date ? new Date(m.fixture.date).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '') + '</span>';
-        html += '</div>';
-        html += '<div class=actions>';
-        html += '<button onclick="toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')">' + (homeFav ? '⭐' : '☆') + '</button>';
-        html += '<button onclick="toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')">' + (awayFav ? '⭐' : '☆') + '</button>';
-        html += '<button onclick="alert(\'🔔 Alert set!\')">🔔</button>';
-        html += '<button onclick="openMatchDetail('+m.fixture.id+')">📊</button>';
-        html += '</div>';
-        html += '</div>';
-    }
-    
-    if(el1) el1.innerHTML = html;
-    if(el2) el2.innerHTML = html;
-    console.log("✅ Rendered:", matches.length, "matches");
-}
-
-// =============================================
-// AUTO REFRESH - 15 SECONDS
-// =============================================
-if(refreshInterval) clearInterval(refreshInterval);
-refreshInterval = setInterval(fetchSports, 15000);
-console.log("⏰ Auto-refresh every 15 seconds");
-
-// =============================================
-// MATCH DETAIL
-// =============================================
-function openMatchDetail(id) {
-    var el = document.getElementById('sL');
-    if(!el) el = document.getElementById('sL2');
-    if(!el) return;
-    el.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>📊 Loading...</p>';
-    
-    fetch('https://v3.football.api-sports.io/fixtures?id=' + id, {
-        headers: {
-            'x-rapidapi-key': SPORTS_KEY,
-            'x-rapidapi-host': 'v3.football.api-sports.io'
-        }
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if(data.response && data.response[0]) {
-            var m = data.response[0];
-            var html = '<div class=sport-card style=border-color:#00ff88;>';
-            html += '<div class=league>🏆 ' + m.league.name + '</div>';
-            html += '<div class=teams>';
-            html += '<div class=team>' + (m.teams.home.logo ? '<img src="'+m.teams.home.logo+'">' : '') + '<span style=font-size:16px;>'+m.teams.home.name+'</span></div>';
-            html += '<div class=score style=font-size:32px;>' + (m.goals.home||0) + '-' + (m.goals.away||0) + '</div>';
-            html += '<div class=team>' + (m.teams.away.logo ? '<img src="'+m.teams.away.logo+'">' : '') + '<span style=font-size:16px;>'+m.teams.away.name+'</span></div>';
-            html += '</div>';
-            html += '<div style=text-align:center;margin:6px 0;>';
-            var st = (m.fixture.status.short === 'FT' || m.fixture.status.short === 'AET') ? '✅ Finished' : '🔴 LIVE';
-            html += '<span class=status style="' + ((m.fixture.status.short === 'FT' || m.fixture.status.short === 'AET') ? 'status-finished' : 'status-live') + '">' + st + '</span>';
-            html += '</div>';
-            if(m.events && m.events.length) {
-                html += '<div style=margin-top:10px;><h4 style=color:#66ffaa;font-size:13px;>⚡ Events</h4>';
-                for(var i=0; i<m.events.length; i++) {
-                    var e = m.events[i];
-                    var name = e.player.name || 'Unknown';
-                    html += '<div style=display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.05);>';
-                    html += '<span style=color:#66aa88;>' + (e.time.elapsed || '') + '\'</span>';
-                    html += '<span style=color:#fff;>' + e.type + ' - ' + name + '</span>';
-                    html += '</div>';
-                }
-                html += '</div>';
-            }
-            html += '<button onclick="fetchSports()" style=margin-top:12px;padding:8px 16px;border-radius:8px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;>⬅ Back</button>';
-            html += '</div>';
-            el.innerHTML = html;
-        }
-    })
-    .catch(function() {
-        el.innerHTML = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ Error</p>';
-    });
-}
-
-
-// =============================================
-// FAVORITES
-// =============================================
-function toggleFavorite(id, name, logo) {
-    var found = -1;
-    for(var i=0; i<favorites.length; i++) {
-        if(favorites[i].id === id) { found = i; break; }
-    }
-    if(found > -1) { favorites.splice(found, 1); } 
-    else { favorites.push({id: id, name: name, logo: logo}); }
-    localStorage.setItem('x10_favorites', JSON.stringify(favorites));
-    fetchSports();
-    renderFavorites();
-}
-
-function renderFavorites() {
-    var list = document.getElementById('favList');
-    if(!list) return;
-    if(favorites.length === 0) {
-        list.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p>';
-        return;
-    }
-    var html = '';
-    for(var i=0; i<favorites.length; i++) {
-        var f = favorites[i];
-        html += '<div class=sport-card style=border-color:rgba(255,204,0,0.3);>';
-        html += '<div class=teams><div class=team>' + (f.logo ? '<img src="'+f.logo+'">' : '') + '<span style=color:#ffcc00;>'+f.name+'</span></div><div style=color:#ffcc00;font-size:20px;>⭐</div></div>';
-        html += '</div>';
-    }
-    list.innerHTML = html;
-}
-
-// =============================================
-// VIDEO PLAYER
-// =============================================
-function playVideo() {
-    var link = document.getElementById('vLink').value.trim();
-    var container = document.getElementById('pBox');
-    if(!link) { alert('Please paste a link'); return; }
-    currentLink = link;
-    container.innerHTML = '';
-    saveHistory(link);
-    
-    var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
-    for(var i=0; i<imgExts.length; i++) {
-        if(link.toLowerCase().includes(imgExts[i])) {
-            container.innerHTML = '<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFullscreen()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    
-    if(link.includes('youtube.com/watch') || link.includes('youtu.be/')) {
-        var id = '';
-        if(link.includes('v=')) { id = link.split('v=')[1].split('&')[0]; } 
-        else if(link.includes('youtu.be/')) { id = link.split('youtu.be/')[1].split('?')[0]; }
-        if(id) {
-            container.innerHTML = '<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFullscreen()">⛶</button>';
-            return;
-        }
-    }
-    
-    if(link.includes('facebook.com') || link.includes('vimeo.com') || link.includes('dailymotion.com') || link.includes('twitter.com') || link.includes('instagram.com') || link.includes('tiktok.com')) {
-        container.innerHTML = '<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFullscreen()">⛶</button>';
-        return;
-    }
-    
-    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
-    for(var j=0; j<videoExts.length; j++) {
-        if(link.toLowerCase().includes(videoExts[j])) {
-            container.innerHTML = '<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFullscreen()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    
-    container.innerHTML = '<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFullscreen()">⛶</button>';
-}
-
-function toggleFullscreen() {
-    var container = document.getElementById('pBox');
-    var iframe = container.querySelector('iframe');
-    var video = container.querySelector('video');
-    var img = container.querySelector('img');
-    if(iframe) { if(iframe.requestFullscreen) iframe.requestFullscreen(); else if(iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen(); }
-    else if(video) { if(video.requestFullscreen) video.requestFullscreen(); else if(video.webkitRequestFullscreen) video.webkitRequestFullscreen(); }
-    else if(img) { if(container.requestFullscreen) container.requestFullscreen(); else if(container.webkitRequestFullscreen) container.webkitRequestFullscreen(); }
-    else { if(container.requestFullscreen) container.requestFullscreen(); else if(container.webkitRequestFullscreen) container.webkitRequestFullscreen(); }
-}
-
-function downloadFile() {
-    if(!currentLink) { alert('No video to download'); return; }
-    var a = document.createElement('a');
-    a.href = currentLink;
-    a.target = '_blank';
-    a.download = currentLink.split('/').pop() || 'video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    alert('⬇️ Download started!');
-}
-
-// =============================================
-// HISTORY
-// =============================================
-function saveHistory(link) {
-    var history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    history.unshift({link: link, time: new Date().toLocaleString(), id: Date.now()});
-    if(history.length > 50) history.pop();
-    localStorage.setItem('watchHistory', JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory() {
-    var history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    var list = document.getElementById('hList');
-    if(!list) return;
-    if(history.length === 0) { list.innerHTML = '<p style=color:#555;font-size:11px;>No history</p>'; return; }
-    var html = '';
-    for(var i=0; i<history.length; i++) {
-        var item = history[i];
-        html += '<div class=history-item><span class=h-link>' + item.link + '</span><span style=color:#555;font-size:9px;margin-right:6px;>' + item.time + '</span><span class=h-play onclick="playFromHistory(\''+item.link+'\')">▶</span><span class=h-delete onclick="deleteHistory('+item.id+')">✕</span></div>';
-    }
-    list.innerHTML = html;
-}
-
-function playFromHistory(link) { document.getElementById('vLink').value = link; playVideo(); }
-
-function deleteHistory(id) {
-    var history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-    var newHistory = [];
-    for(var i=0; i<history.length; i++) {
-        if(history[i].id !== id) { newHistory.push(history[i]); }
-    }
-    localStorage.setItem('watchHistory', JSON.stringify(newHistory));
-    renderHistory();
-}
-
-function clearAll() {
-    if(confirm('Delete all history?')) {
-        localStorage.removeItem('watchHistory');
-        renderHistory();
-    }
-}
-
-// =============================================
-// PROFILE
-// =============================================
-function uploadPhoto() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = function(e) {
-        var file = e.target.files[0];
-        if(file) {
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                document.getElementById('pAv').innerHTML = '<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                localStorage.setItem('x10_avatar', ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-
-function saveName() {
-    var name = document.getElementById('uName').value.trim() || 'Creator';
-    localStorage.setItem('x10_username', name);
-    document.getElementById('pId').textContent = '@' + name.toLowerCase().replace(/\s/g, '_');
-}
-
-var savedName = localStorage.getItem('x10_username');
-if(savedName) {
-    document.getElementById('uName').value = savedName;
-    document.getElementById('pId').textContent = '@' + savedName.toLowerCase().replace(/\s/g, '_');
-}
-var savedAvatar = localStorage.getItem('x10_avatar');
-if(savedAvatar) {
-    document.getElementById('pAv').innerHTML = '<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-}
-
-// =============================================
-// EXIT
-// =============================================
-var exitTimer = 0;
-window.addEventListener('popstate', function() {
-    if(exitTimer === 0) {
-        exitTimer = 1;
-        setTimeout(function() { exitTimer = 0; }, 500);
-    } else {
-        if(confirm('Exit X10 Downloader?')) { window.close(); }
-        exitTimer = 0;
-    }
-});
-history.pushState({page: 'home'}, '');
-
-// =============================================
-// START
-// =============================================
-fetchSports();
-renderHistory();
-renderFavorites();
-console.log('🚀 X10 v3.1.0 Ready!');
-console.log('⚽ Auto-refresh every 15 seconds');
-console.log('📱 Click bottom tabs to switch');
-</script>
-</body>
-</html>
