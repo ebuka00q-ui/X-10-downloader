@@ -166,4 +166,243 @@ function switchPage(tabName) {
         renderFavorites();
     }
 }
+    // =============================================
+// ===== SETUP NAVIGATION CLICKS =====
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("🚀 APP LOADED!");
+    
+    // Bottom nav clicks - using IDs
+    var navMap = {
+        'navHome': 'home',
+        'navSports': 'sports',
+        'navFav': 'fav',
+        'navWatch': 'watch',
+        'navAcct': 'acct'
+    };
+    
+    for (var key in navMap) {
+        var el = document.getElementById(key);
+        if (el) {
+            el.addEventListener('click', function() {
+                var tab = navMap[this.id];
+                switchPage(tab);
+            });
+        }
+    }
+    
+    // Header account click
+    var headerAcct = document.getElementById('headerAccount');
+    if (headerAcct) {
+        headerAcct.addEventListener('click', function() {
+            switchPage('acct');
+        });
+    }
+    
+    // Sub-tab clicks (Men/Women)
+    var stabMale = document.getElementById('stabMale');
+    var stabFemale = document.getElementById('stabFemale');
+    
+    if (stabMale) {
+        stabMale.addEventListener('click', function() {
+            document.getElementById('stabMale').classList.add('active');
+            document.getElementById('stabFemale').classList.remove('active');
+            fetchSports();
+        });
+    }
+    
+    if (stabFemale) {
+        stabFemale.addEventListener('click', function() {
+            document.getElementById('stabFemale').classList.add('active');
+            document.getElementById('stabMale').classList.remove('active');
+            fetchSports();
+        });
+    }
+    
+    // Start
+    fetchSports();
+    renderHistory();
+    renderFavorites();
+    console.log("✅ X10 READY!");
+});
+
+// =============================================
+// ===== FETCH SPORTS =====
+// =============================================
+function fetchSports() {
+    console.log("⚽ FETCHING SPORTS...");
+    var el1 = document.getElementById('sL');
+    var el2 = document.getElementById('sL2');
+    
+    if (el1) el1.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+    if (el2) el2.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+    
+    var d = new Date();
+    var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    
+    fetch('https://v3.football.api-sports.io/fixtures?date=' + ds, {
+        headers: {
+            'x-rapidapi-key': SPORTS_KEY,
+            'x-rapidapi-host': 'v3.football.api-sports.io'
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        console.log("✅ Sports data:", data.response ? data.response.length : 0);
+        if (!data.response || data.response.length === 0) {
+            var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
+            if (el1) el1.innerHTML = msg;
+            if (el2) el2.innerHTML = msg;
+            return;
+        }
+        renderMatches(data.response);
+    })
+    .catch(function(err) {
+        console.log("❌ Error:", err);
+        var msg = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error</p>';
+        if (el1) el1.innerHTML = msg;
+        if (el2) el2.innerHTML = msg;
+    });
+}
+
+function renderMatches(matches) {
+    var el1 = document.getElementById('sL');
+    var el2 = document.getElementById('sL2');
+    var html = '';
+    
+    for (var i = 0; i < matches.length; i++) {
+        var m = matches[i];
+        var s = m.fixture.status.short;
+        var sc = 'status-scheduled';
+        var st = '⏰ Scheduled';
+        
+        if (s === 'FT' || s === 'AET' || s === 'PEN') {
+            sc = 'status-finished';
+            st = '✅ Finished';
+        } else if (s === '1H' || s === 'HT' || s === '2H' || s === 'ET' || s === 'P' || s === 'LIVE') {
+            sc = 'status-live';
+            st = '🔴 LIVE';
+        }
+        
+        var hl = m.teams.home.logo || '';
+        var al = m.teams.away.logo || '';
+        var homeId = m.teams.home.id;
+        var awayId = m.teams.away.id;
+        
+        html += '<div class=sport-card>';
+        html += '<div class=league>🏆 ' + m.league.name + '</div>';
+        html += '<div class=teams>';
+        html += '<div class=team>' + (hl ? '<img src="'+hl+'">' : '') + '<span>' + m.teams.home.name + '</span></div>';
+        html += '<div class=score>' + (m.goals.home||0) + '-' + (m.goals.away||0) + '</div>';
+        html += '<div class=team>' + (al ? '<img src="'+al+'">' : '') + '<span>' + m.teams.away.name + '</span></div>';
+        html += '</div>';
+        html += '<div style=display:flex;justify-content:space-between;margin-top:4px;>';
+        html += '<span class=status style="'+sc+'">'+st+'</span>';
+        html += '<span style=color:#555;font-size:10px;>' + (m.fixture.date ? new Date(m.fixture.date).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '') + '</span>';
+        html += '</div>';
+        html += '<div class=actions>';
+        html += '<button onclick="toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')">☆</button>';
+        html += '<button onclick="toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')">☆</button>';
+        html += '<button onclick="alert(\'🔔 Alert set!\')">🔔</button>';
+        html += '<button onclick="openMatchDetail('+m.fixture.id+')">📊</button>';
+        html += '</div>';
+        html += '</div>';
+    }
+    
+    if (el1) el1.innerHTML = html;
+    if (el2) el2.innerHTML = html;
+    console.log("✅ Rendered:", matches.length, "matches");
+}
+
+// =============================================
+// ===== AUTO REFRESH - 15 SECONDS =====
+// =============================================
+var refreshInterval = setInterval(fetchSports, 15000);
+console.log("⏰ Auto-refresh every 15 seconds");
+
+// =============================================
+// ===== MATCH DETAIL =====
+// =============================================
+function openMatchDetail(id) {
+    var el = document.getElementById('sL');
+    if (!el) el = document.getElementById('sL2');
+    if (!el) return;
+    el.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>📊 Loading...</p>';
+    
+    fetch('https://v3.football.api-sports.io/fixtures?id=' + id, {
+        headers: {
+            'x-rapidapi-key': SPORTS_KEY,
+            'x-rapidapi-host': 'v3.football.api-sports.io'
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.response && data.response[0]) {
+            var m = data.response[0];
+            var html = '<div class=sport-card style=border-color:#00ff88;>';
+            html += '<div class=league>🏆 ' + m.league.name + '</div>';
+            html += '<div class=teams>';
+            html += '<div class=team>' + (m.teams.home.logo ? '<img src="'+m.teams.home.logo+'">' : '') + '<span style=font-size:16px;>'+m.teams.home.name+'</span></div>';
+            html += '<div class=score style=font-size:32px;>' + (m.goals.home||0) + '-' + (m.goals.away||0) + '</div>';
+            html += '<div class=team>' + (m.teams.away.logo ? '<img src="'+m.teams.away.logo+'">' : '') + '<span style=font-size:16px;>'+m.teams.away.name+'</span></div>';
+            html += '</div>';
+            html += '<div style=text-align:center;margin:6px 0;>';
+            var st = (m.fixture.status.short === 'FT' || m.fixture.status.short === 'AET') ? '✅ Finished' : '🔴 LIVE';
+            html += '<span class=status style="' + ((m.fixture.status.short === 'FT' || m.fixture.status.short === 'AET') ? 'status-finished' : 'status-live') + '">' + st + '</span>';
+            html += '</div>';
+            if (m.events && m.events.length) {
+                html += '<div style=margin-top:10px;><h4 style=color:#66ffaa;font-size:13px;>⚡ Events</h4>';
+                for (var i = 0; i < m.events.length; i++) {
+                    var e = m.events[i];
+                    var name = e.player.name || 'Unknown';
+                    html += '<div style=display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.05);>';
+                    html += '<span style=color:#66aa88;>' + (e.time.elapsed || '') + '\'</span>';
+                    html += '<span style=color:#fff;>' + e.type + ' - ' + name + '</span>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+            html += '<button onclick="fetchSports()" style=margin-top:12px;padding:8px 16px;border-radius:8px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;>⬅ Back</button>';
+            html += '</div>';
+            el.innerHTML = html;
+        }
+    })
+    .catch(function() {
+        el.innerHTML = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ Error</p>';
+    });
+}
+
+// =============================================
+// ===== FAVORITES =====
+// =============================================
+var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
+
+function toggleFavorite(id, name, logo) {
+    var found = -1;
+    for (var i = 0; i < favorites.length; i++) {
+        if (favorites[i].id === id) { found = i; break; }
+    }
+    if (found > -1) { favorites.splice(found, 1); } 
+    else { favorites.push({id: id, name: name, logo: logo}); }
+    localStorage.setItem('x10_favorites', JSON.stringify(favorites));
+    fetchSports();
+    renderFavorites();
+}
+
+function renderFavorites() {
+    var list = document.getElementById('favList');
+    if (!list) return;
+    if (favorites.length === 0) {
+        list.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < favorites.length; i++) {
+        var f = favorites[i];
+        html += '<div class=sport-card style=border-color:rgba(255,204,0,0.3);>';
+        html += '<div class=teams><div class=team>' + (f.logo ? '<img src="'+f.logo+'">' : '') + '<span style=color:#ffcc00;>'+f.name+'</span></div><div style=color:#ffcc00;font-size:20px;>⭐</div></div>';
+        html += '</div>';
+    }
+    list.innerHTML = html;
+    }
     
