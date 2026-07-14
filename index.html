@@ -15,7 +15,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 #app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,136,0.15)}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#66ffaa,#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
+.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3);cursor:pointer}
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(0,255,136,0.08)}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
 .stab.active{color:#00ff88;border-bottom-color:#00ff88}
@@ -76,23 +76,23 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <div class=hdr>
 <span class=hdr-t>⬇️ X10</span>
-<div class=hdr-a id=hAcct onclick="switchPage('acct')">👤</div>
+<div class=hdr-a onclick="switchPage('acct')">👤</div>
 </div>
 
 <div class=stabs id=stabs>
-<span class="stab active" data-gender=male onclick="switchGender('male')">MEN</span>
-<span class=stab data-gender=female onclick="switchGender('female')">WOMEN</span>
+<span class="stab active" onclick="switchGender('male')">MEN</span>
+<span class=stab onclick="switchGender('female')">WOMEN</span>
 </div>
 
 <div class=cnt>
 <div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
 <div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>⚽ Live Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
-<div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites yet</p></div></div>
-<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • MP4 • Images • Websites</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick="playVideo()">▶ Watch</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick="clearAll()" style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
+<div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p></div></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • MP4 • Images • Websites</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick="playVideo()">▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste a link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick="clearAll()" style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
 <div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick="uploadPhoto()">👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange="saveName()"></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
 
-<div class=bnav id=bottomNav>
+<div class=bnav>
 <div class="nav-item active" data-tab=home onclick="switchPage('home')"><span class=nic>🏠</span>Home</div>
 <div class="nav-item" data-tab=sports onclick="switchPage('sports')"><span class=nic>⚽</span>Sports</div>
 <div class="nav-item" data-tab=fav onclick="switchPage('fav')"><span class=nic>⭐</span>Favs</div>
@@ -102,37 +102,31 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <script>
-// =============================================
-// KEYS
-// =============================================
+// ===== KEYS =====
+const SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
 const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
-const SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// =============================================
-// VERSION
-// =============================================
+// ===== VERSION =====
 const VERSION = "3.1.0";
 if(localStorage.getItem('x10_version')!==VERSION){
     localStorage.setItem('x10_version',VERSION);
 }
 console.log("✅ Version:", VERSION);
 
-// =============================================
-// STATE
-// =============================================
+// ===== STATE =====
 var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
 var currentLink = '';
 var refreshInterval = null;
 var currentGender = 'male';
 
 // =============================================
-// SWITCH PAGE - SIMPLE
+// SWITCH PAGE - DIRECT onclick
 // =============================================
 function switchPage(tab) {
     console.log("➡️ Switching to:", tab);
     
-    // Update nav buttons
     var items = document.querySelectorAll('.nav-item');
     for(var i=0; i<items.length; i++) {
         items[i].classList.remove('active');
@@ -141,7 +135,6 @@ function switchPage(tab) {
         }
     }
     
-    // Update pages
     var pages = document.querySelectorAll('.page');
     for(var j=0; j<pages.length; j++) {
         pages[j].classList.remove('active');
@@ -150,7 +143,6 @@ function switchPage(tab) {
         }
     }
     
-    // Show/hide sub-tabs
     var stabs = document.getElementById('stabs');
     if(tab === 'home' || tab === 'sports') {
         stabs.style.display = 'flex';
@@ -158,7 +150,6 @@ function switchPage(tab) {
         stabs.style.display = 'none';
     }
     
-    // Load data
     if(tab === 'home' || tab === 'sports') fetchSports();
     if(tab === 'fav') renderFavorites();
 }
@@ -200,7 +191,7 @@ function fetchSports() {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        console.log("✅ Sports data:", data.response ? data.response.length : 0, "matches");
+        console.log("✅ Data received:", data.response ? data.response.length : 0);
         if(!data.response || data.response.length === 0) {
             var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
             if(el1) el1.innerHTML = msg;
@@ -276,7 +267,7 @@ function renderMatches(matches) {
     
     if(el1) el1.innerHTML = html;
     if(el2) el2.innerHTML = html;
-    console.log("✅ Matches rendered!");
+    console.log("✅ Rendered:", matches.length, "matches");
 }
 
 // =============================================
@@ -346,4 +337,14 @@ function toggleFavorite(id, name, logo) {
     for(var i=0; i<favorites.length; i++) {
         if(favorites[i].id === id) { found = i; break; }
     }
-    if(found > -1) { favorites.splice(found, 1);
+    if(found > -1) { favorites.splice(found, 1); } 
+    else { favorites.push({id: id, name: name, logo: logo}); }
+    localStorage.setItem('x10_favorites', JSON.stringify(favorites));
+    fetchSports();
+    renderFavorites();
+}
+
+function renderFavorites() {
+    var list = document.getElementById('favList');
+    if(!list) return;
+    if(favorites.length =
