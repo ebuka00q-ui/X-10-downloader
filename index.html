@@ -76,12 +76,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 
 <div class=hdr>
 <span class=hdr-t>⬇️ X10</span>
-<div class=hdr-a id=hAcct>👤</div>
+<div class=hdr-a id=hAcct onclick="switchPage('acct')">👤</div>
 </div>
 
 <div class=stabs id=stabs>
-<span class="stab active" data-gender=male>MEN</span>
-<span class=stab data-gender=female>WOMEN</span>
+<span class="stab active" data-gender=male onclick="switchGender('male')">MEN</span>
+<span class=stab data-gender=female onclick="switchGender('female')">WOMEN</span>
 </div>
 
 <div class=cnt>
@@ -93,34 +93,41 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 
 <div class=bnav id=bottomNav>
-<div class="nav-item active" data-tab=home><span class=nic>🏠</span>Home</div>
-<div class=nav-item data-tab=sports><span class=nic>⚽</span>Sports</div>
-<div class=nav-item data-tab=fav><span class=nic>⭐</span>Favs</div>
-<div class=nav-item data-tab=watch><span class=nic>▶️</span>Watch</div>
-<div class=nav-item data-tab=acct><span class=nic>👤</span>Account</div>
+<div class="nav-item active" data-tab=home onclick="switchPage('home')"><span class=nic>🏠</span>Home</div>
+<div class="nav-item" data-tab=sports onclick="switchPage('sports')"><span class=nic>⚽</span>Sports</div>
+<div class="nav-item" data-tab=fav onclick="switchPage('fav')"><span class=nic>⭐</span>Favs</div>
+<div class="nav-item" data-tab=watch onclick="switchPage('watch')"><span class=nic>▶️</span>Watch</div>
+<div class="nav-item" data-tab=acct onclick="switchPage('acct')"><span class=nic>👤</span>Account</div>
 </div>
 </div>
 
 <script>
-// ===== KEYS =====
+// =============================================
+// KEYS
+// =============================================
 const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
 const SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
 
-// ===== VERSION =====
-const VERSION = "3.0.9";
+// =============================================
+// VERSION
+// =============================================
+const VERSION = "3.1.0";
 if(localStorage.getItem('x10_version')!==VERSION){
     localStorage.setItem('x10_version',VERSION);
 }
 console.log("✅ Version:", VERSION);
 
-// ===== STATE =====
+// =============================================
+// STATE
+// =============================================
 var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
 var currentLink = '';
 var refreshInterval = null;
+var currentGender = 'male';
 
 // =============================================
-// NAVIGATION - SIMPLE & RELIABLE
+// SWITCH PAGE - SIMPLE
 // =============================================
 function switchPage(tab) {
     console.log("➡️ Switching to:", tab);
@@ -157,49 +164,26 @@ function switchPage(tab) {
 }
 
 // =============================================
-// SETUP NAVIGATION
+// SWITCH GENDER
 // =============================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("🚀 App loading...");
-    
-    // Bottom nav clicks
-    var items = document.querySelectorAll('.nav-item');
-    for(var i=0; i<items.length; i++) {
-        items[i].addEventListener('click', function() {
-            var tab = this.getAttribute('data-tab');
-            switchPage(tab);
-        });
-    }
-    
-    // Header account click
-    document.getElementById('hAcct').addEventListener('click', function() {
-        switchPage('acct');
-    });
-    
-    // Sub-tab clicks
+function switchGender(gender) {
+    console.log("🔄 Gender:", gender);
+    currentGender = gender;
     var stabs = document.querySelectorAll('.stab');
-    for(var j=0; j<stabs.length; j++) {
-        stabs[j].addEventListener('click', function() {
-            var all = document.querySelectorAll('.stab');
-            for(var k=0; k<all.length; k++) {
-                all[k].classList.remove('active');
-            }
-            this.classList.add('active');
-            fetchSports();
-        });
+    for(var i=0; i<stabs.length; i++) {
+        stabs[i].classList.remove('active');
+        if(stabs[i].getAttribute('data-gender') === gender) {
+            stabs[i].classList.add('active');
+        }
     }
-    
-    // Start
     fetchSports();
-    renderHistory();
-    renderFavorites();
-    console.log("✅ X10 Ready!");
-});
+}
 
 // =============================================
-// SPORTS
+// FETCH SPORTS
 // =============================================
 function fetchSports() {
+    console.log("⚽ Fetching sports...");
     var el1 = document.getElementById('sL');
     var el2 = document.getElementById('sL2');
     if(el1) el1.innerHTML = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
@@ -216,6 +200,7 @@ function fetchSports() {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
+        console.log("✅ Sports data:", data.response ? data.response.length : 0, "matches");
         if(!data.response || data.response.length === 0) {
             var msg = '<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
             if(el1) el1.innerHTML = msg;
@@ -224,7 +209,8 @@ function fetchSports() {
         }
         renderMatches(data.response);
     })
-    .catch(function() {
+    .catch(function(err) {
+        console.log("❌ Error:", err);
         var msg = '<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>⚠️ API Error</p>';
         if(el1) el1.innerHTML = msg;
         if(el2) el2.innerHTML = msg;
@@ -290,13 +276,15 @@ function renderMatches(matches) {
     
     if(el1) el1.innerHTML = html;
     if(el2) el2.innerHTML = html;
+    console.log("✅ Matches rendered!");
 }
 
 // =============================================
-// AUTO REFRESH
+// AUTO REFRESH - 15 SECONDS
 // =============================================
 if(refreshInterval) clearInterval(refreshInterval);
-refreshInterval = setInterval(fetchSports, 30000);
+refreshInterval = setInterval(fetchSports, 15000);
+console.log("⏰ Auto-refresh every 15 seconds");
 
 // =============================================
 // MATCH DETAIL
@@ -358,6 +346,4 @@ function toggleFavorite(id, name, logo) {
     for(var i=0; i<favorites.length; i++) {
         if(favorites[i].id === id) { found = i; break; }
     }
-    if(found > -1) { favorites.splice(found, 1); } 
-    else { favorites.push({id: id, name: name, logo: logo}); }
-    localStorage.setItem('x10_favorites', J
+    if(found > -1) { favorites.splice(found, 1);
