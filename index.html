@@ -8,7 +8,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
@@ -80,7 +79,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
 <div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>⚽ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
 <div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p></div></div>
-<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images • Websites</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div id=hList></div></div>
 <div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick=uploadPhoto()>👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange=saveName()></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
 <div class=bnav>
@@ -92,17 +91,21 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 </div>
 <script>
-// ===== YOUR KEYS - ADD YOUR NEW SPORTS KEY HERE =====
-var SPORTS_KEY = "d33f735130466f33942ae58ecd17fb5c"; // CHANGE THIS
-var SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
-var SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
+// =============================================
+// YOUR SPORTS API KEY - CHANGE THIS
+// =============================================
+var SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
 
-// ===== STATE =====
+// =============================================
+// STATE
+// =============================================
 var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
 var currentLink = '';
 var refreshInterval = null;
 
-// ===== NAVIGATION =====
+// =============================================
+// NAVIGATION
+// =============================================
 function switchPage(tab){
     var pages = document.querySelectorAll('.page');
     for(var i=0;i<pages.length;i++){pages[i].classList.remove('active');}
@@ -119,7 +122,9 @@ function switchPage(tab){
     if(tab==='fav'){renderFavorites();}
 }
 
-// ===== SETUP NAVIGATION =====
+// =============================================
+// SETUP NAVIGATION
+// =============================================
 document.addEventListener('DOMContentLoaded',function(){
     var navMap = {navHome:'home',navSports:'sports',navFav:'fav',navWatch:'watch',navAcct:'acct'};
     for(var key in navMap){
@@ -148,7 +153,9 @@ document.addEventListener('DOMContentLoaded',function(){
     console.log('🚀 X10 Ready!');
 });
 
-// ===== SPORTS =====
+// =============================================
+// SPORTS - FETCH
+// =============================================
 function fetchSports(){
     var el1 = document.getElementById('sL');
     var el2 = document.getElementById('sL2');
@@ -219,11 +226,15 @@ function renderMatches(matches){
     if(el2){el2.innerHTML=html;}
 }
 
-// ===== AUTO REFRESH =====
+// =============================================
+// AUTO REFRESH - 15 SECONDS
+// =============================================
 if(refreshInterval){clearInterval(refreshInterval);}
 refreshInterval = setInterval(fetchSports, 15000);
 
-// ===== MATCH DETAIL =====
+// =============================================
+// MATCH DETAIL
+// =============================================
 function openMatchDetail(id){
     var el = document.getElementById('sL');
     if(!el){el=document.getElementById('sL2');}
@@ -269,7 +280,9 @@ function openMatchDetail(id){
     });
 }
 
-// ===== FAVORITES =====
+// =============================================
+// FAVORITES
+// =============================================
 function toggleFavorite(id,name,logo){
     var found=-1;
     for(var i=0;i<favorites.length;i++){
@@ -299,7 +312,9 @@ function renderFavorites(){
     list.innerHTML=html;
 }
 
-// ===== VIDEO PLAYER - ALL LINKS WORK =====
+// =============================================
+// VIDEO PLAYER - ALL LINKS WORK
+// =============================================
 function playVideo(){
     var link = document.getElementById('vLink').value.trim();
     var container = document.getElementById('pBox');
@@ -309,154 +324,4 @@ function playVideo(){
     saveHistory(link);
     
     // IMAGES
-    var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
-    for(var i=0;i<imgExts.length;i++){
-        if(link.toLowerCase().includes(imgExts[i])){
-            container.innerHTML='<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    
-    // // YOUTUBE
-    if(link.includes('youtube.com/watch')||link.includes('youtu.be/')){
-        var id='';
-        if(link.includes('v=')){id=link.split('v=')[1].split('&')[0];}
-        else if(link.includes('youtu.be/')){id=link.split('youtu.be/')[1].split('?')[0];}
-        if(id){
-            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-            return;
-        }
-    }
-    
-    // TIKTOK - embed
-    if(link.includes('tiktok.com')){
-        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-        return;
-    }
-    
-    // FACEBOOK, VIMEO, INSTAGRAM, TWITTER, DAILYMOTION
-    if(link.includes('facebook.com')||link.includes('vimeo.com')||link.includes('dailymotion.com')||link.includes('twitter.com')||link.includes('instagram.com')){
-        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-        return;
-    }
-    
-    // DIRECT VIDEO
-    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
-    for(var j=0;j<videoExts.length;j++){
-        if(link.toLowerCase().includes(videoExts[j])){
-            container.innerHTML='<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    
-    // ANY WEBSITE - try to embed
-    container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-}
-
-function toggleFS(){
-    var container = document.getElementById('pBox');
-    var iframe = container.querySelector('iframe');
-    var video = container.querySelector('video');
-    var img = container.querySelector('img');
-    if(iframe){if(iframe.requestFullscreen){iframe.requestFullscreen();}else if(iframe.webkitRequestFullscreen){iframe.webkitRequestFullscreen();}}
-    else if(video){if(video.requestFullscreen){video.requestFullscreen();}else if(video.webkitRequestFullscreen){video.webkitRequestFullscreen();}}
-    else if(img){if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-    else{if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-}
-
-function downloadFile(){
-    if(!currentLink){alert('No video to download');return;}
-    var a = document.createElement('a');
-    a.href = currentLink;
-    a.target = '_blank';
-    a.download = currentLink.split('/').pop() || 'video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    alert('⬇️ Download started!');
-}
-
-// ===== HISTORY =====
-function saveHistory(link){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    history.unshift({link:link,time:new Date().toLocaleString(),id:Date.now()});
-    if(history.length>50){history.pop();}
-    localStorage.setItem('watchHistory',JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory(){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var list = document.getElementById('hList');
-    if(!list){return;}
-    if(history.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No history</p>';return;}
-    var html='';
-    for(var i=0;i<history.length;i++){
-        var item = history[i];
-        html+='<div class=history-item><span class=h-link>'+item.link+'</span><span style=color:#555;font-size:9px;margin-right:6px;>'+item.time+'</span><span class=h-play onclick="playFrom(\''+item.link+'\')">▶</span><span class=h-delete onclick="delHist('+item.id+')">✕</span></div>';
-    }
-    list.innerHTML=html;
-}
-
-function playFrom(link){document.getElementById('vLink').value=link;playVideo();}
-function delHist(id){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var newHistory = [];
-    for(var i=0;i<history.length;i++){
-        if(history[i].id!==id){newHistory.push(history[i]);}
-    }
-    localStorage.setItem('watchHistory',JSON.stringify(newHistory));
-    renderHistory();
-}
-function clearAll(){if(confirm('Delete all history?')){localStorage.removeItem('watchHistory');renderHistory();}}
-
-// ===== PROFILE =====
-function uploadPhoto(){
-    var input = document.createElement('input');
-    input.type='file';
-    input.accept='image/*';
-    input.onchange=function(e){
-        var file = e.target.files[0];
-        if(file){
-            var reader = new FileReader();
-            reader.onload=function(ev){
-                document.getElementById('pAv').innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                localStorage.setItem('x10_avatar',ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-
-function saveName(){
-    var name = document.getElementById('uName').value.trim()||'Creator';
-    localStorage.setItem('x10_username',name);
-    document.getElementById('pId').textContent='@'+name.toLowerCase().replace(/\s/g,'_');
-}
-
-var savedName = localStorage.getItem('x10_username');
-if(savedName){
-    document.getElementById('uName').value=savedName;
-    document.getElementById('pId').textContent='@'+savedName.toLowerCase().replace(/\s/g,'_');
-}
-var savedAvatar = localStorage.getItem('x10_avatar');
-if(savedAvatar){
-    document.getElementById('pAv').innerHTML='<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-}
-
-// ===== EXIT =====
-var exitTimer = 0;
-window.addEventListener('popstate',function(){
-    if(exitTimer===0){
-        exitTimer=1;
-        setTimeout(function(){exitTimer=0;},500);
-    }else{
-        if(confirm('Exit X10 Downloader?')){window.close();}
-        exitTimer=0;
-    }
-});
-history.pushState({page:'home'},'');
-</script>
-</body>
-</html>
+    var imgExts = ['.jpg','.jpeg','.png','.gif','.w
