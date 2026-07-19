@@ -305,4 +305,306 @@ refreshInterval = setInterval(fetchSports, 15000);
 // =============================================
 // MATCH DETAIL - SOFASCORE STYLE
 // =============================================
-functio
+function openDetail(id){
+    var overlay = document.getElementById('detailOverlay');
+    overlay.classList.add('show');
+    document.getElementById('detailSummary').innerHTML='<p style=color:#555;font-size:13px;>Loading...</p>';
+    document.getElementById('detailLineups').innerHTML='<p style=color:#555;font-size:13px;>Loading...</p>';
+    document.getElementById('detailStats').innerHTML='<p style=color:#555;font-size:13px;>Loading...</p>';
+    
+    fetch('https://v3.football.api-sports.io/fixtures?id='+id,{
+        headers:{'x-rapidapi-key':SPORTS_KEY,'x-rapidapi-host':'v3.football.api-sports.io'}
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+        if(data.response&&data.response[0]){
+            var m = data.response[0];
+            document.getElementById('detailLeague').textContent=m.league.name;
+            document.getElementById('detailHome').textContent=m.teams.home.name;
+            document.getElementById('detailAway').textContent=m.teams.away.name;
+            document.getElementById('detailScore').textContent=(m.goals.home||0)+'-'+(m.goals.away||0);
+            var s=m.fixture.status.short;
+            var st='⏰ Scheduled';
+            if(s==='FT'||s==='AET'||s==='PEN'){st='✅ Finished';}
+            else if(s==='1H'||s==='HT'||s==='2H'||s==='ET'||s==='P'||s==='LIVE'){st='🔴 LIVE';}
+            document.getElementById('detailStatus').textContent=st + (m.fixture.status.elapsed ? ' '+m.fixture.status.elapsed+"'" : '');
+            
+            // Events
+            if(m.events&&m.events.length){
+                var evHtml='';
+                for(var i=0;i<m.events.length;i++){
+                    var e=m.events[i];
+                    var name=e.player.name||'Unknown';
+                    evHtml+='<div style=display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.05);>';
+                    evHtml+='<span style=color:#66aa88;>'+(e.time.elapsed||'')+'\'</span>';
+                    evHtml+='<span style=color:#fff;>'+e.type+' - '+name+'</span>';
+                    evHtml+='</div>';
+                }
+                document.getElementById('detailSummary').innerHTML=evHtml;
+            }
+            
+            // Lineups with Pitch View
+            if(m.lineups&&m.lineups.length){
+                var lineupHtml='';
+                for(var j=0;j<m.lineups.length;j++){
+                    var l=m.lineups[j];
+                    lineupHtml+='<div class=pitch-box>';
+                    lineupHtml+='<div style=display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;>';
+                    lineupHtml+='<span style=color:#66ffaa;font-size:13px;font-weight:600;>'+l.team.name+'</span>';
+                    lineupHtml+='<span style=color:#66aa88;font-size:11px;>'+l.formation+'</span>';
+                    lineupHtml+='</div>';
+                    lineupHtml+='<div class=pitch-toggles>';
+                    lineupHtml+='<button class="pitch-toggle active" onclick="togglePitch(this,\'performance\')">Performance</button>';
+                    lineupHtml+='<button class="pitch-toggle" onclick="togglePitch(this,\'club\')">Club</button>';
+                    lineupHtml+='<button class="pitch-toggle" onclick="togglePitch(this,\'age\')">Age</button>';
+                    lineupHtml+='<button class="pitch-toggle" onclick="togglePitch(this,\'market\')">Market</button>';
+                    lineupHtml+='<button class="pitch-toggle" onclick="togglePitch(this,\'height\')">Height</button>';
+                    lineupHtml+='</div>';
+                    lineupHtml+='<div class=pitch-grid>';
+                    if(l.startXI&&l.startXI.length){
+                        for(var k=0;k<l.startXI.length;k++){
+                            var p=l.startXI[k];
+                            lineupHtml+='<div class=pitch-player>';
+                            lineupHtml+='<div class=num>#'+p.player.number+'</div>';
+                            lineupHtml+='<div class=name>'+p.player.name+'</div>';
+                            lineupHtml+='<div class=data>'+(p.player.age||'')+' yrs</div>';
+                            lineupHtml+='</div>';
+                        }
+                    }
+                    lineupHtml+='</div>';
+                    lineupHtml+='<div class=pitch-coach>👨‍🏫 Coach: '+l.coach.name+'</div>';
+                    lineupHtml+='<div style=margin-top:6px;><div style=color:#66aa88;font-size:10px;margin-bottom:4px;>🔄 Substitutes</div>';
+                    if(l.substitutes&&l.substitutes.length){
+                        for(var s2=0;s2<l.substitutes.length;s2++){
+                            var sub=l.substitutes[s2];
+                            lineupHtml+='<div class=sub-item><span>'+sub.player.name+'</span><span>#'+sub.player.number+'</span></div>';
+                        }
+                    }else{
+                        lineupHtml+='<div style=color:#555;font-size:10px;>No substitutes</div>';
+                    }
+                    lineupHtml+='</div></div>';
+                }
+                document.getElementById('detailLineups').innerHTML=lineupHtml;
+            }
+            
+            // Stats
+            if(m.statistics&&m.statistics.length){
+                var statsHtml='';
+                var stats = m.statistics[0].statistics||[];
+                for(var n=0;n<stats.length;n++){
+                    var stItem=stats[n];
+                    statsHtml+='<div style=display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);>';
+                    statsHtml+='<span style=color:#66aa88;font-size:12px;>'+stItem.type+'</span>';
+                    statsHtml+='<span style=color:#fff;font-size:12px;>'+stItem.value+'</span>';
+                    statsHtml+='</div>';
+                }
+                document.getElementById('detailStats').innerHTML=statsHtml;
+            }
+        }
+    })
+    .catch(function(){
+        document.getElementById('detailSummary').innerHTML='<p style=color:#555;font-size:13px;>Could not load</p>';
+    });
+}
+
+function closeDetail(){
+    document.getElementById('detailOverlay').classList.remove('show');
+}
+
+function switchDetail(tab){
+    document.querySelectorAll('.detail-tab').forEach(function(t){t.classList.remove('active');});
+    document.querySelector('.detail-tab[onclick="switchDetail(\''+tab+'\')"]').classList.add('active');
+    document.querySelectorAll('.detail-content').forEach(function(c){c.classList.remove('active');});
+    document.getElementById('detail'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+}
+
+function togglePitch(btn,type){
+    document.querySelectorAll('.pitch-toggle').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    var dataMap = {
+        'performance':'⭐',
+        'club':'🏟️',
+        'age':'📅',
+        'market':'💰',
+        'height':'📏'
+    };
+    var players = document.querySelectorAll('.pitch-player .data');
+    players.forEach(function(p){
+        p.textContent = dataMap[type] || 'Data';
+    });
+}
+
+// =============================================
+// FAVORITES
+// =============================================
+function toggleFavorite(id,name,logo){
+    var found=-1;
+    for(var i=0;i<favorites.length;i++){
+        if(favorites[i].id===id){found=i;break;}
+    }
+    if(found>-1){favorites.splice(found,1);}
+    else{favorites.push({id:id,name:name,logo:logo});}
+    localStorage.setItem('x10_favorites',JSON.stringify(favorites));
+    fetchSports();
+    renderFavorites();
+}
+
+function renderFavorites(){
+    var list = document.getElementById('favList');
+    if(!list){return;}
+    if(favorites.length===0){
+        list.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p>';
+        return;
+    }
+    var html='';
+    for(var i=0;i<favorites.length;i++){
+        var f = favorites[i];
+        html+='<div class=sport-card style=border-color:rgba(255,204,0,0.3);>';
+        html+='<div class=teams><div class=team>'+(f.logo?'<img src="'+f.logo+'">':'')+'<span style=color:#ffcc00;>'+f.name+'</span></div><div style=color:#ffcc00;font-size:20px;>⭐</div></div>';
+        html+='</div>';
+    }
+    list.innerHTML=html;
+}
+
+// =============================================
+// VIDEO PLAYER - ALL LINKS
+// =============================================
+function playVideo(){
+    var link = document.getElementById('vLink').value.trim();
+    var container = document.getElementById('pBox');
+    if(!link){alert('Paste a link');return;}
+    currentLink = link;
+    container.innerHTML='';
+    saveHistory(link);
+    
+    var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
+    for(var i=0;i<imgExts.length;i++){
+        if(link.toLowerCase().includes(imgExts[i])){
+            container.innerHTML='<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
+            return;
+        }
+    }
+    if(link.includes('youtube.com/watch')||link.includes('youtu.be/')){
+        var id='';
+        if(link.includes('v=')){id=link.split('v=')[1].split('&')[0];}
+        else if(link.includes('youtu.be/')){id=link.split('youtu.be/')[1].split('?')[0];}
+        if(id){
+            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+            return;
+        }
+    }
+    if(link.includes('tiktok.com')||link.includes('facebook.com')||link.includes('vimeo.com')||link.includes('instagram.com')){
+        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+        return;
+    }
+    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
+    for(var j=0;j<videoExts.length;j++){
+        if(link.toLowerCase().includes(videoExts[j])){
+            container.innerHTML='<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
+            return;
+        }
+    }
+    container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+}
+
+function toggleFS(){
+    var c=document.getElementById('pBox');
+    var i=c.querySelector('iframe'),v=c.querySelector('video'),im=c.querySelector('img');
+    if(i){if(i.requestFullscreen){i.requestFullscreen();}else if(i.webkitRequestFullscreen){i.webkitRequestFullscreen();}}
+    else if(v){if(v.requestFullscreen){v.requestFullscreen();}else if(v.webkitRequestFullscreen){v.webkitRequestFullscreen();}}
+    else if(im){if(c.requestFullscreen){c.requestFullscreen();}else if(c.webkitRequestFullscreen){c.webkitRequestFullscreen();}}
+    else{if(c.requestFullscreen){c.requestFullscreen();}else if(c.webkitRequestFullscreen){c.webkitRequestFullscreen();}}
+}
+
+function downloadFile(){
+    if(!currentLink){alert('No video');return;}
+    var a=document.createElement('a');
+    a.href=currentLink;
+    a.target='_blank';
+    a.download=currentLink.split('/').pop()||'video.mp4';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    alert('⬇️ Download started!');
+}
+
+// =============================================
+// HISTORY
+// =============================================
+function saveHistory(link){
+    var h=JSON.parse(localStorage.getItem('watchHistory')||'[]');
+    h.unshift({link:link,time:new Date().toLocaleString(),id:Date.now()});
+    if(h.length>50){h.pop();}
+    localStorage.setItem('watchHistory',JSON.stringify(h));
+    renderHistory();
+}
+function renderHistory(){
+    var h=JSON.parse(localStorage.getItem('watchHistory')||'[]');
+    var list=document.getElementById('hList');
+    if(!list){return;}
+    if(h.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No history</p>';return;}
+    var html='';
+    for(var i=0;i<h.length;i++){
+        html+='<div class=history-item><span class=h-link>'+h[i].link+'</span><span class=h-time>'+h[i].time+'</span><span class=h-play onclick="playFrom(\''+h[i].link+'\')">▶</span><span class=h-delete onclick="delHist('+h[i].id+')">✕</span></div>';
+    }
+    list.innerHTML=html;
+}
+function playFrom(l){document.getElementById('vLink').value=l;playVideo();}
+function delHist(id){
+    var h=JSON.parse(localStorage.getItem('watchHistory')||'[]');
+    var nh=[];
+    for(var i=0;i<h.length;i++){if(h[i].id!==id){nh.push(h[i]);}}
+    localStorage.setItem('watchHistory',JSON.stringify(nh));
+    renderHistory();
+}
+function clearAll(){if(confirm('Delete all?')){localStorage.removeItem('watchHistory');renderHistory();}}
+
+// =============================================
+// PROFILE
+// =============================================
+function uploadPhoto(){
+    var input=document.createElement('input');
+    input.type='file';input.accept='image/*';
+    input.onchange=function(e){
+        var file=e.target.files[0];
+        if(file){
+            var reader=new FileReader();
+            reader.onload=function(ev){
+                document.getElementById('pAv').innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+                localStorage.setItem('x10_avatar',ev.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    input.click();
+}
+function saveName(){
+    var name=document.getElementById('uName').value.trim()||'Creator';
+    localStorage.setItem('x10_username',name);
+    document.getElementById('pId').textContent='@'+name.toLowerCase().replace(/\s/g,'_');
+}
+var sn=localStorage.getItem('x10_username');
+if(sn){document.getElementById('uName').value=sn;document.getElementById('pId').textContent='@'+sn.toLowerCase().replace(/\s/g,'_');}
+var sa=localStorage.getItem('x10_avatar');
+if(sa){document.getElementById('pAv').innerHTML='<img src="'+sa+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
+
+// =============================================
+// EXIT
+// =============================================
+var et=0;
+window.addEventListener('popstate',function(){
+    if(et===0){et=1;setTimeout(function(){et=0;},500);}
+    else{if(confirm('Exit X10 Downloader?')){window.close();}et=0;}
+});
+history.pushState({page:'home'},'');
+
+// =============================================
+// START
+// =============================================
+fetchSports();
+renderHistory();
+renderFavorites();
+console.log('🚀 X10 Ready!');
+console.log('⚽ Auto-refresh every 15 seconds');
+console.log('📱 Home = Club matches | Sports = Tournaments');
+</script>
+</body>
+</html>
