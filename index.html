@@ -102,9 +102,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 </div>
 <script>
 // =============================================
-// KEYS - CHANGE THESE TO YOUR KEYS
+// KEYS - PUT YOUR NEW SPORTS KEY HERE
 // =============================================
-var SPORTS_KEY = "8d2560989cdcc178aa8e4c3276568ce2";
+var SPORTS_KEY = "a5f5d5073e92fc831f428f9466b5edeb";
 var SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
 var supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -118,7 +118,7 @@ var refreshInterval = null;
 var downloadedVideos = JSON.parse(localStorage.getItem('x10_downloads') || '[]');
 
 // =============================================
-// NAVIGATION - FIXED
+// NAVIGATION
 // =============================================
 function switchPage(tab){
     console.log("➡️ Switching to:", tab);
@@ -135,14 +135,9 @@ function switchPage(tab){
     if(tab==='fav'){renderFavorites();}
 }
 
-// =============================================
-// SETUP
-// =============================================
 document.addEventListener('DOMContentLoaded',function(){
     console.log("🚀 App loading...");
-    // Account click
     document.getElementById('hAcct').addEventListener('click',function(){switchPage('acct');});
-    // Gender toggle
     document.getElementById('stabMale').addEventListener('click',function(){
         document.getElementById('stabMale').classList.add('active');
         document.getElementById('stabFemale').classList.remove('active');
@@ -153,7 +148,6 @@ document.addEventListener('DOMContentLoaded',function(){
         document.getElementById('stabMale').classList.remove('active');
         fetchSports();
     });
-    // Start
     fetchSports();
     renderHistory();
     renderFavorites();
@@ -169,14 +163,17 @@ function fetchSports(){
     var el2 = document.getElementById('sL2');
     if(el1){el1.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';}
     if(el2){el2.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';}
+    
     var d = new Date();
     var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    
     fetch('https://v3.football.api-sports.io/fixtures?date='+ds,{
         headers:{'x-rapidapi-key':SPORTS_KEY,'x-rapidapi-host':'v3.football.api-sports.io'}
     })
     .then(function(r){return r.json();})
     .then(function(data){
-        if(!data.response||data.response.length===0){
+        console.log("✅ Sports data received:", data.response ? data.response.length : 0);
+        if(!data.response || data.response.length===0){
             var msg='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
             if(el1){el1.innerHTML=msg;}
             if(el2){el2.innerHTML=msg;}
@@ -186,7 +183,7 @@ function fetchSports(){
     })
     .catch(function(err){
         console.log("❌ Error:", err);
-        var msg='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+        var msg='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading... (Check API Key)</p>';
         if(el1){el1.innerHTML=msg;}
         if(el2){el2.innerHTML=msg;}
     });
@@ -195,70 +192,8 @@ function fetchSports(){
 function renderMatches(matches){
     var el1 = document.getElementById('sL');
     var el2 = document.getElementById('sL2');
-    var html = '';
-    for(var i=0;i<matches.length;i++){
-        var m = matches[i];
-        var s = m.fixture.status.short;
-        var sc = 'status-scheduled';
-        var st = '⏰ Scheduled';
-        var timeDisplay = '';
-        
-        if(s==='FT'||s==='AET'||s==='PEN'){
-            sc='status-finished';
-            st='✅ Finished';
-            timeDisplay = 'FT';
-        }
-        else if(s==='1H'||s==='HT'||s==='2H'||s==='ET'||s==='P'||s==='LIVE'){
-            sc='status-live';
-            st='🔴 LIVE';
-            timeDisplay = (m.fixture.status.elapsed || '0') + "'";
-        }
-        else{
-            st='⏰ Scheduled';
-            // Convert to local time
-            var matchTime = new Date(m.fixture.date);
-            timeDisplay = matchTime.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-        }
-        
-        var hl = m.teams.home.logo||'';
-        var al = m.teams.away.logo||'';
-        var homeId = m.teams.home.id;
-        var awayId = m.teams.away.id;
-        var homeFav=false,awayFav=false;
-        for(var j=0;j<favorites.length;j++){
-            if(favorites[j].id===homeId){homeFav=true;}
-            if(favorites[j].id===awayId){awayFav=true;}
-        }
-        
-        // Separate club vs tournament
-        var isTournament = (m.league.type === 'cup' || m.league.name.includes('World Cup') || m.league.name.includes('Champions League') || m.league.name.includes('Europa') || m.league.name.includes('Copa') || m.league.name.includes('FA Cup'));
-        
-        html+='<div class=sport-card>';
-        html+='<div class=league>🏆 '+m.league.name+'</div>';
-        html+='<div class=teams>';
-        html+='<div class=team>'+(hl?'<img src="'+hl+'">':'')+'<span>'+m.teams.home.name+'</span></div>';
-        html+='<div class=score>'+(m.goals.home||0)+'-'+(m.goals.away||0)+'</div>';
-        html+='<div class=team>'+(al?'<img src="'+al+'">':'')+'<span>'+m.teams.away.name+'</span></div>';
-        html+='</div>';
-        html+='<div style=display:flex;justify-content:space-between;margin-top:4px;>';
-        html+='<span class=status style="'+sc+'">'+st+'</span>';
-        html+='<span style=color:#555;font-size:10px;>'+timeDisplay+'</span>';
-        html+='</div>';
-        html+='<div class=actions>';
-        html+='<button onclick="event.stopPropagation();toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')">'+(homeFav?'⭐':'☆')+'</button>';
-        html+='<button onclick="event.stopPropagation();toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')">'+(awayFav?'⭐':'☆')+'</button>';
-        html+='<button onclick="event.stopPropagation();alert(\'🔔 Alert set for '+m.teams.home.name+' vs '+m.teams.away.name+'\')">🔔</button>';
-        html+='</div>';
-        html+='</div>';
-    }
     
     // Split into Club and Tournament
-    var clubHtml = '';
-    var tourHtml = '';
-    var cards = html.split('</div>');
-    // Simple approach: use the generated html and filter
-    // Since we have the data, re-filter matches
-    
     var clubMatches = [];
     var tourMatches = [];
     for(var k=0;k<matches.length;k++){
@@ -336,9 +271,9 @@ function buildMatchHTML(matches){
         html+='<span style=color:#555;font-size:10px;>'+timeDisplay+'</span>';
         html+='</div>';
         html+='<div class=actions>';
-        html+='<button onclick="event.stopPropagation();toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')">'+(homeFav?'⭐':'☆')+'</button>';
-        html+='<button onclick="event.stopPropagation();toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')">'+(awayFav?'⭐':'☆')+'</button>';
-        html+='<button onclick="event.stopPropagation();alert(\'🔔 Alert set\')">🔔</button>';
+        html+='<button onclick="toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')">'+(homeFav?'⭐':'☆')+'</button>';
+        html+='<button onclick="toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')">'+(awayFav?'⭐':'☆')+'</button>';
+        html+='<button onclick="alert(\'🔔 Alert set!\')">🔔</button>';
         html+='</div>';
         html+='</div>';
     }
@@ -346,10 +281,10 @@ function buildMatchHTML(matches){
 }
 
 // =============================================
-// AUTO REFRESH - 30 SECONDS
+// AUTO REFRESH - 15 SECONDS
 // =============================================
 if(refreshInterval){clearInterval(refreshInterval);}
-refreshInterval = setInterval(fetchSports, 30000);
+refreshInterval = setInterval(fetchSports, 15000);
 
 // =============================================
 // FAVORITES
@@ -397,173 +332,4 @@ function playVideo(){
     var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
     for(var i=0;i<imgExts.length;i++){
         if(link.toLowerCase().includes(imgExts[i])){
-            container.innerHTML='<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    if(link.includes('youtube.com/watch')||link.includes('youtu.be/')){
-        var id='';
-        if(link.includes('v=')){id=link.split('v=')[1].split('&')[0];}
-        else if(link.includes('youtu.be/')){id=link.split('youtu.be/')[1].split('?')[0];}
-        if(id){
-            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-            return;
-        }
-    }
-    if(link.includes('tiktok.com')||link.includes('facebook.com')||link.includes('vimeo.com')||link.includes('instagram.com')||link.includes('twitter.com')){
-        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-        return;
-    }
-    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
-    for(var j=0;j<videoExts.length;j++){
-        if(link.toLowerCase().includes(videoExts[j])){
-            container.innerHTML='<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-}
-
-function toggleFS(){
-    var container = document.getElementById('pBox');
-    var iframe = container.querySelector('iframe');
-    var video = container.querySelector('video');
-    var img = container.querySelector('img');
-    if(iframe){if(iframe.requestFullscreen){iframe.requestFullscreen();}else if(iframe.webkitRequestFullscreen){iframe.webkitRequestFullscreen();}}
-    else if(video){if(video.requestFullscreen){video.requestFullscreen();}else if(video.webkitRequestFullscreen){video.webkitRequestFullscreen();}}
-    else if(img){if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-    else{if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-}
-
-function downloadFile(){
-    if(!currentLink){alert('No video to download');return;}
-    var name = currentLink.split('/').pop() || 'video.mp4';
-    var entry = {name:name,link:currentLink,id:Date.now(),time:new Date().toLocaleString()};
-    downloadedVideos.unshift(entry);
-    if(downloadedVideos.length>20){downloadedVideos.pop();}
-    localStorage.setItem('x10_downloads',JSON.stringify(downloadedVideos));
-    renderDownloads();
-    alert('⬇️ Download started!');
-}
-
-function renderDownloads(){
-    var list = document.getElementById('dList');
-    if(!list){return;}
-    if(downloadedVideos.length===0){
-        list.innerHTML='<p style=color:#555;font-size:11px;>No downloads</p>';
-        return;
-    }
-    var html='';
-    for(var i=0;i<downloadedVideos.length;i++){
-        var d = downloadedVideos[i];
-        html+='<div class=download-item><span class=d-name>'+d.name+'</span><span class=d-play onclick="playDownload(\''+d.link+'\')">▶</span><span class=d-delete onclick="deleteDownload('+d.id+')">✕</span></div>';
-    }
-    list.innerHTML=html;
-}
-
-function playDownload(link){
-    document.getElementById('vLink').value=link;
-    playVideo();
-    switchPage('watch');
-}
-
-function deleteDownload(id){
-    var newList = [];
-    for(var i=0;i<downloadedVideos.length;i++){
-        if(downloadedVideos[i].id!==id){newList.push(downloadedVideos[i]);}
-    }
-    downloadedVideos = newList;
-    localStorage.setItem('x10_downloads',JSON.stringify(downloadedVideos));
-    renderDownloads();
-}
-
-// =============================================
-// HISTORY
-// =============================================
-function saveHistory(link){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    history.unshift({link:link,time:new Date().toLocaleString(),id:Date.now()});
-    if(history.length>50){history.pop();}
-    localStorage.setItem('watchHistory',JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory(){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var list = document.getElementById('hList');
-    if(!list){return;}
-    if(history.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No history</p>';return;}
-    var html='';
-    for(var i=0;i<history.length;i++){
-        var item = history[i];
-        html+='<div class=history-item><span class=h-link>'+item.link+'</span><span class=h-time>'+item.time+'</span><span class=h-play onclick="playFrom(\''+item.link+'\')">▶</span><span class=h-delete onclick="delHist('+item.id+')">✕</span></div>';
-    }
-    list.innerHTML=html;
-}
-
-function playFrom(link){document.getElementById('vLink').value=link;playVideo();}
-function delHist(id){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var newHistory = [];
-    for(var i=0;i<history.length;i++){
-        if(history[i].id!==id){newHistory.push(history[i]);}
-    }
-    localStorage.setItem('watchHistory',JSON.stringify(newHistory));
-    renderHistory();
-}
-function clearAll(){if(confirm('Delete all history?')){localStorage.removeItem('watchHistory');renderHistory();}}
-
-// =============================================
-// PROFILE
-// =============================================
-function uploadPhoto(){
-    var input = document.createElement('input');
-    input.type='file';
-    input.accept='image/*';
-    input.onchange=function(e){
-        var file = e.target.files[0];
-        if(file){
-            var reader = new FileReader();
-            reader.onload=function(ev){
-                document.getElementById('pAv').innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                localStorage.setItem('x10_avatar',ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-
-function saveName(){
-    var name = document.getElementById('uName').value.trim()||'Creator';
-    localStorage.setItem('x10_username',name);
-    document.getElementById('pId').textContent='@'+name.toLowerCase().replace(/\s/g,'_');
-}
-
-var savedName = localStorage.getItem('x10_username');
-if(savedName){
-    document.getElementById('uName').value=savedName;
-    document.getElementById('pId').textContent='@'+savedName.toLowerCase().replace(/\s/g,'_');
-}
-var savedAvatar = localStorage.getItem('x10_avatar');
-if(savedAvatar){
-    document.getElementById('pAv').innerHTML='<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-}
-
-// =============================================
-// EXIT
-// =============================================
-var exitTimer = 0;
-window.addEventListener('popstate',function(){
-    if(exitTimer===0){
-        exitTimer=1;
-        setTimeout(function(){exitTimer=0;},500);
-    }else{
-        if(confirm('Exit X10 Downloader?')){window.close();}
-        exitTimer=0;
-    }
-});
-history.pushState({page:'home'},'');
-</script>
-</body>
-</html>
+            container.innerHTML='<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=f
