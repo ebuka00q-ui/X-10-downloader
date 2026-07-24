@@ -44,6 +44,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .history-item .h-time{color:#555;font-size:9px;margin-right:6px}
 .history-item .h-play{color:#00ff88;cursor:pointer;padding:2px 6px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
 .history-item .h-delete{color:#ff4444;cursor:pointer;padding:2px 6px;border:0;background:0;font-size:14px}
+.history-end{text-align:center;color:#555;font-size:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,0.05)}
 .download-item{background:#12121a;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .download-item .d-name{color:#66ffaa;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
 .download-item .d-play{color:#00ff88;cursor:pointer;padding:2px 8px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
@@ -107,7 +108,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 // =============================================
 // KEYS - YOUR NEW SPORTS KEY IS HERE
 // =============================================
-var SPORTS_KEY = "62382cbef7e8160cbe7de5b76ab42b31";
+var SPORTS_KEY = "dbad0770e8f760cac1cbcf239f35a960";
 var SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5i1Nda3IU1SZQ_1LLxmVSE";
 var supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 // =============================================
-// SPORTS
+// SPORTS - FETCH
 // =============================================
 function fetchSports(){
     var el1 = document.getElementById('sL');
@@ -246,6 +247,7 @@ function buildMatchHTML(matches){
 // =============================================
 if(refreshInterval){clearInterval(refreshInterval);}
 refreshInterval = setInterval(fetchSports, 30000);
+
 // =============================================
 // FAVORITES
 // =============================================
@@ -276,7 +278,7 @@ function renderFavorites(){
 }
 
 // =============================================
-// VIDEO PLAYER - ALL LINKS WORK (YouTube, TikTok, MP4, Images)
+// VIDEO PLAYER - ALL LINKS WORK
 // =============================================
 function playVideo(){
     var link = document.getElementById('vLink').value.trim();
@@ -295,170 +297,10 @@ function playVideo(){
         }
     }
     
-       // YOUTUBE
+    // YOUTUBE
     if(link.includes('youtube.com/watch')||link.includes('youtu.be/')){
         var id='';
         if(link.includes('v=')){id=link.split('v=')[1].split('&')[0];}
         else if(link.includes('youtu.be/')){id=link.split('youtu.be/')[1].split('?')[0];}
         if(id){
-            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-            return;
-        }
-    }
-    
-    // TIKTOK - embed
-    if(link.includes('tiktok.com')){
-        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-        return;
-    }
-    
-    // VIMEO
-    if(link.includes('vimeo.com')){
-        var vid = link.split('vimeo.com/')[1].split('?')[0];
-        if(vid){
-            container.innerHTML='<iframe src="https://player.vimeo.com/video/'+vid+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-            return;
-        }
-    }
-    
-    // DIRECT VIDEO (MP4, WebM, etc.)
-    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
-    for(var j=0;j<videoExts.length;j++){
-        if(link.toLowerCase().includes(videoExts[j])){
-            container.innerHTML='<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    
-    // ANY WEBSITE - try to embed
-    container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-}
-
-function toggleFS(){
-    var container = document.getElementById('pBox');
-    var iframe = container.querySelector('iframe');
-    var video = container.querySelector('video');
-    var img = container.querySelector('img');
-    if(iframe){if(iframe.requestFullscreen){iframe.requestFullscreen();}else if(iframe.webkitRequestFullscreen){iframe.webkitRequestFullscreen();}}
-    else if(video){if(video.requestFullscreen){video.requestFullscreen();}else if(video.webkitRequestFullscreen){video.webkitRequestFullscreen();}}
-    else if(img){if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-    else{if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-}
-
-function downloadFile(){
-    if(!currentLink){alert('No video to download');return;}
-    // Open link in new tab to download directly to phone
-    var a = document.createElement('a');
-    a.href = currentLink;
-    a.target = '_blank';
-    a.download = currentLink.split('/').pop() || 'video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    alert('⬇️ Download started! Check your phone\'s Downloads folder or Gallery.');
-}
-
-// =============================================
-// HISTORY - SCROLLABLE
-// =============================================
-function saveHistory(link){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    history.unshift({link:link,time:new Date().toLocaleString(),id:Date.now()});
-    if(history.length>50){history.pop();}
-    localStorage.setItem('watchHistory',JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory(){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var list = document.getElementById('hList');
-    if(!list){return;}
-    if(history.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No history</p>';return;}
-    var html='';
-    for(var i=0;i<history.length;i++){
-        var item = history[i];
-        html+='<div class=history-item><span class=h-link>'+item.link+'</span><span class=h-time>'+item.time+'</span><span class=h-play onclick="playFrom(\''+item.link+'\')">▶</span><span class=h-delete onclick="delHist('+item.id+')">✕</span></div>';
-    }
-    list.innerHTML=html;
-}
-
-function playFrom(link){document.getElementById('vLink').value=link;playVideo();}
-function delHist(id){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var newHistory = [];
-    for(var i=0;i<history.length;i++){
-        if(history[i].id!==id){newHistory.push(history[i]);}
-    }
-    localStorage.setItem('watchHistory',JSON.stringify(newHistory));
-    renderHistory();
-}
-function clearAll(){if(confirm('Delete all history?')){localStorage.removeItem('watchHistory');renderHistory();}}
-
-// =============================================
-// DOWNLOADS
-// =============================================
-function renderDownloads(){
-    var list = document.getElementById('dList');
-    if(!list){return;}
-    if(downloadedVideos.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No downloads</p>';return;}
-    var html='';
-    for(var i=0;i<downloadedVideos.length;i++){
-        var d = downloadedVideos[i];
-        html+='<div class=download-item><span class=d-name>'+d.name+'</span><span class=d-play onclick="playDownload(\''+d.link+'\')">▶</span><span class=d-delete onclick="deleteDownload('+d.id+')">✕</span></div>';
-    }
-    list.innerHTML=html;
-}
-
-function playDownload(link){document.getElementById('vLink').value=link;playVideo();switchPage('watch');}
-function deleteDownload(id){
-    var newList = [];
-    for(var i=0;i<downloadedVideos.length;i++){
-        if(downloadedVideos[i].id!==id){newList.push(downloadedVideos[i]);}
-    }
-    downloadedVideos = newList;
-    localStorage.setItem('x10_downloads',JSON.stringify(downloadedVideos));
-    renderDownloads();
-}
-
-// =============================================
-// PROFILE
-// =============================================
-function uploadPhoto(){
-    var input = document.createElement('input');
-    input.type='file';
-    input.accept='image/*';
-    input.onchange=function(e){
-        var file = e.target.files[0];
-        if(file){
-            var reader = new FileReader();
-            reader.onload=function(ev){
-                document.getElementById('pAv').innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                localStorage.setItem('x10_avatar',ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-function saveName(){
-    var name = document.getElementById('uName').value.trim()||'Creator';
-    localStorage.setItem('x10_username',name);
-    document.getElementById('pId').textContent='@'+name.toLowerCase().replace(/\s/g,'_');
-}
-var savedName = localStorage.getItem('x10_username');
-if(savedName){document.getElementById('uName').value=savedName;document.getElementById('pId').textContent='@'+savedName.toLowerCase().replace(/\s/g,'_');}
-var savedAvatar = localStorage.getItem('x10_avatar');
-if(savedAvatar){document.getElementById('pAv').innerHTML='<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
-
-// =============================================
-// EXIT
-// =============================================
-var exitTimer = 0;
-window.addEventListener('popstate',function(){
-    if(exitTimer===0){exitTimer=1;setTimeout(function(){exitTimer=0;},500);}
-    else{if(confirm('Exit X10 Downloader?')){window.close();}exitTimer=0;}
-});
-history.pushState({page:'home'},'');
-</script>
-</body>
-</html>
+            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfull
