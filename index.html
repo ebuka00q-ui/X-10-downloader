@@ -414,5 +414,160 @@ window.addEventListener('popstate',function(){
 });
 history.pushState({page:'home'},'');
 </script>
+    <!-- X 10 DOWNLOADER ADVANCED VOICE CONTROL MODULE -->
+<div id="x10-voice-hud" style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 10px 15px; border-radius: 20px; font-family: sans-serif; font-size: 14px; z-index: 9999; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+    <span id="x10-status-dot" style="width: 10px; height: 10px; background: #ff4d4d; border-radius: 50%; display: inline-block;"></span>
+    <span id="x10-status-text">X10 Voice: Off (Tap)</span>
+</div>
+
+<script>
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        console.warn("Speech Recognition is not supported on this browser.");
+        document.getElementById('x10-voice-hud').style.display = 'none';
+    } else {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        let isListeningForCommand = false;
+        let mediaStream = null; 
+        const statusDot = document.getElementById('x10-status-dot');
+        const statusText = document.getElementById('x10-status-text');
+
+        // Tap the bubble to turn voice engine on
+        document.getElementById('x10-voice-hud').onclick = () => {
+            try {
+                recognition.start();
+                statusDot.style.background = '#ffa500';
+                statusText.innerText = 'Say "Hey X10"...';
+            } catch (e) {
+                console.log("Recognition already active");
+            }
+        };
+
+        recognition.onstart = () => {
+            statusDot.style.background = '#ffa500';
+            statusText.innerText = 'Say "Hey X10"...';
+        };
+
+        recognition.onresult = async (event) => {
+            const lastResultIndex = event.results.length - 1;
+            const speechText = event.results[lastResultIndex][0].transcript.toLowerCase().trim();
+            console.log("X10 Heard: " + speechText);
+
+            // 1. Wake Phrase: "Hey X 10" or "Hey X10"
+            if (speechText.includes("hey x10") || speechText.includes("hey x 10")) {
+                isListeningForCommand = true;
+                statusDot.style.background = '#00ff7f';
+                statusText.innerText = 'X10 Listening...';
+                speakFeedback("X10 ready.");
+                return;
+            }
+
+            // 2. Command Processing Mode
+            if (isListeningForCommand) {
+                isListeningForCommand = false; // Reset to sleep until next wake word
+                statusDot.style.background = '#ffa500';
+                statusText.innerText = 'Say "Hey X10"...';
+
+                // --- COMMAND: HOME ---
+                if (speechText.includes("home") || speechText.includes("go home")) {
+                    speakFeedback("Switching to home screen");
+                    switchPanel('home');
+                }
+                // --- COMMAND: WATCH SECTION ---
+                else if (speechText.includes("watch") || speechText.includes("go to watch")) {
+                    speakFeedback("Switching to watch section");
+                    switchPanel('watch');
+                }
+                // --- COMMAND: HISTORY SECTION ---
+                else if (speechText.includes("history") || speechText.includes("show me the history")) {
+                    speakFeedback("Opening your history");
+                    switchPanel('history');
+                }
+                // --- COMMAND: FLASHLIGHT ON ---
+                else if (speechText.includes("turn on flashlight") || speechText.includes("light on")) {
+                    speakFeedback("Flashlight on");
+                    await controlFlashlight(true);
+                }
+                // --- COMMAND: FLASHLIGHT OFF ---
+                else if (speechText.includes("turn off flashlight") || speechText.includes("light off")) {
+                    speakFeedback("Flashlight off");
+                    await controlFlashlight(false);
+                }
+                // --- COMMAND: EXIT APP (Go to idle phone screen) ---
+                else if (speechText.includes("take me out") || speechText.includes("exit app") || speechText.includes("leave app")) {
+                    speakFeedback("Exiting app");
+                    setTimeout(() => {
+                        window.location.href = "about:blank"; // Minimizes/clears view to idle screen
+                    }, 1000);
+                }
+                else {
+                    speakFeedback("Command not recognized.");
+                }
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Speech recognition error", event.error);
+        };
+
+        recognition.onend = () => {
+            try {
+                recognition.start();
+            } catch (e) {
+                // Keep active
+            }
+        };
+
+        // Panel Switcher Helper
+        function switchPanel(panelName) {
+            const panels = document.querySelectorAll('.app-panel, .panel, section, div[id*="section"], div[id*="panel"]');
+            panels.forEach(panel => {
+                if(panel.id && panel.id.toLowerCase().includes(panelName)) {
+                    panel.style.display = 'block';
+                } else if(panel.id && (panel.id.includes('home') || panel.id.includes('watch') || panel.id.includes('history'))) {
+                    panel.style.display = 'none';
+                }
+            });
+
+            if (window.appNavigate && typeof window.appNavigate === 'function') {
+                window.appNavigate(panelName);
+            }
+        }
+
+        function speakFeedback(message) {
+            statusText.innerText = message;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        async function controlFlashlight(turnOn) {
+            try {
+                if (turnOn) {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' }
+                    });
+                    const track = mediaStream.getVideoTracks()[0];
+                    await track.applyConstraints({ advanced: [{ torch: true }] });
+                } else {
+                    if (mediaStream) {
+                        mediaStream.getTracks().forEach(track => track.stop());
+                        mediaStream = null;
+                    }
+                }
+            } catch (err) {
+                console.log("Flashlight error: ", err);
+            }
+        }
+    }
+</script>
+    
 </body>
 </html>
