@@ -644,4 +644,17 @@ function saveName(){
 var savedName = localStorage.getItem('x10_username');
 if(savedName){document.getElementById('uName').value=savedName;document.getElementById('pId').textContent='@'+savedName.toLowerCase().replace(/\s/g,'_');}
 var savedAvatar = localStorage.getItem('x10_avatar');
-if(savedAvatar){document.getElementById('pAv').innerHTML='<img src="'+savedAvatar+'" style="width:100%;height:100%;bor
+if(savedAvatar){document.getElementById('pAv').innerHTML='<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
+
+// =============================================
+// EXIT
+// =============================================
+var exitTimer = 0;
+window.addEventListener('popstate',function(){
+    if(exitTimer===0){exitTimer=1;setTimeout(function(){exitTimer=0;},500);}
+    else{if(confirm('Exit X10 Downloader?')){window.close();}exitTimer=0;}
+});
+history.pushState({page:'home'},'');
+</script>
+</body>
+</html>
