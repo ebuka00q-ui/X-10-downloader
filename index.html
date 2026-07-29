@@ -33,14 +33,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .di input:focus{border-color:#00ff88}
 .di button{padding:10px 16px;border-radius:10px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;font-size:13px}
 .player-box{width:100%;border-radius:10px;margin-top:8px;background:#0d0d15;border:1px solid rgba(0,255,136,0.1);overflow:hidden;min-height:250px;display:flex;align-items:center;justify-content:center;position:relative}
-.player-box video,.player-box iframe,.player-box img{width:100%;border:none;border-radius:8px;display:block;max-height:500px;background:#000}
+.player-box video,.player-box iframe,.player-box img{width:100%;border:none;border-radius:8px;display:block;max-height:400px;background:#000}
 .player-box img{object-fit:contain}
-.player-box iframe{height:500px}
+.player-box iframe{height:350px}
 .fs-btn{position:absolute;bottom:70px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:16px;cursor:pointer;z-index:10}
 .dl-btn{position:absolute;bottom:20px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:14px;cursor:pointer;z-index:10}
 .history-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-bottom:20px;max-height:300px;overflow-y:auto}
 .history-item{background:#12121a;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center}
-.history-item .h-link{color:#ff0000;font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.history-item .h-link{color:#ff0000;font-size:5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
 .history-item .h-time{color:#555;font-size:9px;margin-right:6px}
 .history-item .h-play{color:#00ff88;cursor:pointer;padding:2px 6px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
 .history-item .h-delete{color:#ff4444;cursor:pointer;padding:2px 6px;border:0;background:0;font-size:14px}
@@ -98,12 +98,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <body>
 <div id=app>
 <div class=hdr><span class=hdr-t>⬇️ X10</span><div class=hdr-r><div class=hdr-a id=hAcct>👤</div></div></div>
-<div class=stabs id=stabs><span class="stab active" id=stabMale onclick="switchGender('male')">MEN</span><span class=stab id=stabFemale onclick="switchGender('female')">WOMEN</span></div>
+<div class=stabs id=stabs><span class="stab active" id=stabMale onclick="switchGender('male')">MEN</span><span class=stab id=stabFemale onclick="switchGender('female')"></span></div>
 <div class=cnt>
 <div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
 <div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>⚽ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
 <div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p></div></div>
-<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div class=history-list id=hList></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:11px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div class=history-list id=hList></div>
 <h3 style=color:#66ffaa;font-size:13px;margin-top:12px;>⬇️ Downloads</h3><div id=dList><p style=color:#555;font-size:11px;>No downloads</p></div></div>
 <div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick=uploadPhoto()>👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange=saveName()></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
