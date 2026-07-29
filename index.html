@@ -274,9 +274,17 @@ function buildMatchHTML(matches){
 // =============================================
 // AUTO REFRESH - 30 SECONDS
 // =============================================
-if(refreshInterval){clearInterval(refreshInterval);}
-refreshInterval = setInterval(fetchSports, 30000);
+if (refreshInterval) {
+    clearInterval(refreshInterval);
+}
 
+refreshInterval = setInterval(async () => {
+    const scrollY = window.scrollY;
+
+    await fetchSports();
+
+    window.scrollTo(0, scrollY);
+}, 30000);
 // =============================================
 // MATCH DETAIL WITH PITCH VIEW - SOFASCORE STYLE
 // =============================================
