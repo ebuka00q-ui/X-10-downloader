@@ -16,10 +16,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,136,0.15)}
 .hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#66ffaa,#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr-r{display:flex;align-items:center;gap:12px}
-.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ffffff,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
+.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
 .stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(0,255,136,0.08)}
 .stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
-.stab.active{color:#00ff88;border-bottom-color:#000000}
+.stab.active{color:#00ff88;border-bottom-color:#00ff88}
 .cnt{flex:1;overflow:hidden;position:relative}
 .page{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
 .page.active{display:block}
@@ -29,7 +29,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .nav-item.active{color:#00ff88}
 .nav-item.active .nic{text-shadow:0 0 30px rgba(0,255,136,0.4)}
 .di{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.di input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,255,136,0.2);background:#000000;color:#fff;font-size:40px;outline:0;min-width:180px}
+.di input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,255,136,0.2);background:#12121a;color:#fff;font-size:13px;outline:0;min-width:180px}
 .di input:focus{border-color:#00ff88}
 .di button{padding:10px 16px;border-radius:10px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;font-size:13px}
 .player-box{width:100%;border-radius:10px;margin-top:8px;background:#0d0d15;border:1px solid rgba(0,255,136,0.1);overflow:hidden;min-height:250px;display:flex;align-items:center;justify-content:center;position:relative}
@@ -40,7 +40,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 .dl-btn{position:absolute;bottom:20px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:14px;cursor:pointer;z-index:10}
 .history-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-bottom:20px;max-height:300px;overflow-y:auto}
 .history-item{background:#12121a;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center}
-.history-item .h-link{color:#ff0000;font-size:5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.history-item .h-link{color:#66ffaa;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
 .history-item .h-time{color:#555;font-size:9px;margin-right:6px}
 .history-item .h-play{color:#00ff88;cursor:pointer;padding:2px 6px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
 .history-item .h-delete{color:#ff4444;cursor:pointer;padding:2px 6px;border:0;background:0;font-size:14px}
@@ -98,12 +98,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;heigh
 <body>
 <div id=app>
 <div class=hdr><span class=hdr-t>⬇️ X10</span><div class=hdr-r><div class=hdr-a id=hAcct>👤</div></div></div>
-<div class=stabs id=stabs><span class="stab active" id=stabMale onclick="switchGender('male')">MEN</span><span class=stab id=stabFemale onclick="switchGender('female')"></span></div>
+<div class=stabs id=stabs><span class="stab active" id=stabMale onclick="switchGender('male')">MEN</span><span class=stab id=stabFemale onclick="switchGender('female')">WOMEN</span></div>
 <div class=cnt>
 <div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
 <div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>⚽ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
 <div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p></div></div>
-<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:11px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div class=history-list id=hList></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div class=history-list id=hList></div>
 <h3 style=color:#66ffaa;font-size:13px;margin-top:12px;>⬇️ Downloads</h3><div id=dList><p style=color:#555;font-size:11px;>No downloads</p></div></div>
 <div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick=uploadPhoto()>👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange=saveName()></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div></div>
 </div>
@@ -284,377 +284,4 @@ function openMatchDetail(id){
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a0f;z-index:1000;overflow-y:auto;padding:16px;max-width:500px;margin:0 auto;right:0;';
     overlay.id = 'matchDetailOverlay';
-    overlay.innerHTML = '<div style=display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.1);><span style=color:#66ffaa;font-size:16px;font-weight:700;>⚽ Match Details</span><button onclick="this.parentElement.parentElement.remove()" style=background:0;border:0;color:#ff4444;font-size:24px;cursor:pointer;>✕</button></div><div id=matchDetailContent><p style=color:#555;font-size:13px;text-align:center;padding:20px;>Loading...</p></div>';
-    document.body.appendChild(overlay);
-    
-    fetch('https://v3.football.api-sports.io/fixtures?id='+id,{
-        headers:{'x-rapidapi-key':SPORTS_KEY,'x-rapidapi-host':'v3.football.api-sports.io'}
-    })
-    .then(function(r){return r.json();})
-    .then(function(data){
-        if(data.response&&data.response[0]){
-            var m = data.response[0];
-            var html = '';
-            
-            // HEADER - Score with time
-            html+='<div style=text-align:center;padding:8px 0;>';
-            html+='<div style=display:flex;justify-content:space-between;align-items:center;padding:4px 0;>';
-            html+='<div style=font-size:14px;font-weight:600;color:#fff;>'+m.teams.home.name+'</div>';
-            html+='<div style=font-size:32px;font-weight:900;color:#00ff88;>'+(m.goals.home||0)+'-'+(m.goals.away||0)+'</div>';
-            html+='<div style=font-size:14px;font-weight:600;color:#fff;>'+m.teams.away.name+'</div>';
-            html+='</div>';
-            var st = (m.fixture.status.short==='FT'||m.fixture.status.short==='AET')?'✅ Finished':'🔴 LIVE';
-            var elapsed = m.fixture.status.elapsed || '';
-            html+='<div style=color:#66aa88;font-size:13px;>'+st+' '+(elapsed?elapsed+"'":'')+'</div>';
-            html+='</div>';
-            
-            // GOAL SCORERS
-            if(m.events&&m.events.length){
-                var goals = m.events.filter(function(e){return e.type==='Goal' || e.type==='Penalty' || e.type==='OwnGoal';});
-                if(goals.length){
-                    html+='<div style=display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.08);>';
-                    html+='<div style=font-size:11px;color:#66aa88;>HOME</div>';
-                    html+='<div style=font-size:11px;color:#66aa88;>AWAY</div>';
-                    html+='</div>';
-                    html+='<div style=display:flex;justify-content:space-between;padding:4px 0;>';
-                    var homeGoals = goals.filter(function(e){return e.team.id === m.teams.home.id;});
-                    var awayGoals = goals.filter(function(e){return e.team.id === m.teams.away.id;});
-                    html+='<div style=font-size:11px;color:#fff;>';
-                    for(var h=0;h<homeGoals.length;h++){
-                        html+=homeGoals[h].player.name+' '+homeGoals[h].time.elapsed+"'<br>";
-                    }
-                    html+='</div>';
-                    html+='<div style=font-size:11px;color:#fff;text-align:right;>';
-                    for(var a=0;a<awayGoals.length;a++){
-                        html+=awayGoals[a].player.name+' '+awayGoals[a].time.elapsed+"'<br>";
-                    }
-                    html+='</div>';
-                    html+='</div>';
-                }
-            }
-            
-            // TABS
-            html+='<div style=display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.08);overflow-x:auto;>';
-            var tabs = ['Details','Odds','Lineups','Matches','Media'];
-            for(var t=0;t<tabs.length;t++){
-                var active = tabs[t]==='Lineups'?'active':'';
-                html+='<span style=font-size:11px;color:'+(active?'#00ff88':'#555')+';cursor:pointer;border-bottom:'+(active?'2px solid #00ff88':'none')+';padding:4px 0;>'+tabs[t]+'</span>';
-            }
-            html+='</div>';
-            
-            // PITCH VIEW
-            if(m.lineups&&m.lineups.length){
-                for(var j=0;j<m.lineups.length;j++){
-                    var l = m.lineups[j];
-                    html+='<div style=background:linear-gradient(145deg,#0a2a1a,#05100a);border-radius:12px;padding:12px;margin:8px 0;border:1px solid rgba(0,255,136,0.1);>';
-                    
-                    // Team header
-                    html+='<div style=display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;>';
-                    html+='<span style=color:#66ffaa;font-size:14px;font-weight:600;>'+l.team.name+'</span>';
-                    html+='<span style=color:#66aa88;font-size:11px;>'+l.formation+'</span>';
-                    html+='</div>';
-                    
-                    // Pitch Toggles
-                    html+='<div style=display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;>';
-                    var toggleTypes = ['Performance','Nationality','Age','Market value','Height'];
-                    for(var p=0;p<toggleTypes.length;p++){
-                        html+='<span style=padding:2px 8px;border-radius:10px;border:1px solid rgba(0,255,136,0.15);font-size:8px;color:'+(p===0?'#00ff88':'#888')+';cursor:pointer;>'+(p===0?'⭐ ':'')+toggleTypes[p]+'</span>';
-                    }
-                    html+='</div>';
-                    
-                    // Sofascore logo
-                    html+='<div style=text-align:center;color:#66aa88;font-size:10px;margin-bottom:4px;>Sofascore</div>';
-                    
-                    // Pitch - 11 players in formation
-                    html+='<div style=display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px 0;>';
-                    if(l.startXI&&l.startXI.length){
-                        for(var k=0;k<l.startXI.length;k++){
-                            var player = l.startXI[k];
-                            var playerData = player.player;
-                            html+='<div style=text-align:center;background:rgba(0,255,136,0.04);border-radius:6px;padding:4px 2px;border:1px solid rgba(0,255,136,0.05);>';
-                            html+='<div style=color:#00ff88;font-size:9px;font-weight:700;>#'+playerData.number+'</div>';
-                            // Player photo placeholder
-                            html+='<div style=width:24px;height:24px;border-radius:50%;background:rgba(0,255,136,0.1);margin:2px auto;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;>👤</div>';
-                            html+='<div style=font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;>'+playerData.name+'</div>';
-                            html+='<div style=font-size:7px;color:#66aa88;>'+(playerData.age||'')+' yrs</div>';
-                            html+='</div>';
-                        }
-                    }
-                    html+='</div>';
-                    
-                    // Coach
-                    html+='<div style=color:#66aa88;font-size:10px;padding:4px 0;border-top:1px solid rgba(0,255,136,0.05);text-align:center;>👨‍🏫 Coach: '+l.coach.name+'</div>';
-                    
-                    // Substitutions
-                    html+='<div style=margin-top:6px;><div style=color:#66aa88;font-size:9px;>🔄 Substitutions</div>';
-                    if(l.substitutes&&l.substitutes.length){
-                        for(var s=0;s<l.substitutes.length;s++){
-                            var sub = l.substitutes[s];
-                            var cardIcon = '';
-                            if(sub.player.card && sub.player.card === 'Red'){cardIcon='🟥 ';}
-                            else if(sub.player.card && sub.player.card === 'Yellow'){cardIcon='🟨 ';}
-                            html+='<div style=display:flex;justify-content:space-between;padding:2px 0;font-size:9px;color:#ccc;border-bottom:1px solid rgba(255,255,255,0.03);><span>'+cardIcon+sub.player.name+'</span><span>#'+sub.player.number+'</span></div>';
-                        }
-                    }else{
-                        html+='<div style=color:#555;font-size:9px;>No substitutes</div>';
-                    }
-                    html+='</div>';
-                    html+='</div>';
-                }
-            }else{
-                html+='<div style=color:#555;font-size:12px;text-align:center;padding:20px;>No lineup data available for this match</div>';
-            }
-            
-            document.getElementById('matchDetailContent').innerHTML = html;
-        }
-    })
-    .catch(function(){
-        document.getElementById('matchDetailContent').innerHTML='<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>Error loading details</p>';
-    });
-}
-
-// =============================================
-// FAVORITES
-// =============================================
-function toggleFavorite(id,name,logo){
-    var found=-1;
-    for(var i=0;i<favorites.length;i++){
-        if(favorites[i].id===id){found=i;break;}
-    }
-    if(found>-1){favorites.splice(found,1);}
-    else{favorites.push({id:id,name:name,logo:logo});}
-    localStorage.setItem('x10_favorites',JSON.stringify(favorites));
-    fetchSports();
-    renderFavorites();
-}
-
-function renderFavorites(){
-    var list = document.getElementById('favList');
-    if(!list){return;}
-    if(favorites.length===0){
-        list.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p>';
-        return;
-    }
-    var html='';
-    for(var i=0;i<favorites.length;i++){
-        var f = favorites[i];
-        html+='<div class=fav-match>';
-        html+='<div class=fav-team><img src="'+(f.logo||'')+'" onerror="this.style.display=\'none\'"><span>'+f.name+'</span></div>';
-        
-        var teamMatches = [];
-        for(var j=0;j<allMatches.length;j++){
-            var m = allMatches[j];
-            if(m.teams.home.id===f.id || m.teams.away.id===f.id){
-                teamMatches.push(m);
-            }
-        }
-        if(teamMatches.length>0){
-            for(var k=0;k<teamMatches.length;k++){
-                var tm = teamMatches[k];
-                var matchDate = new Date(tm.fixture.date);
-                var dateStr = matchDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-                var timeStr = matchDate.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-                var status = tm.fixture.status.short;
-                var statusText = status==='FT'?'✅ FT':status==='1H'||status==='HT'?'🔴 LIVE':'⏰';
-                var scoreText = (tm.goals.home||0)+'-'+(tm.goals.away||0);
-                var isToday = matchDate.toDateString() === new Date().toDateString();
-                var displayDate = isToday ? 'Today' : dateStr;
-                html+='<div style=display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;>';
-                html+='<span style=color:#66aa88;font-size:11px;>'+tm.teams.home.name+' vs '+tm.teams.away.name+'</span>';
-                html+='<span style=color:#66aa88;font-size:11px;>'+displayDate+' '+timeStr+' '+statusText+'</span>';
-                html+='<span style=color:#00ff88;font-size:12px;font-weight:600;>'+scoreText+'</span>';
-                html+='</div>';
-            }
-        }else{
-            html+='<div style=color:#555;font-size:11px;padding:4px 0;>No upcoming matches</div>';
-        }
-        html+='</div>';
-    }
-    list.innerHTML=html;
-}
-
-// =============================================
-// VIDEO PLAYER
-// =============================================
-function playVideo(){
-    var link = document.getElementById('vLink').value.trim();
-    var container = document.getElementById('pBox');
-    if(!link){alert('Please paste a link');return;}
-    currentLink = link;
-    container.innerHTML='';
-    saveHistory(link);
-    
-    var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
-    for(var i=0;i<imgExts.length;i++){
-        if(link.toLowerCase().includes(imgExts[i])){
-            container.innerHTML='<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    if(link.includes('youtube.com/watch')||link.includes('youtu.be/')){
-        var id='';
-        if(link.includes('v=')){id=link.split('v=')[1].split('&')[0];}
-        else if(link.includes('youtu.be/')){id=link.split('youtu.be/')[1].split('?')[0];}
-        if(id){
-            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-            return;
-        }
-    }
-    if(link.includes('tiktok.com')){
-        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-        return;
-    }
-    if(link.includes('vimeo.com')){
-        var vid = link.split('vimeo.com/')[1].split('?')[0];
-        if(vid){
-            container.innerHTML='<iframe src="https://player.vimeo.com/video/'+vid+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-            return;
-        }
-    }
-    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
-    for(var j=0;j<videoExts.length;j++){
-        if(link.toLowerCase().includes(videoExts[j])){
-            container.innerHTML='<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
-            return;
-        }
-    }
-    container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
-}
-
-function toggleFS(){
-    var container = document.getElementById('pBox');
-    var iframe = container.querySelector('iframe');
-    var video = container.querySelector('video');
-    var img = container.querySelector('img');
-    if(iframe){if(iframe.requestFullscreen){iframe.requestFullscreen();}else if(iframe.webkitRequestFullscreen){iframe.webkitRequestFullscreen();}}
-    else if(video){if(video.requestFullscreen){video.requestFullscreen();}else if(video.webkitRequestFullscreen){video.webkitRequestFullscreen();}}
-    else if(img){if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-    else{if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
-}
-
-function downloadFile(){
-    if(!currentLink){alert('No video to download');return;}
-    var a = document.createElement('a');
-    a.href = currentLink;
-    a.target = '_blank';
-    a.download = currentLink.split('/').pop() || 'video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    alert('⬇️ Download started! Check your phone\'s Downloads folder.');
-}
-
-// =============================================
-// HISTORY
-// =============================================
-function saveHistory(link){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    history = history.filter(function(item){return item.link !== link;});
-    history.unshift({link:link,time:new Date().toLocaleString(),id:Date.now()});
-    if(history.length>50){history.pop();}
-    localStorage.setItem('watchHistory',JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory(){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var list = document.getElementById('hList');
-    if(!list){return;}
-    if(history.length===0){
-        list.innerHTML='<p style=color:#555;font-size:11px;>No history</p>';
-        return;
-    }
-    var html='';
-    for(var i=0;i<history.length;i++){
-        var item = history[i];
-        html+='<div class=history-item><span class=h-link>'+item.link+'</span><span class=h-time>'+item.time+'</span><span class=h-play onclick="playFrom(\''+item.link+'\')">▶</span><span class=h-delete onclick="delHist('+item.id+')">✕</span></div>';
-    }
-    html+='<div class=history-end>— End of history —</div>';
-    list.innerHTML=html;
-}
-
-function playFrom(link){document.getElementById('vLink').value=link;playVideo();}
-function delHist(id){
-    var history = JSON.parse(localStorage.getItem('watchHistory')||'[]');
-    var newHistory = [];
-    for(var i=0;i<history.length;i++){
-        if(history[i].id!==id){newHistory.push(history[i]);}
-    }
-    localStorage.setItem('watchHistory',JSON.stringify(newHistory));
-    renderHistory();
-}
-function clearAll(){
-    if(confirm('Delete all history?')){
-        localStorage.removeItem('watchHistory');
-        renderHistory();
-    }
-}
-
-// =============================================
-// DOWNLOADS
-// =============================================
-function renderDownloads(){
-    var list = document.getElementById('dList');
-    if(!list){return;}
-    if(downloadedVideos.length===0){list.innerHTML='<p style=color:#555;font-size:11px;>No downloads</p>';return;}
-    var html='';
-    for(var i=0;i<downloadedVideos.length;i++){
-        var d = downloadedVideos[i];
-        html+='<div class=download-item><span class=d-name>'+d.name+'</span><span class=d-play onclick="playDownload(\''+d.link+'\')">▶</span><span class=d-delete onclick="deleteDownload('+d.id+')">✕</span></div>';
-    }
-    list.innerHTML=html;
-}
-
-function playDownload(link){document.getElementById('vLink').value=link;playVideo();switchPage('watch');}
-function deleteDownload(id){
-    var newList = [];
-    for(var i=0;i<downloadedVideos.length;i++){
-        if(downloadedVideos[i].id!==id){newList.push(downloadedVideos[i]);}
-    }
-    downloadedVideos = newList;
-    localStorage.setItem('x10_downloads',JSON.stringify(downloadedVideos));
-    renderDownloads();
-}
-
-// =============================================
-// PROFILE
-// =============================================
-function uploadPhoto(){
-    var input = document.createElement('input');
-    input.type='file';
-    input.accept='image/*';
-    input.onchange=function(e){
-        var file = e.target.files[0];
-        if(file){
-            var reader = new FileReader();
-            reader.onload=function(ev){
-                document.getElementById('pAv').innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                localStorage.setItem('x10_avatar',ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-}
-function saveName(){
-    var name = document.getElementById('uName').value.trim()||'Creator';
-    localStorage.setItem('x10_username',name);
-    document.getElementById('pId').textContent='@'+name.toLowerCase().replace(/\s/g,'_');
-}
-var savedName = localStorage.getItem('x10_username');
-if(savedName){document.getElementById('uName').value=savedName;document.getElementById('pId').textContent='@'+savedName.toLowerCase().replace(/\s/g,'_');}
-var savedAvatar = localStorage.getItem('x10_avatar');
-if(savedAvatar){document.getElementById('pAv').innerHTML='<img src="'+savedAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
-
-// =============================================
-// EXIT
-// =============================================
-var exitTimer = 0;
-window.addEventListener('popstate',function(){
-    if(exitTimer===0){exitTimer=1;setTimeout(function(){exitTimer=0;},500);}
-    else{if(confirm('Exit X10 Downloader?')){window.close();}exitTimer=0;}
-});
-history.pushState({page:'home'},'');
-</script>
-</body>
-</html>
+    overlay.innerHTML = '<div style=display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.1);><span style=color:#6
