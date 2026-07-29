@@ -284,4 +284,262 @@ function openMatchDetail(id){
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a0f;z-index:1000;overflow-y:auto;padding:16px;max-width:500px;margin:0 auto;right:0;';
     overlay.id = 'matchDetailOverlay';
-    overlay.innerHTML = '<div style=display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.1);><span style=color:#6
+    overlay.innerHTML = '<div style=display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.1);><span style=color:#66ffaa;font-size:16px;font-weight:700;>⚽ Match Details</span><button onclick="this.parentElement.parentElement.remove()" style=background:0;border:0;color:#ff4444;font-size:24px;cursor:pointer;>✕</button></div><div id=matchDetailContent><p style=color:#555;font-size:13px;text-align:center;padding:20px;>Loading...</p></div>';
+    document.body.appendChild(overlay);
+    
+    fetch('https://v3.football.api-sports.io/fixtures?id='+id,{
+        headers:{'x-rapidapi-key':SPORTS_KEY,'x-rapidapi-host':'v3.football.api-sports.io'}
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+        if(data.response&&data.response[0]){
+            var m = data.response[0];
+            var html = '';
+            
+            // HEADER - Score with time
+            html+='<div style=text-align:center;padding:8px 0;>';
+            html+='<div style=display:flex;justify-content:space-between;align-items:center;padding:4px 0;>';
+            html+='<div style=font-size:14px;font-weight:600;color:#fff;>'+m.teams.home.name+'</div>';
+            html+='<div style=font-size:32px;font-weight:900;color:#00ff88;>'+(m.goals.home||0)+'-'+(m.goals.away||0)+'</div>';
+            html+='<div style=font-size:14px;font-weight:600;color:#fff;>'+m.teams.away.name+'</div>';
+            html+='</div>';
+            var st = (m.fixture.status.short==='FT'||m.fixture.status.short==='AET')?'✅ Finished':'🔴 LIVE';
+            var elapsed = m.fixture.status.elapsed || '';
+            html+='<div style=color:#66aa88;font-size:13px;>'+st+' '+(elapsed?elapsed+"'":'')+'</div>';
+            html+='</div>';
+            
+            // GOAL SCORERS
+            if(m.events&&m.events.length){
+                var goals = m.events.filter(function(e){return e.type==='Goal' || e.type==='Penalty' || e.type==='OwnGoal';});
+                if(goals.length){
+                    html+='<div style=display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.08);>';
+                    html+='<div style=font-size:11px;color:#66aa88;>HOME</div>';
+                    html+='<div style=font-size:11px;color:#66aa88;>AWAY</div>';
+                    html+='</div>';
+                    html+='<div style=display:flex;justify-content:space-between;padding:4px 0;>';
+                    var homeGoals = goals.filter(function(e){return e.team.id === m.teams.home.id;});
+                    var awayGoals = goals.filter(function(e){return e.team.id === m.teams.away.id;});
+                    html+='<div style=font-size:11px;color:#fff;>';
+                    for(var h=0;h<homeGoals.length;h++){
+                        html+=homeGoals[h].player.name+' '+homeGoals[h].time.elapsed+"'<br>";
+                    }
+                    html+='</div>';
+                    html+='<div style=font-size:11px;color:#fff;text-align:right;>';
+                    for(var a=0;a<awayGoals.length;a++){
+                        html+=awayGoals[a].player.name+' '+awayGoals[a].time.elapsed+"'<br>";
+                    }
+                    html+='</div>';
+                    html+='</div>';
+                }
+            }
+            
+            // TABS
+            html+='<div style=display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,255,136,0.08);overflow-x:auto;>';
+            var tabs = ['Details','Odds','Lineups','Matches','Media'];
+            for(var t=0;t<tabs.length;t++){
+                var active = tabs[t]==='Lineups'?'active':'';
+                html+='<span style=font-size:11px;color:'+(active?'#00ff88':'#555')+';cursor:pointer;border-bottom:'+(active?'2px solid #00ff88':'none')+';padding:4px 0;>'+tabs[t]+'</span>';
+            }
+            html+='</div>';
+            
+            // PITCH VIEW
+            if(m.lineups&&m.lineups.length){
+                for(var j=0;j<m.lineups.length;j++){
+                    var l = m.lineups[j];
+                    html+='<div style=background:linear-gradient(145deg,#0a2a1a,#05100a);border-radius:12px;padding:12px;margin:8px 0;border:1px solid rgba(0,255,136,0.1);>';
+                    
+                    // Team header
+                    html+='<div style=display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;>';
+                    html+='<span style=color:#66ffaa;font-size:14px;font-weight:600;>'+l.team.name+'</span>';
+                    html+='<span style=color:#66aa88;font-size:11px;>'+l.formation+'</span>';
+                    html+='</div>';
+                    
+                    // Pitch Toggles
+                    html+='<div style=display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;>';
+                    var toggleTypes = ['Performance','Nationality','Age','Market value','Height'];
+                    for(var p=0;p<toggleTypes.length;p++){
+                        html+='<span style=padding:2px 8px;border-radius:10px;border:1px solid rgba(0,255,136,0.15);font-size:8px;color:'+(p===0?'#00ff88':'#888')+';cursor:pointer;>'+(p===0?'⭐ ':'')+toggleTypes[p]+'</span>';
+                    }
+                    html+='</div>';
+                    
+                    // Sofascore logo
+                    html+='<div style=text-align:center;color:#66aa88;font-size:10px;margin-bottom:4px;>Sofascore</div>';
+                    
+                    // Pitch - 11 players in formation
+                    html+='<div style=display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px 0;>';
+                    if(l.startXI&&l.startXI.length){
+                        for(var k=0;k<l.startXI.length;k++){
+                            var player = l.startXI[k];
+                            var playerData = player.player;
+                            html+='<div style=text-align:center;background:rgba(0,255,136,0.04);border-radius:6px;padding:4px 2px;border:1px solid rgba(0,255,136,0.05);>';
+                            html+='<div style=color:#00ff88;font-size:9px;font-weight:700;>#'+playerData.number+'</div>';
+                            // Player photo placeholder
+                            html+='<div style=width:24px;height:24px;border-radius:50%;background:rgba(0,255,136,0.1);margin:2px auto;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;>👤</div>';
+                            html+='<div style=font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;>'+playerData.name+'</div>';
+                            html+='<div style=font-size:7px;color:#66aa88;>'+(playerData.age||'')+' yrs</div>';
+                            html+='</div>';
+                        }
+                    }
+                    html+='</div>';
+                    
+                    // Coach
+                    html+='<div style=color:#66aa88;font-size:10px;padding:4px 0;border-top:1px solid rgba(0,255,136,0.05);text-align:center;>👨‍🏫 Coach: '+l.coach.name+'</div>';
+                    
+                    // Substitutions
+                    html+='<div style=margin-top:6px;><div style=color:#66aa88;font-size:9px;>🔄 Substitutions</div>';
+                    if(l.substitutes&&l.substitutes.length){
+                        for(var s=0;s<l.substitutes.length;s++){
+                            var sub = l.substitutes[s];
+                            var cardIcon = '';
+                            if(sub.player.card && sub.player.card === 'Red'){cardIcon='🟥 ';}
+                            else if(sub.player.card && sub.player.card === 'Yellow'){cardIcon='🟨 ';}
+                            html+='<div style=display:flex;justify-content:space-between;padding:2px 0;font-size:9px;color:#ccc;border-bottom:1px solid rgba(255,255,255,0.03);><span>'+cardIcon+sub.player.name+'</span><span>#'+sub.player.number+'</span></div>';
+                        }
+                    }else{
+                        html+='<div style=color:#555;font-size:9px;>No substitutes</div>';
+                    }
+                    html+='</div>';
+                    html+='</div>';
+                }
+            }else{
+                html+='<div style=color:#555;font-size:12px;text-align:center;padding:20px;>No lineup data available for this match</div>';
+            }
+            
+            document.getElementById('matchDetailContent').innerHTML = html;
+        }
+    })
+    .catch(function(){
+        document.getElementById('matchDetailContent').innerHTML='<p style=color:#ff4444;font-size:13px;text-align:center;padding:20px;>Error loading details</p>';
+    });
+}
+
+// =============================================
+// FAVORITES
+// =============================================
+function toggleFavorite(id,name,logo){
+    var found=-1;
+    for(var i=0;i<favorites.length;i++){
+        if(favorites[i].id===id){found=i;break;}
+    }
+    if(found>-1){favorites.splice(found,1);}
+    else{favorites.push({id:id,name:name,logo:logo});}
+    localStorage.setItem('x10_favorites',JSON.stringify(favorites));
+    fetchSports();
+    renderFavorites();
+}
+
+function renderFavorites(){
+    var list = document.getElementById('favList');
+    if(!list){return;}
+    if(favorites.length===0){
+        list.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p>';
+        return;
+    }
+    var html='';
+    for(var i=0;i<favorites.length;i++){
+        var f = favorites[i];
+        html+='<div class=fav-match>';
+        html+='<div class=fav-team><img src="'+(f.logo||'')+'" onerror="this.style.display=\'none\'"><span>'+f.name+'</span></div>';
+        
+        var teamMatches = [];
+        for(var j=0;j<allMatches.length;j++){
+            var m = allMatches[j];
+            if(m.teams.home.id===f.id || m.teams.away.id===f.id){
+                teamMatches.push(m);
+            }
+        }
+        if(teamMatches.length>0){
+            for(var k=0;k<teamMatches.length;k++){
+                var tm = teamMatches[k];
+                var matchDate = new Date(tm.fixture.date);
+                var dateStr = matchDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+                var timeStr = matchDate.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+                var status = tm.fixture.status.short;
+                var statusText = status==='FT'?'✅ FT':status==='1H'||status==='HT'?'🔴 LIVE':'⏰';
+                var scoreText = (tm.goals.home||0)+'-'+(tm.goals.away||0);
+                var isToday = matchDate.toDateString() === new Date().toDateString();
+                var displayDate = isToday ? 'Today' : dateStr;
+                html+='<div style=display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;margin-top:4px;>';
+                html+='<span style=color:#66aa88;font-size:11px;>'+tm.teams.home.name+' vs '+tm.teams.away.name+'</span>';
+                html+='<span style=color:#66aa88;font-size:11px;>'+displayDate+' '+timeStr+' '+statusText+'</span>';
+                html+='<span style=color:#00ff88;font-size:12px;font-weight:600;>'+scoreText+'</span>';
+                html+='</div>';
+            }
+        }else{
+            html+='<div style=color:#555;font-size:11px;padding:4px 0;>No upcoming matches</div>';
+        }
+        html+='</div>';
+    }
+    list.innerHTML=html;
+}
+
+// =============================================
+// VIDEO PLAYER
+// =============================================
+function playVideo(){
+    var link = document.getElementById('vLink').value.trim();
+    var container = document.getElementById('pBox');
+    if(!link){alert('Please paste a link');return;}
+    currentLink = link;
+    container.innerHTML='';
+    saveHistory(link);
+    
+    var imgExts = ['.jpg','.jpeg','.png','.gif','.webp','.svg','.bmp','.ico'];
+    for(var i=0;i<imgExts.length;i++){
+        if(link.toLowerCase().includes(imgExts[i])){
+            container.innerHTML='<img src="'+link+'" style="max-height:400px;width:100%;object-fit:contain;border-radius:8px;"><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
+            return;
+        }
+    }
+    if(link.includes('youtube.com/watch')||link.includes('youtu.be/')){
+        var id='';
+        if(link.includes('v=')){id=link.split('v=')[1].split('&')[0];}
+        else if(link.includes('youtu.be/')){id=link.split('youtu.be/')[1].split('?')[0];}
+        if(id){
+            container.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+            return;
+        }
+    }
+    if(link.includes('tiktok.com')){
+        container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+        return;
+    }
+    if(link.includes('vimeo.com')){
+        var vid = link.split('vimeo.com/')[1].split('?')[0];
+        if(vid){
+            container.innerHTML='<iframe src="https://player.vimeo.com/video/'+vid+'?autoplay=1" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+            return;
+        }
+    }
+    var videoExts = ['.mp4','.webm','.ogg','.mov','.avi','.mkv','.m3u8'];
+    for(var j=0;j<videoExts.length;j++){
+        if(link.toLowerCase().includes(videoExts[j])){
+            container.innerHTML='<video controls autoplay style="width:100%;border-radius:8px;max-height:400px;background:#000;"><source src="'+link+'"></video><button class=fs-btn onclick="toggleFS()">⛶</button><button class=dl-btn onclick="downloadFile()">⬇️</button>';
+            return;
+        }
+    }
+    container.innerHTML='<iframe src="'+link+'" allowfullscreen style="width:100%;height:350px;border:none;border-radius:8px;"></iframe><button class=fs-btn onclick="toggleFS()">⛶</button>';
+}
+
+function toggleFS(){
+    var container = document.getElementById('pBox');
+    var iframe = container.querySelector('iframe');
+    var video = container.querySelector('video');
+    var img = container.querySelector('img');
+    if(iframe){if(iframe.requestFullscreen){iframe.requestFullscreen();}else if(iframe.webkitRequestFullscreen){iframe.webkitRequestFullscreen();}}
+    else if(video){if(video.requestFullscreen){video.requestFullscreen();}else if(video.webkitRequestFullscreen){video.webkitRequestFullscreen();}}
+    else if(img){if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
+    else{if(container.requestFullscreen){container.requestFullscreen();}else if(container.webkitRequestFullscreen){container.webkitRequestFullscreen();}}
+}
+
+function downloadFile(){
+    if(!currentLink){alert('No video to download');return;}
+    var a = document.createElement('a');
+    a.href = currentLink;
+    a.target = '_blank';
+    a.download = currentLink.split('/').pop() || 'video.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alert('⬇️ Download started! Check your phone\'s Downloads folder.');
+}
