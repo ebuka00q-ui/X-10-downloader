@@ -1,1 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>X10 Downloader</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
+#app{height:100vh;display:flex;flex-direction:column;background:#0a0a0f;max-width:500px;margin:0 auto;width:100%}
+.hdr{padding:10px 16px 8px;background:#0a0a0f;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,136,0.15)}
+.hdr-t{font-size:18px;font-weight:900;background:linear-gradient(135deg,#66ffaa,#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-r{display:flex;align-items:center;gap:12px}
+.hdr-a{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;border:2px solid rgba(0,255,136,0.3)}
+.stabs{display:flex;padding:8px 16px 0;gap:20px;background:#0a0a0f;border-bottom:1px solid rgba(0,255,136,0.08)}
+.stab{padding:8px 4px 12px;font-size:13px;font-weight:600;color:#555;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
+.stab.active{color:#00ff88;border-bottom-color:#00ff88}
+.cnt{flex:1;overflow:hidden;position:relative}
+.page{display:none;height:100%;overflow-y:auto;padding:12px;scroll-behavior:smooth}
+.page.active{display:block}
+.bnav{display:flex;justify-content:space-around;align-items:center;padding:8px 0 14px;background:rgba(10,10,15,0.97);border-top:1px solid rgba(0,255,136,0.12);flex-shrink:0;position:sticky;bottom:0;z-index:20}
+.nav-item{display:flex;flex-direction:column;align-items:center;color:#555;font-size:9px;cursor:pointer;padding:4px 12px;border:0;background:0;font-family:inherit}
+.nav-item .nic{font-size:20px}
+.nav-item.active{color:#00ff88}
+.nav-item.active .nic{text-shadow:0 0 30px rgba(0,255,136,0.4)}
+.di{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.di input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,255,136,0.2);background:#12121a;color:#fff;font-size:13px;outline:0;min-width:180px}
+.di input:focus{border-color:#00ff88}
+.di button{padding:10px 16px;border-radius:10px;border:0;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;font-size:13px}
+.player-box{width:100%;border-radius:10px;margin-top:8px;background:#0d0d15;border:1px solid rgba(0,255,136,0.1);overflow:hidden;min-height:250px;display:flex;align-items:center;justify-content:center;position:relative}
+.player-box video,.player-box iframe,.player-box img{width:100%;border:none;border-radius:8px;display:block;max-height:400px;background:#000}
+.player-box img{object-fit:contain}
+.player-box iframe{height:350px}
+.fs-btn{position:absolute;bottom:70px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:16px;cursor:pointer;z-index:10}
+.dl-btn{position:absolute;bottom:20px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,136,0.3);border-radius:50%;width:36px;height:36px;color:#00ff88;font-size:14px;cursor:pointer;z-index:10}
+.history-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-bottom:20px;max-height:300px;overflow-y:auto}
+.history-item{background:#12121a;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center}
+.history-item .h-link{color:#66ffaa;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.history-item .h-time{color:#555;font-size:9px;margin-right:6px}
+.history-item .h-play{color:#00ff88;cursor:pointer;padding:2px 6px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
+.history-item .h-delete{color:#ff4444;cursor:pointer;padding:2px 6px;border:0;background:0;font-size:14px}
+.history-end{text-align:center;color:#555;font-size:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,0.05)}
+.download-item{background:#12121a;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,136,0.08);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.download-item .d-name{color:#66ffaa;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.download-item .d-play{color:#00ff88;cursor:pointer;padding:2px 8px;border:1px solid rgba(0,255,136,0.2);border-radius:4px;font-size:10px;margin-right:4px}
+.download-item .d-delete{color:#ff4444;cursor:pointer;padding:2px 6px;border:0;background:0;font-size:14px}
+.ph{text-align:center;padding:12px 0}
+.pa{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#0a0a0f;border:3px solid rgba(0,255,136,0.25);cursor:pointer;overflow:hidden}
+.pa img{width:100%;height:100%;object-fit:cover}
+.pn{font-size:17px;font-weight:700;color:#66ffaa}
+.pn input{background:#12121a;border:1px solid rgba(0,255,136,0.2);border-radius:6px;padding:4px 10px;color:#66ffaa;font-size:15px;font-weight:700;text-align:center;outline:0;width:180px}
+.ps{display:flex;justify-content:center;gap:16px;margin:10px 0}
+.ps div{text-align:center}
+.ps .n{font-size:15px;font-weight:700;color:#00ff88}
+.ps .lbl{font-size:9px;color:#66aa88;text-transform:uppercase}
+.cd{background:linear-gradient(145deg,#0a1a0f,#05100a);border-radius:12px;padding:12px;margin-top:10px;border:2px solid rgba(0,255,136,0.1)}
+.cd h3{color:#66ffaa;font-size:12px;margin-bottom:8px;text-transform:uppercase}
+.cd .sr{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.cd .sr:last-child{border-bottom:0}
+.cd .sl{color:#66aa88;font-size:12px}
+.cd .sv{color:#00ff88;font-weight:700;font-size:12px}
+.sport-card{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(0,255,136,0.08);cursor:pointer}
+.sport-card:hover{border-color:rgba(0,255,136,0.3)}
+.sport-card .teams{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.sport-card .team{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#fff}
+.sport-card .team img{width:24px;height:24px;border-radius:50%;object-fit:contain;background:#fff;padding:2px}
+.sport-card .score{font-size:24px;font-weight:900;color:#00ff88}
+.sport-card .status{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:12px;display:inline-block}
+.status-live{color:#00ff88;border:1px solid #00ff88;animation:pulse 1.5s infinite}
+.status-finished{color:#ff4444;border:1px solid #ff4444}
+.status-scheduled{color:#ffaa00;border:1px solid #ffaa00}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sport-card .league{color:#66aa88;font-size:10px;margin-bottom:4px}
+.sport-card .goals{color:#66aa88;font-size:10px;margin-top:4px;text-align:center}
+.sport-card .goals span{color:#fff;font-weight:600}
+.sport-card .actions{display:flex;gap:10px;margin-top:6px;justify-content:space-between;align-items:center}
+.sport-card .actions .stars{display:flex;gap:10px}
+.sport-card .actions button{background:0;border:0;color:#888;font-size:18px;cursor:pointer;padding:2px 6px}
+.sport-card .actions button:hover{color:#00ff88}
+.fav-match{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,204,0,0.15)}
+.fav-match .fav-team{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.fav-match .fav-team span{color:#ffcc00;font-weight:700;font-size:14px}
+.fav-match .fav-team img{width:28px;height:28px;border-radius:50%;object-fit:contain;background:#fff;padding:2px}
+.fav-match .fav-date{color:#ffcc00;font-size:11px;font-weight:600}
+.fav-match .fav-time{color:#66aa88;font-size:10px}
+.fav-match .fav-result{color:#00ff88;font-size:13px;font-weight:600}
+.fav-match .fav-vs{color:#66aa88;font-size:11px}
+.league-table{background:linear-gradient(145deg,#12121a,#0d0d15);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(0,255,136,0.08)}
+.league-table .row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.league-table .row .pos{color:#66aa88;width:20px}
+.league-table .row .team{color:#fff;flex:1;display:flex;align-items:center;gap:6px}
+.league-table .row .team img{width:16px;height:16px;border-radius:50%;object-fit:contain}
+.league-table .row .pts{color:#00ff88;font-weight:700;width:25px;text-align:right}
+.league-table .header{color:#66aa88;font-weight:600;border-bottom:2px solid rgba(0,255,136,0.1)}
+.promotion{color:#00ff88}
+.relegation{color:#ff4444}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:#00ff88;border-radius:10px}
+::-webkit-scrollbar-track{background:#0a0a0f}
+</style>
+</head>
+<body>
+<div id=app>
+<div class=hdr><span class=hdr-t>⬇️ X10</span><div class=hdr-r><div class=hdr-a onclick="openX10AI()">AI</div></div></div>
+<div class=stabs id=stabs><span class="stab active" id=stabMale onclick="switchGender('male')">MEN</span><span class=stab id=stabFemale onclick="switchGender('female')">WOMEN</span></div>
+<div class=cnt>
+<div class="page active" id=page-home><div id=sL><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading matches...</p></div></div>
+<div class=page id=page-sports><h2 style=color:#66ffaa;font-size:15px;>⚽ Sports</h2><div id=sL2><p style=color:#555;font-size:13px;text-align:center;padding:40px 0;>⚽ Loading...</p></div></div>
+<div class=page id=page-fav><h2 style=color:#66ffaa;font-size:15px;>⭐ Favorites</h2><div id=favList><p style=color:#555;font-size:13px;text-align:center;padding:20px;>⭐ No favorites</p></div></div>
+<div class=page id=page-watch><h2 style=color:#66ffaa;font-size:15px;>▶️ Watch Any Link</h2><p style=color:#66aa88;font-size:11px;>YouTube • TikTok • MP4 • Images</p><div class=di><input type=text placeholder="Paste any link..." id=vLink><button onclick=playVideo()>▶</button></div><div class=player-box id=pBox><div style=color:#555;font-size:13px;text-align:center;padding:20px;>⬇️ Paste any link</div></div><div style=display:flex;justify-content:space-between;margin-top:12px;><h3 style=color:#66ffaa;font-size:13px;>📜 History</h3><button onclick=clearAll() style=color:#ff4444;background:0;border:0;font-size:11px;cursor:pointer;>Clear</button></div><div class=history-list id=hList></div>
+<h3 style=color:#66ffaa;font-size:13px;margin-top:12px;>⬇️ Downloads</h3><div id=dList><p style=color:#555;font-size:11px;>No downloads</p></div></div>
+<div class=page id=page-acct><div class=ph><div class=pa id=pAv onclick=uploadPhoto()>👤</div><div class=pn><input type=text id=uName value=Creator maxlength=20 onchange=saveName()></div><div style=color:#66aa88;font-size:11px; id=pId>@x10_creator</div></div><div class=ps><div><div class=n id=fCount>100M</div><div class=lbl>Followers</div></div><div><div class=n id=pCount>47</div><div class=lbl>Posts</div></div><div><div class=n id=rCount>12</div><div class=lbl>Reposts</div></div></div><div class=cd><h3>📊 Dashboard</h3><div class=sr><span class=sl>Total Users</span><span class=sv id=tUsers>1</span></div><div class=sr><span class=sl>Total Posts</span><span class=sv id=tPosts>47</span></div></div>
+<div style=margin-top:12px;><button onclick="openX10AI()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a0a0f;font-weight:700;cursor:pointer;font-size:14px;">🤖 Open X10 AI</button></div></div>
+</div>
+<div class=bnav>
+<div class="nav-item active" id=navHome onclick="switchPage('home')"><span class=nic>🏠</span>Home</div>
+<div class=nav-item id=navSports onclick="switchPage('sports')"><span class=nic>⚽</span>Sports</div>
+<div class=nav-item id=navFav onclick="switchPage('fav')"><span class=nic>⭐</span>Favs</div>
+<div class=nav-item id=navWatch onclick="switchPage('watch')"><span class=nic>▶️</span>Watch</div>
+<div class=nav-item id=navAcct onclick="switchPage('acct')"><span class=nic>👤</span>Account</div>
+</div>
+</div>
+<script>
+// =============================================
+// STATE
+// =============================================
+var favorites = JSON.parse(localStorage.getItem('x10_favorites') || '[]');
+var currentLink = '';
+var downloadedVideos = JSON.parse(localStorage.getItem('x10_downloads') || '[]');
+var allMatches = [];
 
+// =============================================
+// NAVIGATION
+// =============================================
+function switchPage(tab){
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    var target = document.getElementById('page-'+tab);
+    if(target){target.classList.add('active');}
+    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+    var navMap = {home:'navHome',sports:'navSports',fav:'navFav',watch:'navWatch',acct:'navAcct'};
+    var tn = document.getElementById(navMap[tab]);
+    if(tn){tn.classList.add('active');}
+    var stabs = document.getElementById('stabs');
+    if(tab==='home'||tab==='sports'){stabs.style.display='flex';}else{stabs.style.display='none';}
+    if(tab==='home'||tab==='sports'){fetchSports();}
+    if(tab==='fav'){renderFavorites();}
+}
+
+function switchGender(g){
+    document.querySelectorAll('.stab').forEach(function(s){s.classList.remove('active');});
+    document.querySelector('.stab[onclick="switchGender(\''+g+'\')"]').classList.add('active');
+    fetchSports();
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    fetchSports();
+    renderHistory();
+    renderFavorites();
+    renderDownloads();
+    console.log('🚀 X10 Ready!');
+});
+
+// =============================================
+// SPORTS - FETCH
+// =============================================
+function fetchSports(){
+    var el1 = document.getElementById('sL');
+    var el2 = document.getElementById('sL2');
+    if(el1){el1.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';}
+    if(el2){el2.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';}
+    var d = new Date();
+    var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    fetch('https://v3.football.api-sports.io/fixtures?date='+ds,{
+        headers:{'x-rapidapi-key':"bc0d3b3d4f96c5214c6ff87b305186f9",'x-rapidapi-host':'v3.football.api-sports.io'}
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+        if(!data.response||data.response.length===0){
+            var msg='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No matches today</p>';
+            if(el1){el1.innerHTML=msg;}
+            if(el2){el2.innerHTML=msg;}
+            return;
+        }
+        allMatches = data.response;
+        renderMatches(allMatches);
+    })
+    .catch(function(){
+        var msg='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ Loading...</p>';
+        if(el1){el1.innerHTML=msg;}
+        if(el2){el2.innerHTML=msg;}
+    });
+}
+
+function renderMatches(matches){
+    var el1 = document.getElementById('sL');
+    var el2 = document.getElementById('sL2');
+    var clubMatches = [];
+    var tourMatches = [];
+    for(var k=0;k<matches.length;k++){
+        var m = matches[k];
+        var isTour = (m.league.type === 'cup' || m.league.name.includes('World Cup') || m.league.name.includes('Champions League') || m.league.name.includes('Europa') || m.league.name.includes('Copa') || m.league.name.includes('FA Cup'));
+        if(isTour){tourMatches.push(m);}else{clubMatches.push(m);}
+    }
+    if(el1){
+        if(clubMatches.length===0){el1.innerHTML='<p style=color:#555;font-size:13px;text-align:center;padding:20px;>⚽ No club matches today</p>';}
+        else{el1.innerHTML = buildMatchHTML(clubMatches);}
+    }
+    if(el2){
+        if(tourMatches.length===0){
+            el2.innerHTML = buildLeagueTable();
+        }else{
+            el2.innerHTML = buildMatchHTML(tourMatches);}
+    }
+    renderFavorites();
+}
+
+function buildMatchHTML(matches){
+    var html = '';
+    for(var i=0;i<matches.length;i++){
+        var m = matches[i];
+        var s = m.fixture.status.short;
+        var sc = 'status-scheduled';
+        var st = '⏰ Scheduled';
+        var timeDisplay = '';
+        if(s==='FT'||s==='AET'||s==='PEN'){sc='status-finished';st='✅ Finished';timeDisplay='FT';}
+        else if(s==='1H'||s==='HT'||s==='2H'||s==='ET'||s==='P'||s==='LIVE'){sc='status-live';st='🔴 LIVE';timeDisplay=(m.fixture.status.elapsed||'0')+"'";}
+        else{var matchTime = new Date(m.fixture.date);timeDisplay = matchTime.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});}
+        var hl = m.teams.home.logo||'', al = m.teams.away.logo||'';
+        var homeId = m.teams.home.id, awayId = m.teams.away.id;
+        var homeFav=false,awayFav=false;
+        for(var j=0;j<favorites.length;j++){
+            if(favorites[j].id===homeId){homeFav=true;}
+            if(favorites[j].id===awayId){awayFav=true;}
+        }
+        var goalsHtml = '';
+        if(m.events && m.events.length){
+            var goals = m.events.filter(function(e){return e.type==='Goal' || e.type==='Penalty' || e.type==='OwnGoal';});
+            if(goals.length){
+                goalsHtml = '<div class=goals>';
+                for(var g=0;g<goals.length;g++){
+                    var scorer = goals[g].player.name || 'Unknown';
+                    var assist = goals[g].assist ? goals[g].assist.name : '';
+                    goalsHtml += '<span>⚽ '+scorer+(assist?' (assist: '+assist+')':'')+'</span> ';
+                }
+                goalsHtml += '</div>';
+            }
+        }
+        html+='<div class=sport-card onclick="openMatchDetail('+m.fixture.id+')">';
+        html+='<div class=league>🏆 '+m.league.name+'</div>';
+        html+='<div class=teams>';
+        html+='<div class=team>'+(hl?'<img src="'+hl+'">':'')+'<span>'+m.teams.home.name+'</span></div>';
+        html+='<div class=score>'+(m.goals.home||0)+'-'+(m.goals.away||0)+'</div>';
+        html+='<div class=team>'+(al?'<img src="'+al+'">':'')+'<span>'+m.teams.away.name+'</span></div>';
+        html+='</div>';
+        html+='<div style=display:flex;justify-content:space-between;margin-top:4px;>';
+        html+='<span class=status style="'+sc+'">'+st+'</span>';
+        html+='<span style=color:#555;font-size:10px;>'+timeDisplay+'</span>';
+        html+='</div>';
+        html+=goalsHtml;
+        html+='<div class=actions>';
+        html+='<div class=stars>';
+        html+='<button onclick="event.stopPropagation();toggleFavorite('+homeId+',\''+m.teams.home.name+'\',\''+hl+'\')" title="Favorite '+m.teams.home.name+'">'+(homeFav?'⭐':'☆')+'</button>';
+        html+='<button onclick="event.stopPropagation();toggleFavorite('+awayId+',\''+m.teams.away.name+'\',\''+al+'\')" title="Favorite '+m.teams.away.name+'">'+(awayFav?'⭐':'☆')+'</button>';
+        html+='</div>';
+        html+='<button onclick="event.stopPropagation();alert(\'🔔 Alert set!\')">🔔</button>';
+        html+='</div>';
+        html+='</div>';
+    }
+    return html;
+}
+
+function buildLeagueTable(){
+    var html = '<h3 style=color:#66ffaa;font-size:13px;margin-bottom:8px;>🏆 League Tables</h3><div class=league-table><div class="row header"><span class=pos>#</span><span class=team>Team</span><span class=pts>Pts</span></div>';
+    var teams = [
+        {name:'Liverpool',pts:45,pos:1},{name:'Man City',pts:42,pos:2},{name:'Arsen
