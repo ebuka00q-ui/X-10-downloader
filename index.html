@@ -4,31 +4,35 @@
 
 <meta charset="UTF-8">
 <meta name="viewport"
-content="width=device-width,initial-scale=1.0,user-scalable=no">
+content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
 <title>X10 Downloader</title>
 
 <link rel="manifest" href="manifest.json">
 
-<meta name="theme-color" content="#00ff88">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#00ff66">
 
 <link rel="stylesheet" href="style.css">
+
+<link
+href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<script
+src="https://kit.fontawesome.com/6b5f0d4e4d.js"
+crossorigin="anonymous"></script>
 
 </head>
 
 <body>
 
-<div id="loader">
+<!-- Splash Screen -->
 
-<div class="logo">
+<div id="splash">
 
-<img src="https://i.imgur.com/8Km9tLL.png">
+<img
+src="assets/logo.png"
+class="splash-logo">
 
 <h1>X10 Downloader</h1>
 
@@ -36,179 +40,121 @@ content="width=device-width,initial-scale=1.0,user-scalable=no">
 
 </div>
 
-</div>
+<!-- App -->
 
-<div id="app">
+<div id="app" class="hidden">
+
+<!-- Header -->
 
 <header>
 
-<div class="top">
+<div class="profileButton" id="quickAI">
 
-<div>
-
-<h2>X10 Downloader</h2>
-
-<p id="todayDate"></p>
+<i class="fas fa-user-astronaut"></i>
 
 </div>
 
-<button id="notificationBtn">
+<div class="title">
 
-🔔
+X10 Downloader
 
-<span id="notifyCount">0</span>
+</div>
+
+<div class="headerButtons">
+
+<button>
+
+<i class="fas fa-search"></i>
 
 </button>
 
-</div>
+<button>
 
-<div class="search">
+<i class="fas fa-bell"></i>
 
-<input
-
-type="text"
-
-id="search"
-
-placeholder="Search club or league...">
+</button>
 
 </div>
 
 </header>
 
+<!-- Pages -->
+
 <main id="pages">
 
 <section id="homePage" class="page active">
-
-<h3>Today's Matches</h3>
-
-<div id="todayMatches"></div>
 
 </section>
 
 <section id="sportsPage" class="page">
 
-<h3>Competitions</h3>
-
-<div id="leagueList"></div>
-
 </section>
 
 <section id="favoritePage" class="page">
-
-<div class="pageTitle">
-
-<h3>Favorites</h3>
-
-</div>
-
-<div id="favoriteList"></div>
 
 </section>
 
 <section id="watchPage" class="page">
 
-<h3>Watch</h3>
-
-<input
-
-id="videoLink"
-
-placeholder="Paste video link...">
-
-<button id="watchButton">
-
-Watch
-
-</button>
-
-<div id="player"></div>
-
 </section>
 
-<section id="profilePage" class="page">
-
-<div class="profile">
-
-<div id="avatar">
-
-👤
-
-</div>
-
-<h2 id="username">
-
-Creator
-
-</h2>
-
-<p id="userid">
-
-@creator
-
-</p>
-
-<button id="editProfile">
-
-Edit Profile
-
-</button>
-
-</div>
+<section id="accountPage" class="page">
 
 </section>
 
 </main>
 
+<!-- Bottom Navigation -->
+
 <nav>
 
-<button class="nav active"
-
+<button
+class="nav active"
 data-page="homePage">
 
-🏠
+<i class="fas fa-house"></i>
 
 <span>Home</span>
 
 </button>
 
-<button class="nav"
-
+<button
+class="nav"
 data-page="sportsPage">
 
-⚽
+<i class="fas fa-futbol"></i>
 
 <span>Sports</span>
 
 </button>
 
-<button class="nav"
-
+<button
+class="nav"
 data-page="favoritePage">
 
-⭐
+<i class="fas fa-heart"></i>
 
 <span>Favorites</span>
 
 </button>
 
-<button class="nav"
-
+<button
+class="nav"
 data-page="watchPage">
 
-▶️
+<i class="fas fa-play-circle"></i>
 
 <span>Watch</span>
 
 </button>
 
-<button class="nav"
+<button
+class="nav"
+data-page="accountPage">
 
-data-page="profilePage">
+<i class="fas fa-user"></i>
 
-👤
-
-<span>Profile</span>
+<span>Account</span>
 
 </button>
 
@@ -220,4 +166,4 @@ data-page="profilePage">
 
 </body>
 
-</html>
+  </html>
