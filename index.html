@@ -4,73 +4,100 @@
 
 <meta charset="UTF-8">
 <meta name="viewport"
-content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-<title>X10 Downloader</title>
+<title>X-10 Downloader</title>
+
+<meta name="theme-color" content="#121212">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
 <link rel="manifest" href="manifest.json">
-
-<meta name="theme-color" content="#00ff66">
-
 <link rel="stylesheet" href="style.css">
-
-<link
-href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-rel="stylesheet">
-
-<script
-src="https://kit.fontawesome.com/6b5f0d4e4d.js"
-crossorigin="anonymous"></script>
 
 </head>
 
 <body>
 
+<!-- ========================= -->
 <!-- Splash Screen -->
+<!-- ========================= -->
 
-<div id="splash">
+<div id="splash-screen">
 
-<img
-src="assets/logo.png"
-class="splash-logo">
+    <div class="logo-wrapper">
 
-<h1>X10 Downloader</h1>
+        <img
+        id="app-logo"
+        src=""
+        alt="X-10 Downloader">
 
-<p>Loading Football...</p>
+        <h1>X-10 Downloader</h1>
+
+        <p>
+            Everything dynamic.
+        </p>
+
+    </div>
 
 </div>
 
+<!-- ========================= -->
 <!-- App -->
+<!-- ========================= -->
 
-<div id="app" class="hidden">
+<div id="app">
 
+<!-- ========================= -->
 <!-- Header -->
+<!-- ========================= -->
 
-<header>
+<header id="top-header">
 
-<div class="profileButton" id="quickAI">
+<div class="header-left">
 
-<i class="fas fa-user-astronaut"></i>
+<button id="menuButton">
 
-</div>
-
-<div class="title">
-
-X10 Downloader
-
-</div>
-
-<div class="headerButtons">
-
-<button>
-
-<i class="fas fa-search"></i>
+☰
 
 </button>
 
-<button>
+</div>
 
-<i class="fas fa-bell"></i>
+<div class="header-center">
+
+<h2>
+
+X-10 Downloader
+
+</h2>
+
+</div>
+
+<div class="header-right">
+
+<button id="searchButton">
+
+🔍
+
+</button>
+
+<button id="notificationButton">
+
+🔔
+
+<span id="notificationCount">
+
+0
+
+</span>
+
+</button>
+
+<button id="quickAIButton">
+
+🤖
 
 </button>
 
@@ -78,92 +105,15 @@ X10 Downloader
 
 </header>
 
-<!-- Pages -->
+<!-- ========================= -->
+<!-- Main Content -->
+<!-- ========================= -->
 
-<main id="pages">
+<main id="main-content">
 
-<section id="homePage" class="page active">
-
-</section>
-
-<section id="sportsPage" class="page">
-
-</section>
-
-<section id="favoritePage" class="page">
-
-</section>
-
-<section id="watchPage" class="page">
-
-</section>
-
-<section id="accountPage" class="page">
+<section
+id="page-container">
 
 </section>
 
 </main>
-
-<!-- Bottom Navigation -->
-
-<nav>
-
-<button
-class="nav active"
-data-page="homePage">
-
-<i class="fas fa-house"></i>
-
-<span>Home</span>
-
-</button>
-
-<button
-class="nav"
-data-page="sportsPage">
-
-<i class="fas fa-futbol"></i>
-
-<span>Sports</span>
-
-</button>
-
-<button
-class="nav"
-data-page="favoritePage">
-
-<i class="fas fa-heart"></i>
-
-<span>Favorites</span>
-
-</button>
-
-<button
-class="nav"
-data-page="watchPage">
-
-<i class="fas fa-play-circle"></i>
-
-<span>Watch</span>
-
-</button>
-
-<button
-class="nav"
-data-page="accountPage">
-
-<i class="fas fa-user"></i>
-
-<span>Account</span>
-
-</button>
-
-</nav>
-
-</div>
-
-<script src="app.js"></script>
-
-</body>
-
-  </html>
