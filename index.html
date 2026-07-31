@@ -1077,3 +1077,308 @@
           <div id="account-offline" class="offline-indicator">📡 No internet</div>
           <div id="account-server-error" class="server-error">⚠️ Server error</div>
             </div>
+<!-- Profile Section -->
+        <section id="profile-section" aria-label="Profile">
+          <div id="profile-card">
+            <img src="#" alt="Profile picture" id="profile-picture" />
+            <span id="username">@user</span>
+            <span id="display-name">Football Fan</span>
+            <span id="profile-email">user@example.com</span>
+            <span id="membership-status">Free Member</span>
+            <span id="joined-date">Joined: Jan 2025</span>
+            <button id="edit-profile-btn">✏️ Edit Profile</button>
+          </div>
+        </section>
+
+        <!-- Quick Settings -->
+        <section id="quick-settings" aria-label="Quick settings">
+          <div class="quick-setting-card" id="settings-appearance">🎨 Appearance</div>
+          <div class="quick-setting-card" id="settings-language">🌍 Language</div>
+          <div class="quick-setting-card" id="settings-notifications">🔔 Notifications</div>
+          <div class="quick-setting-card" id="settings-downloads">📥 Downloads</div>
+          <div class="quick-setting-card" id="settings-watch-history">📜 Watch History</div>
+          <div class="quick-setting-card" id="settings-favorites">⭐ Favorites</div>
+          <div class="quick-setting-card" id="settings-privacy">🔒 Privacy</div>
+          <div class="quick-setting-card" id="settings-security">🛡️ Security</div>
+        </section>
+
+        <!-- AI Assistant Entry -->
+        <section id="ai-entry" aria-label="AI Assistant">
+          <div id="ai-entry-card">
+            <span id="ai-entry-icon">🤖</span>
+            <h2>X-10 AI Assistant</h2>
+            <p>Your intelligent assistant for football, productivity, coding, learning and everyday conversations.</p>
+            <button id="open-ai-assistant-btn">Open AI Assistant</button>
+          </div>
+        </section>
+
+        <!-- AI Assistant -->
+        <section id="ai-assistant" aria-label="AI Assistant">
+          <div id="ai-header">
+            <h2>🤖 AI Assistant</h2>
+            <div id="ai-actions">
+              <button id="ai-new-chat">➕ New Chat</button>
+              <button id="ai-delete-chat">🗑️ Delete Chat</button>
+              <button id="ai-rename-chat">✏️ Rename Chat</button>
+              <button id="ai-search-conversations">🔍 Search</button>
+            </div>
+          </div>
+
+          <!-- Chat List -->
+          <div id="ai-chat-list">
+            <div id="ai-pinned-conversations">
+              <h4>📌 Pinned</h4>
+              <div class="chat-item pinned">Barcelona tactics</div>
+            </div>
+            <div id="ai-recent-conversations">
+              <h4>Recent</h4>
+              <div class="chat-item">Premier League analysis</div>
+              <div class="chat-item">Coding help</div>
+              <div class="chat-item">Match predictions</div>
+            </div>
+            <div id="ai-empty-conversations" class="empty-state" hidden>No conversations yet</div>
+          </div>
+
+          <!-- Chat Screen -->
+          <div id="ai-chat-screen">
+            <div id="ai-messages" aria-live="polite">
+              <div class="message user">
+                <span class="msg-content">What's the latest on Champions League?</span>
+                <span class="msg-time">10:30</span>
+              </div>
+              <div class="message assistant">
+                <span class="msg-content">⚽ Real Madrid won 2-1; Bayern drew 1-1. Memory stored.</span>
+                <span class="msg-time">10:31</span>
+                <div class="msg-actions">
+                  <button class="copy-msg">📋</button>
+                  <button class="delete-msg">✕</button>
+                  <button class="regenerate-msg">🔄</button>
+                  <button class="like-msg">👍</button>
+                  <button class="dislike-msg">👎</button>
+                  <button class="share-msg">📤</button>
+                </div>
+              </div>
+              <div class="message user">
+                <span class="msg-content">Remind me of Barcelona lineup.</span>
+                <span class="msg-time">10:32</span>
+              </div>
+              <div class="message assistant thinking">
+                <span class="msg-content">⏳ Thinking...</span>
+              </div>
+              <div class="message assistant">
+                <span class="msg-content">📋 Lineup: Ter Stegen, Cancelo, Christensen, Koundé, Balde, Gündogan, De Jong, Pedri, Lewandowski, Raphinha, Félix.</span>
+                <span class="msg-time">10:33</span>
+              </div>
+              <div class="date-separator">Today</div>
+            </div>
+
+            <!-- Chat Input -->
+            <div id="ai-chat-input-area">
+              <form id="ai-chat-form">
+                <input type="text" id="ai-chat-input" placeholder="Ask me anything..." aria-label="AI chat input" />
+                <button type="submit" id="ai-send-btn">➤</button>
+                <button type="button" id="ai-voice-btn">🎤</button>
+                <button type="button" id="ai-camera-btn">📷</button>
+                <button type="button" id="ai-gallery-btn">🖼️</button>
+                <button type="button" id="ai-file-upload-btn">📎</button>
+                <button type="button" id="ai-image-upload-btn">🖼️</button>
+                <button type="button" id="ai-doc-upload-btn">📄</button>
+                <button type="button" id="ai-stop-btn">⏹️</button>
+              </form>
+              <input type="file" id="ai-file-input" accept="image/*,.pdf,.doc,.docx,.txt,.js,.py,.html,.css" multiple hidden />
+              <input type="file" id="ai-image-input" accept="image/*" multiple hidden />
+              <input type="file" id="ai-doc-input" accept=".pdf,.doc,.docx,.txt" multiple hidden />
+              <div id="ai-attachments-preview"></div>
+            </div>
+
+            <!-- Typing & Thinking Indicators -->
+            <div id="ai-typing-indicator" hidden>User is typing...</div>
+            <div id="ai-thinking-indicator" hidden>AI is thinking...</div>
+          </div>
+
+          <!-- Memory Status -->
+          <div id="ai-memory-status">
+            <span id="memory-indicator">🧠 Memory: Connected to Supabase</span>
+            <button id="memory-toggle">Enable/Disable Memory</button>
+            <button id="memory-clear">Clear Memory</button>
+            <button id="memory-manage">Manage Memory</button>
+            <span id="memory-temp">Temporary Chat</span>
+          </div>
+
+          <!-- AI Capabilities -->
+          <section id="ai-capabilities" aria-label="AI capabilities">
+            <h4>Capabilities</h4>
+            <div class="capability-tag">💬 General</div>
+            <div class="capability-tag">⚽ Football</div>
+            <div class="capability-tag">💻 Coding</div>
+            <div class="capability-tag">✍️ Writing</div>
+            <div class="capability-tag">📐 Math</div>
+            <div class="capability-tag">🌍 Translation</div>
+            <div class="capability-tag">🖼️ Image Analysis</div>
+            <div class="capability-tag">📄 File Analysis</div>
+            <div class="capability-tag">🔬 Research</div>
+            <div class="capability-tag">💡 Brainstorming</div>
+          </section>
+
+          <!-- Code Support -->
+          <div id="ai-code-support" hidden>
+            <pre><code id="ai-code-block">// Code will appear here</code></pre>
+            <button class="copy-code">📋 Copy</button>
+            <button class="download-code">💾 Download</button>
+            <button class="expand-code">⏬ Expand</button>
+            <button class="collapse-code">⏫ Collapse</button>
+          </div>
+
+          <!-- Image Support -->
+          <div id="ai-image-support" hidden>
+            <div id="ai-image-preview"><img src="#" alt="AI image preview" /></div>
+            <div id="ai-image-analysis">Analysis placeholder</div>
+            <button class="download-image">💾 Download</button>
+          </div>
+
+          <!-- Voice Support -->
+          <div id="ai-voice-support" hidden>
+            <button id="voice-microphone">🎤</button>
+            <button id="voice-speaker">🔊</button>
+            <button id="voice-playback">▶️</button>
+            <button id="voice-interrupt">⏹️</button>
+          </div>
+
+          <!-- AI Settings -->
+          <section id="ai-settings" aria-label="AI settings">
+            <h4>AI Settings</h4>
+            <div>
+              <label>Conversation Style</label>
+              <select id="ai-conversation-style">
+                <option value="balanced">Balanced</option>
+                <option value="creative">Creative</option>
+                <option value="precise">Precise</option>
+              </select>
+            </div>
+            <div>
+              <label>Response Length</label>
+              <select id="ai-response-length">
+                <option value="short">Short</option>
+                <option value="medium" selected>Medium</option>
+                <option value="long">Long</option>
+              </select>
+            </div>
+            <div>
+              <label>Creativity</label>
+              <input type="range" id="ai-creativity" min="0" max="100" value="50" />
+            </div>
+            <div>
+              <label>Memory Settings</label>
+              <select id="ai-memory-settings">
+                <option value="enabled" selected>Enabled</option>
+                <option value="disabled">Disabled</option>
+                <option value="temporary">Temporary</option>
+              </select>
+            </div>
+            <div>
+              <label>Language</label>
+              <select id="ai-language">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+              </select>
+            </div>
+            <button id="ai-reset-btn">🔄 Reset AI</button>
+          </section>
+
+          <!-- AI Security Notice -->
+          <div id="ai-security-notice">
+            🔒 API keys are never exposed. AI communicates through secure backend endpoints.
+          </div>
+
+          <div id="ai-empty-state" class="empty-state" hidden>No AI conversations yet. Start chatting!</div>
+        </section>
+
+        <!-- ============================================================
+        SETTINGS PAGES (hidden containers)
+        ============================================================ -->
+        <div id="settings" class="hidden-page">
+          <h2>Settings</h2>
+          <div id="settings-content"></div>
+        </div>
+
+        <div id="appearance" class="hidden-page">
+          <h2>Appearance</h2>
+          <button class="theme-btn" data-theme="light">☀️ Light</button>
+          <button class="theme-btn" data-theme="dark">🌙 Dark</button>
+          <button class="theme-btn" data-theme="system">🔄 System</button>
+          <div>
+            <label>Theme Color</label>
+            <input type="color" id="theme-color-picker" value="#0a0e1a" />
+          </div>
+          <div>
+            <label>Font Size</label>
+            <select id="font-size-select">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="language" class="hidden-page">
+          <h2>Language</h2>
+          <input type="text" id="language-search" placeholder="Search languages..." />
+          <ul id="language-list">
+            <li class="lang-item" data-lang="en">English ✓</li>
+            <li class="lang-item" data-lang="es">Español</li>
+            <li class="lang-item" data-lang="fr">Français</li>
+            <li class="lang-item" data-lang="de">Deutsch</li>
+            <li class="lang-item" data-lang="it">Italiano</li>
+            <li class="lang-item" data-lang="pt">Português</li>
+          </ul>
+          <button id="lang-default">Set Default</button>
+        </div>
+
+        <div id="notifications-settings" class="hidden-page">
+          <h2>Notification Settings</h2>
+          <div><input type="checkbox" id="notif-match-start" /> Match Start Reminder</div>
+          <div><input type="checkbox" id="notif-goal" /> Goal Alerts</div>
+          <div><input type="checkbox" id="notif-fav-club" /> Favorite Club Alerts</div>
+          <div><input type="checkbox" id="notif-fav-player" /> Favorite Player Alerts</div>
+          <div><input type="checkbox" id="notif-transfer" /> Transfer Alerts</div>
+          <div><input type="checkbox" id="notif-breaking" /> Breaking News</div>
+          <div><input type="checkbox" id="notif-system" /> System Updates</div>
+          <div><input type="checkbox" id="notif-ai" /> AI Notifications</div>
+        </div>
+
+        <div id="downloads" class="hidden-page">
+          <h2>Downloads</h2>
+          <div id="downloads-list"></div>
+          <div id="download-storage">
+            <span>Storage Used: 2.4 GB</span>
+            <span>Available: 8.6 GB</span>
+            <button id="clear-downloads">🗑️ Clear All</button>
+            <button id="optimize-storage">⚡ Optimize</button>
+          </div>
+        </div>
+
+        <div id="privacy" class="hidden-page">
+          <h2>Privacy</h2>
+          <div id="privacy-policy-content">
+            <h3>Privacy Policy</h3>
+            <p>Your privacy is important to us. Data is encrypted and secure.</p>
+          </div>
+          <div id="permissions">
+            <h4>Permissions</h4>
+            <button id="manage-permissions">Manage Permissions</button>
+          </div>
+          <button id="delete-account">🗑️ Delete Account</button>
+          <button id="export-data">📤 Export Data</button>
+        </div>
+
+        <div id="about" class="hidden-page">
+          <h2>About X-10</h2>
+          <p>Version: 2.0.0</p>
+          <p>Developer: X-10 Labs</p>
+          <p>Licenses: MIT, Open Source</p>
+          <p>Open Source Credits: API-Football, TheSportsDB, Supabase</p>
+                </div>
