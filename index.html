@@ -876,3 +876,204 @@
             <button class="filter-btn" data-filter="upcoming">Upcoming</button>
           </div>
   </div>
+<!-- Empty Favorites -->
+        <div id="favorites-empty-state" class="empty-state">
+          <div class="illustration">📭</div>
+          <p>You haven't added any favorites yet.</p>
+          <button id="browse-sports-btn">Browse Sports</button>
+        </div>
+
+        <div id="favorites-no-results" class="no-results" hidden>No favorites match your search</div>
+      </section>
+
+      <!-- ============================================================
+      WATCH PAGE (Part 5)
+      ============================================================ -->
+      <section id="section-watch" aria-label="Watch">
+        <div id="watch-refresh" class="refresh-container">
+          <div id="watch-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="watch-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="watch-skeleton" class="skeleton-container">
+            <div class="skeleton-player"></div>
+            <div class="skeleton-card"></div>
+          </div>
+          <div id="watch-offline" class="offline-indicator">📡 No internet</div>
+          <div id="watch-server-error" class="server-error">⚠️ Server error</div>
+        </div>
+
+        <!-- Link Input -->
+        <section id="watch-link-input" aria-label="Enter media link">
+          <form id="watch-link-form">
+            <input type="url" id="watch-link" placeholder="Paste video, image or stream URL here..." aria-label="Media URL" />
+            <button type="button" id="watch-paste-btn">📋</button>
+            <button type="submit" id="watch-play-btn">▶ Play</button>
+            <button type="button" id="watch-clear-btn">✕</button>
+          </form>
+        </section>
+
+        <!-- Media Player -->
+        <section id="media-player" aria-label="Media player">
+          <div id="media-viewer">
+            <div id="video-player" class="media-container">
+              <video id="media-video" controls preload="metadata" poster="#">
+                <source src="#" type="video/mp4" />
+                <track kind="captions" src="#" srclang="en" label="English" />
+                Your browser does not support video playback.
+              </video>
+              <div id="video-controls">
+                <button id="play-pause-btn">⏯️</button>
+                <button id="replay-btn">⏪</button>
+                <button id="rewind-btn">⏪</button>
+                <button id="forward-btn">⏩</button>
+                <input type="range" id="progress-bar" min="0" max="100" value="0" aria-label="Progress" />
+                <span id="current-time">00:00</span>
+                <span id="total-duration">00:00</span>
+                <button id="volume-btn">🔊</button>
+                <input type="range" id="volume-slider" min="0" max="100" value="80" aria-label="Volume" />
+                <button id="fullscreen-btn">⛶</button>
+                <button id="pip-btn">📺</button>
+                <select id="playback-speed">
+                  <option value="0.5">0.5x</option>
+                  <option value="0.75">0.75x</option>
+                  <option value="1" selected>1x</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="2">2x</option>
+                </select>
+                <select id="quality-selector">
+                  <option value="auto">Auto</option>
+                  <option value="2160p">2160p</option>
+                  <option value="1440p">1440p</option>
+                  <option value="1080p">1080p</option>
+                  <option value="720p">720p</option>
+                  <option value="480p">480p</option>
+                </select>
+                <button id="next-btn">⏭️</button>
+                <button id="prev-btn">⏮️</button>
+                <div id="buffer-indicator">⏳ Buffering...</div>
+                <div id="loading-spinner">⏳ Loading...</div>
+              </div>
+            </div>
+            <div id="image-viewer" class="media-container" hidden>
+              <img src="#" alt="Image viewer" id="media-image" />
+              <div id="image-controls">
+                <button id="zoom-in-btn">🔍+</button>
+                <button id="zoom-out-btn">🔍−</button>
+                <button id="pan-btn">🖐️</button>
+                <button id="rotate-btn">🔄</button>
+                <button id="image-fullscreen-btn">⛶</button>
+                <button id="download-img-btn">💾</button>
+                <button id="share-img-btn">📤</button>
+              </div>
+            </div>
+          </div>
+          <div id="media-info">
+            <h3 id="media-title">Media Title</h3>
+            <p id="media-description">Description placeholder</p>
+            <span id="media-source">Source: unknown</span>
+            <span id="media-status">Playback status</span>
+            <span id="media-resolution">Resolution: 1080p</span>
+            <span id="media-duration">Duration: 00:00</span>
+            <span id="media-type">File type: video/mp4</span>
+          </div>
+        </section>
+
+        <!-- Football Integration Shortcuts -->
+        <section id="watch-football-integration" aria-label="Football shortcuts" hidden>
+          <button id="watch-match-details">📋 Match Details</button>
+          <button id="watch-statistics">📊 Statistics</button>
+          <button id="watch-lineups">👥 Lineups</button>
+          <button id="watch-competition">🏆 Competition</button>
+          <button id="watch-favorite">⭐ Favorite</button>
+          <button id="watch-notifications">🔔 Notifications</button>
+        </section>
+
+        <!-- Link History -->
+        <section id="watch-history" aria-label="Link history">
+          <h2>Link History</h2>
+          <div id="watch-history-controls">
+            <input type="text" id="history-search" placeholder="Search history..." />
+            <button id="history-sort-newest">Newest</button>
+            <button id="history-sort-oldest">Oldest</button>
+            <button id="history-clear-all">🗑️ Clear All</button>
+            <button id="history-delete-selected">✕ Delete Selected</button>
+          </div>
+          <div id="watch-history-list">
+            <div class="history-item" data-id="1">
+              <img src="#" alt="Thumbnail" class="thumbnail" />
+              <span class="title">Match Highlights</span>
+              <span class="url-preview">https://example.com/video</span>
+              <span class="last-opened">2 hours ago</span>
+              <button class="play-btn">▶</button>
+              <button class="delete-btn">✕</button>
+              <button class="favorite-btn">⭐</button>
+              <button class="share-btn">📤</button>
+              <button class="copy-btn">📋</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Continue Watching -->
+        <section id="watch-continue" aria-label="Continue watching">
+          <h2>Continue Watching</h2>
+          <div id="watch-continue-list">
+            <div class="continue-card" data-id="1">
+              <img src="#" alt="Thumbnail" class="thumbnail" />
+              <span class="title">Match Replay</span>
+              <span class="progress">45%</span>
+              <button class="continue-btn">▶ Continue</button>
+              <button class="start-over-btn">🔄 Start Over</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recently Played -->
+        <section id="watch-recently-played" aria-label="Recently played">
+          <h2>Recently Played</h2>
+          <div id="watch-recently-played-list"></div>
+        </section>
+
+        <!-- Saved Links -->
+        <section id="watch-saved-links" aria-label="Saved links">
+          <h2>Saved Links</h2>
+          <div id="watch-saved-links-list">
+            <div class="saved-link" data-id="1">
+              <img src="#" alt="Thumbnail" class="thumbnail" />
+              <span class="title">Saved Video</span>
+              <button class="play-btn">▶</button>
+              <button class="delete-btn">✕</button>
+              <button class="share-btn">📤</button>
+              <button class="copy-btn">📋</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Error States -->
+        <div id="watch-error-unsupported" class="error-state" hidden>Unsupported media format</div>
+        <div id="watch-error-invalid" class="error-state" hidden>Invalid link</div>
+        <div id="watch-error-broken" class="error-state" hidden>Broken link</div>
+        <div id="watch-error-removed" class="error-state" hidden>Video removed</div>
+        <div id="watch-error-blocked" class="error-state" hidden>Embedding blocked</div>
+        <div id="watch-error-network" class="error-state" hidden>Network error</div>
+        <div id="watch-error-playback" class="error-state" hidden>Playback failed</div>
+        <div id="watch-empty-state" class="empty-state" hidden>No media loaded</div>
+
+        <!-- AI-to-Watch communication hidden container -->
+        <div id="watch-ai-link-receiver" hidden data-ai-link=""></div>
+      </section>
+
+      <!-- ============================================================
+      ACCOUNT PAGE & AI ASSISTANT (Part 6)
+      ============================================================ -->
+      <section id="section-account" aria-label="Account">
+        <div id="account-refresh" class="refresh-container">
+          <div id="account-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="account-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="account-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-chat"></div>
+          </div>
+          <div id="account-offline" class="offline-indicator">📡 No internet</div>
+          <div id="account-server-error" class="server-error">⚠️ Server error</div>
+            </div>
