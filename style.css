@@ -1541,3 +1541,439 @@ h4 {
   font-size: var(--font-size-sm);
   opacity: 0.7;
    }
+/* ----- Horizontal Carousels ----- */
+.carousel {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  padding: var(--space-sm) 0;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel .carousel-item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 280px;
+  max-width: 85vw;
+}
+
+/* ----- Competition Cards ----- */
+.competition-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.competition-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.competition-card .competition-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  padding: var(--space-xs);
+}
+
+.competition-card .info {
+  flex: 1;
+}
+
+.competition-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.competition-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* ----- Club Cards ----- */
+.club-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.club-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.club-card .club-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  padding: 2px;
+}
+
+.club-card .info {
+  flex: 1;
+}
+
+.club-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.club-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* ----- Player Cards ----- */
+.player-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.player-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.player-card .player-photo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background: var(--bg-primary);
+}
+
+.player-card .info {
+  flex: 1;
+}
+
+.player-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.player-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.player-card .info .meta .club-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+
+/* ----- Continue Watching ----- */
+.watch-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-base);
+}
+
+.watch-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.watch-card .thumbnail {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--bg-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.watch-card .title {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.watch-card .last-watched {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.watch-card .actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.watch-card .actions button {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  border: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.watch-card .actions .continue-btn {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+.watch-card .actions .continue-btn:hover {
+  background: var(--accent-primary-light);
+}
+
+.watch-card .actions .start-over-btn {
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+}
+
+.watch-card .actions .delete-btn {
+  background: none;
+  color: var(--text-muted);
+}
+
+/* ----- Quick Access Section ----- */
+.quick-access {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--space-sm);
+}
+
+.quick-access .quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.quick-access .quick-item:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+
+.quick-access .quick-item:active {
+  transform: scale(0.96);
+}
+
+.quick-access .quick-item .icon {
+  font-size: var(--font-size-xl);
+}
+
+/* ============================================================
+   PART 3 — SPORTS SCREEN STYLING
+   ============================================================ */
+
+#section-sports {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+/* ----- Sports Navigation ----- */
+#sports-nav {
+  display: flex;
+  gap: var(--space-sm);
+  overflow-x: auto;
+  padding: var(--space-sm) 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+#sports-nav::-webkit-scrollbar {
+  display: none;
+}
+
+#sports-nav ul {
+  display: flex;
+  gap: var(--space-sm);
+  list-style: none;
+}
+
+#sports-nav ul li a {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  border: 1px solid var(--border-color);
+}
+
+#sports-nav ul li a:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#sports-nav ul li a.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* ----- Sports Controls (Filters & Sort) ----- */
+#sports-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+#sports-filters,
+#sports-sort {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+#sports-filters .filter-btn,
+#sports-sort .sort-btn {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#sports-filters .filter-btn:hover,
+#sports-sort .sort-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#sports-filters .filter-btn.active,
+#sports-sort .sort-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* ----- Country, League, Competition Cards ----- */
+.country-card,
+.league-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.country-card:hover,
+.league-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.country-card .country-flag,
+.league-card .league-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.country-card .info,
+.league-card .info {
+  flex: 1;
+}
+
+.country-card .info .name,
+.league-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.country-card .info .meta,
+.league-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.country-card .actions,
+.league-card .actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.country-card .actions button,
+.league-card .actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-base);
+}
+
+.country-card .actions button:hover,
+.league-card .actions button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+     }
+   
