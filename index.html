@@ -1,61 +1,286 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>X-10 Downloader V2A</title>
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>X-10 · Bible Spec</title>
+  <!-- pure semantic HTML, no CSS, no JS, no backend -->
 </head>
 <body>
-<header class="topbar">
-<button id="menuButton">☰</button>
-<h1>X-10 Downloader</h1>
-<div>
-<button id="searchButton">🔍</button>
-<button id="quickAIButton">✨</button>
-</div>
-</header>
-<aside id="sideDrawer" class="drawer">
-<h3>Menu</h3>
-<ul>
-<li>Home</li><li>Sports</li><li>Favorites</li><li>History</li><li>Notifications</li><li>Watch</li><li>Account</li>
-</ul>
-</aside>
-<div id="searchOverlay" class="hidden">
-<input placeholder="Search teams, leagues...">
-<button id="closeSearch">Close</button>
-<div id="searchResults"></div>
-</div>
-<div id="aiAssistant" class="hidden">
-<h2>X-10 AI</h2>
-<div id="aiMessages"></div>
-<input id="aiInput" placeholder="Ask AI...">
-<button id="sendAI">Send</button>
-<button id="closeAI">Close</button>
-</div>
-<main id="page-container">
-<section id="homePage">
-<h2>Today's Matches</h2>
-<div id="todayMatches"></div>
-<h2>Trending</h2>
-<div id="trendingMatches"></div>
-<h2>Live Scores</h2>
-<div id="liveMatches"></div>
-</section>
-<section id="sportsPage" class="hidden"></section>
-<section id="favoritesPage" class="hidden"></section>
-<section id="historyPage" class="hidden"></section>
-<section id="notificationsPage" class="hidden"></section>
-<section id="watchPage" class="hidden"></section>
-<section id="accountPage" class="hidden"></section>
-</main>
-<nav class="bottomNav">
-<button class="navButton active" data-page="home">Home</button>
-<button class="navButton" data-page="sports">Sports</button>
-<button class="navButton" data-page="favorites">Favorites</button>
-<button class="navButton" data-page="watch">Watch</button>
-<button class="navButton" data-page="account">Account</button>
-</nav>
-<script src="app.js"></script>
-</body></html>
+  <!-- PWA shell: master container -->
+  <div id="app-root">
+
+    <!-- ===== TOP BAR ===== -->
+    <header id="global-header" role="banner">
+      <!-- menu hamburger / drawer trigger -->
+      <button id="menu-toggle" aria-label="Open navigation menu">☰</button>
+      <!-- product logo -->
+      <div id="brand-logo">
+        <span id="logo-icon">⚡</span>
+        <span id="logo-text">X-10</span>
+      </div>
+      <!-- search entry point -->
+      <button id="search-global" aria-label="Search matches, teams, leagues">🔍</button>
+      <!-- Quick AI floating trigger (top bar) -->
+      <button id="quick-ai-trigger" aria-label="Open AI assistant">🤖</button>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="main-content">
+
+      <!-- ===== HOME SECTION ===== -->
+      <section id="section-home" aria-label="Home">
+        <h2 class="section-title">Home</h2>
+        <!-- live matches / highlights placeholder -->
+        <div class="home-carousel" id="home-carousel">
+          <article class="match-card" data-match-id="1001">
+            <span class="match-status">LIVE</span>
+            <div class="team-badge home">FC Alpha</div>
+            <div class="score">2 - 1</div>
+            <div class="team-badge away">SC Beta</div>
+          </article>
+          <article class="match-card" data-match-id="1002">
+            <span class="match-status">upcoming</span>
+            <div class="team-badge home">United XI</div>
+            <div class="score">vs</div>
+            <div class="team-badge away">City Reds</div>
+          </article>
+        </div>
+        <!-- quick shortcuts -->
+        <nav id="home-quick-nav">
+          <a href="#section-sports">⚽ Sports</a>
+          <a href="#section-favorites">⭐ Favorites</a>
+          <a href="#section-watch">📺 Watch</a>
+        </nav>
+      </section>
+
+      <!-- ===== SPORTS SECTION ===== -->
+      <section id="section-sports" aria-label="Sports">
+        <h2 class="section-title">Sports</h2>
+        <!-- league / tournament filters -->
+        <div id="sports-filter">
+          <button class="filter-option active">All</button>
+          <button class="filter-option">Football</button>
+          <button class="filter-option">Basketball</button>
+          <button class="filter-option">Tennis</button>
+        </div>
+        <!-- list of matches from API-Football (live data placeholder) -->
+        <ul id="sports-match-list">
+          <li class="sports-match-item" data-fixture="301">
+            <span class="league">Premier League</span>
+            <span class="teams">Liverpool vs Arsenal</span>
+            <span class="time">20:45</span>
+          </li>
+          <li class="sports-match-item" data-fixture="302">
+            <span class="league">La Liga</span>
+            <span class="teams">Barcelona vs Real Madrid</span>
+            <span class="time">22:00</span>
+          </li>
+          <li class="sports-match-item" data-fixture="303">
+            <span class="league">Serie A</span>
+            <span class="teams">AC Milan vs Inter</span>
+            <span class="time">19:30</span>
+          </li>
+        </ul>
+        <!-- TheSportsDB image placeholder -->
+        <div id="sports-image-zone">
+          <img src="#" alt="TheSportsDB placeholder: team/league images" id="sports-db-img" />
+          <p class="image-credit">📸 TheSportsDB</p>
+        </div>
+      </section>
+
+      <!-- ===== FAVORITES SECTION ===== -->
+      <section id="section-favorites" aria-label="Favorites">
+        <h2 class="section-title">Favorites</h2>
+        <p id="favorites-empty" class="empty-message">You have no favorites yet.</p>
+        <!-- favorite items (teams, players, leagues) -->
+        <ul id="favorites-list">
+          <li class="fav-item" data-type="team" data-id="101">⚽ FC Barcelona ⭐</li>
+          <li class="fav-item" data-type="player" data-id="202">🏀 L. James</li>
+          <li class="fav-item" data-type="league" data-id="303">🏆 Champions League</li>
+        </ul>
+      </section>
+
+      <!-- ===== WATCH SECTION ===== -->
+      <section id="section-watch" aria-label="Watch">
+        <h2 class="section-title">Watch</h2>
+        <!-- embedded / external video placeholders -->
+        <div id="watch-grid">
+          <div class="watch-thumbnail" data-stream="abc123">
+            <span class="live-badge">● LIVE</span>
+            <span class="match-title">Real Madrid vs Bayern</span>
+          </div>
+          <div class="watch-thumbnail" data-stream="def456">
+            <span class="live-badge">● LIVE</span>
+            <span class="match-title">PSG vs Dortmund</span>
+          </div>
+          <div class="watch-thumbnail" data-stream="ghi789">
+            <span class="upcoming-badge">⏱️ today</span>
+            <span class="match-title">Manchester City vs Chelsea</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ACCOUNT SECTION ===== (also appears as bottom tab) -->
+      <section id="section-account" aria-label="Account">
+        <h2 class="section-title">Account</h2>
+        <div id="account-profile">
+          <div id="avatar-placeholder">👤</div>
+          <span id="user-name">Guest User</span>
+          <span id="user-email">guest@x-10.app</span>
+        </div>
+        <nav id="account-settings">
+          <a href="#notifications">🔔 Notifications</a>
+          <a href="#history">📜 History</a>
+          <a href="#account-preferences">⚙️ Preferences</a>
+        </nav>
+      </section>
+
+      <!-- ===== HIDDEN / DETAIL PAGES (anchors) ===== -->
+      <!-- History -->
+      <section id="history" aria-label="History" class="detail-page">
+        <h2>History</h2>
+        <ul id="history-list">
+          <li>Match: Liverpool 3-1 Arsenal (watched)</li>
+          <li>Match: Barcelona 2-2 PSG (highlights)</li>
+          <li>Search: “Champions League”</li>
+        </ul>
+      </section>
+
+      <!-- Notifications -->
+      <section id="notifications" aria-label="Notifications" class="detail-page">
+        <h2>Notifications</h2>
+        <ul id="notification-list">
+          <li>🔔 Match starts in 15min: Real Madrid vs Atletico</li>
+          <li>⭐ Your favorite team scored!</li>
+          <li>📅 Reminder: upcoming derby</li>
+        </ul>
+      </section>
+
+      <!-- Search (global) -->
+      <section id="search-panel" aria-label="Search" class="detail-page">
+        <h2>Search</h2>
+        <form id="search-form" action="#" method="get">
+          <input type="text" id="search-input" placeholder="Search teams, leagues, players..." />
+          <button type="submit" id="search-submit">🔍</button>
+        </form>
+        <div id="search-results" aria-live="polite">
+          <p>Try “Manchester”, “Liga”, “Mbappé”</p>
+        </div>
+      </section>
+
+      <!-- Match Details (deep link) -->
+      <article id="match-details" aria-label="Match Details" class="detail-page">
+        <h2>Match Details</h2>
+        <div id="md-header">
+          <span class="md-league">UEFA Champions League</span>
+          <span class="md-status">⚽ LIVE</span>
+        </div>
+        <div id="md-teams">
+          <span class="md-home">FC Barcelona</span>
+          <span class="md-score">3 - 1</span>
+          <span class="md-away">Napoli</span>
+        </div>
+        <div id="md-stats">
+          <span>Possession: 58% - 42%</span>
+          <span>Shots: 14 - 8</span>
+        </div>
+        <!-- Lineups (nested) -->
+        <section id="lineups" aria-label="Lineups">
+          <h3>Lineups</h3>
+          <div class="lineup-home">
+            <h4>Barcelona (4-3-3)</h4>
+            <ul>
+              <li>1. Ter Stegen (GK)</li>
+              <li>2. Cancelo</li>
+              <li>15. Christensen</li>
+              <li>23. Koundé</li>
+              <li>3. Balde</li>
+              <li>22. Gündogan</li>
+              <li>21. De Jong</li>
+              <li>8. Pedri</li>
+              <li>9. Lewandowski</li>
+              <li>11. Raphinha</li>
+              <li>14. Félix</li>
+            </ul>
+          </div>
+          <div class="lineup-away">
+            <h4>Napoli (4-3-3)</h4>
+            <ul>
+              <li>1. Meret (GK)</li>
+              <li>22. Di Lorenzo</li>
+              <li>5. Juan Jesus</li>
+              <li>13. Rrahmani</li>
+              <li>17. Olivera</li>
+              <li>68. Lobotka</li>
+              <li>99. Anguissa</li>
+              <li>20. Zielinski</li>
+              <li>21. Politano</li>
+              <li>9. Osimhen</li>
+              <li>77. Kvaratskhelia</li>
+            </ul>
+          </div>
+        </section>
+        <!-- AI assistant integrated in match context -->
+        <aside id="match-ai-assistant" class="ai-context">
+          <span class="ai-label">🤖 AI Match Insight</span>
+          <p class="ai-suggestion">Barcelona pressing high – Napoli counter-attacks dangerous.</p>
+        </aside>
+      </article>
+
+      <!-- ===== AI ASSISTANT (GENERAL PURPOSE) ===== -->
+      <section id="ai-assistant" aria-label="AI Assistant" class="detail-page">
+        <h2>AI Assistant <span class="ai-badge">🧠</span></h2>
+        <!-- image/file placeholders -->
+        <div id="ai-upload-zone">
+          <label for="ai-file-upload" class="ai-upload-label">📎 Attach image / file</label>
+          <input type="file" id="ai-file-upload" accept="image/*,.pdf,.txt" multiple />
+          <div id="ai-file-preview"></div>
+        </div>
+        <!-- chat memory (Supabase placeholder) -->
+        <div id="ai-chat-container">
+          <div id="chat-history" aria-live="polite">
+            <div class="chat-message user">What’s the latest on Champions League?</div>
+            <div class="chat-message assistant">⚽ Real Madrid won 2-1; Bayern drew 1-1. Memory stored.</div>
+            <div class="chat-message user">Remind me of Barcelona lineup.</div>
+            <div class="chat-message assistant">📋 Stored in your preferences. Lineup: Ter Stegen, Cancelo, Christensen …</div>
+          </div>
+          <form id="ai-chat-form" action="#">
+            <input type="text" id="ai-chat-input" placeholder="Ask me anything about sports, tactics, or general..." />
+            <button type="submit" id="ai-chat-send">➤</button>
+          </form>
+          <div id="ai-memory-indicator">🧠 memory · connected to Supabase</div>
+        </div>
+        <!-- screen-share / live placeholders -->
+        <div id="ai-screen-share">
+          <span>📱 Screen share / live placeholder</span>
+          <div class="screen-preview">[ screen preview ]</div>
+        </div>
+        <!-- secret guard: never reveal secrets (text placeholder) -->
+        <p id="ai-security-notice" style="display: none;">🔒 secrets never revealed</p>
+      </section>
+
+    </main>
+
+    <!-- ===== BOTTOM TABS ===== -->
+    <footer id="bottom-tabs" role="navigation">
+      <a href="#section-home" class="tab-item active" data-tab="home">🏠 Home</a>
+      <a href="#section-sports" class="tab-item" data-tab="sports">⚽ Sports</a>
+      <a href="#section-favorites" class="tab-item" data-tab="favorites">⭐ Favorites</a>
+      <a href="#section-watch" class="tab-item" data-tab="watch">📺 Watch</a>
+      <a href="#section-account" class="tab-item" data-tab="account">👤 Account</a>
+    </footer>
+
+    <!-- hidden / additional anchors for completeness -->
+    <div id="hidden-anchors" style="display:none;">
+      <a href="#match-details">Match Details</a>
+      <a href="#lineups">Lineups</a>
+      <a href="#ai-assistant">AI Assistant</a>
+      <a href="#search-panel">Search</a>
+      <a href="#notifications">Notifications</a>
+      <a href="#history">History</a>
+    </div>
+  </div>
+  <!-- no CSS, no JS, no backend – pure semantic HTML spec -->
+</body>
+        </html>
