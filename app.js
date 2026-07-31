@@ -231,3 +231,102 @@ function renderTodayMatches(matches) {
     `).join("");
 
 }
+
+// ===============================
+// Sports
+// ===============================
+
+function loadSports() {
+
+    app.currentPage = "sports";
+
+    document.getElementById("page-container").innerHTML = `
+        <h2>Sports</h2>
+        <p>Sports page coming soon...</p>
+    `;
+
+}
+
+// ===============================
+// Favorites
+// ===============================
+
+async function loadFavorites() {
+
+    app.currentPage = "favorites";
+
+    const container = document.getElementById("page-container");
+
+    container.innerHTML = `
+        <h2>Favorites</h2>
+        <p>Loading favorites...</p>
+    `;
+
+    try {
+
+        const response = await fetch(API_BASE + "/favorites");
+
+        const data = await response.json();
+
+        if (!data.length) {
+
+            container.innerHTML = `
+                <h2>Favorites</h2>
+                <p>No favorite matches yet.</p>
+            `;
+
+            return;
+
+        }
+
+        container.innerHTML = `
+            <h2>Favorites</h2>
+            ${data.map(match => `
+                <div class="match-card">
+                    <strong>${match.home}</strong>
+                    vs
+                    <strong>${match.away}</strong>
+                </div>
+            `).join("")}
+        `;
+
+    } catch {
+
+        container.innerHTML = `
+            <h2>Favorites</h2>
+            <p>Unable to load favorites.</p>
+        `;
+
+    }
+
+}
+
+// ===============================
+// Watch
+// ===============================
+
+function loadWatch() {
+
+    app.currentPage = "watch";
+
+    document.getElementById("page-container").innerHTML = `
+        <h2>Watch</h2>
+        <p>Live streams will appear here.</p>
+    `;
+
+}
+
+// ===============================
+// Account
+// ===============================
+
+function loadAccount() {
+
+    app.currentPage = "account";
+
+    document.getElementById("page-container").innerHTML = `
+        <h2>Account</h2>
+        <p>Your profile page.</p>
+    `;
+
+}
