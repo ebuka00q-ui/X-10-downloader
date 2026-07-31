@@ -1,238 +1,206 @@
+/* =======================================
+   X-10 Downloader
+   Base Style
+======================================= */
+
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Poppins,sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+
+    width:100%;
+    height:100%;
+
+    background:#0f1117;
+
+    color:white;
+
+    font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+    overflow:hidden;
+
 }
 
 body{
-background:#090909;
-color:#fff;
-overflow:hidden;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
 }
 
-#loader{
-position:fixed;
-inset:0;
-display:flex;
-justify-content:center;
-align-items:center;
-background:#090909;
-z-index:9999;
-}
-
-.logo{
-text-align:center;
-}
-
-.logo img{
-width:90px;
-height:90px;
-border-radius:50%;
-margin-bottom:15px;
-}
-
-.logo h1{
-font-size:28px;
-color:#00ff88;
-font-weight:700;
-}
-
-.logo p{
-margin-top:10px;
-color:#999;
-}
+/* =======================================
+   Main App
+======================================= */
 
 #app{
-display:flex;
-flex-direction:column;
-height:100vh;
+
+    width:100%;
+
+    max-width:500px;
+
+    height:100vh;
+
+    background:#121212;
+
+    position:relative;
+
+    overflow:hidden;
+
 }
 
-header{
-padding:15px;
-background:#111;
-border-bottom:1px solid #1f1f1f;
+/* =======================================
+   Splash Screen
+======================================= */
+
+#splash-screen{
+
+    position:fixed;
+
+    inset:0;
+
+    background:#121212;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:9999;
+
 }
 
-.top{
-display:flex;
-justify-content:space-between;
-align-items:center;
+.logo-wrapper{
+
+    text-align:center;
+
 }
 
-.top h2{
-color:#00ff88;
+.logo-wrapper h1{
+
+    margin-top:20px;
+
+    font-size:28px;
+
+    font-weight:700;
+
 }
 
-#notificationBtn{
-background:#1b1b1b;
-border:none;
-color:white;
-font-size:20px;
-padding:10px;
-border-radius:50%;
-position:relative;
+.logo-wrapper p{
+
+    margin-top:10px;
+
+    color:#8d8d8d;
+
+    font-size:15px;
+
 }
 
-#notifyCount{
-position:absolute;
-top:-4px;
-right:-4px;
-background:red;
-color:white;
-font-size:10px;
-padding:3px 6px;
-border-radius:20px;
-display:none;
+/* =======================================
+   Header
+======================================= */
+
+#top-header{
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    right:0;
+
+    height:60px;
+
+    background:#181818;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 15px;
+
+    border-bottom:1px solid #2b2b2b;
+
+    z-index:100;
+
 }
 
-.search{
-margin-top:15px;
+.header-left,
+.header-center,
+.header-right{
+
+    display:flex;
+
+    align-items:center;
+
 }
 
-.search input{
-width:100%;
-padding:12px;
-border-radius:12px;
-border:none;
-background:#1d1d1d;
-color:white;
-outline:none;
+.header-center{
+
+    flex:1;
+
+    justify-content:center;
+
 }
 
-main{
-flex:1;
-overflow:auto;
-padding:15px;
+.header-right{
+
+    gap:10px;
+
 }
 
-.page{
-display:none;
+#top-header button{
+
+    background:none;
+
+    border:none;
+
+    color:white;
+
+    font-size:20px;
+
+    cursor:pointer;
+
 }
 
-.page.active{
-display:block;
-}
+#notificationCount{
 
-.match-card{
-background:#161616;
-border-radius:18px;
-padding:15px;
-margin-bottom:15px;
-box-shadow:0 0 15px rgba(0,0,0,.3);
-}
+    position:absolute;
 
-.match-header{
-display:flex;
-justify-content:space-between;
-margin-bottom:10px;
-font-size:13px;
-color:#aaa;
-}
+    margin-left:-8px;
 
-.teams{
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
+    margin-top:-10px;
 
-.team{
-display:flex;
-flex-direction:column;
-align-items:center;
-width:40%;
-}
+    background:red;
 
-.team img{
-width:60px;
-height:60px;
-object-fit:contain;
-}
+    color:white;
 
-.team span{
-margin-top:8px;
-font-size:13px;
-text-align:center;
-}
+    border-radius:50%;
 
-.score{
-font-size:30px;
-font-weight:700;
-color:#00ff88;
-}
+    width:18px;
 
-.match-footer{
-display:flex;
-justify-content:space-between;
-margin-top:15px;
-}
+    height:18px;
 
-.favorite-btn,
-.notify-btn{
-padding:8px 15px;
-border:none;
-border-radius:10px;
-background:#00ff88;
-color:black;
-font-weight:600;
-}
+    display:flex;
 
-.favorite-btn.active{
-background:#ffd400;
-}
+    justify-content:center;
 
-nav{
-height:70px;
-display:flex;
-justify-content:space-around;
-align-items:center;
-background:#111;
-border-top:1px solid #1f1f1f;
-}
+    align-items:center;
 
-.nav{
-background:none;
-border:none;
-color:#888;
-display:flex;
-flex-direction:column;
-align-items:center;
-font-size:11px;
-}
+    font-size:10px;
 
-.nav.active{
-color:#00ff88;
 }
-
-.nav span{
-margin-top:4px;
-}
-
-.profile{
-display:flex;
-flex-direction:column;
-align-items:center;
-margin-top:30px;
-}
-
-#avatar{
-width:120px;
-height:120px;
-border-radius:50%;
-background:#222;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:50px;
-margin-bottom:20px;
-}
-
-button{
-cursor:pointer;
-transition:.3s;
-}
-
-button:hover{
-transform:scale(1.05);
-  }
