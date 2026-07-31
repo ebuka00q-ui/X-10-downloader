@@ -204,3 +204,210 @@ body{
     font-size:10px;
 
 }
+/* =======================================
+   Main Content
+======================================= */
+
+#main-content{
+
+    position:absolute;
+
+    top:60px;
+
+    bottom:70px;
+
+    left:0;
+
+    right:0;
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+
+    background:#121212;
+
+}
+
+#page-container{
+
+    min-height:100%;
+
+    padding:15px;
+
+}
+
+/* =======================================
+   Bottom Navigation
+======================================= */
+
+#bottomNavigation{
+
+    position:absolute;
+
+    left:0;
+
+    right:0;
+
+    bottom:0;
+
+    height:70px;
+
+    background:#181818;
+
+    border-top:1px solid #2b2b2b;
+
+    display:flex;
+
+    justify-content:space-around;
+
+    align-items:center;
+
+    z-index:100;
+
+}
+
+.navButton{
+
+    flex:1;
+
+    height:100%;
+
+    border:none;
+
+    background:none;
+
+    color:#888;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    font-size:22px;
+
+}
+
+.navButton span{
+
+    font-size:11px;
+
+    margin-top:3px;
+
+}
+
+.navButton.active{
+
+    color:#00d26a;
+
+}
+
+/* =======================================
+   Drawer
+======================================= */
+
+.drawer{
+
+    position:fixed;
+
+    top:0;
+
+    left:-280px;
+
+    width:280px;
+
+    height:100%;
+
+    background:#1b1b1b;
+
+    transition:.3s;
+
+    z-index:300;
+
+    overflow:auto;
+
+}
+
+.drawer.open{
+
+    left:0;
+
+}
+
+.drawer-header{
+
+    padding:30px 20px;
+
+    border-bottom:1px solid #333;
+
+}
+
+.drawer-header h2{
+
+    color:#00d26a;
+
+}
+
+.drawer-header p{
+
+    color:#888;
+
+    margin-top:8px;
+
+}
+
+.drawer-item{
+
+    width:100%;
+
+    border:none;
+
+    background:none;
+
+    color:white;
+
+    padding:18px 20px;
+
+    text-align:left;
+
+    font-size:15px;
+
+    cursor:pointer;
+
+    border-bottom:1px solid #252525;
+
+}
+
+.drawer-item:hover{
+
+    background:#252525;
+
+}
+
+/* =======================================
+   Overlay
+======================================= */
+
+.overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.85);
+
+    z-index:400;
+
+}
+
+.hidden{
+
+    display:none;
+
+}
