@@ -616,3 +616,263 @@
             </article>
           </div>
         </section
+<!-- Upcoming Fixtures -->
+        <section id="sports-upcoming-fixtures" aria-label="Upcoming fixtures">
+          <h2>Upcoming Fixtures</h2>
+          <div id="sports-upcoming-fixtures-list">
+            <article class="fixture-card" data-match="2003">
+              <span class="date">2026-08-02</span>
+              <span class="time">18:30</span>
+              <span class="competition">Bundesliga</span>
+              <div class="teams">
+                <div class="home">
+                  <img src="#" alt="Home badge" class="club-badge" />
+                  <span class="home-name">RB Leipzig</span>
+                </div>
+                <div class="away">
+                  <img src="#" alt="Away badge" class="club-badge" />
+                  <span class="away-name">Borussia M'gladbach</span>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="favorite-btn">⭐</button>
+                <button class="notify-btn">🔔</button>
+                <button class="watch-btn">▶</button>
+                <button class="stats-btn">📊</button>
+                <button class="lineup-btn">📋</button>
+                <button class="details-btn">ℹ️</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Standings -->
+        <section id="sports-standings" aria-label="Standings">
+          <h2>Standings</h2>
+          <div id="standings-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Club</th>
+                  <th>P</th>
+                  <th>W</th>
+                  <th>D</th>
+                  <th>L</th>
+                  <th>GF</th>
+                  <th>GA</th>
+                  <th>GD</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody id="standings-body">
+                <tr>
+                  <td>1</td>
+                  <td><img src="#" alt="Club badge" class="club-badge" /> Liverpool</td>
+                  <td>38</td>
+                  <td>28</td>
+                  <td>8</td>
+                  <td>2</td>
+                  <td>85</td>
+                  <td>30</td>
+                  <td>+55</td>
+                  <td>92</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Statistics containers -->
+        <section id="sports-statistics" aria-label="Statistics">
+          <h2>Statistics</h2>
+          <div id="stats-container">
+            <div class="stat-item"><span class="stat-label">Possession</span><span class="stat-value">58%</span></div>
+            <div class="stat-item"><span class="stat-label">Shots</span><span class="stat-value">14</span></div>
+            <div class="stat-item"><span class="stat-label">Shots on Target</span><span class="stat-value">6</span></div>
+            <div class="stat-item"><span class="stat-label">Corners</span><span class="stat-value">5</span></div>
+            <div class="stat-item"><span class="stat-label">Yellow Cards</span><span class="stat-value">2</span></div>
+            <div class="stat-item"><span class="stat-label">Red Cards</span><span class="stat-value">0</span></div>
+            <div class="stat-item"><span class="stat-label">Fouls</span><span class="stat-value">12</span></div>
+            <div class="stat-item"><span class="stat-label">Offsides</span><span class="stat-value">3</span></div>
+            <div class="stat-item"><span class="stat-label">Expected Goals</span><span class="stat-value">1.8</span></div>
+            <div class="stat-item"><span class="stat-label">Pass Accuracy</span><span class="stat-value">82%</span></div>
+          </div>
+        </section>
+
+        <!-- Sports Search -->
+        <section id="sports-search" aria-label="Search in sports">
+          <h2>Search in Sports</h2>
+          <form id="sports-search-form">
+            <input type="text" id="sports-search-input" placeholder="Search players, clubs, competitions..." />
+            <button type="submit">🔍</button>
+          </form>
+          <div id="sports-search-suggestions"></div>
+          <div id="sports-search-results"></div>
+          <div id="sports-search-loading" class="loading-state">Searching...</div>
+          <div id="sports-search-empty" class="empty-state">No results</div>
+        </section>
+
+        <div id="sports-empty-state" class="empty-state" hidden>No sports content available</div>
+        <div id="sports-no-results" class="no-results" hidden>No results found</div>
+      </section>
+
+      <!-- ============================================================
+      FAVORITES PAGE (Part 4)
+      ============================================================ -->
+      <section id="section-favorites" aria-label="Favorites">
+        <div id="favorites-refresh" class="refresh-container">
+          <div id="favorites-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="favorites-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="favorites-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>
+          <div id="favorites-last-updated" class="last-updated">Last updated: just now</div>
+          <div id="favorites-offline" class="offline-indicator">📡 No internet</div>
+          <div id="favorites-server-error" class="server-error">⚠️ Server error</div>
+        </div>
+
+        <!-- Favorite Categories -->
+        <div id="favorites-categories">
+          <button class="category-toggle" data-category="clubs">⚪ Clubs</button>
+          <button class="category-toggle" data-category="national-teams">🏆 National Teams</button>
+          <button class="category-toggle" data-category="competitions">📋 Competitions</button>
+          <button class="category-toggle" data-category="players">👤 Players</button>
+          <button class="category-toggle" data-category="countries">🌍 Countries</button>
+        </div>
+
+        <!-- Favorite Clubs -->
+        <section id="favorite-clubs" class="favorite-category">
+          <h2>Favorite Clubs</h2>
+          <div id="favorite-clubs-list">
+            <div class="favorite-club-card" data-club="1">
+              <img src="#" alt="Club badge" class="club-badge" />
+              <span class="club-name">FC Barcelona</span>
+              <span class="league">La Liga</span>
+              <img src="#" alt="Country flag" class="country-flag" />
+              <div class="next-match">
+                <span class="match-time">22:00</span>
+                <span class="match-status">Upcoming</span>
+                <button class="watch-btn">▶</button>
+                <button class="stats-btn">📊</button>
+                <button class="lineup-btn">📋</button>
+                <button class="details-btn">ℹ️</button>
+              </div>
+              <button class="notify-btn">🔔</button>
+              <button class="remove-btn">✕</button>
+              <button class="share-btn">📤</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Favorite National Teams -->
+        <section id="favorite-national-teams" class="favorite-category">
+          <h2>Favorite National Teams</h2>
+          <div id="favorite-national-teams-list">
+            <div class="favorite-national-card" data-team="1">
+              <img src="#" alt="Team badge" class="team-badge" />
+              <img src="#" alt="Country flag" class="country-flag" />
+              <span class="team-name">Brazil</span>
+              <div class="next-match">
+                <span class="match-time">20:00</span>
+                <span class="match-date">2026-08-03</span>
+                <button class="watch-btn">▶</button>
+                <button class="stats-btn">📊</button>
+                <button class="lineup-btn">📋</button>
+              </div>
+              <button class="remove-btn">✕</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Favorite Competitions -->
+        <section id="favorite-competitions" class="favorite-category">
+          <h2>Favorite Competitions</h2>
+          <div id="favorite-competitions-list">
+            <div class="favorite-competition-card" data-competition="1">
+              <img src="#" alt="Competition logo" class="competition-logo" />
+              <span class="competition-name">Champions League</span>
+              <span class="country">Europe</span>
+              <span class="season">2025/26</span>
+              <span class="match-count">12 matches</span>
+              <button class="watch-btn">▶</button>
+              <button class="open-btn">📂</button>
+              <button class="stats-btn">📊</button>
+              <button class="remove-btn">✕</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Favorite Players -->
+        <section id="favorite-players" class="favorite-category">
+          <h2>Favorite Players</h2>
+          <div id="favorite-players-list">
+            <div class="favorite-player-card" data-player="1">
+              <img src="#" alt="Player photo" class="player-photo" />
+              <span class="player-name">L. Messi</span>
+              <img src="#" alt="Club badge" class="club-badge" />
+              <img src="#" alt="Country flag" class="country-flag" />
+              <span class="position">Forward</span>
+              <div class="next-match">
+                <span class="match-time">22:00</span>
+              </div>
+              <button class="favorite-btn">⭐</button>
+              <button class="remove-btn">✕</button>
+              <button class="open-btn">📂</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Favorite Countries -->
+        <section id="favorite-countries" class="favorite-category">
+          <h2>Favorite Countries</h2>
+          <div id="favorite-countries-list">
+            <div class="favorite-country-card" data-country="1">
+              <img src="#" alt="Country flag" class="country-flag" />
+              <span class="country-name">Spain</span>
+              <span class="competition-count">8 competitions</span>
+              <button class="open-btn">📂</button>
+              <button class="remove-btn">✕</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recently Added -->
+        <section id="recently-added-favorites" aria-label="Recently added favorites">
+          <h2>Recently Added</h2>
+          <div id="recently-added-favorites-list"></div>
+        </section>
+
+        <!-- Favorite Search -->
+        <section id="favorite-search" aria-label="Search favorites">
+          <h2>Search Favorites</h2>
+          <form id="favorite-search-form">
+            <input type="text" id="favorite-search-input" placeholder="Search your favorites..." />
+            <button type="submit">🔍</button>
+          </form>
+          <div id="favorite-search-suggestions"></div>
+          <div id="favorite-search-results"></div>
+          <div id="favorite-search-empty" class="empty-state">No favorites found</div>
+        </section>
+
+        <!-- Sorting & Filtering -->
+        <div id="favorites-controls">
+          <div id="favorites-sort">
+            <button class="sort-btn" data-sort="recent">Recently Added</button>
+            <button class="sort-btn" data-sort="alpha">Alphabetical</button>
+            <button class="sort-btn" data-sort="time">Match Time</button>
+            <button class="sort-btn" data-sort="competition">Competition</button>
+            <button class="sort-btn" data-sort="country">Country</button>
+          </div>
+          <div id="favorites-filters">
+            <button class="filter-btn" data-filter="clubs">Clubs</button>
+            <button class="filter-btn" data-filter="players">Players</button>
+            <button class="filter-btn" data-filter="national-teams">National Teams</button>
+            <button class="filter-btn" data-filter="competitions">Competitions</button>
+            <button class="filter-btn" data-filter="countries">Countries</button>
+            <button class="filter-btn" data-filter="live">Live</button>
+            <button class="filter-btn" data-filter="today">Today</button>
+            <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+          </div>
+  </div>
