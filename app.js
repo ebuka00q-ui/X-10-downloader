@@ -1,191 +1,162 @@
-// =====================================
-// X10 DOWNLOADER
-// Version 2.0
-// =====================================
+// ===============================
+// X-10 Downloader
+// Main Application
+// ===============================
 
-// ---------- CONFIG ----------
-const API = {
+// Change this to your Vercel domain
+const API_BASE = window.location.origin + "/api";
 
-    football: "/api/football",
-
-    footballData: "/api/football-data",
-
-    sportsDB: "/api/sportsdb"
-
+const app = {
+    currentPage: "home",
+    favorites: [],
+    history: [],
+    notifications: []
 };
 
-// ---------- APP STATE ----------
+// ===============================
+// Initialize
+// ===============================
 
-let matches = [];
+document.addEventListener("DOMContentLoaded", () => {
 
-let favoriteTeams = JSON.parse(
-localStorage.getItem("favoriteTeams") || "[]"
-);
+    initializeNavigation();
 
-let notifications = JSON.parse(
-localStorage.getItem("notifications") || "{}"
-);
+    initializeDrawer();
 
-let cache = {};
+    initializeSearch();
 
-let currentPage = "homePage";
+    initializeAI();
 
-// ---------- START ----------
+    loadHome();
 
-window.addEventListener("load", init);
+});
 
-async function init(){
+// ===============================
+// Navigation
+// ===============================
 
-    updateToday();
+function initializeNavigation(){
 
-    setupNavigation();
+    document.querySelectorAll(".navButton").forEach(button=>{
 
-    await loadMatches();
+        button.addEventListener("click",()=>{
 
-    renderFavorites();
+            document.querySelectorAll(".navButton")
+            .forEach(btn=>btn.classList.remove("active"));
 
-}
+            button.classList.add("active");
 
-// ---------- DATE ----------
+            const page=button.dataset.page;
 
-function updateToday(){
+            switch(page){
 
-    const d = new Date();
+                case "home":
+                    loadHome();
+                    break;
 
-    document.getElementById("todayDate").innerText =
-        d.toDateString();
+                case "sports":
+                    loadSports();
+                    break;
 
-}
+                case "favorites":
+                    loadFavorites();
+                    break;
 
-// ---------- NAVIGATION ----------
+                case "watch":
+                    loadWatch();
+                    break;
 
-function setupNavigation(){
+                case "account":
+                    loadAccount();
+                    break;
 
-    document.querySelectorAll(".nav").forEach(btn=>{
+            }
 
-        btn.onclick=()=>{
-
-            document.querySelectorAll(".nav")
-            .forEach(n=>n.classList.remove("active"));
-
-            btn.classList.add("active");
-
-            document.querySelectorAll(".page")
-            .forEach(p=>p.classList.remove("active"));
-
-            document.getElementById(
-                btn.dataset.page
-            ).classList.add("active");
-
-            currentPage=btn.dataset.page;
-
-        };
+        });
 
     });
 
 }
 
-// ---------- LOAD MATCHES ----------
+// ===============================
+// Drawer
+// ===============================
 
-async function loadMatches(){
+function initializeDrawer(){
 
-    try{
+    const drawer=document.getElementById("sideDrawer");
 
-        const res=await fetch(API.football);
+    document.getElementById("menuButton")
+    ?.addEventListener("click",()=>{
 
-        matches=await res.json();
+        drawer.classList.toggle("open");
 
-        renderMatches();
-
-    }
-
-    catch(e){
-
-        console.log(e);
-
-    }
+    });
 
 }
 
-// ---------- RENDER MATCHES ----------
+// ===============================
+// Search
+// ===============================
 
-function renderMatches(){
+function initializeSearch(){
 
-    const box=document.getElementById("todayMatches");
+    document.getElementById("searchButton")
+    ?.addEventListener("click",()=>{
 
-    box.innerHTML="";
-
-    matches.forEach(match=>{
-
-        const fav=favoriteTeams.includes(match.home.id)
-        ||favoriteTeams.includes(match.away.id);
-
-        box.innerHTML+=`
-
-<div class="match-card">
-
-<div class="match-header">
-
-<span>${match.league}</span>
-
-<span>${match.time}</span>
-
-</div>
-
-<div class="teams">
-
-<div class="team">
-
-<img src="${match.home.logo}">
-
-<span>${match.home.name}</span>
-
-</div>
-
-<div class="score">
-
-${match.score}
-
-</div>
-
-<div class="team">
-
-<img src="${match.away.logo}">
-
-<span>${match.away.name}</span>
-
-</div>
-
-</div>
-
-<div class="match-footer">
-
-<button
-
-class="favorite-btn ${fav?"active":""}"
-
-onclick="toggleFavorite('${match.home.id}','${match.away.id}')">
-
-⭐ Favorite
-
-</button>
-
-<button
-
-class="notify-btn"
-
-onclick="openNotificationMenu('${match.id}')">
-
-🔔 Notify
-
-</button>
-
-</div>
-
-</div>
-
-`;
+        document.getElementById("searchOverlay")
+        .classList.remove("hidden");
 
     });
+
+    document.getElementById("closeSearch")
+    ?.addEventListener("click",()=>{
+
+        document.getElementById("searchOverlay")
+        .classList.add("hidden");
+
+    });
+
+}
+
+// ===============================
+// AI Assistant
+// ===============================
+
+function initializeAI(){
+
+    document.getElementById("quickAIButton")
+    ?.addEventListener("click",()=>{
+
+        document.getElementById("aiAssistant")
+        .classList.remove("hidden");
+
+    });
+
+    document.getElementById("closeAI")
+    ?.addEventListener("click",()=>{
+
+        document.getElementById("aiAssistant")
+        .classList.add("hidden");
+
+    });
+
+}
+
+// ===============================
+// API Helper
+// ===============================
+
+async function api(endpoint){
+
+    const response=await fetch(API_BASE+endpoint);
+
+    if(!response.ok){
+
+        throw new Error("Network Error");
+
+    }
+
+    return response.json();
 
 }
