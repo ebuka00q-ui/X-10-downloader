@@ -1382,3 +1382,406 @@
           <p>Licenses: MIT, Open Source</p>
           <p>Open Source Credits: API-Football, TheSportsDB, Supabase</p>
                 </div>
+   <div id="feedback" class="hidden-page">
+          <h2>Feedback</h2>
+          <form id="feedback-form">
+            <textarea id="feedback-text" placeholder="Share your feedback..."></textarea>
+            <button type="submit">Submit Feedback</button>
+          </form>
+        </div>
+
+        <div id="support" class="hidden-page">
+          <h2>Support</h2>
+          <p>Contact us at support@x-10.app</p>
+          <button id="report-problem">Report a Problem</button>
+        </div>
+
+        <div id="terms" class="hidden-page">
+          <h2>Terms of Service</h2>
+          <p>Terms and conditions will appear here.</p>
+        </div>
+
+        <div id="licenses" class="hidden-page">
+          <h2>Licenses</h2>
+          <p>Open source licenses and attributions.</p>
+        </div>
+
+        <div id="changelog" class="hidden-page">
+          <h2>Changelog</h2>
+          <p>v2.0.0 — Final HTML complete</p>
+        </div>
+      </section>
+
+      <!-- ============================================================
+      HISTORY PAGE (Part 7)
+      ============================================================ -->
+      <section id="history" class="hidden-page" aria-label="History">
+        <div id="history-refresh" class="refresh-container">
+          <div id="history-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="history-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="history-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+          </div>
+          <div id="history-offline" class="offline-indicator">📡 No internet</div>
+          <div id="history-server-error" class="server-error">⚠️ Server error</div>
+        </div>
+
+        <h2>History</h2>
+
+        <div id="history-controls">
+          <input type="text" id="history-search-input" placeholder="Search history..." />
+          <button id="history-delete-selected-btn">✕ Delete Selected</button>
+          <button id="history-clear-all-btn">🗑️ Clear All</button>
+          <button id="history-sort-newest-btn">Newest</button>
+          <button id="history-sort-oldest-btn">Oldest</button>
+          <button id="history-filter-btn">Filter</button>
+        </div>
+
+        <div id="history-sections">
+          <section id="history-matches" aria-label="Viewed matches">
+            <h3>Viewed Matches</h3>
+            <div class="history-item" data-id="1">
+              <img src="#" alt="Thumbnail" class="thumbnail" />
+              <span class="title">Liverpool vs Arsenal</span>
+              <span class="date">2026-07-31</span>
+              <span class="time">20:45</span>
+              <span class="category">Match</span>
+              <button class="open-again">↩️</button>
+              <button class="delete-btn">✕</button>
+              <button class="favorite-btn">⭐</button>
+              <button class="share-btn">📤</button>
+            </div>
+          </section>
+
+          <section id="history-clubs" aria-label="Viewed clubs">
+            <h3>Viewed Clubs</h3>
+            <div class="history-item" data-id="2">
+              <img src="#" alt="Club badge" class="thumbnail" />
+              <span class="title">FC Barcelona</span>
+              <span class="date">2026-07-30</span>
+              <span class="category">Club</span>
+              <button class="open-again">↩️</button>
+              <button class="delete-btn">✕</button>
+              <button class="favorite-btn">⭐</button>
+            </div>
+          </section>
+
+          <section id="history-players" aria-label="Viewed players">
+            <h3>Viewed Players</h3>
+            <div class="history-item" data-id="3">
+              <img src="#" alt="Player photo" class="thumbnail" />
+              <span class="title">L. Messi</span>
+              <span class="date">2026-07-29</span>
+              <span class="category">Player</span>
+              <button class="open-again">↩️</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </section>
+
+          <section id="history-competitions" aria-label="Viewed competitions">
+            <h3>Viewed Competitions</h3>
+            <div class="history-item" data-id="4">
+              <img src="#" alt="Competition logo" class="thumbnail" />
+              <span class="title">Champions League</span>
+              <span class="date">2026-07-28</span>
+              <span class="category">Competition</span>
+              <button class="open-again">↩️</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </section>
+
+          <section id="history-watch-links" aria-label="Watch links">
+            <h3>Watch Links</h3>
+            <div class="history-item" data-id="5">
+              <img src="#" alt="Thumbnail" class="thumbnail" />
+              <span class="title">Stream: Barcelona vs Real Madrid</span>
+              <span class="date">2026-07-27</span>
+              <span class="category">Watch</span>
+              <button class="open-again">↩️</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </section>
+
+          <section id="history-ai-conversations" aria-label="AI conversations">
+            <h3>AI Conversations</h3>
+            <div class="history-item" data-id="6">
+              <span class="title">AI: Match predictions</span>
+              <span class="date">2026-07-27</span>
+              <span class="category">AI</span>
+              <button class="open-again">↩️</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </section>
+
+          <section id="history-searches" aria-label="Searches">
+            <h3>Searches</h3>
+            <div class="history-item" data-id="7">
+              <span class="title">"Champions League"</span>
+              <span class="date">2026-07-27</span>
+              <span class="category">Search</span>
+              <button class="delete-btn">✕</button>
+            </div>
+          </section>
+        </div>
+
+        <div id="history-end" class="end-of-history">End of History</div>
+
+        <div id="history-empty-state" class="empty-state">
+          <p>No history yet.</p>
+          <button id="explore-sports-btn">Explore Sports</button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+      NOTIFICATIONS PAGE (Part 7)
+      ============================================================ -->
+      <section id="notifications" class="hidden-page" aria-label="Notifications">
+        <div id="notifications-refresh" class="refresh-container">
+          <div id="notifications-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="notifications-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="notifications-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+          </div>
+          <div id="notifications-offline" class="offline-indicator">📡 No internet</div>
+          <div id="notifications-server-error" class="server-error">⚠️ Server error</div>
+        </div>
+
+        <h2>Notifications</h2>
+
+        <div id="notifications-controls">
+          <button id="notif-mark-all-read">✅ Mark All as Read</button>
+          <button id="notif-delete-all">🗑️ Delete All</button>
+          <button id="notif-delete-selected">✕ Delete Selected</button>
+          <input type="text" id="notif-search" placeholder="Search notifications..." />
+          <button id="notif-filter-btn">Filter</button>
+          <button id="notif-settings-btn">⚙️</button>
+        </div>
+
+        <div id="notifications-list">
+          <div class="notification-item unread" data-id="1">
+            <span class="notif-icon">⚽</span>
+            <span class="notif-title">Match Reminder</span>
+            <p class="notif-message">Liverpool vs Arsenal starts in 30 minutes.</p>
+            <span class="notif-date">Today</span>
+            <span class="notif-time">20:15</span>
+            <span class="notif-status">Unread</span>
+            <button class="notif-open-btn">📂</button>
+            <button class="notif-delete-btn">✕</button>
+          </div>
+          <div class="notification-item" data-id="2">
+            <span class="notif-icon">⭐</span>
+            <span class="notif-title">Favorite Club</span>
+            <p class="notif-message">FC Barcelona won 3-1!</p>
+            <span class="notif-date">Yesterday</span>
+            <span class="notif-time">22:00</span>
+            <span class="notif-status">Read</span>
+            <button class="notif-open-btn">📂</button>
+            <button class="notif-delete-btn">✕</button>
+          </div>
+          <div class="notification-item" data-id="3">
+            <span class="notif-icon">🔴</span>
+            <span class="notif-title">Live Match</span>
+            <p class="notif-message">Real Madrid vs Bayern is now live.</p>
+            <span class="notif-date">2026-07-30</span>
+            <span class="notif-time">21:30</span>
+            <span class="notif-status">Read</span>
+            <button class="notif-open-btn">📂</button>
+            <button class="notif-delete-btn">✕</button>
+          </div>
+        </div>
+
+        <div id="notifications-empty" class="empty-state" hidden>No notifications</div>
+      </section>
+
+      <!-- ============================================================
+      MATCH CENTER (Part 8) — Match Details, Statistics, Lineups
+      ============================================================ -->
+      <section id="match-details" class="hidden-page" aria-label="Match details">
+        <div id="match-refresh" class="refresh-container">
+          <div id="match-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="match-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="match-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-pitch"></div>
+          </div>
+          <div id="match-offline" class="offline-indicator">📡 No internet</div>
+          <div id="match-server-error" class="server-error">⚠️ Server error</div>
+          <div id="match-not-found" class="error-state">Match not found</div>
+        </div>
+
+        <!-- Match Header -->
+        <div id="match-header">
+          <div class="competition-info">
+            <img src="#" alt="Competition logo" class="competition-logo" />
+            <span class="competition-name">Premier League</span>
+            <img src="#" alt="Country flag" class="country-flag" />
+            <span class="round">Round 38</span>
+            <span class="season">2025/26</span>
+          </div>
+          <div class="venue-info">
+            <span class="venue">Anfield</span>
+            <span class="referee">M. Oliver</span>
+            <span class="weather">🌤️ 22°C</span>
+          </div>
+          <div class="match-time">
+            <span class="kickoff-date">2026-07-31</span>
+            <span class="kickoff-time">20:45</span>
+            <span class="match-status live">● LIVE</span>
+          </div>
+        </div>
+
+        <!-- Team Section -->
+        <div id="match-teams">
+          <div class="team home">
+            <img src="#" alt="Home badge" class="club-badge" />
+            <span class="club-name">Liverpool</span>
+            <span class="score">2</span>
+          </div>
+          <div class="match-clock">67'</div>
+          <div class="team away">
+            <img src="#" alt="Away badge" class="club-badge" />
+            <span class="club-name">Arsenal</span>
+            <span class="score">1</span>
+          </div>
+        </div>
+
+        <!-- Match Status -->
+        <div id="match-status-indicators">
+          <span class="status-label">⚽ First Half</span>
+          <span class="status-label">⏱️ Half Time</span>
+          <span class="status-label">⚽ Second Half</span>
+          <span class="status-label">⏱️ Extra Time</span>
+          <span class="status-label">⚽ Penalty Shootout</span>
+          <span class="status-label">✅ Full Time</span>
+          <span class="status-label">⏸️ Postponed</span>
+          <span class="status-label">❌ Cancelled</span>
+          <span class="status-label">⏳ Suspended</span>
+          <span class="status-label">🚫 Abandoned</span>
+        </div>
+
+        <!-- Quick Actions -->
+        <div id="match-quick-actions">
+          <button class="watch-btn">▶ Watch</button>
+          <button class="stats-btn">📊 Statistics</button>
+          <button class="lineup-btn">📋 Lineups</button>
+          <button class="standings-btn">📋 Standings</button>
+          <button class="share-btn">📤 Share</button>
+          <button class="favorite-btn">⭐ Favorite Match</button>
+          <button class="notify-btn">🔔 Notifications</button>
+          <button class="competition-btn">🏆 Open Competition</button>
+          <button class="club-btn">⚪ Open Club</button>
+        </div>
+
+        <!-- Match Timeline -->
+        <section id="match-timeline" aria-label="Match timeline">
+          <h3>Timeline</h3>
+          <div id="timeline-events">
+            <div class="timeline-event" data-minute="1">
+              <span class="minute">1'</span>
+              <span class="event-icon">⚽</span>
+              <span class="event-desc">Kickoff</span>
+            </div>
+            <div class="timeline-event" data-minute="23">
+              <span class="minute">23'</span>
+              <img src="#" alt="Player" class="player-thumb" />
+              <img src="#" alt="Club badge" class="club-badge" />
+              <span class="event-icon">⚽</span>
+              <span class="event-desc">Goal! Salah (Liverpool)</span>
+            </div>
+            <div class="timeline-event" data-minute="45">
+              <span class="minute">45'</span>
+              <span class="event-icon">⏱️</span>
+              <span class="event-desc">Half Time</span>
+            </div>
+            <div class="timeline-event" data-minute="67">
+              <span class="minute">67'</span>
+              <img src="#" alt="Player" class="player-thumb" />
+              <img src="#" alt="Club badge" class="club-badge" />
+              <span class="event-icon">🟨</span>
+              <span class="event-desc">Yellow Card: Odegaard (Arsenal)</span>
+            </div>
+            <div class="timeline-event" data-minute="90">
+              <span class="minute">90'</span>
+              <span class="event-icon">✅</span>
+              <span class="event-desc">Full Time</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Statistics -->
+        <section id="match-statistics" aria-label="Statistics">
+          <h3>Statistics</h3>
+          <div id="stats-grid">
+            <div class="stat-row"><span class="stat-label">Possession</span><span class="stat-value">58%</span></div>
+            <div class="stat-row"><span class="stat-label">Shots</span><span class="stat-value">14</span></div>
+            <div class="stat-row"><span class="stat-label">Shots on Target</span><span class="stat-value">6</span></div>
+            <div class="stat-row"><span class="stat-label">Shots off Target</span><span class="stat-value">5</span></div>
+            <div class="stat-row"><span class="stat-label">Blocked Shots</span><span class="stat-value">3</span></div>
+            <div class="stat-row"><span class="stat-label">Corners</span><span class="stat-value">5</span></div>
+            <div class="stat-row"><span class="stat-label">Free Kicks</span><span class="stat-value">12</span></div>
+            <div class="stat-row"><span class="stat-label">Offsides</span><span class="stat-value">3</span></div>
+            <div class="stat-row"><span class="stat-label">Yellow Cards</span><span class="stat-value">2</span></div>
+            <div class="stat-row"><span class="stat-label">Red Cards</span><span class="stat-value">0</span></div>
+            <div class="stat-row"><span class="stat-label">Fouls</span><span class="stat-value">12</span></div>
+            <div class="stat-row"><span class="stat-label">Pass Accuracy</span><span class="stat-value">82%</span></div>
+            <div class="stat-row"><span class="stat-label">Passes</span><span class="stat-value">420</span></div>
+            <div class="stat-row"><span class="stat-label">Long Passes</span><span class="stat-value">45</span></div>
+            <div class="stat-row"><span class="stat-label">Crosses</span><span class="stat-value">18</span></div>
+            <div class="stat-row"><span class="stat-label">Dribbles</span><span class="stat-value">12</span></div>
+            <div class="stat-row"><span class="stat-label">Tackles</span><span class="stat-value">20</span></div>
+            <div class="stat-row"><span class="stat-label">Interceptions</span><span class="stat-value">8</span></div>
+            <div class="stat-row"><span class="stat-label">Clearances</span><span class="stat-value">15</span></div>
+            <div class="stat-row"><span class="stat-label">Goalkeeper Saves</span><span class="stat-value">4</span></div>
+            <div class="stat-row"><span class="stat-label">Expected Goals (xG)</span><span class="stat-value">1.8</span></div>
+            <div class="stat-row"><span class="stat-label">Dangerous Attacks</span><span class="stat-value">32</span></div>
+            <div class="stat-row"><span class="stat-label">Attacks</span><span class="stat-value">78</span></div>
+            <div class="stat-row"><span class="stat-label">Ball Recoveries</span><span class="stat-value">45</span></div>
+            <div class="stat-row"><span class="stat-label">Duels Won</span><span class="stat-value">52%</span></div>
+            <div class="stat-row"><span class="stat-label">Aerial Duels</span><span class="stat-value">48%</span></div>
+          </div>
+        </section>
+
+        <!-- Lineups -->
+        <section id="match-lineups" aria-label="Lineups">
+          <h3>Lineups</h3>
+          <div id="lineups-container">
+            <div class="lineup-home">
+              <h4>Liverpool (4-3-3)</h4>
+              <ul class="starting-xi">
+                <li><span class="shirt">1</span> Alisson (GK)</li>
+                <li><span class="shirt">2</span> Gomez</li>
+                <li><span class="shirt">4</span> Van Dijk</li>
+                <li><span class="shirt">5</span> Konaté</li>
+                <li><span class="shirt">21</span> Tsimikas</li>
+                <li><span class="shirt">8</span> Szoboszlai</li>
+                <li><span class="shirt">10</span> Mac Allister</li>
+                <li><span class="shirt">17</span> Jones</li>
+                <li><span class="shirt">11</span> Salah <span class="captain">(C)</span></li>
+                <li><span class="shirt">9</span> Núñez</li>
+                <li><span class="shirt">7</span> Díaz</li>
+              </ul>
+              <h5>Bench</h5>
+              <ul class="bench">
+                <li><span class="shirt">13</span> Kelleher (GK)</li>
+                <li><span class="shirt">3</span> Endo</li>
+                <li><span class="shirt">19</span> Elliott</li>
+                <li><span class="shirt">20</span> Jota</li>
+                <li><span class="shirt">38</span> Gravenberch</li>
+              </ul>
+              <h5>Unavailable</h5>
+              <ul class="unavailable">
+                <li>Trent Alexander-Arnold (Injured)</li>
+                <li>Alisson Becker (Suspended)</li>
+              </ul>
+              <span class="coach">Coach: J. Klopp</span>
+            </div>
+
+            <div class="lineup-away">
+              <h4>Arsenal (4-2-3-1)</h4>
+              <ul class="starting-xi">
+                <li><span class="shirt">1</span> Ramsdale (GK)</li>
+                <li><span class="shirt">4</span> White</li>
+                <li><span class="shirt">6</span> Gabriel</li>
+                <li><span class="shirt">2</span> Saliba</li>
+                <li><span class="shirt">3</span> Tierney</li>
+                <li><span
