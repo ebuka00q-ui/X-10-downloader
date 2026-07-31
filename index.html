@@ -1,1 +1,61 @@
-<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>X-10 Downloader</title><link rel='manifest' href='manifest.json'><link rel='stylesheet' href='style.css'></head><body><header class='topbar'><button id='menuButton'>☰</button><h1>X-10 Downloader</h1><button id='searchButton'>🔍</button><button id='quickAIButton'>✨</button></header><aside id='sideDrawer'></aside><main id='page-container'></main><div id='searchOverlay' class='hidden'><button id='closeSearch'>Close</button></div><div id='aiAssistant' class='hidden'><button id='closeAI'>✕</button><div id='aiMessages'></div><input id='aiInput'><button id='sendAI'>Send</button></div><nav><button class='navButton active' data-page='home'>Home</button><button class='navButton' data-page='sports'>Sports</button><button class='navButton' data-page='favorites'>Favorites</button><button class='navButton' data-page='watch'>Watch</button><button class='navButton' data-page='account'>Account</button></nav><script src='app.js'></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>X-10 Downloader V2A</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<header class="topbar">
+<button id="menuButton">☰</button>
+<h1>X-10 Downloader</h1>
+<div>
+<button id="searchButton">🔍</button>
+<button id="quickAIButton">✨</button>
+</div>
+</header>
+<aside id="sideDrawer" class="drawer">
+<h3>Menu</h3>
+<ul>
+<li>Home</li><li>Sports</li><li>Favorites</li><li>History</li><li>Notifications</li><li>Watch</li><li>Account</li>
+</ul>
+</aside>
+<div id="searchOverlay" class="hidden">
+<input placeholder="Search teams, leagues...">
+<button id="closeSearch">Close</button>
+<div id="searchResults"></div>
+</div>
+<div id="aiAssistant" class="hidden">
+<h2>X-10 AI</h2>
+<div id="aiMessages"></div>
+<input id="aiInput" placeholder="Ask AI...">
+<button id="sendAI">Send</button>
+<button id="closeAI">Close</button>
+</div>
+<main id="page-container">
+<section id="homePage">
+<h2>Today's Matches</h2>
+<div id="todayMatches"></div>
+<h2>Trending</h2>
+<div id="trendingMatches"></div>
+<h2>Live Scores</h2>
+<div id="liveMatches"></div>
+</section>
+<section id="sportsPage" class="hidden"></section>
+<section id="favoritesPage" class="hidden"></section>
+<section id="historyPage" class="hidden"></section>
+<section id="notificationsPage" class="hidden"></section>
+<section id="watchPage" class="hidden"></section>
+<section id="accountPage" class="hidden"></section>
+</main>
+<nav class="bottomNav">
+<button class="navButton active" data-page="home">Home</button>
+<button class="navButton" data-page="sports">Sports</button>
+<button class="navButton" data-page="favorites">Favorites</button>
+<button class="navButton" data-page="watch">Watch</button>
+<button class="navButton" data-page="account">Account</button>
+</nav>
+<script src="app.js"></script>
+</body></html>
