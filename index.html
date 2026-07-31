@@ -117,3 +117,119 @@ id="page-container">
 </section>
 
 </main>
+<!-- ========================= -->
+<!-- Navigation Drawer -->
+<!-- ========================= -->
+
+<aside id="sideDrawer" class="drawer">
+
+    <div class="drawer-header">
+
+        <h2>X-10 Downloader</h2>
+
+        <p>Everything dynamic.</p>
+
+    </div>
+
+    <nav class="drawer-menu">
+
+        <button class="drawer-item" data-page="home">
+            🏠 Home
+        </button>
+
+        <button class="drawer-item" data-page="sports">
+            ⚽ Sports
+        </button>
+
+        <button class="drawer-item" data-page="favorites">
+            ⭐ Favorites
+        </button>
+
+        <button class="drawer-item" data-page="watch">
+            ▶ Watch
+        </button>
+
+        <button class="drawer-item" data-page="account">
+            👤 Account
+        </button>
+
+    </nav>
+
+</aside>
+
+<!-- ========================= -->
+<!-- Search Overlay -->
+<!-- ========================= -->
+
+<div id="searchOverlay" class="overlay hidden">
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="globalSearch"
+            placeholder="Search teams, players, leagues...">
+
+        <button id="closeSearch">
+            ✕
+        </button>
+
+    </div>
+
+    <div id="searchResults"></div>
+
+</div>
+
+<!-- ========================= -->
+<!-- Loading Overlay -->
+<!-- ========================= -->
+
+<div id="loadingOverlay" class="hidden">
+
+    <div class="loader"></div>
+
+    <p>Loading...</p>
+
+</div>
+
+<!-- ========================= -->
+<!-- Toast -->
+<!-- ========================= -->
+
+<div id="toast" class="hidden">
+
+    <span id="toastMessage"></span>
+
+</div>
+
+<!-- ========================= -->
+<!-- Dialog -->
+<!-- ========================= -->
+
+<div id="dialogOverlay" class="hidden">
+
+    <div class="dialog">
+
+        <h3 id="dialogTitle"></h3>
+
+        <p id="dialogText"></p>
+
+        <div class="dialog-buttons">
+
+            <button id="dialogCancel">
+
+                Cancel
+
+            </button>
+
+            <button id="dialogConfirm">
+
+                OK
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
