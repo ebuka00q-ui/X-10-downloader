@@ -1,286 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>X-10 · Bible Spec</title>
-  <!-- pure semantic HTML, no CSS, no JS, no backend -->
+  <!-- ============================================================
+  X-10 DOWNLOADER — PRODUCTION HTML
+  Parts 1–10 Complete Specification
+  Next Stage: style.css
+  ============================================================ -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="X-10" />
+  <meta name="application-name" content="X-10 Downloader" />
+  <meta name="description" content="X-10 Downloader — Football, AI, Media & More" />
+  <meta name="keywords" content="football,live,scores,AI,media,player" />
+  <meta name="robots" content="index, follow" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon-180x180.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/assets/icons/apple-touch-icon-152x152.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="/assets/icons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon" sizes="76x76" href="/assets/icons/apple-touch-icon-76x76.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/android-icon-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/android-icon-512x512.png" />
+  <link rel="icon" type="image/png" sizes="144x144" href="/assets/icons/android-icon-144x144.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="/assets/icons/android-icon-96x96.png" />
+  <link rel="icon" type="image/png" sizes="72x72" href="/assets/icons/android-icon-72x72.png" />
+  <!-- ===== CSS (next stage) ===== -->
+  <!-- <link rel="stylesheet" href="/style.css" /> -->
+  <!-- ===== JavaScript (next stage) ===== -->
+  <!-- <script src="/app.js" defer></script> -->
+  <title>X-10 Downloader</title>
 </head>
 <body>
-  <!-- PWA shell: master container -->
+
+  <!-- ============================================================
+  APP ROOT
+  ============================================================ -->
   <div id="app-root">
 
-    <!-- ===== TOP BAR ===== -->
+    <!-- ============================================================
+    GLOBAL HEADER
+    ============================================================ -->
     <header id="global-header" role="banner">
-      <!-- menu hamburger / drawer trigger -->
-      <button id="menu-toggle" aria-label="Open navigation menu">☰</button>
-      <!-- product logo -->
+      <button id="menu-toggle" aria-label="Open navigation menu" class="header-btn">☰</button>
       <div id="brand-logo">
         <span id="logo-icon">⚡</span>
         <span id="logo-text">X-10</span>
       </div>
-      <!-- search entry point -->
-      <button id="search-global" aria-label="Search matches, teams, leagues">🔍</button>
-      <!-- Quick AI floating trigger (top bar) -->
-      <button id="quick-ai-trigger" aria-label="Open AI assistant">🤖</button>
+      <button id="search-global" aria-label="Search" class="header-btn">🔍</button>
+      <!-- Quick AI floating button — visible on Home, Sports, Favorites only -->
+      <button id="quick-ai-trigger" aria-label="Open AI Assistant" class="header-btn ai-floating">🤖</button>
     </header>
 
-    <!-- ===== MAIN CONTENT ===== -->
+    <!-- ============================================================
+    SIDE DRAWER
+    ============================================================ -->
+    <nav id="side-drawer" role="navigation" aria-label="Main navigation">
+      <div id="drawer-header">
+        <span id="drawer-brand">⚡ X-10</span>
+        <button id="drawer-close" aria-label="Close drawer">✕</button>
+      </div>
+      <ul id="drawer-nav-list">
+        <li><a href="#section-home" class="drawer-link">🏠 Home</a></li>
+        <li><a href="#section-sports" class="drawer-link">⚽ Sports</a></li>
+        <li><a href="#section-favorites" class="drawer-link">⭐ Favorites</a></li>
+        <li><a href="#section-watch" class="drawer-link">📺 Watch</a></li>
+        <li><a href="#history" class="drawer-link">📜 History</a></li>
+        <li><a href="#notifications" class="drawer-link">🔔 Notifications</a></li>
+        <li><a href="#section-account" class="drawer-link">👤 Account</a></li>
+        <li><a href="#settings" class="drawer-link">⚙️ Settings</a></li>
+        <li><a href="#appearance" class="drawer-link">🎨 Appearance</a></li>
+        <li><a href="#language" class="drawer-link">🌍 Language</a></li>
+        <li><a href="#feedback" class="drawer-link">💬 Feedback</a></li>
+        <li><a href="#support" class="drawer-link">🛟 Support</a></li>
+        <li><a href="#privacy" class="drawer-link">🔒 Privacy Policy</a></li>
+        <li><a href="#terms" class="drawer-link">📄 Terms of Service</a></li>
+        <li><a href="#about" class="drawer-link">ℹ️ About X-10</a></li>
+        <li class="drawer-footer">
+          <span id="app-version">v2.0.0</span>
+          <span id="dev-info">X-10 Labs</span>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- ============================================================
+    SEARCH OVERLAY
+    ============================================================ -->
+    <div id="search-overlay" role="dialog" aria-label="Search">
+      <div id="search-header">
+        <button id="search-close" aria-label="Close search">✕</button>
+        <form id="search-form" action="#" method="get">
+          <input type="text" id="search-input" placeholder="Search clubs, players, competitions..." aria-label="Search input" />
+          <button type="submit" id="search-submit" aria-label="Submit search">🔍</button>
+          <button type="button" id="search-clear" aria-label="Clear search">✕</button>
+          <button type="button" id="search-voice" aria-label="Voice search">🎤</button>
+          <button type="button" id="search-filter-btn" aria-label="Filter">⚙️</button>
+          <button type="button" id="search-sort-btn" aria-label="Sort">↕</button>
+        </form>
+      </div>
+      <div id="search-body">
+        <div id="search-suggestions">
+          <section id="recent-searches">
+            <h3>Recent Searches</h3>
+            <ul id="recent-search-list"></ul>
+          </section>
+          <section id="trending-searches">
+            <h3>Trending</h3>
+            <ul id="trending-search-list"></ul>
+          </section>
+          <section id="suggested-searches">
+            <h3>Suggested</h3>
+            <ul id="suggested-search-list"></ul>
+          </section>
+          <section id="popular-clubs">
+            <h3>Popular Clubs</h3>
+            <ul id="popular-club-list"></ul>
+          </section>
+          <section id="popular-players">
+            <h3>Popular Players</h3>
+            <ul id="popular-player-list"></ul>
+          </section>
+          <section id="popular-competitions">
+            <h3>Popular Competitions</h3>
+            <ul id="popular-competition-list"></ul>
+          </section>
+          <section id="popular-countries">
+            <h3>Popular Countries</h3>
+            <ul id="popular-country-list"></ul>
+          </section>
+        </div>
+        <div id="search-results" aria-live="polite">
+          <!-- search result items will be injected here -->
+          <div id="search-loading" class="search-state">Loading...</div>
+          <div id="search-empty" class="search-state">No results found</div>
+          <div id="search-offline" class="search-state">You are offline</div>
+          <div id="search-error" class="search-state">Server error</div>
+          <div id="search-no-query" class="search-state">Type to search</div>
+        </div>
+      </div>
+      <div id="search-filters" hidden>
+        <button class="filter-option active" data-filter="all">All</button>
+        <button class="filter-option" data-filter="live">Live</button>
+        <button class="filter-option" data-filter="matches">Matches</button>
+        <button class="filter-option" data-filter="players">Players</button>
+        <button class="filter-option" data-filter="clubs">Clubs</button>
+        <button class="filter-option" data-filter="countries">Countries</button>
+        <button class="filter-option" data-filter="competitions">Competitions</button>
+        <button class="filter-option" data-filter="national-teams">National Teams</button>
+        <button class="filter-option" data-filter="favorites">Favorites</button>
+        <button class="filter-option" data-filter="recently-viewed">Recently Viewed</button>
+      </div>
+    </div>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
     <main id="main-content">
 
-      <!-- ===== HOME SECTION ===== -->
+      <!-- ===== HOME SECTION (Part 2) ===== -->
       <section id="section-home" aria-label="Home">
-        <h2 class="section-title">Home</h2>
-        <!-- live matches / highlights placeholder -->
-        <div class="home-carousel" id="home-carousel">
-          <article class="match-card" data-match-id="1001">
-            <span class="match-status">LIVE</span>
-            <div class="team-badge home">FC Alpha</div>
-            <div class="score">2 - 1</div>
-            <div class="team-badge away">SC Beta</div>
-          </article>
-          <article class="match-card" data-match-id="1002">
-            <span class="match-status">upcoming</span>
-            <div class="team-badge home">United XI</div>
-            <div class="score">vs</div>
-            <div class="team-badge away">City Reds</div>
-          </article>
-        </div>
-        <!-- quick shortcuts -->
-        <nav id="home-quick-nav">
-          <a href="#section-sports">⚽ Sports</a>
-          <a href="#section-favorites">⭐ Favorites</a>
-          <a href="#section-watch">📺 Watch</a>
-        </nav>
-      </section>
-
-      <!-- ===== SPORTS SECTION ===== -->
-      <section id="section-sports" aria-label="Sports">
-        <h2 class="section-title">Sports</h2>
-        <!-- league / tournament filters -->
-        <div id="sports-filter">
-          <button class="filter-option active">All</button>
-          <button class="filter-option">Football</button>
-          <button class="filter-option">Basketball</button>
-          <button class="filter-option">Tennis</button>
-        </div>
-        <!-- list of matches from API-Football (live data placeholder) -->
-        <ul id="sports-match-list">
-          <li class="sports-match-item" data-fixture="301">
-            <span class="league">Premier League</span>
-            <span class="teams">Liverpool vs Arsenal</span>
-            <span class="time">20:45</span>
-          </li>
-          <li class="sports-match-item" data-fixture="302">
-            <span class="league">La Liga</span>
-            <span class="teams">Barcelona vs Real Madrid</span>
-            <span class="time">22:00</span>
-          </li>
-          <li class="sports-match-item" data-fixture="303">
-            <span class="league">Serie A</span>
-            <span class="teams">AC Milan vs Inter</span>
-            <span class="time">19:30</span>
-          </li>
-        </ul>
-        <!-- TheSportsDB image placeholder -->
-        <div id="sports-image-zone">
-          <img src="#" alt="TheSportsDB placeholder: team/league images" id="sports-db-img" />
-          <p class="image-credit">📸 TheSportsDB</p>
-        </div>
-      </section>
-
-      <!-- ===== FAVORITES SECTION ===== -->
-      <section id="section-favorites" aria-label="Favorites">
-        <h2 class="section-title">Favorites</h2>
-        <p id="favorites-empty" class="empty-message">You have no favorites yet.</p>
-        <!-- favorite items (teams, players, leagues) -->
-        <ul id="favorites-list">
-          <li class="fav-item" data-type="team" data-id="101">⚽ FC Barcelona ⭐</li>
-          <li class="fav-item" data-type="player" data-id="202">🏀 L. James</li>
-          <li class="fav-item" data-type="league" data-id="303">🏆 Champions League</li>
-        </ul>
-      </section>
-
-      <!-- ===== WATCH SECTION ===== -->
-      <section id="section-watch" aria-label="Watch">
-        <h2 class="section-title">Watch</h2>
-        <!-- embedded / external video placeholders -->
-        <div id="watch-grid">
-          <div class="watch-thumbnail" data-stream="abc123">
-            <span class="live-badge">● LIVE</span>
-            <span class="match-title">Real Madrid vs Bayern</span>
+        <div id="home-refresh" class="refresh-container">
+          <div id="home-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="home-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="home-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
           </div>
-          <div class="watch-thumbnail" data-stream="def456">
-            <span class="live-badge">● LIVE</span>
-            <span class="match-title">PSG vs Dortmund</span>
+          <div id="home-last-updated" class="last-updated">Last updated: just now</div>
+          <div id="home-refresh-complete" class="refresh-complete">✅ Updated</div>
+          <div id="home-offline" class="offline-indicator">📡 No internet connection</div>
+          <div id="home-server-error" class="server-error">⚠️ Server error</div>
+        </div>
+
+        <!-- Live Matches -->
+        <section id="live-matches" aria-label="Live matches">
+          <h2>Live Matches</h2>
+          <div id="live-matches-list">
+            <article class="match-card live" data-match-id="1001">
+              <span class="live-badge">● LIVE</span>
+              <div class="competition-info">
+                <img src="#" alt="Competition logo" class="competition-logo" />
+                <span class="competition-name">Premier League</span>
+              </div>
+              <div class="teams">
+                <div class="home-team">
+                  <img src="#" alt="Home badge" class="club-badge" />
+                  <span class="home-name">Liverpool</span>
+                </div>
+                <div class="score">2 - 1</div>
+                <div class="away-team">
+                  <img src="#" alt="Away badge" class="club-badge" />
+                  <span class="away-name">Arsenal</span>
+                </div>
+              </div>
+              <span class="match-minute">67'</span>
+              <div class="match-events">
+                <span class="red-card" title="Red card">🟥</span>
+                <span class="var" title="VAR">📺</span>
+                <span class="penalty" title="Penalty">⚽</span>
+              </div>
+              <div class="match-actions">
+                <button class="watch-btn" data-match="1001">▶ Watch</button>
+                <button class="stats-btn" data-match="1001">📊 Stats</button>
+                <button class="lineup-btn" data-match="1001">📋 Lineups</button>
+                <button class="favorite-btn" data-match="1001">⭐</button>
+                <button class="notify-btn" data-match="1001">🔔</button>
+                <button class="share-btn" data-match="1001">📤</button>
+              </div>
+            </article>
+            <!-- additional live match cards -->
           </div>
-          <div class="watch-thumbnail" data-stream="ghi789">
-            <span class="upcoming-badge">⏱️ today</span>
-            <span class="match-title">Manchester City vs Chelsea</span>
+          <div id="live-matches-empty" class="empty-state">No live matches</div>
+          <div id="live-matches-loading" class="loading-state">Loading live matches...</div>
+        </section>
+
+        <!-- Today's Matches -->
+        <section id="todays-matches" aria-label="Today's matches">
+          <h2>Today's Matches</h2>
+          <div id="todays-matches-list">
+            <article class="match-card today" data-match-id="1002">
+              <span class="kickoff-time">20:45</span>
+              <div class="competition-info">
+                <img src="#" alt="Competition logo" class="competition-logo" />
+                <span class="competition-name">La Liga</span>
+              </div>
+              <div class="teams">
+                <div class="home-team">
+                  <img src="#" alt="Home badge" class="club-badge" />
+                  <span class="home-name">Barcelona</span>
+                </div>
+                <div class="score">vs</div>
+                <div class="away-team">
+                  <img src="#" alt="Away badge" class="club-badge" />
+                  <span class="away-name">Real Madrid</span>
+                </div>
+              </div>
+              <div class="match-actions">
+                <button class="notify-btn" data-match="1002">🔔</button>
+                <button class="favorite-btn" data-match="1002">⭐</button>
+                <button class="stats-btn" data-match="1002">📊</button>
+                <button class="lineup-btn" data-match="1002">📋</button>
+                <button class="watch-btn" data-match="1002">▶</button>
+                <button class="details-btn" data-match="1002">ℹ️</button>
+              </div>
+            </article>
           </div>
-        </div>
-      </section>
+          <div id="todays-matches-empty" class="empty-state">No matches today</div>
+        </section>
 
-      <!-- ===== ACCOUNT SECTION ===== (also appears as bottom tab) -->
-      <section id="section-account" aria-label="Account">
-        <h2 class="section-title">Account</h2>
-        <div id="account-profile">
-          <div id="avatar-placeholder">👤</div>
-          <span id="user-name">Guest User</span>
-          <span id="user-email">guest@x-10.app</span>
-        </div>
-        <nav id="account-settings">
-          <a href="#notifications">🔔 Notifications</a>
-          <a href="#history">📜 History</a>
-          <a href="#account-preferences">⚙️ Preferences</a>
-        </nav>
-      </section>
-
-      <!-- ===== HIDDEN / DETAIL PAGES (anchors) ===== -->
-      <!-- History -->
-      <section id="history" aria-label="History" class="detail-page">
-        <h2>History</h2>
-        <ul id="history-list">
-          <li>Match: Liverpool 3-1 Arsenal (watched)</li>
-          <li>Match: Barcelona 2-2 PSG (highlights)</li>
-          <li>Search: “Champions League”</li>
-        </ul>
-      </section>
-
-      <!-- Notifications -->
-      <section id="notifications" aria-label="Notifications" class="detail-page">
-        <h2>Notifications</h2>
-        <ul id="notification-list">
-          <li>🔔 Match starts in 15min: Real Madrid vs Atletico</li>
-          <li>⭐ Your favorite team scored!</li>
-          <li>📅 Reminder: upcoming derby</li>
-        </ul>
-      </section>
-
-      <!-- Search (global) -->
-      <section id="search-panel" aria-label="Search" class="detail-page">
-        <h2>Search</h2>
-        <form id="search-form" action="#" method="get">
-          <input type="text" id="search-input" placeholder="Search teams, leagues, players..." />
-          <button type="submit" id="search-submit">🔍</button>
-        </form>
-        <div id="search-results" aria-live="polite">
-          <p>Try “Manchester”, “Liga”, “Mbappé”</p>
-        </div>
-      </section>
-
-      <!-- Match Details (deep link) -->
-      <article id="match-details" aria-label="Match Details" class="detail-page">
-        <h2>Match Details</h2>
-        <div id="md-header">
-          <span class="md-league">UEFA Champions League</span>
-          <span class="md-status">⚽ LIVE</span>
-        </div>
-        <div id="md-teams">
-          <span class="md-home">FC Barcelona</span>
-          <span class="md-score">3 - 1</span>
-          <span class="md-away">Napoli</span>
-        </div>
-        <div id="md-stats">
-          <span>Possession: 58% - 42%</span>
-          <span>Shots: 14 - 8</span>
-        </div>
-        <!-- Lineups (nested) -->
-        <section id="lineups" aria-label="Lineups">
-          <h3>Lineups</h3>
-          <div class="lineup-home">
-            <h4>Barcelona (4-3-3)</h4>
-            <ul>
-              <li>1. Ter Stegen (GK)</li>
-              <li>2. Cancelo</li>
-              <li>15. Christensen</li>
-              <li>23. Koundé</li>
-              <li>3. Balde</li>
-              <li>22. Gündogan</li>
-              <li>21. De Jong</li>
-              <li>8. Pedri</li>
-              <li>9. Lewandowski</li>
-              <li>11. Raphinha</li>
-              <li>14. Félix</li>
-            </ul>
-          </div>
-          <div class="lineup-away">
-            <h4>Napoli (4-3-3)</h4>
-            <ul>
-              <li>1. Meret (GK)</li>
-              <li>22. Di Lorenzo</li>
-              <li>5. Juan Jesus</li>
-              <li>13. Rrahmani</li>
-              <li>17. Olivera</li>
-              <li>68. Lobotka</li>
-              <li>99. Anguissa</li>
-              <li>20. Zielinski</li>
-              <li>21. Politano</li>
-              <li>9. Osimhen</li>
-              <li>77. Kvaratskhelia</li>
-            </ul>
+        <!-- Tomorrow's Matches -->
+        <section id="tomorrows-matches" aria-label="Tomorrow's matches">
+          <h2>Tomorrow's Matches</h2>
+          <div id="tomorrows-matches-list">
+            <article class="match-card upcoming" data-match-id="1003">
+              <span class="match-date">2026-08-01</span>
+              <span class="kickoff-time">21:00</span>
+              <div class="competition-info">
+                <img src="#" alt="Competition logo" class="competition-logo" />
+                <span class="competition-name">Serie A</span>
+              </div>
+              <div class="teams">
+                <div class="home-team">
+                  <img src="#" alt="Home badge" class="club-badge" />
+                  <span class="home-name">AC Milan</span>
+                </div>
+                <div class="score">vs</div>
+                <div class="away-team">
+                  <img src="#" alt="Away badge" class="club-badge" />
+                  <span class="away-name">Inter</span>
+                </div>
+              </div>
+              <div class="match-actions">
+                <button class="favorite-btn" data-match="1003">⭐</button>
+                <button class="notify-btn" data-match="1003">🔔</button>
+                <button class="watch-btn" data-match="1003">▶</button>
+                <button class="stats-btn" data-match="1003">📊</button>
+                <button class="lineup-btn" data-match="1003">📋</button>
+              </div>
+            </article>
           </div>
         </section>
-        <!-- AI assistant integrated in match context -->
-        <aside id="match-ai-assistant" class="ai-context">
-          <span class="ai-label">🤖 AI Match Insight</span>
-          <p class="ai-suggestion">Barcelona pressing high – Napoli counter-attacks dangerous.</p>
-        </aside>
-      </article>
 
-      <!-- ===== AI ASSISTANT (GENERAL PURPOSE) ===== -->
-      <section id="ai-assistant" aria-label="AI Assistant" class="detail-page">
-        <h2>AI Assistant <span class="ai-badge">🧠</span></h2>
-        <!-- image/file placeholders -->
-        <div id="ai-upload-zone">
-          <label for="ai-file-upload" class="ai-upload-label">📎 Attach image / file</label>
-          <input type="file" id="ai-file-upload" accept="image/*,.pdf,.txt" multiple />
-          <div id="ai-file-preview"></div>
-        </div>
-        <!-- chat memory (Supabase placeholder) -->
-        <div id="ai-chat-container">
-          <div id="chat-history" aria-live="polite">
-            <div class="chat-message user">What’s the latest on Champions League?</div>
-            <div class="chat-message assistant">⚽ Real Madrid won 2-1; Bayern drew 1-1. Memory stored.</div>
-            <div class="chat-message user">Remind me of Barcelona lineup.</div>
-            <div class="chat-message assistant">📋 Stored in your preferences. Lineup: Ter Stegen, Cancelo, Christensen …</div>
+        <!-- Upcoming Matches (next 7 days) -->
+        <section id="upcoming-matches" aria-label="Upcoming matches">
+          <h2>Upcoming Matches</h2>
+          <div id="upcoming-matches-list">
+            <article class="match-card upcoming" data-match-id="1004">
+              <span class="match-date">2026-08-02</span>
+              <span class="kickoff-time">18:30</span>
+              <div class="competition-info">
+                <img src="#" alt="Competition logo" class="competition-logo" />
+                <span class="competition-name">Bundesliga</span>
+                <span class="country">🇩🇪</span>
+              </div>
+              <div class="teams">
+                <div class="home-team">
+                  <img src="#" alt="Home badge" class="club-badge" />
+                  <span class="home-name">Bayern Munich</span>
+                </div>
+                <div class="score">vs</div>
+                <div class="away-team">
+                  <img src="#" alt="Away badge" class="club-badge" />
+                  <span class="away-name">Borussia Dortmund</span>
+                </div>
+              </div>
+              <div class="match-actions">
+                <button class="favorite-btn" data-match="1004">⭐</button>
+                <button class="notify-btn" data-match="1004">🔔</button>
+                <button class="watch-btn" data-match="1004">▶</button>
+                <button class="stats-btn" data-match="1004">📊</button>
+                <button class="lineup-btn" data-match="1004">📋</button>
+                <button class="details-btn" data-match="1004">ℹ️</button>
+              </div>
+            </article>
           </div>
-          <form id="ai-chat-form" action="#">
-            <input type="text" id="ai-chat-input" placeholder="Ask me anything about sports, tactics, or general..." />
-            <button type="submit" id="ai-chat-send">➤</button>
-          </form>
-          <div id="ai-memory-indicator">🧠 memory · connected to Supabase</div>
-        </div>
-        <!-- screen-share / live placeholders -->
-        <div id="ai-screen-share">
-          <span>📱 Screen share / live placeholder</span>
-          <div class="screen-preview">[ screen preview ]</div>
-        </div>
-        <!-- secret guard: never reveal secrets (text placeholder) -->
-        <p id="ai-security-notice" style="display: none;">🔒 secrets never revealed</p>
-      </section>
+        </section>
 
-    </main>
+        <!-- Trending Matches -->
+        <section id="trending-matches" aria-label="Trending matches">
+          <h2>Trending Matches</h2>
+          <div id="trending-matches-list"></div>
+        </section>
 
-        <!-- ===== BOTTOM TABS ===== -->
-    <footer id="bottom-tabs" role="navigation">
-      <a href="#section-home" class="tab-item active" data-tab="home">🏠 Home</a>
-      <a href="#section-sports" class="tab-item" data-tab="sports">⚽ Sports</a>
-      <a href="#section-favorites" class="tab-item" data-tab="favorites">⭐ Favorites</a>
-      <a href="#section-watch" class="tab-item" data-tab="watch">📺 Watch</a>
-      <a href="#section-account" class="tab-item" data-tab="account">👤 Account</a>
-    </footer>
+        <!-- Featured Competitions -->
+        <section id="featured-competitions" aria-label="Featured competitions">
+          <h2>Featured Competitions</h2>
+          <div id="featured-competitions-list">
+            <div class="competition-card" data-competition="1">
+              <img src="#" alt="Premier League" class="competition-logo" />
+              <span class="competition-name">Premier League</span>
+            </div>
+            <div class="competition-card" data-competition="2">
+              <img src="#" alt="La Liga" class="competition-logo" />
+              <span class="competition-name">La Liga</span>
+            </div>
+            <div class="competition-card" data-competition="3">
+              <img src="#" alt="Serie A" class="competition-logo" />
+              <span class="competition-name">Serie A</span>
+            </div>
+            <div class="competition-card" data-competition="4">
+              <img src="#" alt="Bundesliga" class="competition-logo" />
+              <span class="competition-name">Bundesliga</span>
+            </div>
+            <div class="competition-card" data-competition="5">
+              <img src="#" alt="Ligue 1" class="competition-logo" />
+              <span class="competition-name">Ligue 1</span>
+            </div>
+            <div class="competition-card" data-competition="6">
+              <img src="#" alt="Champions League" class="competition-logo" />
+              <span class="competition-name">Champions League</span>
+            </div>
+            <div class="competition-card" data-competition="7">
+              <img src="#" alt="Europa League" class="competition-logo" />
+              <span class="competition-name">Europa League</span>
+            </div>
+            <div class="competition-card" data-competition="8">
+              <img src="#" alt="Conference League" class="competition-logo" />
+              <span class="competition-name">Conference League</span>
+            </div>
+          </div>
+        </section>
 
-    <!-- hidden / additional anchors for completeness -->
-    <div id="hidden-anchors" style="display:none;">
-      <a href="#match-details">Match Details</a>
-      <a href="#lineups">Lineups</a>
-      <a href="#ai-assistant">AI Assistant</a>
-      <a href="#search-panel">Search</a>
-      <a href="#notifications">Notifications</a>
-      <a href="#history">History</a>
-    </div>
-  </div>
-  <!-- no CSS, no JS, no backend – pure semantic HTML spec -->
-</body>
-</html
+        <!-- Continue Watching -->
+        <section id="continue-watching" aria-label="Continue watching">
+          <h2>Continue Watching</h2>
+          <div id="continue-watching-list">
+            <div class="watch-card" data-id="101">
+              <img src="#" alt="Thumbnail" class="thumbnail" />
+              <span class="title">Match Highlights: Liverpool vs Arsenal</span>
+              <span class="last-watched">2 hours ago</span>
+              <button class="continue-btn">▶ Continue</button>
+              <button class="start-over-btn">🔄 Start Over</button>
+              <button class="delete-btn">🗑️</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recently Viewed -->
+        <section id="recently-viewed" aria-label="Recently viewed">
+          <h2>Recently Viewed</h2>
+          <div id="recently-viewed-list">
+            <div class="recent-item" data-type="club" data-id="101">
+              <img src="#" alt="Club badge" class="thumbnail" />
+              <span class="title">FC Barcelona</span>
+              <button class="open-again">↩️</button>
+              <button class="remove-btn">✕</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recommended -->
+        <section id="recommended" aria-label="Recommended">
+          <h2>Recommended</h2>
+         
