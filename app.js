@@ -160,3 +160,74 @@ async function api(endpoint){
     return response.json();
 
 }
+// ===============================
+// Home
+// ===============================
+
+async function loadHome() {
+
+    app.currentPage = "home";
+
+    const container = document.getElementById("page-container");
+
+    container.innerHTML = `
+        <h2>Today's Matches</h2>
+        <div id="todayMatches">
+            <p>Loading matches...</p>
+        </div>
+    `;
+
+    try {
+
+        // This endpoint should exist in your Vercel backend.
+        const data = await api("/matches/today");
+
+        renderTodayMatches(data);
+
+    } catch (err) {
+
+        document.getElementById("todayMatches").innerHTML = `
+            <p>Unable to load today's matches.</p>
+        `;
+
+        console.error(err);
+
+    }
+
+}
+
+function renderTodayMatches(matches) {
+
+    const container = document.getElementById("todayMatches");
+
+    if (!matches || matches.length === 0) {
+
+        container.innerHTML = `
+            <p>No matches today.</p>
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML = matches.map(match => `
+        <div class="match-card" data-id="${match.idEvent}">
+
+            <div class="team">
+                <img src="${match.strHomeTeamBadge || ""}" alt="">
+                <span>${match.strHomeTeam}</span>
+            </div>
+
+            <div class="match-time">
+                ${match.strTime}
+            </div>
+
+            <div class="team">
+                <img src="${match.strAwayTeamBadge || ""}" alt="">
+                <span>${match.strAwayTeam}</span>
+            </div>
+
+        </div>
+    `).join("");
+
+}
