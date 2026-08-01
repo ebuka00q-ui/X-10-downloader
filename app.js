@@ -59,9 +59,8 @@
       window.addEventListener('hashchange', () => this.handleHash());
     },
 
-    // ----- Cache DOM -----
     cacheDom: function() {
-      this.dom = {
+    this.dom = {
         body: document.body,
         main: document.getElementById('main-content'),
         header: document.getElementById('global-header'),
@@ -78,22 +77,23 @@
         searchClear: document.getElementById('search-clear'),
         tabs: document.querySelectorAll('#bottom-tabs .tab-item'),
         pages: {
-          home: document.getElementById('section-home'),
-          sports: document.getElementById('section-sports'),
-          favorites: document.getElementById('section-favorites'),
-          watch: document.getElementById('section-watch'),
-          account: document.getElementById('section-account'),
+            home: document.getElementById('section-home'),
+            sports: document.getElementById('section-sports'),
+            favorites: document.getElementById('section-favorites'),
+            watch: document.getElementById('section-watch'),
+            account: document.getElementById('section-account'),
         },
-      };
+    };
 
-      // Ensure all critical elements exist
-      Object.keys(this.dom).forEach(key => {
+    // Ensure all critical elements exist
+    Object.keys(this.dom).forEach(key => {
         if (!this.dom[key] && key !== 'drawerOverlay') {
-          if (this.config.debug) console.warn(`⚠️ DOM element not found: ${key}`);
+            if (this.config.debug) {
+                console.warn('DOM element not found: ' + key);
+            }
         }
-      });
-    },
-
+    });
+},
     // --- Navigation ---
 navigateTo: function(page) {
     const validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
