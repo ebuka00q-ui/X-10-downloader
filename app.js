@@ -2870,3 +2870,354 @@
     },
   };
         
+// ============================================================
+  // PART 7 — SEARCH, NOTIFICATIONS & HISTORY MODULE
+  // ============================================================
+
+  const SearchModule = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      history: [],
+      results: [],
+      isSearching: false,
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.loadSearchHistory();
+      this.renderSearchSuggestions();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('🔍 Search module initialized');
+    },
+
+    cacheDom: function() {
+      this.dom = {
+        overlay: document.getElementById('search-overlay'),
+        input: document.getElementById('search-input'),
+        form: document.getElementById('search-form'),
+        results: document.getElementById('search-results'),
+        suggestions: document.getElementById('search-suggestions'),
+        clearBtn: document.getElementById('search-clear'),
+        voiceBtn: document.getElementById('search-voice'),
+        filterBtn: document.getElementById('search-filter-btn'),
+        sortBtn: document.getElementById('search-sort-btn'),
+        filters: document.getElementById('search-filters'),
+        loading: document.getElementById('search-loading'),
+        empty: document.getElementById('search-empty'),
+        offline: document.getElementById('search-offline'),
+        error: document.getElementById('search-error'),
+        noQuery: document.getElementById('search-no-query'),
+        recentList: document.getElementById('recent-search-list'),
+        trendingList: document.getElementById('trending-search-list'),
+        suggestedList: document.getElementById('suggested-search-list'),
+        popularClubs: document.getElementById('popular-club-list'),
+        popularPlayers: document.getElementById('popular-player-list'),
+        popularCompetitions: document.getElementById('popular-competition-list'),
+        popularCountries: document.getElementById('popular-country-list'),
+      };
+    },
+
+    bindEvents: function() {
+      // Search input
+      if (this.dom.input) {
+        this.dom.input.addEventListener('input', (e) => {
+          const query = e.target.value.trim();
+          if (query.length >= 2) {
+            this.performSearch(query);
+          } else {
+            this.showSuggestions();
+          }
+        });
+
+        this.dom.input.addEventListener('focus', () => {
+          this.showSuggestions();
+        });
+      }
+
+      // Filter buttons
+      if (this.dom.filterBtn) {
+        this.dom.filterBtn.addEventListener('click', () => {
+          if (this.dom.filters) {
+            this.dom.filters.hidden = !this.dom.filters.hidden;
+          }
+        });
+      }
+
+      if (this.dom.filters) {
+        this.dom.filters.querySelectorAll('.filter-option').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.dom.filters.querySelectorAll('.filter-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Re-search with filter
+            if (this.dom.input && this.dom.input.value.trim()) {
+              this.performSearch(this.dom.input.value.trim());
+            }
+          });
+        });
+      }
+
+      // Voice search
+      if (this.dom.voiceBtn) {
+        this.dom.voiceBtn.addEventListener('click', () => {
+          if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            this.startVoiceSearch();
+          } else {
+            this.showToast('🎤 Voice search not supported on this browser');
+          }
+        });
+      }
+
+      // Search events from other modules
+      document.addEventListener('x10:search', (e) => {
+        if (e.detail && e.detail.query) {
+          App.openSearch();
+          setTimeout(() => {
+            if (this.dom.input) {
+              this.dom.input.value = e.detail.query;
+              this.performSearch(e.detail.query);
+            }
+          }, 200);
+        }
+      });
+    },
+
+    loadSearchHistory: function() {
+      try {
+        const saved = localStorage.getItem('x10-search-history');
+        this.state.history = saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        this.state.history = [];
+        if (App.config.debug) console.warn('⚠️ Failed to load search history:', e);
+      }
+    },
+
+    saveSearchHistory: function() {
+      try {
+        localStorage.setItem('x10-search-history', JSON.stringify(this.state.history));
+      } catch (e) {
+        if (App.config.debug) console.warn('⚠️ Failed to save search history:', e);
+      }
+    },
+
+    performSearch: function(query) {
+      this.state.isSearching = true;
+      this.hideAllStates();
+
+      // Simulate search
+      setTimeout(() => {
+        const results = this.getSearchResults(query);
+        this.state.results = results;
+        this.displayResults(results, query);
+
+        // Save to history
+        this.addToHistory(query);
+        this.state.isSearching = false;
+      }, 300);
+    },
+
+    getSearchResults: function(query) {
+      const lower = query.toLowerCase();
+      const results = [];
+
+      // Mock data
+      const clubs = ['Barcelona', 'Liverpool', 'Real Madrid', 'Bayern Munich', 'Arsenal'];
+      const players = ['Lamine Yamal', 'Erling Haaland', 'Jude Bellingham', 'Kylian Mbappé', 'Bukayo Saka'];
+      const competitions = ['Premier League', 'La Liga', 'Champions League', 'Serie A', 'Bundesliga'];
+      const countries = ['Spain', 'England', 'Germany', 'Italy', 'France'];
+
+      clubs.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Club', name: name, image: '#' });
+        }
+      });
+
+      players.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Player', name: name, image: '#' });
+        }
+      });
+
+      competitions.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Competition', name: name, image: '#' });
+        }
+      });
+
+      countries.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Country', name: name, image: '#' });
+        }
+      });
+
+      return results;
+    },
+
+    displayResults: function(results, query) {
+      if (!this.dom.results) return;
+
+      if (results.length === 0) {
+        this.showEmpty();
+        return;
+      }
+
+      // Group by type
+      const grouped = {};
+      results.forEach(r => {
+        if (!grouped[r.type]) grouped[r.type] = [];
+        grouped[r.type].push(r);
+      });
+
+      let html = '';
+      for (const [type, items] of Object.entries(grouped)) {
+        html += `<section class="result-group">
+          <h3>${type}s</h3>
+          <div class="result-list">
+            ${items.map(item => `
+              <div class="search-result-item" data-name="${item.name}">
+                <img src="${item.image}" alt="${item.name}" class="image" />
+                <div class="info">
+                  <div class="title">${item.name}</div>
+                  <div class="subtitle">${type}</div>
+                </div>
+                <button class="open-btn">📂</button>
+              </div>
+            `).join('')}
+          </div>
+        </section>`;
+      }
+
+      this.dom.results.innerHTML = html;
+
+      // Bind clicks
+      this.dom.results.querySelectorAll('.search-result-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const name = el.dataset.name;
+          this.showToast(`🔍 Opening ${name}`);
+          App.closeSearch();
+        });
+      });
+    },
+
+    showSuggestions: function() {
+      this.hideAllStates();
+      if (this.dom.suggestions) {
+        this.dom.suggestions.style.display = 'block';
+      }
+
+      // Render recent searches
+      if (this.dom.recentList && this.state.history.length > 0) {
+        this.dom.recentList.innerHTML = this.state.history.slice(0, 5).map(s =>
+          `<li data-query="${s}">${s}</li>`
+        ).join('');
+
+        this.dom.recentList.querySelectorAll('li').forEach(el => {
+          el.addEventListener('click', () => {
+            const query = el.dataset.query;
+            if (this.dom.input) {
+              this.dom.input.value = query;
+              this.performSearch(query);
+            }
+          });
+        });
+      }
+
+      // Trending
+      if (this.dom.trendingList) {
+        const trending = ['Champions League', 'El Clásico', 'Derby', 'World Cup', 'Transfer News'];
+        this.dom.trendingList.innerHTML = trending.map(s =>
+          `<li data-query="${s}">🔥 ${s}</li>`
+        ).join('');
+
+        this.dom.trendingList.querySelectorAll('li').forEach(el => {
+          el.addEventListener('click', () => {
+            const query = el.dataset.query;
+            if (this.dom.input) {
+              this.dom.input.value = query;
+              this.performSearch(query);
+            }
+          });
+        });
+      }
+    },
+
+    addToHistory: function(query) {
+      // Remove duplicate
+      this.state.history = this.state.history.filter(s => s !== query);
+      this.state.history.unshift(query);
+
+      if (this.state.history.length > 20) {
+        this.state.history.pop();
+      }
+
+      this.saveSearchHistory();
+    },
+
+    hideAllStates: function() {
+      if (this.dom.suggestions) this.dom.suggestions.style.display = 'none';
+      if (this.dom.results) this.dom.results.innerHTML = '';
+      if (this.dom.loading) this.dom.loading.style.display = 'none';
+      if (this.dom.empty) this.dom.empty.style.display = 'none';
+      if (this.dom.offline) this.dom.offline.style.display = 'none';
+      if (this.dom.error) this.dom.error.style.display = 'none';
+      if (this.dom.noQuery) this.dom.noQuery.style.display = 'none';
+    },
+
+    showEmpty: function() {
+      if (this.dom.empty) this.dom.empty.style.display = 'flex';
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'info' }
+      }));
+    },
+
+    startVoiceSearch: function() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.showToast('🎤 Voice search not supported');
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        this.showToast('🎤 Listening...');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (this.dom.input) {
+          this.dom.input.value = transcript;
+          this.performSearch(transcript);
+        }
+      };
+
+      recognition.onerror = () => {
+        this.showToast('🎤 Could not understand');
+      };
+
+      recognition.start();
+    },
+
+    // Public API
+    clearHistory: function() {
+      if (confirm('Clear all search history?')) {
+        this.state.history = [];
+        this.saveSearchHistory();
+        this.showSuggestions();
+        this.showToast('🗑️ Search history cleared');
+      }
+    },
+
+    destroy: function() {
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('🔍 Search module destroyed');
+    },
+  };
