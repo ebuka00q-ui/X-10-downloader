@@ -4556,5 +4556,72 @@ h4 {
 }
 
 /* ============================================================
+   FIX: Page Alignment & Centering
+   ============================================================ */
+
+#main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-md);
+  padding-bottom: calc(var(--space-md) + var(--safe-bottom));
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Make sure sections don't overflow */
+#section-home,
+#section-sports,
+#section-favorites,
+#section-watch,
+#section-account {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Cards should not overflow */
+.match-card,
+.featured-match,
+.competition-card,
+.club-card,
+.player-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fix bottom navigation */
+#bottom-tabs {
+  max-width: 1200px;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+}
+
+/* Fix header */
+#global-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+}
+
+/* Disable zoom on mobile (keep it app-like) */
+html {
+  touch-action: manipulation;
+}
+
+body {
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Prevent horizontal scroll */
+* {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================================
    END OF STYLESHEET
    ============================================================ */
