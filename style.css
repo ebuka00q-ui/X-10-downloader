@@ -4621,6 +4621,83 @@ body {
   max-width: 100%;
   box-sizing: border-box;
 }
+/* ============================================================
+   FIX: Bottom Navigation Active State & Page Display
+   ============================================================ */
+
+/* Show only the active page */
+#section-home,
+#section-sports,
+#section-favorites,
+#section-watch,
+#section-account {
+  display: none;
+}
+
+#section-home.active,
+#section-sports.active,
+#section-favorites.active,
+#section-watch.active,
+#section-account.active {
+  display: block;
+}
+
+/* Bottom tab active state */
+#bottom-tabs .tab-item {
+  color: var(--text-muted);
+  transition: color 0.25s ease;
+  position: relative;
+}
+
+#bottom-tabs .tab-item.active {
+  color: var(--accent-primary);
+}
+
+#bottom-tabs .tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(1);
+  width: 24px;
+  height: 3px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-full);
+  transition: transform 0.25s ease;
+}
+
+#bottom-tabs .tab-item::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 24px;
+  height: 3px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-full);
+  transition: transform 0.25s ease;
+}
+
+/* Page transition animation */
+#section-home.active,
+#section-sports.active,
+#section-favorites.active,
+#section-watch.active,
+#section-account.active {
+  animation: fadeSlideUp 0.3s ease;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 /* ============================================================
    END OF STYLESHEET
