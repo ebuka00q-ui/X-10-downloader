@@ -94,6 +94,40 @@
       });
     },
 
+    // --- Navigation ---
+navigateTo: function(page) {
+    const validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
+    if (!validPages.includes(page)) return;
+
+    if (this.state.currentPage === page) return;
+
+    this.state.previousPage = this.state.currentPage;
+    this.state.currentPage = page;
+
+    // Hide all pages
+    Object.keys(this.dom.pages).forEach(key => {
+        if (this.dom.pages[key]) {
+            this.dom.pages[key].style.display = 'none';
+        }
+    });
+
+    // Show target page
+    const target = this.dom.pages[page];
+    if (target) {
+        target.style.display = 'block';
+    }
+
+    // Update tabs
+    this.dom.tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === page);
+    });
+
+    // Update URL hash
+    window.location.hash = page;
+
+    // Update AI button visibility
+    this.updateAIButtonVisibility(page);
+},
     // ----- Bind Events -----
     bindEvents: function() {
       // Bottom navigation
