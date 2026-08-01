@@ -1842,3 +1842,298 @@
         const path = parsed.pathname;
         const filename = path.split('/').pop() || '';
                                     
+ // Try to get title from query params
+        const params = new URLSearchParams(parsed.search);
+        const titleParam = params.get('title') || params.get('t') || params.get('name');
+
+        if (titleParam) {
+          return decodeURIComponent(titleParam).replace(/[^a-zA-Z0-9\s\-]/g, '').trim();
+        }
+
+        // Clean filename
+        if (filename) {
+          const clean = decodeURIComponent(filename)
+            .replace(/\.[^.]+$/, '') // Remove extension
+            .replace(/[_-]/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase())
+            .trim();
+
+          if (clean && clean.length > 3) {
+            return clean;
+          }
+        }
+
+        // Fallback: domain name
+        const domain = parsed.hostname.replace('www.', '');
+        return domain.charAt(0).toUpperCase() + domain.slice(1);
+      } catch {
+        return 'Unknown Media';
+      }
+    },
+
+    // ----- History -----
+    loadHistory: function() {
+      try {
+        const saved = localStorage.getItem('x10-watch-history');
+        this.state.history = saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        this.state.history = [];
+        if (App.config.debug) console.warn('⚠️ Failed to load watch history:', e);
+      }
+    },
+
+    saveHistory: function() {
+      try {
+        localStorage.setItem('x10-watch-history', JSON.stringify(this.state.history));
+      } catch (e) {
+        if (App.config.debug) console.warn('⚠️ Failed to save watch history:', e);
+      }
+    },
+
+    saveToHistory: function(url, title, type) {
+      // Check for duplicate
+      const existing = this.state.history.findIndex(h => h.url === url);
+      if (existing !== -1) {
+        this.state.history.splice(existing, 1);
+      }
+
+      const entry = {
+        url: url,
+        title: title || this.extractTitle(url),
+        type: type || 'unknown',
+        date: new Date().toISOString(),
+        playbackPosition: this.state.playbackPosition || 0,
+      };
+
+      this.state.history.unshift(entry);
+      if (this.state.history.length > 100) {
+        this.state.history.pop();
+      }
+
+      this.saveHistory();
+      this.renderHistory();
+      this.renderContinueWatching();
+
+      if (App.config.debug) console.log(`📝 Saved to history: ${entry.title}`);
+    },
+
+    renderHistory: function() {
+      if (!this.dom.historyList) return;
+
+      if (this.state.history.length === 0) {
+        this.dom.historyList.innerHTML = '<div class="empty-state">No watch history yet</div>';
+        return;
+      }
+
+      this.dom.historyList.innerHTML = this.state.history.slice(0, 20).map(item => `
+        <div class="history-item" data-url="${item.url}">
+          <div class="thumbnail" style="background: var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:24px;">
+            ${item.type === 'video' ? '🎬' : '🖼️'}
+          </div>
+          <div class="info">
+            <div class="title">${item.title}</div>
+            <div class="meta">${new Date(item.date).toLocaleDateString()} • ${new Date(item.date).toLocaleTimeString()}</div>
+          </div>
+          <div class="actions">
+            <button class="play-btn" data-url="${item.url}">▶</button>
+            <button class="delete-btn" data-url="${item.url}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Bind play buttons
+      this.dom.historyList.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          if (this.dom.linkInput) {
+            this.dom.linkInput.value = url;
+            this.loadMedia();
+          }
+        });
+      });
+
+      // Bind delete buttons
+      this.dom.historyList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          this.deleteHistoryItem(url);
+        });
+      });
+    },
+
+    deleteHistoryItem: function(url) {
+      this.state.history = this.state.history.filter(h => h.url !== url);
+      this.saveHistory();
+      this.renderHistory();
+      this.renderContinueWatching();
+    },
+
+    clearAllHistory: function() {
+      if (confirm('Are you sure you want to clear all watch history?')) {
+        this.state.history = [];
+        this.saveHistory();
+        this.renderHistory();
+        this.renderContinueWatching();
+        this.showToast('🗑️ All watch history cleared');
+      }
+    },
+
+    searchHistory: function(query) {
+      if (!this.dom.historyList) return;
+
+      const filtered = this.state.history.filter(item =>
+        item.title.toLowerCase().includes(query.toLowerCase()) ||
+        item.url.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        this.dom.historyList.innerHTML = '<div class="empty-state">No matches found</div>';
+        return;
+      }
+
+      this.dom.historyList.innerHTML = filtered.slice(0, 20).map(item => `
+        <div class="history-item" data-url="${item.url}">
+          <div class="thumbnail" style="background: var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:24px;">
+            ${item.type === 'video' ? '🎬' : '🖼️'}
+          </div>
+          <div class="info">
+            <div class="title">${item.title}</div>
+            <div class="meta">${new Date(item.date).toLocaleDateString()}</div>
+          </div>
+          <div class="actions">
+            <button class="play-btn" data-url="${item.url}">▶</button>
+            <button class="delete-btn" data-url="${item.url}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.historyList.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          if (this.dom.linkInput) {
+            this.dom.linkInput.value = url;
+            this.loadMedia();
+          }
+        });
+      });
+
+      this.dom.historyList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          this.deleteHistoryItem(url);
+        });
+      });
+    },
+
+    renderContinueWatching: function() {
+      if (!this.dom.continueList) return;
+
+      const recent = this.state.history.slice(0, 3);
+      if (recent.length === 0) {
+        this.dom.continueList.innerHTML = '<div class="empty-state">No media to continue</div>';
+        return;
+      }
+
+      this.dom.continueList.innerHTML = recent.map(item => `
+        <div class="continue-card" data-url="${item.url}">
+          <div class="thumbnail" style="background: var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:40px; min-height:120px;">
+            ${item.type === 'video' ? '🎬' : '🖼️'}
+          </div>
+          <div class="title">${item.title}</div>
+          <div class="progress">
+            <div class="progress-fill" style="width:${item.playbackPosition ? '30%' : '0%'}"></div>
+          </div>
+          <div class="actions">
+            <button class="continue-btn" data-url="${item.url}">▶ Continue</button>
+            <button class="delete-btn" data-url="${item.url}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.continueList.querySelectorAll('.continue-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const url = btn.dataset.url;
+          if (this.dom.linkInput) {
+            this.dom.linkInput.value = url;
+            this.loadMedia();
+          }
+        });
+      });
+
+      this.dom.continueList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          this.deleteHistoryItem(url);
+        });
+      });
+    },
+
+    // ----- Media Info -----
+    updateMediaInfo: function(title, type, source) {
+      if (this.dom.mediaTitle) this.dom.mediaTitle.textContent = title || 'Untitled Media';
+      if (this.dom.mediaDescription) this.dom.mediaDescription.textContent = 'Media loaded successfully';
+      if (this.dom.mediaSource) this.dom.mediaSource.textContent = `Source: ${source || 'Unknown'}`;
+      if (this.dom.mediaStatus) this.dom.mediaStatus.textContent = '✅ Loaded';
+      if (this.dom.mediaType) this.dom.mediaType.textContent = `Type: ${type || 'Unknown'}`;
+    },
+
+    // ----- Error Handling -----
+    showError: function(type) {
+      this.clearErrors();
+
+      const errorMap = {
+        'invalid': 'invalid',
+        'unsupported': 'unsupported',
+        'broken': 'broken',
+        'removed': 'removed',
+        'blocked': 'blocked',
+        'network': 'network',
+        'playback': 'playback',
+      };
+
+      const key = errorMap[type] || 'unsupported';
+      if (this.dom.errorStates && this.dom.errorStates[key]) {
+        this.dom.errorStates[key].style.display = 'block';
+      }
+
+      if (App.config.debug) console.warn(`⚠️ Watch error: ${type}`);
+    },
+
+    clearErrors: function() {
+      if (this.dom.errorStates) {
+        Object.values(this.dom.errorStates).forEach(el => {
+          if (el) el.style.display = 'none';
+        });
+      }
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'success' }
+      }));
+    },
+
+    // ----- Public API -----
+    playMedia: function(url) {
+      if (this.dom.linkInput) {
+        this.dom.linkInput.value = url;
+        this.loadMedia();
+      }
+    },
+
+    getHistory: function() {
+      return [...this.state.history];
+    },
+
+    destroy: function() {
+      this.clearMedia();
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('📺 Watch module destroyed');
+    },
+  };
+      
