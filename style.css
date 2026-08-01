@@ -9,9 +9,6 @@
    ============================================================ */
 
 /* ----- CSS Variables (Theme System) ----- */
-body {
-  background: red !important;
-}
 :root {
   /* Dark Theme (Default) */
   --bg-primary: #0a0e1a;
