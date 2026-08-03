@@ -135,7 +135,11 @@ navigateTo: function(page) {
     tab.addEventListener('click', (e) => {
         e.preventDefault();
         const page = tab.dataset.tab;
-        if (page) this.navigateTo(page);
+if (page) {
+    this.navigateTo(page);
+    document.dispatchEvent(new CustomEvent('x10:pageChange', { detail: { page: page } }));
+}
+      
     });
 });
         
