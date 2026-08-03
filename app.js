@@ -5,6 +5,8 @@
  * Production Ready
  * ============================================================
  */
+alert("YES! JavaScript is connected!");
+
 
 (function() {
   'use strict';
