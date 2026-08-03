@@ -4698,6 +4698,12 @@ body {
     transform: translateY(0);
   }
 }
+/* Hide hidden pages and indicators */
+.hidden-page,
+.hidden {
+  display: none !important;
+}
+
 
 /* ============================================================
    END OF STYLESHEET
