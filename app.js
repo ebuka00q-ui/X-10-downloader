@@ -99,8 +99,7 @@ navigateTo: function(page) {
     const validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
     if (!validPages.includes(page)) return;
 
-    if (this.state.currentPage === page) return;
-
+    // if (this.state.currentPage === page) return;
     this.state.previousPage = this.state.currentPage;
     this.state.currentPage = page;
 
