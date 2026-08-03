@@ -4704,6 +4704,17 @@ body {
   display: none !important;
 }
 
+/* Page section display defaults */
+#section-home {
+  display: block;
+}
+
+#section-sports,
+#section-favorites,
+#section-watch,
+#section-account {
+  display: none;
+}
 
 /* ============================================================
    END OF STYLESHEET
