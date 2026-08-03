@@ -131,13 +131,24 @@ navigateTo: function(page) {
     bindEvents: function() {
       // Bottom navigation
       this.dom.tabs.forEach(tab => {
-        tab.addEventListener('click', (e) => {
-          e.preventDefault();
-          const page = tab.dataset.tab;
-          if (page) this.navigateTo(page);
+                // Universal Tab Navigation Click Fix
+        document.querySelectorAll('#bottom-tabs .tab-item').forEach(tab => {
+            tab.onclick = (e) => {
+                e.preventDefault();
+                const page = tab.getAttribute('data-tab');
+                if (page) {
+                    // Hide all sections, show only target section
+                    document.querySelectorAll('main > section').forEach(sec => sec.style.display = 'none');
+                    const target = document.getElementById('section-' + page);
+                    if (target) target.style.display = 'block';
+                    
+                    // Highlight active bottom tab
+                    document.querySelectorAll('#bottom-tabs .tab-item').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                }
+            };
         });
-      });
-
+        
       // Menu toggle
       if (this.dom.menuToggle) {
         this.dom.menuToggle.addEventListener('click', () => this.toggleSidebar());
