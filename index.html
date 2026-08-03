@@ -1990,6 +1990,185 @@
         </div>
       </section>
 
-      <!-- Manager Profile -->
+<!-- Manager Profile -->
       <section id="manager-profile" class="hidden-page" aria-label="Manager profile">
-        <h2>
+        <h2>Manager Profile</h2>
+        <div class="manager-profile-card">
+          <img src="#" alt="Manager photo" class="manager-photo" />
+          <span class="manager-name">J. Klopp</span>
+          <span class="club">Liverpool</span>
+          <span class="nationality">Germany</span>
+          <span class="age">57</span>
+          <span class="trophies">6</span>
+        </div>
+      </section>
+
+      <!-- Referee Profile -->
+      <section id="referee-profile" class="hidden-page" aria-label="Referee profile">
+        <h2>Referee Profile</h2>
+        <div class="referee-profile-card">
+          <span class="referee-name">M. Oliver</span>
+          <span class="country">England</span>
+          <span class="matches">250</span>
+          <span class="yellow-cards">850</span>
+          <span class="red-cards">25</span>
+        </div>
+      </section>
+
+      <!-- AI Memory Manager -->
+      <section id="ai-memory-manager" class="hidden-page" aria-label="AI memory manager">
+        <h2>AI Memory Manager</h2>
+        <div id="memory-stats">
+          <span>Total Conversations: 12</span>
+          <span>Memory Size: 256 KB</span>
+          <span>Status: Connected to Supabase</span>
+        </div>
+        <div id="memory-conversations">
+          <div class="memory-item">Barcelona tactics - 3 days ago</div>
+          <div class="memory-item">Premier League analysis - 1 week ago</div>
+          <div class="memory-item">Coding help - 2 weeks ago</div>
+        </div>
+        <button id="clear-all-memory">🗑️ Clear All Memory</button>
+      </section>
+
+      <!-- Download Manager -->
+      <section id="download-manager" class="hidden-page" aria-label="Download manager">
+        <h2>Download Manager</h2>
+        <div id="download-controls">
+          <input type="text" id="download-search" placeholder="Search downloads..." />
+          <button id="download-sort">Sort</button>
+        </div>
+        <div id="download-items">
+          <div class="download-item">
+            <span class="file-name">Match Highlights.mp4</span>
+            <span class="file-size">120 MB</span>
+            <span class="file-date">2026-07-31</span>
+            <button class="delete-file">✕</button>
+          </div>
+        </div>
+        <div id="download-storage-info">
+          <span>Storage Used: 2.4 GB</span>
+          <button id="clear-downloads-btn">🗑️ Clear All</button>
+        </div>
+      </section>
+
+      <!-- Report Problem -->
+      <section id="report-problem" class="hidden-page" aria-label="Report problem">
+        <h2>Report a Problem</h2>
+        <form id="report-form">
+          <input type="text" id="report-title" placeholder="Problem title..." />
+          <textarea id="report-description" placeholder="Describe the problem..."></textarea>
+          <input type="file" id="report-attachment" accept="image/*" />
+          <button type="submit">Submit Report</button>
+        </form>
+      </section>
+
+      <!-- Offline Page -->
+      <section id="offline-page" class="hidden-page" aria-label="Offline">
+        <div class="offline-container">
+          <img src="#" alt="No internet illustration" class="offline-illustration" />
+          <h2>You are offline</h2>
+          <p>Please check your internet connection.</p>
+          <button id="reconnect-btn">🔄 Reconnect</button>
+          <button id="retry-btn">🔁 Retry</button>
+          <span id="cached-notice">📦 Showing cached data</span>
+          <span id="last-sync">Last synced: 2026-07-31 20:00</span>
+          <span id="connection-status">📡 Disconnected</span>
+        </div>
+      </section>
+
+      <!-- Error Pages -->
+      <section id="error-404" class="hidden-page" aria-label="404 error">
+        <h2>404 - Page Not Found</h2>
+        <p>The page you are looking for does not exist.</p>
+        <button id="error-home-btn">🏠 Go Home</button>
+      </section>
+
+      <section id="error-403" class="hidden-page" aria-label="403 error">
+        <h2>403 - Forbidden</h2>
+        <p>You do not have permission to access this page.</p>
+      </section>
+
+      <section id="error-500" class="hidden-page" aria-label="500 error">
+        <h2>500 - Server Error</h2>
+        <p>Something went wrong on our end. Please try again later.</p>
+        <button id="error-retry-btn">🔄 Retry</button>
+      </section>
+
+      <section id="maintenance-mode" class="hidden-page" aria-label="Maintenance">
+        <h2>🔧 Maintenance Mode</h2>
+        <p>We're currently performing maintenance. Please check back later.</p>
+      </section>
+
+      <section id="unsupported-browser" class="hidden-page" aria-label="Unsupported browser">
+        <h2>Unsupported Browser</h2>
+        <p>Please use a modern browser to access X-10 Downloader.</p>
+      </section>
+
+      <!-- Loading Components -->
+      <div id="loading-spinner-component" class="loading-component" hidden>
+        <div class="spinner">⏳</div>
+      </div>
+
+      <div id="skeleton-card-component" class="skeleton-component" hidden>
+        <div class="skeleton-card"></div>
+      </div>
+
+      <div id="skeleton-list-component" class="skeleton-component" hidden>
+        <div class="skeleton-list-item"></div>
+        <div class="skeleton-list-item"></div>
+        <div class="skeleton-list-item"></div>
+      </div>
+
+      <div id="skeleton-match-card" class="skeleton-component" hidden>
+        <div class="skeleton-match"></div>
+      </div>
+
+      <div id="skeleton-player-card" class="skeleton-component" hidden>
+        <div class="skeleton-player"></div>
+      </div>
+
+      <div id="skeleton-competition-card" class="skeleton-component" hidden>
+        <div class="skeleton-competition"></div>
+      </div>
+
+      <div id="skeleton-ai-response" class="skeleton-component" hidden>
+        <div class="skeleton-ai"></div>
+      </div>
+
+      <div id="progress-indicator" class="progress-component" hidden>
+        <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+      </div>
+
+      <!-- ============================================================
+      FOOTER INFORMATION
+      ============================================================ -->
+      <footer id="app-footer" role="contentinfo">
+        <span id="footer-version">X-10 v2.0.0</span>
+        <span id="footer-build">Build #2026.07.31</span>
+        <span id="footer-dev">X-10 Labs</span>
+        <span id="footer-copyright">© 2026 X-10 Downloader</span>
+        <a href="#privacy">Privacy</a>
+        <a href="#terms">Terms</a>
+        <a href="#support">Support</a>
+        <span id="footer-credits">Open Source: API-Football, TheSportsDB, Supabase</span>
+      </footer>
+
+      <!-- ============================================================
+      BOTTOM TABS
+      ============================================================ -->
+      <nav id="bottom-tabs" role="navigation" aria-label="Bottom navigation">
+        <a href="#section-home" class="tab-item active" data-tab="home">🏠 Home</a>
+        <a href="#section-sports" class="tab-item" data-tab="sports">⚽ Sports</a>
+        <a href="#section-favorites" class="tab-item" data-tab="favorites">⭐ Favorites</a>
+        <a href="#section-watch" class="tab-item" data-tab="watch">📺 Watch</a>
+        <a href="#section-account" class="tab-item" data-tab="account">👤 Account</a>
+      </nav>
+
+    </main>
+  </div>
+  <!-- ============================================================
+  END APP ROOT
+  ============================================================ -->
+</body>
+  </html>
