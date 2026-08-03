@@ -1400,3 +1400,208 @@ h4 {
 .section-header .view-all:hover {
   color: var(--accent-primary-light);
    }
+
+/* ----- Match Cards (Live, Today, Upcoming) ----- */
+.match-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.match-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.match-card:active {
+  transform: scale(0.98);
+}
+
+.match-card .competition-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.match-card .competition-info .competition-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+.match-card .teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.match-card .teams .team {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.match-card .teams .team .badge {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  padding: 2px;
+}
+
+.match-card .teams .team .name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-card .teams .score {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  padding: 0 var(--space-sm);
+  min-width: 40px;
+  text-align: center;
+}
+
+.match-card .match-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.match-card .match-meta .live-badge {
+  background: var(--color-danger);
+  color: #fff;
+  padding: 1px var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  animation: pulse-live 1.5s ease-in-out infinite;
+}
+
+.match-card .match-meta .minute {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-medium);
+}
+
+.match-card .match-actions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.match-card .match-actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.match-card .match-actions button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.match-card .match-actions button:active {
+  transform: scale(0.92);
+}
+
+.match-card .match-events {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.match-card .match-events .event-icon {
+  font-size: var(--font-size-sm);
+  opacity: 0.7;
+}
+
+/* ----- Horizontal Carousels ----- */
+.carousel {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  padding: var(--space-sm) 0;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel .carousel-item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 280px;
+  max-width: 85vw;
+}
+
+/* ----- Competition Cards ----- */
+.competition-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.competition-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.competition-card .competition-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  padding: var(--space-xs);
+}
+
+.competition-card .info {
+  flex: 1;
+}
+
+.competition-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.competition-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+     }
