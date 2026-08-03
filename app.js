@@ -130,7 +130,7 @@ navigateTo: function(page) {
     
     // ----- Bind Events -----
     bindEvents: function() {
-        // Bottom navigation
+                // Bottom navigation
         document.body.addEventListener('click', (e) => {
             const tab = e.target.closest('#bottom-tabs .tab-item');
             if (!tab) return;
@@ -150,7 +150,7 @@ navigateTo: function(page) {
                 target.style.display = 'block';
             }
 
-            // Highlight active tab
+            // Highlight tab
             document.querySelectorAll('#bottom-tabs .tab-item').forEach(t => {
                 t.classList.remove('active');
             });
@@ -159,22 +159,7 @@ navigateTo: function(page) {
             // Dispatch page change event
             document.dispatchEvent(new CustomEvent('x10:pageChange', { detail: { page: page } }));
         });
-    },
-    
-    
-            // Show selected section
-            const target = document.getElementById('section-' + page);
-            if (target) {
-                target.style.display = 'block';
-            }
-
-            // Highlight tab
-            document.querySelectorAll('#bottom-tabs .tab-item').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            // Dispatch page change event
-            document.dispatchEvent(new CustomEvent('x10:pageChange', { detail: { page: page } }));
-        });
+      
       
       // Menu toggle
       if (this.dom.menuToggle) {
