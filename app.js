@@ -129,21 +129,35 @@ navigateTo: function(page) {
 },
     // ----- Bind Events -----
     bindEvents: function() {
-      // Bottom navigation
-      this.dom.tabs.forEach(tab => {
-                this.dom.tabs.forEach(tab => {
-    tab.addEventListener('click', (e) => {
-        e.preventDefault();
-        const page = tab.dataset.tab;
-if (page) {
-    this.navigateTo(page);
-    document.dispatchEvent(new CustomEvent('x10:pageChange', { detail: { page: page } }));
-}
+    
+              // Bottom navigation
+        document.body.addEventListener('click', (e) => {
+            const tab = e.target.closest('#bottom-tabs .tab-item');
+            if (!tab) return;
+            
+            e.preventDefault();
+            const page = tab.getAttribute('data-tab');
+            if (!page) return;
+
+            // Hide all sections
+            document.querySelectorAll('main > section').forEach(sec => {
+                sec.style.display = 'none';
+            });
+
+            // Show selected section
+            const target = document.getElementById('section-' + page);
+            if (target) {
+                target.style.display = 'block';
+            }
+
+            // Highlight tab
+            document.querySelectorAll('#bottom-tabs .tab-item').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Dispatch page change event
+            document.dispatchEvent(new CustomEvent('x10:pageChange', { detail: { page: page } }));
+        });
       
-    });
-});
-        
-        
       // Menu toggle
       if (this.dom.menuToggle) {
         this.dom.menuToggle.addEventListener('click', () => this.toggleSidebar());
