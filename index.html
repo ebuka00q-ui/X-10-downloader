@@ -1593,3 +1593,403 @@
         <div id="notifications-empty" class="empty-state" hidden>No notifications</div>
             </section>
                 
+<!-- ============================================================
+      MATCH CENTER (Part 8) — Match Details, Statistics, Lineups
+      ============================================================ -->
+      <section id="match-details" class="hidden-page" aria-label="Match details">
+        <div id="match-refresh" class="refresh-container">
+          <div id="match-refresh-indicator" class="refresh-indicator">⬇️ Pull to refresh</div>
+          <div id="match-loading-spinner" class="loading-spinner">⏳</div>
+          <div id="match-skeleton" class="skeleton-container">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-pitch"></div>
+          </div>
+          <div id="match-offline" class="offline-indicator">📡 No internet</div>
+          <div id="match-server-error" class="server-error">⚠️ Server error</div>
+          <div id="match-not-found" class="error-state">Match not found</div>
+        </div>
+
+        <!-- Match Header -->
+        <div id="match-header">
+          <div class="competition-info">
+            <img src="#" alt="Competition logo" class="competition-logo" />
+            <span class="competition-name">Premier League</span>
+            <img src="#" alt="Country flag" class="country-flag" />
+            <span class="round">Round 38</span>
+            <span class="season">2025/26</span>
+          </div>
+          <div class="venue-info">
+            <span class="venue">Anfield</span>
+            <span class="referee">M. Oliver</span>
+            <span class="weather">🌤️ 22°C</span>
+          </div>
+          <div class="match-time">
+            <span class="kickoff-date">2026-07-31</span>
+            <span class="kickoff-time">20:45</span>
+            <span class="match-status live">● LIVE</span>
+          </div>
+        </div>
+
+        <!-- Team Section -->
+        <div id="match-teams">
+          <div class="team home">
+            <img src="#" alt="Home badge" class="club-badge" />
+            <span class="club-name">Liverpool</span>
+            <span class="score">2</span>
+          </div>
+          <div class="match-clock">67'</div>
+          <div class="team away">
+            <img src="#" alt="Away badge" class="club-badge" />
+            <span class="club-name">Arsenal</span>
+            <span class="score">1</span>
+          </div>
+        </div>
+
+        <!-- Match Status -->
+        <div id="match-status-indicators">
+          <span class="status-label">⚽ First Half</span>
+          <span class="status-label">⏱️ Half Time</span>
+          <span class="status-label">⚽ Second Half</span>
+          <span class="status-label">⏱️ Extra Time</span>
+          <span class="status-label">⚽ Penalty Shootout</span>
+          <span class="status-label">✅ Full Time</span>
+          <span class="status-label">⏸️ Postponed</span>
+          <span class="status-label">❌ Cancelled</span>
+          <span class="status-label">⏳ Suspended</span>
+          <span class="status-label">🚫 Abandoned</span>
+        </div>
+
+        <!-- Quick Actions -->
+        <div id="match-quick-actions">
+          <button class="watch-btn">▶ Watch</button>
+          <button class="stats-btn">📊 Statistics</button>
+          <button class="lineup-btn">📋 Lineups</button>
+          <button class="standings-btn">📋 Standings</button>
+          <button class="share-btn">📤 Share</button>
+          <button class="favorite-btn">⭐ Favorite Match</button>
+          <button class="notify-btn">🔔 Notifications</button>
+          <button class="competition-btn">🏆 Open Competition</button>
+          <button class="club-btn">⚪ Open Club</button>
+        </div>
+
+        <!-- Match Timeline -->
+        <section id="match-timeline" aria-label="Match timeline">
+          <h3>Timeline</h3>
+          <div id="timeline-events">
+            <div class="timeline-event" data-minute="1">
+              <span class="minute">1'</span>
+              <span class="event-icon">⚽</span>
+              <span class="event-desc">Kickoff</span>
+            </div>
+            <div class="timeline-event" data-minute="23">
+              <span class="minute">23'</span>
+              <img src="#" alt="Player" class="player-thumb" />
+              <img src="#" alt="Club badge" class="club-badge" />
+              <span class="event-icon">⚽</span>
+              <span class="event-desc">Goal! Salah (Liverpool)</span>
+            </div>
+            <div class="timeline-event" data-minute="45">
+              <span class="minute">45'</span>
+              <span class="event-icon">⏱️</span>
+              <span class="event-desc">Half Time</span>
+            </div>
+            <div class="timeline-event" data-minute="67">
+              <span class="minute">67'</span>
+              <img src="#" alt="Player" class="player-thumb" />
+              <img src="#" alt="Club badge" class="club-badge" />
+              <span class="event-icon">🟨</span>
+              <span class="event-desc">Yellow Card: Odegaard (Arsenal)</span>
+            </div>
+            <div class="timeline-event" data-minute="90">
+              <span class="minute">90'</span>
+              <span class="event-icon">✅</span>
+              <span class="event-desc">Full Time</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Statistics -->
+        <section id="match-statistics" aria-label="Statistics">
+          <h3>Statistics</h3>
+          <div id="stats-grid">
+            <div class="stat-row"><span class="stat-label">Possession</span><span class="stat-value">58%</span></div>
+            <div class="stat-row"><span class="stat-label">Shots</span><span class="stat-value">14</span></div>
+            <div class="stat-row"><span class="stat-label">Shots on Target</span><span class="stat-value">6</span></div>
+            <div class="stat-row"><span class="stat-label">Shots off Target</span><span class="stat-value">5</span></div>
+            <div class="stat-row"><span class="stat-label">Blocked Shots</span><span class="stat-value">3</span></div>
+            <div class="stat-row"><span class="stat-label">Corners</span><span class="stat-value">5</span></div>
+            <div class="stat-row"><span class="stat-label">Free Kicks</span><span class="stat-value">12</span></div>
+            <div class="stat-row"><span class="stat-label">Offsides</span><span class="stat-value">3</span></div>
+            <div class="stat-row"><span class="stat-label">Yellow Cards</span><span class="stat-value">2</span></div>
+            <div class="stat-row"><span class="stat-label">Red Cards</span><span class="stat-value">0</span></div>
+            <div class="stat-row"><span class="stat-label">Fouls</span><span class="stat-value">12</span></div>
+            <div class="stat-row"><span class="stat-label">Pass Accuracy</span><span class="stat-value">82%</span></div>
+            <div class="stat-row"><span class="stat-label">Passes</span><span class="stat-value">420</span></div>
+            <div class="stat-row"><span class="stat-label">Long Passes</span><span class="stat-value">45</span></div>
+            <div class="stat-row"><span class="stat-label">Crosses</span><span class="stat-value">18</span></div>
+            <div class="stat-row"><span class="stat-label">Dribbles</span><span class="stat-value">12</span></div>
+            <div class="stat-row"><span class="stat-label">Tackles</span><span class="stat-value">20</span></div>
+            <div class="stat-row"><span class="stat-label">Interceptions</span><span class="stat-value">8</span></div>
+            <div class="stat-row"><span class="stat-label">Clearances</span><span class="stat-value">15</span></div>
+            <div class="stat-row"><span class="stat-label">Goalkeeper Saves</span><span class="stat-value">4</span></div>
+            <div class="stat-row"><span class="stat-label">Expected Goals (xG)</span><span class="stat-value">1.8</span></div>
+            <div class="stat-row"><span class="stat-label">Dangerous Attacks</span><span class="stat-value">32</span></div>
+            <div class="stat-row"><span class="stat-label">Attacks</span><span class="stat-value">78</span></div>
+            <div class="stat-row"><span class="stat-label">Ball Recoveries</span><span class="stat-value">45</span></div>
+            <div class="stat-row"><span class="stat-label">Duels Won</span><span class="stat-value">52%</span></div>
+            <div class="stat-row"><span class="stat-label">Aerial Duels</span><span class="stat-value">48%</span></div>
+          </div>
+        </section>
+
+        <!-- Lineups -->
+        <section id="match-lineups" aria-label="Lineups">
+          <h3>Lineups</h3>
+          <div id="lineups-container">
+            <div class="lineup-home">
+              <h4>Liverpool (4-3-3)</h4>
+              <ul class="starting-xi">
+                <li><span class="shirt">1</span> Alisson (GK)</li>
+                <li><span class="shirt">2</span> Gomez</li>
+                <li><span class="shirt">4</span> Van Dijk</li>
+                <li><span class="shirt">5</span> Konaté</li>
+                <li><span class="shirt">21</span> Tsimikas</li>
+                <li><span class="shirt">8</span> Szoboszlai</li>
+                <li><span class="shirt">10</span> Mac Allister</li>
+                <li><span class="shirt">17</span> Jones</li>
+                <li><span class="shirt">11</span> Salah <span class="captain">(C)</span></li>
+                <li><span class="shirt">9</span> Núñez</li>
+                <li><span class="shirt">7</span> Díaz</li>
+              </ul>
+              <h5>Bench</h5>
+              <ul class="bench">
+                <li><span class="shirt">13</span> Kelleher (GK)</li>
+                <li><span class="shirt">3</span> Endo</li>
+                <li><span class="shirt">19</span> Elliott</li>
+                <li><span class="shirt">20</span> Jota</li>
+                <li><span class="shirt">38</span> Gravenberch</li>
+              </ul>
+              <h5>Unavailable</h5>
+              <ul class="unavailable">
+                <li>Trent Alexander-Arnold (Injured)</li>
+                <li>Alisson Becker (Suspended)</li>
+              </ul>
+              <span class="coach">Coach: J. Klopp</span>
+            </div>
+
+            <div class="lineup-away">
+              <h4>Arsenal (4-2-3-1)</h4>
+              <ul class="starting-xi">
+                <li><span class="shirt">1</span> Ramsdale (GK)</li>
+                <li><span class="shirt">4</span> White</li>
+                <li><span class="shirt">6</span> Gabriel</li>
+                <li><span class="shirt">2</span> Saliba</li>
+                <li><span class="shirt">3</span> Tierney</li>
+                <li><span class="shirt">5</span> Partey</li>
+                <li><span class="shirt">8</span> Odegaard <span class="captain">(C)</span></li>
+                <li><span class="shirt">7</span> Saka</li>
+                <li><span class="shirt">11</span> Martinelli</li>
+                <li><span class="shirt">10</span> Smith Rowe</li>
+                <li><span class="shirt">9</span> Jesus</li>
+              </ul>
+              <h5>Bench</h5>
+              <ul class="bench">
+                <li><span class="shirt">13</span> Raya (GK)</li>
+                <li><span class="shirt">15</span> Kiwior</li>
+                <li><span class="shirt">20</span> Jorginho</li>
+                <li><span class="shirt">21</span> Vieira</li>
+                <li><span class="shirt">24</span> Nelson</li>
+              </ul>
+              <span class="coach">Coach: M. Arteta</span>
+              <span class="assistant-coach">Assistant: A. Jover</span>
+            </div>
+          </div>
+
+          <!-- Formation View -->
+          <div id="formation-view">
+            <h4>Formation Pitch</h4>
+            <div id="pitch-placeholder">
+              <div class="pitch">
+                <div class="player-pos gk" style="top:90%;left:50%">GK</div>
+                <div class="player-pos def" style="top:75%;left:20%">CB</div>
+                <div class="player-pos def" style="top:75%;left:50%">CB</div>
+                <div class="player-pos def" style="top:75%;left:80%">CB</div>
+                <div class="player-pos mid" style="top:55%;left:15%">CM</div>
+                <div class="player-pos mid" style="top:55%;left:50%">CM</div>
+                <div class="player-pos mid" style="top:55%;left:85%">CM</div>
+                <div class="player-pos fwd" style="top:30%;left:25%">FW</div>
+                <div class="player-pos fwd" style="top:30%;left:50%">FW</div>
+                <div class="player-pos fwd" style="top:30%;left:75%">FW</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Match Officials -->
+        <section id="match-officials" aria-label="Match officials">
+          <h3>Match Officials</h3>
+          <div class="official"><span class="role">Main Referee:</span> M. Oliver</div>
+          <div class="official"><span class="role">Assistant Referee 1:</span> S. Bennett</div>
+          <div class="official"><span class="role">Assistant Referee 2:</span> D. Cook</div>
+          <div class="official"><span class="role">Fourth Official:</span> A. Taylor</div>
+          <div class="official"><span class="role">VAR Referee:</span> C. Kavanagh</div>
+        </section>
+
+        <!-- Stadium -->
+        <section id="match-stadium" aria-label="Stadium">
+          <h3>Stadium</h3>
+          <img src="#" alt="Stadium image" id="stadium-image" />
+          <span class="stadium-name">Anfield</span>
+          <span class="stadium-city">Liverpool</span>
+          <span class="stadium-country">England</span>
+          <span class="stadium-capacity">Capacity: 53,394</span>
+          <span class="stadium-surface">Surface: Grass</span>
+        </section>
+
+        <!-- Competition Information -->
+        <section id="match-competition-info" aria-label="Competition information">
+          <h3>Competition</h3>
+          <img src="#" alt="Competition logo" class="competition-logo" />
+          <span class="competition-name">Premier League</span>
+          <span class="current-round">Round 38</span>
+          <span class="current-season">2025/26</span>
+          <span class="country">England</span>
+          <button class="league-table-btn">📋 League Table</button>
+        </section>
+
+        <!-- Head-to-Head -->
+        <section id="match-h2h" aria-label="Head-to-head">
+          <h3>Head-to-Head</h3>
+          <div class="h2h-stats">
+            <span>Wins: Liverpool 5, Arsenal 3, Draws 2</span>
+            <span>Last 5: Liverpool 3W, Arsenal 1W, Draws 1</span>
+          </div>
+          <div class="h2h-matches">
+            <div class="h2h-item">Liverpool 2-1 Arsenal (2025)</div>
+            <div class="h2h-item">Arsenal 3-1 Liverpool (2024)</div>
+            <div class="h2h-item">Liverpool 1-1 Arsenal (2024)</div>
+          </div>
+        </section>
+
+        <!-- Predictions -->
+        <section id="match-predictions" aria-label="Predictions">
+          <h3>AI Predictions</h3>
+          <div class="prediction">
+            <span>Home Win: 45%</span>
+            <span>Draw: 25%</span>
+            <span>Away Win: 30%</span>
+            <span>Confidence: 72%</span>
+            <span class="ai-prediction">AI: Liverpool likely to win</span>
+          </div>
+        </section>
+
+        <!-- AI Match Insight -->
+        <section id="match-ai-insight" aria-label="AI match insight">
+          <h3>🤖 AI Match Insight</h3>
+          <div class="ai-insight-content">
+            <p>Tactical Analysis: Liverpool pressing high, Arsenal counter-attacking.</p>
+            <p>Key Moments: Salah's goal in the 23rd minute changed the momentum.</p>
+            <p>Player Performance: Salah (8.2), Odegaard (7.5).</p>
+          </div>
+        </section>
+
+        <!-- Related Matches -->
+        <section id="related-matches" aria-label="Related matches">
+          <h3>Related Matches</h3>
+          <div class="related-match">
+            <span class="competition">Premier League</span>
+            <span class="teams">Chelsea vs Tottenham</span>
+            <span class="time">21:00</span>
+            <button class="watch-btn">▶</button>
+            <button class="stats-btn">📊</button>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============================================================
+      HIDDEN PAGES — Player, Club, Competition, Country, Stadium,
+      Manager, Referee, AI Settings, AI Memory Manager, Download Manager,
+      Feedback, Report Problem, Privacy Policy, Terms, Licenses,
+      Open Source Credits, About, Changelog, Future Updates
+      (Part 9)
+      ============================================================ -->
+
+      <!-- Player Profile -->
+      <section id="player-profile" class="hidden-page" aria-label="Player profile">
+        <h2>Player Profile</h2>
+        <div class="player-profile-card">
+          <img src="#" alt="Player photo" class="player-photo" />
+          <span class="player-name">L. Messi</span>
+          <span class="position">Forward</span>
+          <span class="club">Inter Miami</span>
+          <span class="nationality">Argentina</span>
+          <span class="age">36</span>
+          <span class="shirt-number">10</span>
+          <div class="stats">
+            <span>Goals: 15</span>
+            <span>Assists: 8</span>
+            <span>Yellow Cards: 2</span>
+            <span>Red Cards: 0</span>
+          </div>
+          <button class="favorite-btn">⭐</button>
+          <button class="share-btn">📤</button>
+        </div>
+      </section>
+
+      <!-- Club Profile -->
+      <section id="club-profile" class="hidden-page" aria-label="Club profile">
+        <h2>Club Profile</h2>
+        <div class="club-profile-card">
+          <img src="#" alt="Club badge" class="club-badge" />
+          <span class="club-name">FC Barcelona</span>
+          <span class="league">La Liga</span>
+          <span class="country">Spain</span>
+          <span class="stadium">Camp Nou</span>
+          <span class="manager">H. Flick</span>
+          <span class="founded">1899</span>
+          <button class="favorite-btn">⭐</button>
+          <button class="notify-btn">🔔</button>
+        </div>
+      </section>
+
+      <!-- Competition Profile -->
+      <section id="competition-profile" class="hidden-page" aria-label="Competition profile">
+        <h2>Competition Profile</h2>
+        <div class="competition-profile-card">
+          <img src="#" alt="Competition logo" class="competition-logo" />
+          <span class="competition-name">Champions League</span>
+          <span class="country">Europe</span>
+          <span class="season">2025/26</span>
+          <span class="teams">32 Teams</span>
+          <button class="favorite-btn">⭐</button>
+          <button class="standings-btn">📋 Standings</button>
+        </div>
+      </section>
+
+      <!-- Country Profile -->
+      <section id="country-profile" class="hidden-page" aria-label="Country profile">
+        <h2>Country Profile</h2>
+        <div class="country-profile-card">
+          <img src="#" alt="Country flag" class="country-flag" />
+          <span class="country-name">Spain</span>
+          <span class="competitions">8 Competitions</span>
+          <span class="clubs">20 Clubs</span>
+          <button class="favorite-btn">⭐</button>
+        </div>
+      </section>
+
+      <!-- Stadium Profile -->
+      <section id="stadium-profile" class="hidden-page" aria-label="Stadium profile">
+        <h2>Stadium Profile</h2>
+        <div class="stadium-profile-card">
+          <img src="#" alt="Stadium image" class="stadium-image" />
+          <span class="stadium-name">Camp Nou</span>
+          <span class="city">Barcelona</span>
+          <span class="country">Spain</span>
+          <span class="capacity">99,354</span>
+          <span class="surface">Grass</span>
+        </div>
+      </section>
+
+      <!-- Manager Profile -->
+      <section id="manager-profile" class="hidden-page" aria-label="Manager profile">
+        <h2>
