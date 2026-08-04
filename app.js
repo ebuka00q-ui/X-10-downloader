@@ -1,4 +1,4 @@
-/**
+I'm/**
  * ============================================================
  * X-10 DOWNLOADER — COMPLETE JAVASCRIPT
  * Parts 1–8
@@ -2869,3 +2869,661 @@
     },
   };
                              
+// ============================================================
+  // PART 7 — SEARCH, NOTIFICATIONS & HISTORY MODULE
+  // ============================================================
+
+  const SearchModule = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      history: [],
+      results: [],
+      isSearching: false,
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.loadSearchHistory();
+      this.renderSearchSuggestions();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('🔍 Search module initialized');
+    },
+
+    cacheDom: function() {
+      this.dom = {
+        overlay: document.getElementById('search-overlay'),
+        input: document.getElementById('search-input'),
+        form: document.getElementById('search-form'),
+        results: document.getElementById('search-results'),
+        suggestions: document.getElementById('search-suggestions'),
+        clearBtn: document.getElementById('search-clear'),
+        voiceBtn: document.getElementById('search-voice'),
+        filterBtn: document.getElementById('search-filter-btn'),
+        sortBtn: document.getElementById('search-sort-btn'),
+        filters: document.getElementById('search-filters'),
+        loading: document.getElementById('search-loading'),
+        empty: document.getElementById('search-empty'),
+        offline: document.getElementById('search-offline'),
+        error: document.getElementById('search-error'),
+        noQuery: document.getElementById('search-no-query'),
+        recentList: document.getElementById('recent-search-list'),
+        trendingList: document.getElementById('trending-search-list'),
+        suggestedList: document.getElementById('suggested-search-list'),
+        popularClubs: document.getElementById('popular-club-list'),
+        popularPlayers: document.getElementById('popular-player-list'),
+        popularCompetitions: document.getElementById('popular-competition-list'),
+        popularCountries: document.getElementById('popular-country-list'),
+      };
+    },
+
+    bindEvents: function() {
+      // Search input
+      if (this.dom.input) {
+        this.dom.input.addEventListener('input', (e) => {
+          const query = e.target.value.trim();
+          if (query.length >= 2) {
+            this.performSearch(query);
+          } else {
+            this.showSuggestions();
+          }
+        });
+
+        this.dom.input.addEventListener('focus', () => {
+          this.showSuggestions();
+        });
+      }
+
+      // Filter buttons
+      if (this.dom.filterBtn) {
+        this.dom.filterBtn.addEventListener('click', () => {
+          if (this.dom.filters) {
+            this.dom.filters.hidden = !this.dom.filters.hidden;
+          }
+        });
+      }
+
+      if (this.dom.filters) {
+        this.dom.filters.querySelectorAll('.filter-option').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.dom.filters.querySelectorAll('.filter-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Re-search with filter
+            if (this.dom.input && this.dom.input.value.trim()) {
+              this.performSearch(this.dom.input.value.trim());
+            }
+          });
+        });
+      }
+
+      // Voice search
+      if (this.dom.voiceBtn) {
+        this.dom.voiceBtn.addEventListener('click', () => {
+          if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            this.startVoiceSearch();
+          } else {
+            this.showToast('🎤 Voice search not supported on this browser');
+          }
+        });
+      }
+
+      // Search events from other modules
+      document.addEventListener('x10:search', (e) => {
+        if (e.detail && e.detail.query) {
+          App.openSearch();
+          setTimeout(() => {
+            if (this.dom.input) {
+              this.dom.input.value = e.detail.query;
+              this.performSearch(e.detail.query);
+            }
+          }, 200);
+        }
+      });
+    },
+
+    loadSearchHistory: function() {
+      try {
+        const saved = localStorage.getItem('x10-search-history');
+        this.state.history = saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        this.state.history = [];
+        if (App.config.debug) console.warn('⚠️ Failed to load search history:', e);
+      }
+    },
+
+    saveSearchHistory: function() {
+      try {
+        localStorage.setItem('x10-search-history', JSON.stringify(this.state.history));
+      } catch (e) {
+        if (App.config.debug) console.warn('⚠️ Failed to save search history:', e);
+      }
+    },
+
+    performSearch: function(query) {
+      this.state.isSearching = true;
+      this.hideAllStates();
+
+      // Simulate search
+      setTimeout(() => {
+        const results = this.getSearchResults(query);
+        this.state.results = results;
+        this.displayResults(results, query);
+
+        // Save to history
+        this.addToHistory(query);
+        this.state.isSearching = false;
+      }, 300);
+    },
+
+    getSearchResults: function(query) {
+      const lower = query.toLowerCase();
+      const results = [];
+
+      // Mock data
+      const clubs = ['Barcelona', 'Liverpool', 'Real Madrid', 'Bayern Munich', 'Arsenal'];
+      const players = ['Lamine Yamal', 'Erling Haaland', 'Jude Bellingham', 'Kylian Mbappé', 'Bukayo Saka'];
+      const competitions = ['Premier League', 'La Liga', 'Champions League', 'Serie A', 'Bundesliga'];
+      const countries = ['Spain', 'England', 'Germany', 'Italy', 'France'];
+
+      clubs.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Club', name: name, image: '#' });
+        }
+      });
+
+      players.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Player', name: name, image: '#' });
+        }
+      });
+
+      competitions.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Competition', name: name, image: '#' });
+        }
+      });
+
+      countries.forEach(name => {
+        if (name.toLowerCase().includes(lower)) {
+          results.push({ type: 'Country', name: name, image: '#' });
+        }
+      });
+
+      return results;
+    },
+
+    displayResults: function(results, query) {
+      if (!this.dom.results) return;
+
+      if (results.length === 0) {
+        this.showEmpty();
+        return;
+      }
+
+      // Group by type
+      const grouped = {};
+      results.forEach(r => {
+        if (!grouped[r.type]) grouped[r.type] = [];
+        grouped[r.type].push(r);
+      });
+
+      let html = '';
+      for (const [type, items] of Object.entries(grouped)) {
+        html += `<section class="result-group">
+          <h3>${type}s</h3>
+          <div class="result-list">
+            ${items.map(item => `
+              <div class="search-result-item" data-name="${item.name}">
+                <img src="${item.image}" alt="${item.name}" class="image" />
+                <div class="info">
+                  <div class="title">${item.name}</div>
+                  <div class="subtitle">${type}</div>
+                </div>
+                <button class="open-btn">📂</button>
+              </div>
+            `).join('')}
+          </div>
+        </section>`;
+      }
+
+      this.dom.results.innerHTML = html;
+
+      // Bind clicks
+      this.dom.results.querySelectorAll('.search-result-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const name = el.dataset.name;
+          this.showToast(`🔍 Opening ${name}`);
+          App.closeSearch();
+        });
+      });
+    },
+
+    showSuggestions: function() {
+      this.hideAllStates();
+      if (this.dom.suggestions) {
+        this.dom.suggestions.style.display = 'block';
+      }
+
+      // Render recent searches
+      if (this.dom.recentList && this.state.history.length > 0) {
+        this.dom.recentList.innerHTML = this.state.history.slice(0, 5).map(s =>
+          `<li data-query="${s}">${s}</li>`
+        ).join('');
+
+        this.dom.recentList.querySelectorAll('li').forEach(el => {
+          el.addEventListener('click', () => {
+            const query = el.dataset.query;
+            if (this.dom.input) {
+              this.dom.input.value = query;
+              this.performSearch(query);
+            }
+          });
+        });
+      }
+
+      // Trending
+      if (this.dom.trendingList) {
+        const trending = ['Champions League', 'El Clásico', 'Derby', 'World Cup', 'Transfer News'];
+        this.dom.trendingList.innerHTML = trending.map(s =>
+          `<li data-query="${s}">🔥 ${s}</li>`
+        ).join('');
+
+        this.dom.trendingList.querySelectorAll('li').forEach(el => {
+          el.addEventListener('click', () => {
+            const query = el.dataset.query;
+            if (this.dom.input) {
+              this.dom.input.value = query;
+              this.performSearch(query);
+            }
+          });
+        });
+      }
+    },
+
+    addToHistory: function(query) {
+      // Remove duplicate
+      this.state.history = this.state.history.filter(s => s !== query);
+      this.state.history.unshift(query);
+
+      if (this.state.history.length > 20) {
+        this.state.history.pop();
+      }
+
+      this.saveSearchHistory();
+    },
+
+    hideAllStates: function() {
+      if (this.dom.suggestions) this.dom.suggestions.style.display = 'none';
+      if (this.dom.results) this.dom.results.innerHTML = '';
+      if (this.dom.loading) this.dom.loading.style.display = 'none';
+      if (this.dom.empty) this.dom.empty.style.display = 'none';
+      if (this.dom.offline) this.dom.offline.style.display = 'none';
+      if (this.dom.error) this.dom.error.style.display = 'none';
+      if (this.dom.noQuery) this.dom.noQuery.style.display = 'none';
+    },
+
+    showEmpty: function() {
+      if (this.dom.empty) this.dom.empty.style.display = 'flex';
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'info' }
+      }));
+    },
+
+    startVoiceSearch: function() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.showToast('🎤 Voice search not supported');
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        this.showToast('🎤 Listening...');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (this.dom.input) {
+          this.dom.input.value = transcript;
+          this.performSearch(transcript);
+        }
+      };
+
+      recognition.onerror = () => {
+        this.showToast('🎤 Could not understand');
+      };
+
+      recognition.start();
+    },
+
+    // Public API
+    clearHistory: function() {
+      if (confirm('Clear all search history?')) {
+        this.state.history = [];
+        this.saveSearchHistory();
+        this.showSuggestions();
+        this.showToast('🗑️ Search history cleared');
+      }
+    },
+
+    destroy: function() {
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('🔍 Search module destroyed');
+    },
+  };
+
+  // ============================================================
+  // PART 8 — PWA, OFFLINE MODE, SMART REFRESH, MODULE INTEGRATION
+  // ============================================================
+
+  const PWA = {
+    state: {
+      isOnline: navigator.onLine,
+      isVisible: document.visibilityState === 'visible',
+      updateAvailable: false,
+      isInstalled: false,
+    },
+
+    init: function() {
+      this.bindEvents();
+      this.checkOnlineStatus();
+      this.setupVisibility();
+      this.setupInstallPrompt();
+
+      if (App.config.debug) console.log('📲 PWA module initialized');
+    },
+
+    bindEvents: function() {
+      // Online/Offline
+      window.addEventListener('online', () => {
+        this.state.isOnline = true;
+        this.updateStatus();
+        document.dispatchEvent(new CustomEvent('x10:online'));
+        this.showToast('🌐 Back online');
+      });
+
+      window.addEventListener('offline', () => {
+        this.state.isOnline = false;
+        this.updateStatus();
+        document.dispatchEvent(new CustomEvent('x10:offline'));
+        this.showToast('📡 You are offline');
+      });
+
+      // Visibility
+      document.addEventListener('visibilitychange', () => {
+        this.state.isVisible = document.visibilityState === 'visible';
+        document.dispatchEvent(new CustomEvent('x10:visibilityChange', {
+          detail: { isVisible: this.state.isVisible }
+        }));
+      });
+
+      // App installed
+      window.addEventListener('appinstalled', () => {
+        this.state.isInstalled = true;
+        document.dispatchEvent(new CustomEvent('x10:appInstalled'));
+        if (App.config.debug) console.log('✅ App installed');
+      });
+    },
+
+    checkOnlineStatus: function() {
+      // Check if we're in standalone mode
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        this.state.isInstalled = true;
+      }
+    },
+
+    setupVisibility: function() {
+      // Handle page visibility for refresh management
+      let refreshTimers = {};
+
+      document.addEventListener('x10:visibilityChange', (e) => {
+        if (e.detail.isVisible) {
+          // Resume all refreshes
+          document.dispatchEvent(new CustomEvent('x10:resumeRefreshes'));
+        } else {
+          // Pause all refreshes
+          document.dispatchEvent(new CustomEvent('x10:pauseRefreshes'));
+        }
+      });
+    },
+
+    setupInstallPrompt: function() {
+      let deferredPrompt;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.dispatchEvent(new CustomEvent('x10:installAvailable'));
+
+        // Show install button
+        const installBtn = document.createElement('button');
+        installBtn.id = 'install-app-btn';
+        installBtn.textContent = '📲 Install X-10';
+        installBtn.className = 'btn btn-primary';
+        installBtn.style.cssText = `
+          position: fixed;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 1000;
+          padding: 12px 24px;
+          border-radius: 9999px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          animation: fadeSlideUp 0.3s ease;
+        `;
+
+        installBtn.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const result = await deferredPrompt.userChoice;
+            if (result.outcome === 'accepted') {
+              this.showToast('✅ App installed successfully!');
+              installBtn.remove();
+            }
+            deferredPrompt = null;
+          }
+        });
+
+        document.body.appendChild(installBtn);
+      });
+    },
+
+    updateStatus: function() {
+      // Update any status indicators
+      const offlineIndicators = document.querySelectorAll('.offline-indicator');
+      offlineIndicators.forEach(el => {
+        el.style.display = this.state.isOnline ? 'none' : 'flex';
+      });
+
+      // Show offline screen if applicable
+      const offlinePages = document.querySelectorAll('.offline-page');
+      offlinePages.forEach(el => {
+        el.style.display = this.state.isOnline ? 'none' : 'flex';
+      });
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'info' }
+      }));
+    },
+
+    // Public API
+    getStatus: function() {
+      return { ...this.state };
+    },
+
+    isOnline: function() {
+      return this.state.isOnline;
+    },
+
+    isVisible: function() {
+      return this.state.isVisible;
+    },
+  };
+
+  // ============================================================
+  // SMART REFRESH MANAGER
+  // ============================================================
+
+  const RefreshManager = {
+    timers: {},
+    active: true,
+    paused: false,
+    intervals: {
+      live: 20000,      // 20 seconds
+      upcoming: 300000, // 5 minutes
+      tables: 1800000,  // 30 minutes
+      images: 86400000, // 24 hours
+    },
+
+    init: function() {
+      this.bindEvents();
+      this.startAll();
+
+      if (App.config.debug) console.log('🔄 Refresh Manager initialized');
+    },
+
+    bindEvents: function() {
+      document.addEventListener('x10:pageChange', (e) => {
+        // Only refresh active page
+        this.active = true;
+      });
+
+      document.addEventListener('x10:pauseRefreshes', () => {
+        this.pauseAll();
+      });
+
+      document.addEventListener('x10:resumeRefreshes', () => {
+        this.resumeAll();
+      });
+    },
+
+    startAll: function() {
+      this.startTimer('live', this.intervals.live);
+      this.startTimer('upcoming', this.intervals.upcoming);
+      this.startTimer('tables', this.intervals.tables);
+      this.startTimer('images', this.intervals.images);
+    },
+
+    startTimer: function(name, interval) {
+      if (this.timers[name]) {
+        clearInterval(this.timers[name]);
+      }
+
+      this.timers[name] = setInterval(() => {
+        if (!this.paused && this.active && App.state.isOnline) {
+          this.refresh(name);
+        }
+      }, interval);
+
+      if (App.config.debug) console.log(`⏱️ Refresh timer started: ${name}`);
+    },
+
+    refresh: function(type) {
+      if (App.config.debug) console.log(`🔄 Refreshing: ${type}`);
+
+      switch (type) {
+        case 'live':
+          // Refresh live data
+          if (Home.state.isActive) {
+            Home.refreshData();
+          }
+          if (Sports.state.isActive) {
+            Sports.refresh();
+          }
+          break;
+        case 'upcoming':
+          // Refresh upcoming matches
+          if (Home.state.isActive) {
+            Home.renderUpcomingMatches();
+          }
+          break;
+        case 'tables':
+          // Refresh league tables
+          if (Sports.state.isActive) {
+            Sports.renderStandings();
+          }
+          break;
+        case 'images':
+          // Refresh cached images (only if needed)
+          break;
+        default:
+          break;
+      }
+    },
+
+    pauseAll: function() {
+      this.paused = true;
+      if (App.config.debug) console.log('⏸️ All refreshes paused');
+    },
+
+    resumeAll: function() {
+      this.paused = false;
+      if (App.config.debug) console.log('▶️ All refreshes resumed');
+    },
+
+    stopAll: function() {
+      Object.keys(this.timers).forEach(key => {
+        clearInterval(this.timers[key]);
+        delete this.timers[key];
+      });
+      if (App.config.debug) console.log('⏹️ All refreshes stopped');
+    },
+
+    // Public API
+    getIntervals: function() {
+      return { ...this.intervals };
+    },
+
+    setInterval: function(name, ms) {
+      this.intervals[name] = ms;
+      if (this.timers[name]) {
+        clearInterval(this.timers[name]);
+        this.startTimer(name, ms);
+      }
+    },
+  };
+
+  // ============================================================
+  // TOAST SYSTEM
+  // ============================================================
+
+  const ToastSystem = {
+    container: null,
+    timers: [],
+
+    init: function() {
+      this.createContainer();
+      this.bindEvents();
+
+      if (App.config.debug) console.log('🍞 Toast system initialized');
+    },
+
+    createContainer: function() {
+      this.container = document.createElement('div');
+      this.container.className = 'toast-container';
+      this.container.id = 'toast-container';
+      document.body.appendChild(this.container);
+    },
+
+    bindEvents: function() {
+      document.addEventListener('x10:toast', (e) => {
+        if (e.detail) {
+          this.show(e.detail.message, e.detail.type || 'info');
+        }
+      });
+    },
+
+    show: function(message, type = 'info') {
+      const toast = document.createElement('div');
+  
