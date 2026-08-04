@@ -1057,3 +1057,349 @@
           this.handleSearch();
         });
       }
+// Browse Sports button
+      const browseBtn = document.getElementById('browse-sports-btn');
+      if (browseBtn) {
+        browseBtn.addEventListener('click', () => App.navigateTo('sports'));
+      }
+
+      // Load favorites from localStorage
+      document.addEventListener('x10:favoritesLoaded', () => {
+        this.loadFavorites();
+        this.renderFavorites();
+      });
+    },
+
+    loadFavorites: function() {
+      try {
+        const saved = localStorage.getItem('x10-favorites');
+        this.state.items = saved ? JSON.parse(saved) : [];
+        this.state.filteredItems = [...this.state.items];
+      } catch (e) {
+        this.state.items = [];
+        this.state.filteredItems = [];
+        if (App.config.debug) console.warn('⚠️ Failed to load favorites:', e);
+      }
+    },
+
+    saveFavorites: function() {
+      try {
+        localStorage.setItem('x10-favorites', JSON.stringify(this.state.items));
+      } catch (e) {
+        if (App.config.debug) console.warn('⚠️ Failed to save favorites:', e);
+      }
+    },
+
+    addItem: function(item) {
+      // Check for duplicates
+      const exists = this.state.items.some(i => i.id === item.id);
+      if (exists) {
+        if (App.config.debug) console.log('⭐ Item already in favorites');
+        return;
+      }
+
+      const newItem = {
+        id: item.id || `fav-${Date.now()}`,
+        name: item.name,
+        type: item.type || 'Club',
+        image: item.image || '#',
+        addedAt: new Date().toISOString(),
+        ...item,
+      };
+
+      this.state.items.unshift(newItem);
+      this.state.filteredItems = [...this.state.items];
+      this.saveFavorites();
+      this.renderFavorites();
+      this.showToast(`⭐ Added ${newItem.name} to favorites`);
+
+      if (App.config.debug) console.log(`⭐ Added favorite: ${newItem.name}`);
+    },
+
+    removeItem: function(id) {
+      const index = this.state.items.findIndex(i => i.id === id);
+      if (index === -1) return;
+
+      const removed = this.state.items[index];
+      this.state.items.splice(index, 1);
+      this.state.filteredItems = [...this.state.items];
+      this.saveFavorites();
+      this.renderFavorites();
+      this.showToast(`🗑️ Removed ${removed.name} from favorites`);
+
+      if (App.config.debug) console.log(`🗑️ Removed favorite: ${removed.name}`);
+    },
+
+    toggleFavorite: function(item) {
+      const exists = this.state.items.some(i => i.id === item.id);
+      if (exists) {
+        this.removeItem(item.id);
+      } else {
+        this.addItem(item);
+      }
+    },
+
+    renderFavorites: function() {
+      if (this.state.items.length === 0) {
+        this.showEmpty();
+        return;
+      }
+
+      this.hideEmpty();
+
+      // Group by type
+      const clubs = this.state.items.filter(i => i.type === 'Club' || i.type === 'club');
+      const national = this.state.items.filter(i => i.type === 'National Team' || i.type === 'national');
+      const competitions = this.state.items.filter(i => i.type === 'Competition' || i.type === 'competition');
+      const players = this.state.items.filter(i => i.type === 'Player' || i.type === 'player');
+      const countries = this.state.items.filter(i => i.type === 'Country' || i.type === 'country');
+
+      this.renderClubFavorites(clubs);
+      this.renderNationalFavorites(national);
+      this.renderCompetitionFavorites(competitions);
+      this.renderPlayerFavorites(players);
+      this.renderCountryFavorites(countries);
+    },
+
+    renderClubFavorites: function(items) {
+      if (!this.dom.clubList) return;
+      if (items.length === 0) {
+        this.dom.clubList.innerHTML = '<div class="empty-state">No favorite clubs yet</div>';
+        return;
+      }
+
+      this.dom.clubList.innerHTML = items.map(item => `
+        <div class="favorite-club-card" data-id="${item.id}">
+          <img src="${item.image}" alt="${item.name}" class="badge" />
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="meta">${item.league || 'Club'} • Next match: TBD</div>
+          </div>
+          <div class="actions">
+            <button class="open-btn" data-id="${item.id}">📂</button>
+            <button class="remove-btn" data-id="${item.id}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Bind remove buttons
+      this.dom.clubList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeItem(btn.dataset.id);
+        });
+      });
+
+      this.dom.clubList.querySelectorAll('.open-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const item = this.state.items.find(i => i.id === btn.dataset.id);
+          if (item) App.navigateTo('home');
+        });
+      });
+    },
+
+    renderNationalFavorites: function(items) {
+      if (!this.dom.nationalList) return;
+      if (items.length === 0) {
+        this.dom.nationalList.innerHTML = '<div class="empty-state">No favorite national teams yet</div>';
+        return;
+      }
+
+      this.dom.nationalList.innerHTML = items.map(item => `
+        <div class="favorite-national-card" data-id="${item.id}">
+          <img src="${item.image}" alt="${item.name}" class="badge" />
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="meta">National Team • Next match: TBD</div>
+          </div>
+          <div class="actions">
+            <button class="open-btn" data-id="${item.id}">📂</button>
+            <button class="remove-btn" data-id="${item.id}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.nationalList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeItem(btn.dataset.id);
+        });
+      });
+    },
+
+    renderCompetitionFavorites: function(items) {
+      if (!this.dom.competitionList) return;
+      if (items.length === 0) {
+        this.dom.competitionList.innerHTML = '<div class="empty-state">No favorite competitions yet</div>';
+        return;
+      }
+
+      this.dom.competitionList.innerHTML = items.map(item => `
+        <div class="favorite-competition-card" data-id="${item.id}">
+          <img src="${item.image}" alt="${item.name}" class="badge" />
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="meta">${item.country || 'International'} • 2025/26</div>
+          </div>
+          <div class="actions">
+            <button class="open-btn" data-id="${item.id}">📂</button>
+            <button class="remove-btn" data-id="${item.id}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.competitionList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeItem(btn.dataset.id);
+        });
+      });
+    },
+
+    renderPlayerFavorites: function(items) {
+      if (!this.dom.playerList) return;
+      if (items.length === 0) {
+        this.dom.playerList.innerHTML = '<div class="empty-state">No favorite players yet</div>';
+        return;
+      }
+
+      this.dom.playerList.innerHTML = items.map(item => `
+        <div class="favorite-player-card" data-id="${item.id}">
+          <img src="${item.image}" alt="${item.name}" class="badge" />
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="meta">${item.position || 'Player'} • ${item.club || 'TBD'}</div>
+          </div>
+          <div class="actions">
+            <button class="open-btn" data-id="${item.id}">📂</button>
+            <button class="remove-btn" data-id="${item.id}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.playerList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeItem(btn.dataset.id);
+        });
+      });
+    },
+
+    renderCountryFavorites: function(items) {
+      if (!this.dom.countryList) return;
+      if (items.length === 0) {
+        this.dom.countryList.innerHTML = '<div class="empty-state">No favorite countries yet</div>';
+        return;
+      }
+
+      this.dom.countryList.innerHTML = items.map(item => `
+        <div class="favorite-country-card" data-id="${item.id}">
+          <img src="${item.image}" alt="${item.name}" class="badge" />
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="meta">${item.competitions || '0'} competitions</div>
+          </div>
+          <div class="actions">
+            <button class="open-btn" data-id="${item.id}">📂</button>
+            <button class="remove-btn" data-id="${item.id}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.countryList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeItem(btn.dataset.id);
+        });
+      });
+    },
+
+    applyFilters: function() {
+      const filter = this.state.currentFilter;
+      if (filter === 'all') {
+        this.state.filteredItems = [...this.state.items];
+      } else {
+        const typeMap = {
+          'clubs': ['Club', 'club'],
+          'national-teams': ['National Team', 'national'],
+          'competitions': ['Competition', 'competition'],
+          'players': ['Player', 'player'],
+          'countries': ['Country', 'country'],
+        };
+        const types = typeMap[filter] || [];
+        this.state.filteredItems = this.state.items.filter(i => types.includes(i.type));
+      }
+      this.renderFavorites();
+    },
+
+    applySort: function() {
+      const sort = this.state.currentSort;
+      const items = this.state.filteredItems;
+
+      switch (sort) {
+        case 'recent':
+          items.sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+          break;
+        case 'alpha':
+          items.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        default:
+          break;
+      }
+
+      this.renderFavorites();
+    },
+
+    handleSearch: function() {
+      const query = this.dom.searchInput ? this.dom.searchInput.value.trim().toLowerCase() : '';
+      if (!query) {
+        this.state.filteredItems = [...this.state.items];
+        this.renderFavorites();
+        return;
+      }
+
+      this.state.filteredItems = this.state.items.filter(i =>
+        i.name.toLowerCase().includes(query) ||
+        (i.type && i.type.toLowerCase().includes(query))
+      );
+      this.renderFavorites();
+    },
+
+    showEmpty: function() {
+      if (this.dom.emptyState) {
+        this.dom.emptyState.style.display = 'flex';
+      }
+      // Hide all lists
+      const lists = ['clubList', 'nationalList', 'competitionList', 'playerList', 'countryList'];
+      lists.forEach(key => {
+        if (this.dom[key]) this.dom[key].innerHTML = '';
+      });
+    },
+
+    hideEmpty: function() {
+      if (this.dom.emptyState) {
+        this.dom.emptyState.style.display = 'none';
+      }
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'success' }
+      }));
+    },
+
+    // Public API
+    getItems: function() {
+      return [...this.state.items];
+    },
+
+    isFavorite: function(id) {
+      return this.state.items.some(i => i.id === id);
+    },
+
+    destroy: function() {
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('⭐ Favorites module destroyed');
+    },
+  };
