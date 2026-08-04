@@ -756,3 +756,304 @@
       if (App.config.debug) console.log('🏠 Home module destroyed');
     },
   };
+// ============================================================
+  // PART 3 — SPORTS MODULE
+  // ============================================================
+
+  const Sports = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      isActive: true,
+      competitions: [],
+      currentFilter: 'all',
+      currentSort: 'time',
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.renderCompetitions();
+      this.renderStandings();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('⚽ Sports module initialized');
+    },
+
+    cacheDom: function() {
+      const section = document.getElementById('section-sports');
+      if (!section) return;
+
+      this.dom = {
+        section: section,
+        competitions: section.querySelector('#sports-competitions'),
+        standings: section.querySelector('#standings-table'),
+        filters: section.querySelector('#sports-filters'),
+        sort: section.querySelector('#sports-sort'),
+        liveList: section.querySelector('#sports-live-list'),
+        fixturesList: section.querySelector('#sports-todays-fixtures-list'),
+        upcomingList: section.querySelector('#sports-upcoming-fixtures-list'),
+        searchInput: section.querySelector('#sports-search-input'),
+        searchForm: section.querySelector('#sports-search-form'),
+      };
+    },
+
+    bindEvents: function() {
+      // Page change
+      document.addEventListener('x10:pageChange', (e) => {
+        this.state.isActive = e.detail.page === 'sports';
+        if (this.state.isActive && !this.state.isLoaded) {
+          this.init();
+        }
+      });
+
+      // Filters
+      if (this.dom.filters) {
+        this.dom.filters.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.dom.filters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.state.currentFilter = btn.dataset.filter;
+            this.applyFilters();
+          });
+        });
+      }
+
+      // Sort
+      if (this.dom.sort) {
+        this.dom.sort.querySelectorAll('.sort-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.dom.sort.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.state.currentSort = btn.dataset.sort;
+            this.applySort();
+          });
+        });
+      }
+
+      // Search
+      if (this.dom.searchForm) {
+        this.dom.searchForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.handleSearch();
+        });
+      }
+
+      // Navigation
+      const navLinks = this.dom.section?.querySelectorAll('#sports-nav ul li a');
+      if (navLinks) {
+        navLinks.forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            const target = link.getAttribute('href');
+            if (target) {
+              const el = document.querySelector(target);
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }
+          });
+        });
+      }
+    },
+
+    renderCompetitions: function() {
+      if (!this.dom.competitions) return;
+
+      const competitions = [
+        { name: 'Premier League', country: 'England', logo: '#' },
+        { name: 'La Liga', country: 'Spain', logo: '#' },
+        { name: 'Serie A', country: 'Italy', logo: '#' },
+        { name: 'Bundesliga', country: 'Germany', logo: '#' },
+        { name: 'Ligue 1', country: 'France', logo: '#' },
+        { name: 'UEFA Champions League', country: 'Europe', logo: '#' },
+      ];
+
+      this.dom.competitions.innerHTML = competitions.map(c => `
+        <div class="competition-card" data-competition="${c.name}">
+          <img src="${c.logo}" alt="${c.name}" class="competition-logo" />
+          <div class="info">
+            <div class="name">${c.name}</div>
+            <div class="meta">${c.country} • 2025/26</div>
+          </div>
+          <button class="open-btn">📂</button>
+          <button class="favorite-btn">⭐</button>
+        </div>
+      `).join('');
+
+      // Bind favorite buttons
+      this.dom.competitions.querySelectorAll('.favorite-btn').forEach((btn, index) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const name = competitions[index].name;
+          const type = 'Competition';
+          document.dispatchEvent(new CustomEvent('x10:addFavorite', {
+            detail: { id: `comp-${index}`, name, type, image: competitions[index].logo }
+          }));
+          btn.classList.toggle('active');
+        });
+      });
+    },
+
+    renderStandings: function() {
+      if (!this.dom.standings) return;
+
+      // Placeholder standings data
+      const teams = [
+        { pos: 1, name: 'Liverpool', played: 38, wins: 28, draws: 8, losses: 2, gf: 85, ga: 30, pts: 92 },
+        { pos: 2, name: 'Manchester City', played: 38, wins: 27, draws: 7, losses: 4, gf: 82, ga: 28, pts: 88 },
+        { pos: 3, name: 'Arsenal', played: 38, wins: 25, draws: 9, losses: 4, gf: 78, ga: 32, pts: 84 },
+        { pos: 4, name: 'Chelsea', played: 38, wins: 22, draws: 10, losses: 6, gf: 70, ga: 35, pts: 76 },
+      ];
+
+      const tbody = this.dom.standings.querySelector('#standings-body');
+      if (tbody) {
+        tbody.innerHTML = teams.map(t => `
+          <tr class="${t.pos <= 4 ? 'top-four' : ''}">
+            <td>${t.pos}</td>
+            <td><img src="#" alt="${t.name}" class="club-badge" /> ${t.name}</td>
+            <td>${t.played}</td>
+            <td>${t.wins}</td>
+            <td>${t.draws}</td>
+            <td>${t.losses}</td>
+            <td>${t.gf}</td>
+            <td>${t.ga}</td>
+            <td>${t.gf - t.ga}</td>
+            <td>${t.pts}</td>
+          </tr>
+        `).join('');
+      }
+    },
+
+    applyFilters: function() {
+      // Future: filter competitions, matches, etc.
+      if (App.config.debug) console.log(`🔍 Sports filter: ${this.state.currentFilter}`);
+    },
+
+    applySort: function() {
+      // Future: sort competitions, matches, etc.
+      if (App.config.debug) console.log(`↕ Sports sort: ${this.state.currentSort}`);
+    },
+
+    handleSearch: function() {
+      const query = this.dom.searchInput ? this.dom.searchInput.value.trim() : '';
+      if (!query) return;
+
+      if (App.config.debug) console.log(`🔍 Sports search: "${query}"`);
+      document.dispatchEvent(new CustomEvent('x10:search', { detail: { query, source: 'sports' } }));
+    },
+
+    // Public API
+    refresh: function() {
+      if (App.config.debug) console.log('🔄 Sports refresh triggered');
+      // Future: fetch data from backend
+    },
+
+    destroy: function() {
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('⚽ Sports module destroyed');
+    },
+  };
+
+  // ============================================================
+  // PART 4 — FAVORITES MODULE
+  // ============================================================
+
+  const Favorites = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      isActive: true,
+      items: [],
+      filteredItems: [],
+      currentFilter: 'all',
+      currentSort: 'recent',
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.loadFavorites();
+      this.renderFavorites();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('⭐ Favorites module initialized');
+    },
+
+    cacheDom: function() {
+      const section = document.getElementById('section-favorites');
+      if (!section) return;
+
+      this.dom = {
+        section: section,
+        categories: section.querySelector('#favorites-categories'),
+        clubList: section.querySelector('#favorite-clubs-list'),
+        nationalList: section.querySelector('#favorite-national-teams-list'),
+        competitionList: section.querySelector('#favorite-competitions-list'),
+        playerList: section.querySelector('#favorite-players-list'),
+        countryList: section.querySelector('#favorite-countries-list'),
+        recentList: section.querySelector('#recently-added-favorites-list'),
+        emptyState: section.querySelector('#favorites-empty-state'),
+        searchInput: section.querySelector('#favorite-search-input'),
+        searchForm: section.querySelector('#favorite-search-form'),
+        sort: section.querySelector('#favorites-sort'),
+        filters: section.querySelector('#favorites-filters'),
+      };
+    },
+
+    bindEvents: function() {
+      // Page change
+      document.addEventListener('x10:pageChange', (e) => {
+        this.state.isActive = e.detail.page === 'favorites';
+        if (this.state.isActive && !this.state.isLoaded) {
+          this.init();
+        }
+      });
+
+      // Add favorite from other modules
+      document.addEventListener('x10:addFavorite', (e) => {
+        if (e.detail) {
+          this.addItem(e.detail);
+        }
+      });
+
+      // Remove favorite event
+      document.addEventListener('x10:removeFavorite', (e) => {
+        if (e.detail && e.detail.id) {
+          this.removeItem(e.detail.id);
+        }
+      });
+
+      // Categories
+      if (this.dom.categories) {
+        this.dom.categories.querySelectorAll('.category-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.dom.categories.querySelectorAll('.category-toggle').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.state.currentFilter = btn.dataset.category;
+            this.applyFilters();
+          });
+        });
+      }
+
+      // Sort
+      if (this.dom.sort) {
+        this.dom.sort.querySelectorAll('.sort-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.dom.sort.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.state.currentSort = btn.dataset.sort;
+            this.applySort();
+          });
+        });
+      }
+
+      // Search
+      if (this.dom.searchForm) {
+        this.dom.searchForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.handleSearch();
+        });
+      }
