@@ -2501,3 +2501,371 @@
         });
       });
     },
+// ----- Send Message -----
+    sendMessage: function() {
+      const input = this.dom.chatInput;
+      if (!input) return;
+
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (this.state.isThinking) {
+        this.showToast('⏳ Please wait for the current response');
+        return;
+      }
+
+      input.value = '';
+
+      // Add user message
+      this.addMessage('user', text);
+
+      // Show thinking
+      this.state.isThinking = true;
+      if (this.dom.thinkingIndicator) {
+        this.dom.thinkingIndicator.style.display = 'block';
+      }
+
+      // Simulate AI response
+      setTimeout(() => {
+        const response = this.generateResponse(text);
+        this.addMessage('assistant', response);
+        this.state.isThinking = false;
+        if (this.dom.thinkingIndicator) {
+          this.dom.thinkingIndicator.style.display = 'none';
+        }
+      }, 1000 + Math.random() * 1000);
+    },
+
+    addMessage: function(role, content) {
+      const conv = this.state.currentConversation;
+      if (!conv) {
+        this.newConversation();
+        return this.addMessage(role, content);
+      }
+
+      if (!conv.messages) conv.messages = [];
+
+      const msg = {
+        id: `msg-${Date.now()}`,
+        role: role,
+        content: content,
+        time: new Date().toLocaleTimeString(),
+      };
+
+      conv.messages.push(msg);
+      conv.updatedAt = new Date().toISOString();
+
+      // Update title from first user message
+      if (conv.messages.length === 1 && role === 'user') {
+        conv.title = content.substring(0, 40) + (content.length > 40 ? '...' : '');
+      }
+
+      this.saveConversations();
+      this.renderMessages();
+      this.renderConversations();
+    },
+
+    deleteMessage: function(id) {
+      const conv = this.state.currentConversation;
+      if (!conv) return;
+
+      conv.messages = conv.messages.filter(m => m.id !== id);
+      this.saveConversations();
+      this.renderMessages();
+    },
+
+    regenerateResponse: function() {
+      const conv = this.state.currentConversation;
+      if (!conv || conv.messages.length < 2) return;
+
+      // Remove last assistant message
+      const lastMsg = conv.messages[conv.messages.length - 1];
+      if (lastMsg.role === 'assistant') {
+        conv.messages.pop();
+        this.saveConversations();
+        this.renderMessages();
+
+        // Re-send the last user message
+        const lastUser = conv.messages[conv.messages.length - 1];
+        if (lastUser && lastUser.role === 'user') {
+          this.state.isThinking = true;
+          if (this.dom.thinkingIndicator) {
+            this.dom.thinkingIndicator.style.display = 'block';
+          }
+
+          setTimeout(() => {
+            const response = this.generateResponse(lastUser.content);
+            this.addMessage('assistant', response);
+            this.state.isThinking = false;
+            if (this.dom.thinkingIndicator) {
+              this.dom.thinkingIndicator.style.display = 'none';
+            }
+          }, 1000 + Math.random() * 1000);
+        }
+      }
+    },
+
+    stopGeneration: function() {
+      this.state.isThinking = false;
+      if (this.dom.thinkingIndicator) {
+        this.dom.thinkingIndicator.style.display = 'none';
+      }
+      this.showToast('⏹️ Generation stopped');
+    },
+
+    // ----- AI Response Generation (Simulated) -----
+    generateResponse: function(input) {
+      const lower = input.toLowerCase();
+
+      // Football responses
+      if (lower.includes('barcelona') || lower.includes('real madrid') || lower.includes('match')) {
+        return this.getFootballResponse(input);
+      }
+
+      // Help responses
+      if (lower.includes('help') || lower.includes('how') || lower.includes('what')) {
+        return this.getHelpResponse(input);
+      }
+
+      // General responses
+      const responses = [
+        "That's a great question! Let me think about that for a moment.",
+        "Interesting! I'd like to help you with that. Could you tell me more?",
+        "I understand what you're asking. Here's what I know about that topic.",
+        "That's a really good point. Let me share some insights with you.",
+        "I appreciate your curiosity. Here's what I can tell you about that.",
+      ];
+
+      return responses[Math.floor(Math.random() * responses.length)] +
+        "\n\n*I'm still learning. For more accurate information, feel free to ask me anything about X-10 Downloader, football, or general topics.*";
+    },
+
+    getFootballResponse: function(input) {
+      const responses = [
+        "⚽ **Match Information**\n\nI can help you find match details, statistics, and live scores for football matches across all major competitions. Just tell me which match you're interested in!",
+        "🏆 **Competition Update**\n\nThe current football season is in full swing with exciting matches happening in the Premier League, La Liga, Serie A, Bundesliga, and Champions League.",
+        "📊 **Statistics**\n\nI can provide detailed statistics including possession, shots, corners, and player performance data for any match. Which match would you like to analyze?",
+      ];
+
+      if (input.includes('barcelona') || input.includes('Barcelona')) {
+        return "🔵🔴 **FC Barcelona**\n\nBarcelona is currently competing in La Liga and the Champions League. Their next match is coming up soon. Would you like to know the schedule or recent results?";
+      }
+
+      if (input.includes('real madrid') || input.includes('Real Madrid')) {
+        return "⚪ **Real Madrid**\n\nReal Madrid, the reigning Champions League winners, continue to perform at the highest level. Their matches are always exciting to watch!";
+      }
+
+      return responses[Math.floor(Math.random() * responses.length)] +
+        "\n\n*Would you like more specific information about a particular match, team, or competition?*";
+    },
+
+    getHelpResponse: function(input) {
+      return "🤖 **X-10 Downloader Help Center**\n\nI can help you with:\n\n📌 **Navigation** — Move between Home, Sports, Favorites, Watch, and Account\n\n⚽ **Football** — Find matches, competitions, teams, and players\n\n⭐ **Favorites** — Save your favorite clubs, players, and competitions\n\n📺 **Watch** — Play videos, images, and media links\n\n🔍 **Search** — Find anything across the application\n\n🔔 **Notifications** — Stay updated with match alerts and reminders\n\n📜 **History** — View your watch history, search history, and conversations\n\nIs there something specific you'd like to learn about?";
+    },
+
+    // ----- Conversation Management -----
+    newConversation: function() {
+      const conv = {
+        id: `conv-${Date.now()}`,
+        title: 'New Chat',
+        messages: [],
+        pinned: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      this.state.conversations.unshift(conv);
+      this.state.currentConversation = conv;
+      this.saveConversations();
+      this.renderConversations();
+      this.renderMessages();
+
+      if (this.dom.chatInput) {
+        this.dom.chatInput.focus();
+      }
+
+      if (App.config.debug) console.log('💬 New conversation created');
+    },
+
+    deleteCurrentConversation: function() {
+      const conv = this.state.currentConversation;
+      if (!conv) return;
+
+      if (!confirm(`Delete "${conv.title}" conversation?`)) return;
+
+      this.state.conversations = this.state.conversations.filter(c => c.id !== conv.id);
+      if (this.state.conversations.length > 0) {
+        this.state.currentConversation = this.state.conversations[0];
+      } else {
+        this.newConversation();
+      }
+
+      this.saveConversations();
+      this.renderConversations();
+      this.renderMessages();
+
+      if (App.config.debug) console.log(`🗑️ Conversation deleted: ${conv.title}`);
+    },
+
+    renameCurrentConversation: function() {
+      const conv = this.state.currentConversation;
+      if (!conv) return;
+
+      const newTitle = prompt('Rename conversation:', conv.title);
+      if (newTitle && newTitle.trim()) {
+        conv.title = newTitle.trim();
+        this.saveConversations();
+        this.renderConversations();
+        this.showToast(`✏️ Renamed to "${conv.title}"`);
+      }
+    },
+
+    searchConversations: function(query) {
+      if (!query) {
+        this.renderConversations();
+        return;
+      }
+
+      const filtered = this.state.conversations.filter(conv =>
+        conv.title.toLowerCase().includes(query.toLowerCase()) ||
+        conv.messages.some(m => m.content.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      if (this.dom.chatList) {
+        if (filtered.length === 0) {
+          this.dom.chatList.innerHTML = '<div class="empty-state">No conversations found</div>';
+          return;
+        }
+
+        this.dom.chatList.innerHTML = filtered.map(conv => `
+          <div class="chat-item ${conv.pinned ? 'pinned' : ''} ${conv.id === this.state.currentConversation?.id ? 'active' : ''}"
+               data-id="${conv.id}">
+            ${conv.pinned ? '📌 ' : ''}${conv.title || 'New Chat'}
+          </div>
+        `).join('');
+
+        this.dom.chatList.querySelectorAll('.chat-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const id = el.dataset.id;
+            const conv = this.state.conversations.find(c => c.id === id);
+            if (conv) {
+              this.state.currentConversation = conv;
+              this.renderMessages();
+              this.renderConversations();
+            }
+          });
+        });
+      }
+    },
+
+    // ----- Memory -----
+    toggleMemory: function() {
+      this.showToast('🧠 Memory toggled (Supabase integration coming soon)');
+    },
+
+    clearMemory: function() {
+      if (confirm('Clear all AI memory? This cannot be undone.')) {
+        this.showToast('🧠 Memory cleared');
+      }
+    },
+
+    // ----- Settings -----
+    saveSettings: function() {
+      const settings = {
+        style: document.getElementById('ai-conversation-style')?.value || 'balanced',
+        length: document.getElementById('ai-response-length')?.value || 'medium',
+        creativity: document.getElementById('ai-creativity')?.value || 50,
+        memory: document.getElementById('ai-memory-settings')?.value || 'enabled',
+        language: document.getElementById('ai-language')?.value || 'en',
+      };
+
+      try {
+        localStorage.setItem('x10-ai-settings', JSON.stringify(settings));
+      } catch (e) {
+        if (App.config.debug) console.warn('⚠️ Failed to save AI settings:', e);
+      }
+
+      if (App.config.debug) console.log('⚙️ AI settings saved:', settings);
+    },
+
+    resetAI: function() {
+      if (confirm('Reset all AI settings and conversations?')) {
+        this.state.conversations = [];
+        this.saveConversations();
+        this.newConversation();
+        this.showToast('🔄 AI reset complete');
+      }
+    },
+
+    // ----- File Uploads -----
+    handleFileUpload: function(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      this.handleFiles(files);
+      e.target.value = '';
+    },
+
+    handleImageUpload: function(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      this.handleFiles(files);
+      e.target.value = '';
+    },
+
+    handleDocUpload: function(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      this.handleFiles(files);
+      e.target.value = '';
+    },
+
+    handleFiles: function(files) {
+      const preview = this.dom.attachmentsPreview;
+      if (!preview) return;
+
+      const fileNames = [];
+      for (let i = 0; i < files.length; i++) {
+        fileNames.push(files[i].name);
+      }
+
+      preview.innerHTML = fileNames.map(name => `
+        <div class="attachment">
+          📎 ${name}
+          <span class="remove" data-file="${name}">✕</span>
+        </div>
+      `).join('');
+
+      preview.querySelectorAll('.remove').forEach(el => {
+        el.addEventListener('click', () => {
+          el.closest('.attachment').remove();
+        });
+      });
+
+      this.showToast(`📎 ${fileNames.length} file(s) attached`);
+    },
+
+    // ----- Toast -----
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'info' }
+      }));
+    },
+
+    // ----- Public API -----
+    getConversations: function() {
+      return [...this.state.conversations];
+    },
+
+    getCurrentConversation: function() {
+      return this.state.currentConversation ? { ...this.state.currentConversation } : null;
+    },
+
+    destroy: function() {
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('👤 Account module destroyed');
+    },
+  };
+                             
