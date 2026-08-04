@@ -2135,4 +2135,436 @@ h4 {
 #sports-search-form button:hover {
   background: var(--accent-primary-light);
                                                   }
-     
+     /* ============================================================
+   PART 4 — FAVORITES SCREEN STYLING
+   ============================================================ */
+
+#section-favorites {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+/* ----- Favorites Categories ----- */
+#favorites-categories {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+#favorites-categories .category-toggle {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#favorites-categories .category-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#favorites-categories .category-toggle.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* ----- Favorite Cards ----- */
+.favorite-club-card,
+.favorite-national-card,
+.favorite-competition-card,
+.favorite-player-card,
+.favorite-country-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+}
+
+.favorite-club-card:hover,
+.favorite-national-card:hover,
+.favorite-competition-card:hover,
+.favorite-player-card:hover,
+.favorite-country-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.favorite-club-card .badge,
+.favorite-national-card .badge,
+.favorite-competition-card .badge,
+.favorite-player-card .badge,
+.favorite-country-card .badge {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  padding: var(--space-xs);
+}
+
+.favorite-club-card .info,
+.favorite-national-card .info,
+.favorite-competition-card .info,
+.favorite-player-card .info,
+.favorite-country-card .info {
+  flex: 1;
+}
+
+.favorite-club-card .info .name,
+.favorite-national-card .info .name,
+.favorite-competition-card .info .name,
+.favorite-player-card .info .name,
+.favorite-country-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.favorite-club-card .info .meta,
+.favorite-national-card .info .meta,
+.favorite-competition-card .info .meta,
+.favorite-player-card .info .meta,
+.favorite-country-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.favorite-club-card .actions,
+.favorite-national-card .actions,
+.favorite-competition-card .actions,
+.favorite-player-card .actions,
+.favorite-country-card .actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.favorite-club-card .actions button,
+.favorite-national-card .actions button,
+.favorite-competition-card .actions button,
+.favorite-player-card .actions button,
+.favorite-country-card .actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-base);
+}
+
+.favorite-club-card .actions button:hover,
+.favorite-national-card .actions button:hover,
+.favorite-competition-card .actions button:hover,
+.favorite-player-card .actions button:hover,
+.favorite-country-card .actions button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.favorite-club-card .actions .remove-btn:hover,
+.favorite-national-card .actions .remove-btn:hover,
+.favorite-competition-card .actions .remove-btn:hover,
+.favorite-player-card .actions .remove-btn:hover,
+.favorite-country-card .actions .remove-btn:hover {
+  color: var(--color-danger);
+}
+
+/* ----- Favorite Controls ----- */
+#favorites-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+#favorites-sort,
+#favorites-filters {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+#favorites-sort .sort-btn,
+#favorites-filters .filter-btn {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#favorites-sort .sort-btn:hover,
+#favorites-filters .filter-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#favorites-sort .sort-btn.active,
+#favorites-filters .filter-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* ----- Favorite Search ----- */
+#favorite-search-form {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+#favorite-search-form input {
+  flex: 1;
+  border-radius: var(--radius-full);
+}
+
+#favorite-search-form button {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--accent-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#favorite-search-form button:hover {
+  background: var(--accent-primary-light);
+}
+
+/* ============================================================
+   PART 5 — WATCH SCREEN STYLING
+   ============================================================ */
+
+#section-watch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+/* ----- Watch Link Input ----- */
+#watch-link-form {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+#watch-link-form #watch-link {
+  flex: 1;
+  min-width: 200px;
+  border-radius: var(--radius-full);
+}
+
+#watch-link-form button {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-base);
+  min-height: 44px;
+  min-width: 44px;
+}
+
+#watch-link-form button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#watch-link-form #watch-play-btn {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+#watch-link-form #watch-play-btn:hover {
+  background: var(--accent-primary-light);
+}
+
+/* ----- Media Player ----- */
+#media-player {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+#media-viewer {
+  position: relative;
+  background: #000;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#media-viewer video,
+#media-viewer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ----- Video Controls (Overlay) ----- */
+#video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-md);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+#media-player:hover #video-controls,
+#media-player:focus-within #video-controls {
+  opacity: 1;
+}
+
+#video-controls .controls-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+#video-controls button {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: var(--space-xs);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+  font-size: var(--font-size-base);
+}
+
+#video-controls button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#video-controls #progress-bar {
+  flex: 1;
+  min-width: 60px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  outline: none;
+  transition: height var(--transition-fast);
+}
+
+#video-controls #progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+  cursor: pointer;
+}
+
+#video-controls #progress-bar::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+  cursor: pointer;
+  border: none;
+}
+
+#video-controls .time {
+  color: #fff;
+  font-size: var(--font-size-xs);
+  min-width: 40px;
+  text-align: center;
+}
+
+#video-controls #volume-slider {
+  width: 60px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  outline: none;
+}
+
+#video-controls #volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: #fff;
+  cursor: pointer;
+}
+
+#video-controls #volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: #fff;
+  cursor: pointer;
+  border: none;
+}
+
+#video-controls select {
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+/* ----- Media Info ----- */
+#media-info {
+  padding: var(--space-md);
+  background: var(--bg-card);
+}
+
+#media-info #media-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-xs);
+}
+
+#media-info #media-description {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-xs);
+}
+
+#media-info .meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+   }
