@@ -6,6 +6,62 @@
  * ============================================================
  */
 
+// --- REPLACE PREVIOUS JS BLOCK IN app.js ---
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Target all navigation links (bottom tabs & side drawer)
+  const navLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
+  
+  // Target all main view panels
+  const viewPanels = document.querySelectorAll(
+    '#section-home, #section-sports, #section-favorites, #section-watch, #section-account, #history, #notifications, #settings, #appearance'
+  );
+
+  function switchView(targetId) {
+    if (!targetId) return;
+
+    // Clean up '#' from href target
+    const cleanId = targetId.replace('#', '');
+    const targetPanel = document.getElementById(cleanId);
+
+    if (targetPanel) {
+      // Hide all main page panels
+      viewPanels.forEach(panel => {
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+      });
+
+      // Show selected panel
+      targetPanel.classList.add('active');
+      targetPanel.style.display = 'block';
+
+      // Update active state on bottom navigation tabs
+      document.querySelectorAll('#bottom-tabs .tab-item').forEach(link => {
+        const linkHref = link.getAttribute('href')?.replace('#', '');
+        if (linkHref === cleanId) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+
+      // Scroll to top of view
+      window.scrollTo(0, 0);
+    }
+  }
+
+  // Attach click events to nav links
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute('href');
+      switchView(targetId);
+    });
+  });
+
+  // Set initial active screen to Home on startup
+  switchView('section-home');
+});
 
 
 (function() {
