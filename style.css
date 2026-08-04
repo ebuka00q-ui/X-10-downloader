@@ -4552,19 +4552,34 @@ h4 {
   }
 }
 
-/* Hide all view sections by default */
-section.view-panel,
-.tab-panel,
-.page-section {
-  display: none !important;
+/* --- REPLACE AT THE VERY BOTTOM OF style.css --- */
+
+/* Hide main top-level views by default */
+#section-home,
+#section-sports,
+#section-favorites,
+#section-watch,
+#section-account,
+#history,
+#notifications,
+#settings,
+#appearance {
+  display: none;
 }
 
-/* Show only the active section */
-section.view-panel.active,
-.tab-panel.active,
-.page-section.active {
+/* Show only the active view */
+#section-home.active,
+#section-sports.active,
+#section-favorites.active,
+#section-watch.active,
+#section-account.active,
+#history.active,
+#notifications.active,
+#settings.active,
+#appearance.active {
   display: block !important;
 }
+
 
 
 /* ============================================================
