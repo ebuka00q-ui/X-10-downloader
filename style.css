@@ -4552,6 +4552,21 @@ h4 {
   }
 }
 
+/* Hide all view sections by default */
+section.view-panel,
+.tab-panel,
+.page-section {
+  display: none !important;
+}
+
+/* Show only the active section */
+section.view-panel.active,
+.tab-panel.active,
+.page-section.active {
+  display: block !important;
+}
+
+
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */
