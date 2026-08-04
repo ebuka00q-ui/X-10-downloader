@@ -4552,46 +4552,36 @@ h4 {
   }
 }
 
-/* --- REPLACE AT THE VERY BOTTOM OF style.css --- */
+/* --- VIEWPORT LAYOUT SAFEGUARDS --- */
 
-/* Hide main top-level views by default */
-#section-home,
-#section-sports,
-#section-favorites,
-#section-watch,
-#section-account,
-#history,
-#notifications,
-#settings,
-#appearance {
-  display: none;
-}
-
-/* Show only the active view */
-#section-home.active,
-#section-sports.active,
-#section-favorites.active,
-#section-watch.active,
-#section-account.active,
-#history.active,
-#notifications.active,
-#settings.active,
-#appearance.active {
-  display: block !important;
-}
-
-/* Prevent full page horizontal zoom and stretching */
+/* Prevent full page horizontal zoom and screen stretching */
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
 
-/* Make sports sub-navigation scroll cleanly sideways without stretching the screen */
+/* Make sports sub-navigation scroll cleanly sideways without stretching */
 #sports-nav ul {
   display: flex !important;
   overflow-x: auto !important;
   white-space: nowrap !important;
   -webkit-overflow-scrolling: touch;
+}
+
+/* --- DYNAMIC VIEW SWITCHING --- */
+
+/* Hide only top-level page panels under #main-content by default */
+#main-content > section,
+#main-content > div.view-panel,
+#main-content > div[id] {
+  display: none;
+}
+
+/* Reveal ONLY the currently active top-level panel */
+#main-content > section.active,
+#main-content > div.view-panel.active,
+#main-content > div[id].active {
+  display: block !important;
 }
 
 
