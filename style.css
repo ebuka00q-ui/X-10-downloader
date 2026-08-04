@@ -4580,6 +4580,19 @@ h4 {
   display: block !important;
 }
 
+/* Prevent full page horizontal zoom and stretching */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Make sports sub-navigation scroll cleanly sideways without stretching the screen */
+#sports-nav ul {
+  display: flex !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  -webkit-overflow-scrolling: touch;
+}
 
 
 /* ============================================================
