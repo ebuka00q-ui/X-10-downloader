@@ -3526,4 +3526,117 @@ I'm/**
 
     show: function(message, type = 'info') {
       const toast = document.createElement('div');
-  
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+
+      this.container.appendChild(toast);
+
+      // Auto dismiss after 3 seconds
+      const timer = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(40px)';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }, 3000);
+
+      this.timers.push(timer);
+
+      // Clean up timer on click
+      toast.addEventListener('click', () => {
+        clearTimeout(timer);
+        toast.remove();
+      });
+    },
+
+    clear: function() {
+      this.timers.forEach(t => clearTimeout(t));
+      this.timers = [];
+      if (this.container) {
+        this.container.innerHTML = '';
+      }
+    },
+  };
+
+  // ============================================================
+  // APPLICATION INITIALIZATION
+  // ============================================================
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize core
+    App.init();
+
+    // Initialize modules
+    Home.init();
+    Sports.init();
+    Favorites.init();
+    Watch.init();
+    Account.init();
+    SearchModule.init();
+    PWA.init();
+    RefreshManager.init();
+    ToastSystem.init();
+
+    // Handle initial hash
+    App.handleHash();
+
+    // Handle online/offline status on load
+    if (!navigator.onLine) {
+      document.dispatchEvent(new CustomEvent('x10:offline'));
+    }
+
+    if (App.config.debug) console.log('🚀 X-10 Downloader fully initialized');
+  });
+
+  // ============================================================
+  // EXPOSE PUBLIC API
+  // ============================================================
+
+  window.X10 = {
+    App: App,
+    Home: Home,
+    Sports: Sports,
+    Favorites: Favorites,
+    Watch: Watch,
+    Account: Account,
+    Search: SearchModule,
+    PWA: PWA,
+    RefreshManager: RefreshManager,
+    Toast: ToastSystem,
+
+    // Convenience methods
+    navigateTo: function(page) {
+      App.navigateTo(page);
+    },
+
+    getState: function() {
+      return App.getState();
+    },
+
+    getFavorites: function() {
+      return Favorites.getItems();
+    },
+
+    isFavorite: function(id) {
+      return Favorites.isFavorite(id);
+    },
+
+    playMedia: function(url) {
+      Watch.playMedia(url);
+    },
+
+    showToast: function(message, type) {
+      ToastSystem.show(message, type);
+    },
+
+    openAI: function() {
+      document.dispatchEvent(new CustomEvent('x10:openAI'));
+    },
+  };
+
+  // ============================================================
+  // END OF JAVASCRIPT
+  // ============================================================
+})();
