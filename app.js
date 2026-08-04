@@ -6,6 +6,46 @@
  * ============================================================
  */
 
+// Function to switch active tabs/pages
+function switchTab(targetId) {
+  // Hide all sections
+  document.querySelectorAll('section, .view-panel, .tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+
+  // Show the target section
+  const targetPanel = document.getElementById(targetId);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+}
+
+// Listen for clicks on all bottom navigation tabs
+document.addEventListener('DOMContentLoaded', () => {
+  // Set default view on startup (e.g., Home or Sports)
+  switchTab('section-home'); 
+
+  // Click listener for navigation links
+  document.querySelectorAll('.tab-item, .nav-link').forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Get target tab ID from data attribute or href (e.g., data-tab="section-sports")
+      const targetId = button.getAttribute('data-tab') || button.getAttribute('href')?.replace('#', '');
+      
+      if (targetId) {
+        switchTab(targetId);
+        
+        // Highlight active button
+        document.querySelectorAll('.tab-item, .nav-link').forEach(b => b.classList.remove('active'));
+        button.classList.add('active');
+      }
+    });
+  });
+});
+
+
 (function() {
   'use strict';
 
