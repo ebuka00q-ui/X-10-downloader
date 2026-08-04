@@ -5,44 +5,61 @@
  * Production Ready
  * ============================================================
  */
+// --- REPLACE PREVIOUS JS BLOCK IN app.js ---
 
-// Function to switch active tabs/pages
-function switchTab(targetId) {
-  // Hide all sections
-  document.querySelectorAll('section, .view-panel, .tab-panel').forEach(panel => {
-    panel.classList.remove('active');
-  });
-
-  // Show the target section
-  const targetPanel = document.getElementById(targetId);
-  if (targetPanel) {
-    targetPanel.classList.add('active');
-    window.scrollTo(0, 0);
-  }
-}
-
-// Listen for clicks on all bottom navigation tabs
 document.addEventListener('DOMContentLoaded', () => {
-  // Set default view on startup (e.g., Home or Sports)
-  switchTab('section-home'); 
+  // Target all navigation links (bottom tabs & side drawer)
+  const navLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
+  
+  // Target all main view panels
+  const viewPanels = document.querySelectorAll(
+    '#section-home, #section-sports, #section-favorites, #section-watch, #section-account, #history, #notifications, #settings, #appearance'
+  );
 
-  // Click listener for navigation links
-  document.querySelectorAll('.tab-item, .nav-link').forEach(button => {
-    button.addEventListener('click', (e) => {
+  function switchView(targetId) {
+    if (!targetId) return;
+
+    // Clean up '#' from href target
+    const cleanId = targetId.replace('#', '');
+    const targetPanel = document.getElementById(cleanId);
+
+    if (targetPanel) {
+      // Hide all main page panels
+      viewPanels.forEach(panel => {
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+      });
+
+      // Show selected panel
+      targetPanel.classList.add('active');
+      targetPanel.style.display = 'block';
+
+      // Update active state on bottom navigation tabs
+      document.querySelectorAll('#bottom-tabs .tab-item').forEach(link => {
+        const linkHref = link.getAttribute('href')?.replace('#', '');
+        if (linkHref === cleanId) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+
+      // Scroll to top of view
+      window.scrollTo(0, 0);
+    }
+  }
+
+  // Attach click events to nav links
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
       e.preventDefault();
-      
-      // Get target tab ID from data attribute or href (e.g., data-tab="section-sports")
-      const targetId = button.getAttribute('data-tab') || button.getAttribute('href')?.replace('#', '');
-      
-      if (targetId) {
-        switchTab(targetId);
-        
-        // Highlight active button
-        document.querySelectorAll('.tab-item, .nav-link').forEach(b => b.classList.remove('active'));
-        button.classList.add('active');
-      }
+      const targetId = link.getAttribute('href');
+      switchView(targetId);
     });
   });
+
+  // Set initial active screen to Home on startup
+  switchView('section-home');
 });
 
 
