@@ -6,61 +6,57 @@
  * ============================================================
  */
 
-// --- REPLACE PREVIOUS JS BLOCK IN app.js ---
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Target all navigation links (bottom tabs & side drawer)
-  const navLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
+  // 1. Grab all navigation trigger links (Bottom Bar & Side Drawer)
+  const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
   
-  // Target all main view panels
-  const viewPanels = document.querySelectorAll(
-    '#section-home, #section-sports, #section-favorites, #section-watch, #section-account, #history, #notifications, #settings, #appearance'
-  );
+  // 2. Target top-level panels directly inside main-content container
+  const mainPages = document.querySelectorAll('#main-content > section, #main-content > div');
 
-  function switchView(targetId) {
-    if (!targetId) return;
+  function openPage(targetHref) {
+    if (!targetHref) return;
 
-    // Clean up '#' from href target
-    const cleanId = targetId.replace('#', '');
-    const targetPanel = document.getElementById(cleanId);
+    // Clean up '#' symbol from href attribute
+    const cleanId = targetHref.replace('#', '');
+    const selectedPage = document.getElementById(cleanId);
 
-    if (targetPanel) {
-      // Hide all main page panels
-      viewPanels.forEach(panel => {
-        panel.classList.remove('active');
-        panel.style.display = 'none';
+    if (selectedPage) {
+      // Hide all top-level main screens
+      mainPages.forEach(page => {
+        page.classList.remove('active');
+        page.style.display = 'none';
       });
 
-      // Show selected panel
-      targetPanel.classList.add('active');
-      targetPanel.style.display = 'block';
+      // Show ONLY the chosen screen
+      selectedPage.classList.add('active');
+      selectedPage.style.display = 'block';
 
-      // Update active state on bottom navigation tabs
-      document.querySelectorAll('#bottom-tabs .tab-item').forEach(link => {
-        const linkHref = link.getAttribute('href')?.replace('#', '');
-        if (linkHref === cleanId) {
-          link.classList.add('active');
+      // Update active highlight state on bottom tabs
+      document.querySelectorAll('#bottom-tabs .tab-item').forEach(btn => {
+        const btnTarget = btn.getAttribute('href')?.replace('#', '');
+        if (btnTarget === cleanId) {
+          btn.classList.add('active');
         } else {
-          link.classList.remove('active');
+          btn.classList.remove('active');
         }
       });
 
-      // Scroll to top of view
+      // Reset scroll position to top when entering new page
       window.scrollTo(0, 0);
     }
   }
 
-  // Attach click events to nav links
-  navLinks.forEach(link => {
+  // 3. Attach click event handlers to navigation links
+  allNavLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const targetId = link.getAttribute('href');
-      switchView(targetId);
+      const destination = link.getAttribute('href');
+      openPage(destination);
     });
   });
 
-  // Set initial active screen to Home on startup
-  switchView('section-home');
+  // 4. Default active screen on app launch
+  openPage('#section-home');
 });
 
 
