@@ -4606,6 +4606,28 @@ img:not([src]), img[src=""], img[src="undefined"] {
   visibility: hidden;
 }
 
+/* --- STEP 2: DYNAMIC ERRORS & IMAGE FALLBACKS --- */
+
+/* 1. Hide error banners dynamically until specifically triggered */
+#no-internet, 
+#server-error, 
+.error-banner, 
+.offline-card {
+  display: none !important;
+}
+
+/* 2. Prevent broken images from squishing text layout */
+img {
+  min-width: 20px;
+  min-height: 20px;
+  object-fit: contain;
+}
+
+/* Hide empty/broken image placeholders cleanly */
+img:not([src]), img[src=""], img[src="undefined"] {
+  visibility: hidden;
+}
+
 
 /* ============================================================
    END OF STYLESHEET
