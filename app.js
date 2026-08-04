@@ -269,6 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el) el.style.display = 'none';
       });
 
+    // Hide all sub-views and filter containers
+    document.querySelectorAll('.sub-page, .detail-view, #section-settings, #section-about, .sports-category, .favorite-category').forEach(sub => {
+      if (sub) sub.style.display = 'none';
+    });
+      
+      
       // Show target page
       const target = this.dom.pages[page];
       if (target) {
