@@ -1604,4 +1604,207 @@ h4 {
 .competition-card .info .meta {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-     }
+}
+/* ----- Club Cards ----- */
+.club-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.club-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.club-card .club-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  padding: 2px;
+}
+
+.club-card .info {
+  flex: 1;
+}
+
+.club-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.club-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* ----- Player Cards ----- */
+.player-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.player-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.player-card .player-photo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background: var(--bg-primary);
+}
+
+.player-card .info {
+  flex: 1;
+}
+
+.player-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.player-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.player-card .info .meta .club-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+
+/* ----- Continue Watching ----- */
+.watch-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-base);
+}
+
+.watch-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.watch-card .thumbnail {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--bg-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.watch-card .title {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.watch-card .last-watched {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.watch-card .actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.watch-card .actions button {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  border: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.watch-card .actions .continue-btn {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+.watch-card .actions .continue-btn:hover {
+  background: var(--accent-primary-light);
+}
+
+.watch-card .actions .start-over-btn {
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+}
+
+.watch-card .actions .delete-btn {
+  background: none;
+  color: var(--text-muted);
+}
+
+/* ----- Quick Access Section ----- */
+.quick-access {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--space-sm);
+}
+
+.quick-access .quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.quick-access .quick-item:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+
+.quick-access .quick-item:active {
+  transform: scale(0.96);
+}
+
+.quick-access .quick-item .icon {
+  font-size: var(--font-size-xl);
+   }
