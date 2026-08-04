@@ -1808,3 +1808,331 @@ h4 {
 .quick-access .quick-item .icon {
   font-size: var(--font-size-xl);
    }
+/* ============================================================
+   PART 3 — SPORTS SCREEN STYLING
+   ============================================================ */
+
+#section-sports {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+/* ----- Sports Navigation ----- */
+#sports-nav {
+  display: flex;
+  gap: var(--space-sm);
+  overflow-x: auto;
+  padding: var(--space-sm) 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+#sports-nav::-webkit-scrollbar {
+  display: none;
+}
+
+#sports-nav ul {
+  display: flex;
+  gap: var(--space-sm);
+  list-style: none;
+}
+
+#sports-nav ul li a {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  border: 1px solid var(--border-color);
+}
+
+#sports-nav ul li a:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#sports-nav ul li a.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* ----- Sports Controls (Filters & Sort) ----- */
+#sports-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+#sports-filters,
+#sports-sort {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+#sports-filters .filter-btn,
+#sports-sort .sort-btn {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#sports-filters .filter-btn:hover,
+#sports-sort .sort-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#sports-filters .filter-btn.active,
+#sports-sort .sort-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* ----- Country, League, Competition Cards ----- */
+.country-card,
+.league-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.country-card:hover,
+.league-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.country-card .country-flag,
+.league-card .league-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.country-card .info,
+.league-card .info {
+  flex: 1;
+}
+
+.country-card .info .name,
+.league-card .info .name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.country-card .info .meta,
+.league-card .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.country-card .actions,
+.league-card .actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.country-card .actions button,
+.league-card .actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-base);
+}
+
+.country-card .actions button:hover,
+.league-card .actions button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+/* ----- Standings Table ----- */
+#standings-table {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+#standings-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+#standings-table thead {
+  background: var(--bg-secondary);
+}
+
+#standings-table th {
+  padding: var(--space-sm) var(--space-xs);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#standings-table td {
+  padding: var(--space-sm) var(--space-xs);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+#standings-table tr:last-child td {
+  border-bottom: none;
+}
+
+#standings-table tr.top-four {
+  background: var(--color-success-bg);
+}
+
+#standings-table tr.relegation {
+  background: var(--color-danger-bg);
+}
+
+#standings-table .club-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: var(--space-xs);
+}
+
+/* ----- Formation Preview ----- */
+#formation-preview {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  aspect-ratio: 3/2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#formation-preview .pitch {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: radial-gradient(ellipse at center, var(--bg-card-hover), var(--bg-primary));
+  border: 2px solid var(--border-color-light);
+  border-radius: var(--radius-md);
+}
+
+#formation-preview .player-node {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  transform: translate(-50%, -50%);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--border-color-light);
+}
+
+#formation-preview .player-node.gk {
+  background: var(--color-warning);
+}
+
+#formation-preview .player-node.def {
+  background: var(--accent-primary);
+}
+
+#formation-preview .player-node.mid {
+  background: var(--accent-secondary);
+}
+
+#formation-preview .player-node.fwd {
+  background: var(--color-danger);
+}
+
+#formation-preview .player-node .number {
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+#formation-preview .player-node .name {
+  display: none;
+}
+
+/* ----- Live Card Glow ----- */
+.live-card {
+  border-color: var(--color-danger) !important;
+  box-shadow: 0 0 20px var(--color-live-glow) !important;
+}
+
+.live-card .live-badge {
+  background: var(--color-danger);
+  color: #fff;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  animation: pulse-live 1.5s ease-in-out infinite;
+}
+
+/* ----- Sports Search ----- */
+#sports-search-form {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+#sports-search-form input {
+  flex: 1;
+  border-radius: var(--radius-full);
+}
+
+#sports-search-form button {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--accent-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#sports-search-form button:hover {
+  background: var(--accent-primary-light);
+                                                  }
+     
