@@ -412,3 +412,347 @@
       return { ...this.config };
     },
   };
+ // ============================================================
+  // PART 2 — HOME PAGE MODULE
+  // ============================================================
+
+  const Home = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      refreshTimer: null,
+      isActive: true,
+      featuredMatch: null,
+      liveMatches: [],
+      upcomingMatches: [],
+      finishedMatches: [],
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.setupRefresh();
+      this.renderWelcome();
+      this.renderFeatured();
+      this.renderLiveMatches();
+      this.renderUpcomingMatches();
+      this.renderFinishedMatches();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('🏠 Home module initialized');
+    },
+
+    cacheDom: function() {
+      const section = document.getElementById('section-home');
+      if (!section) return;
+
+      this.dom = {
+        section: section,
+        welcome: section.querySelector('#home-welcome'),
+        featured: section.querySelector('#featured-match'),
+        liveList: section.querySelector('#live-matches-list'),
+        upcomingList: section.querySelector('#upcoming-matches-list'),
+        finishedList: section.querySelector('#finished-matches-list'),
+        skeleton: section.querySelector('#home-skeleton'),
+        emptyState: section.querySelector('#home-empty-state'),
+        refreshIndicator: section.querySelector('#home-refresh-indicator'),
+        lastUpdated: section.querySelector('#home-last-updated'),
+      };
+    },
+
+    bindEvents: function() {
+      // Page change events
+      document.addEventListener('x10:pageChange', (e) => {
+        this.state.isActive = e.detail.page === 'home';
+        if (this.state.isActive) {
+          this.resumeRefresh();
+        } else {
+          this.pauseRefresh();
+        }
+      });
+
+      // Visibility change
+      document.addEventListener('x10:visibilityChange', (e) => {
+        if (!this.state.isActive) return;
+        if (e.detail.isVisible) {
+          this.resumeRefresh();
+        } else {
+          this.pauseRefresh();
+        }
+      });
+
+      // Quick action buttons
+      const quickActions = this.dom.section?.querySelectorAll('.quick-item');
+      if (quickActions) {
+        quickActions.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.dataset.target;
+            if (target) App.navigateTo(target);
+          });
+        });
+      }
+    },
+
+    setupRefresh: function() {
+      this.startRefresh();
+    },
+
+    startRefresh: function() {
+      if (this.state.refreshTimer) return;
+
+      this.state.refreshTimer = setInterval(() => {
+        if (this.state.isActive && App.state.isOnline) {
+          this.refreshData();
+        }
+      }, App.config.refreshIntervals.live);
+
+      if (App.config.debug) console.log('🔄 Home refresh started');
+    },
+
+    pauseRefresh: function() {
+      if (this.state.refreshTimer) {
+        clearInterval(this.state.refreshTimer);
+        this.state.refreshTimer = null;
+        if (App.config.debug) console.log('⏸️ Home refresh paused');
+      }
+    },
+
+    resumeRefresh: function() {
+      if (!this.state.refreshTimer) {
+        this.startRefresh();
+        if (App.config.debug) console.log('▶️ Home refresh resumed');
+      }
+    },
+
+    refreshData: function() {
+      if (App.config.debug) console.log('🔄 Home refresh triggered');
+      this.updateLastUpdated();
+      // Future: fetch live data from backend
+    },
+
+    updateLastUpdated: function() {
+      const now = new Date();
+      const time = now.toLocaleTimeString();
+      if (this.dom.lastUpdated) {
+        this.dom.lastUpdated.textContent = `Last updated: ${time}`;
+      }
+    },
+
+    renderWelcome: function() {
+      if (!this.dom.welcome) return;
+
+      const now = new Date();
+      const greeting = this.getGreeting();
+      const dateStr = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      this.dom.welcome.innerHTML = `
+        <div class="greeting">${greeting}</div>
+        <div class="date">${dateStr}</div>
+        <div class="featured-competition">🏆 Premier League • Matchday 38</div>
+      `;
+    },
+
+    getGreeting: function() {
+      const hour = new Date().getHours();
+      if (hour < 12) return 'Good Morning ☀️';
+      if (hour < 17) return 'Good Afternoon 🌤️';
+      if (hour < 21) return 'Good Evening 🌅';
+      return 'Good Night 🌙';
+    },
+
+    renderFeatured: function() {
+      if (!this.dom.featured) return;
+
+      // Placeholder featured match
+      this.dom.featured.innerHTML = `
+        <div class="competition-info">
+          <img src="#" alt="Premier League" class="competition-logo" />
+          <span>Premier League • Matchday 38</span>
+        </div>
+        <div class="teams">
+          <div class="team">
+            <img src="#" alt="Liverpool" class="badge" />
+            <span class="name">Liverpool</span>
+          </div>
+          <div class="score">2 - 1</div>
+          <div class="team">
+            <img src="#" alt="Arsenal" class="badge" />
+            <span class="name">Arsenal</span>
+          </div>
+        </div>
+        <div class="match-meta">
+          <span class="live-badge">● LIVE</span>
+          <span>67'</span>
+          <span>Anfield</span>
+          <span>Ref: M. Oliver</span>
+        </div>
+        <div class="match-actions">
+          <button class="btn btn-primary watch-btn">▶ Watch</button>
+          <button class="btn btn-secondary stats-btn">📊 Stats</button>
+          <button class="btn btn-secondary lineup-btn">📋 Lineups</button>
+          <button class="btn btn-secondary favorite-btn">⭐</button>
+        </div>
+      `;
+
+      // Bind actions
+      const watchBtn = this.dom.featured.querySelector('.watch-btn');
+      if (watchBtn) {
+        watchBtn.addEventListener('click', () => App.navigateTo('watch'));
+      }
+    },
+
+    renderLiveMatches: function() {
+      if (!this.dom.liveList) return;
+
+      // Placeholder live matches
+      const matches = [
+        { home: 'Chelsea', away: 'Tottenham', score: '1 - 0', minute: '32' },
+        { home: 'Bayern', away: 'Dortmund', score: '2 - 2', minute: '78' },
+      ];
+
+      this.dom.liveList.innerHTML = matches.map(m => `
+        <article class="match-card live-card">
+          <div class="competition-info">
+            <img src="#" alt="Premier League" class="competition-logo" />
+            <span>Premier League</span>
+          </div>
+          <div class="teams">
+            <div class="team">
+              <img src="#" alt="${m.home}" class="badge" />
+              <span class="name">${m.home}</span>
+            </div>
+            <div class="score">${m.score}</div>
+            <div class="team">
+              <img src="#" alt="${m.away}" class="badge" />
+              <span class="name">${m.away}</span>
+            </div>
+          </div>
+          <div class="match-meta">
+            <span class="live-badge">● LIVE</span>
+            <span class="minute">${m.minute}'</span>
+          </div>
+          <div class="match-actions">
+            <button class="watch-btn">▶</button>
+            <button class="stats-btn">📊</button>
+            <button class="lineup-btn">📋</button>
+            <button class="favorite-btn">⭐</button>
+          </div>
+        </article>
+      `).join('');
+    },
+
+    renderUpcomingMatches: function() {
+      if (!this.dom.upcomingList) return;
+
+      // Placeholder upcoming matches
+      const matches = [
+        { home: 'Barcelona', away: 'Real Madrid', time: '21:00', date: 'Tomorrow' },
+        { home: 'AC Milan', away: 'Inter', time: '20:45', date: 'Tomorrow' },
+      ];
+
+      this.dom.upcomingList.innerHTML = matches.map(m => `
+        <article class="match-card upcoming-card">
+          <div class="competition-info">
+            <img src="#" alt="La Liga" class="competition-logo" />
+            <span>La Liga</span>
+          </div>
+          <div class="teams">
+            <div class="team">
+              <img src="#" alt="${m.home}" class="badge" />
+              <span class="name">${m.home}</span>
+            </div>
+            <div class="score">vs</div>
+            <div class="team">
+              <img src="#" alt="${m.away}" class="badge" />
+              <span class="name">${m.away}</span>
+            </div>
+          </div>
+          <div class="match-meta">
+            <span>${m.date} • ${m.time}</span>
+          </div>
+          <div class="match-actions">
+            <button class="notify-btn">🔔</button>
+            <button class="favorite-btn">⭐</button>
+          </div>
+        </article>
+      `).join('');
+    },
+
+    renderFinishedMatches: function() {
+      if (!this.dom.finishedList) return;
+
+      // Placeholder finished matches
+      const matches = [
+        { home: 'Manchester City', away: 'Arsenal', score: '3 - 1' },
+        { home: 'Liverpool', away: 'Everton', score: '2 - 0' },
+      ];
+
+      this.dom.finishedList.innerHTML = matches.map(m => `
+        <article class="match-card finished-card">
+          <div class="competition-info">
+            <img src="#" alt="Premier League" class="competition-logo" />
+            <span>Premier League</span>
+          </div>
+          <div class="teams">
+            <div class="team">
+              <img src="#" alt="${m.home}" class="badge" />
+              <span class="name">${m.home}</span>
+            </div>
+            <div class="score">${m.score}</div>
+            <div class="team">
+              <img src="#" alt="${m.away}" class="badge" />
+              <span class="name">${m.away}</span>
+            </div>
+          </div>
+          <div class="match-meta">
+            <span>✅ Full Time</span>
+          </div>
+          <div class="match-actions">
+            <button class="stats-btn">📊</button>
+            <button class="lineup-btn">📋</button>
+          </div>
+        </article>
+      `).join('');
+    },
+
+    showLoading: function() {
+      if (this.dom.skeleton) {
+        this.dom.skeleton.style.display = 'block';
+      }
+    },
+
+    hideLoading: function() {
+      if (this.dom.skeleton) {
+        this.dom.skeleton.style.display = 'none';
+      }
+    },
+
+    showEmpty: function() {
+      if (this.dom.emptyState) {
+        this.dom.emptyState.style.display = 'flex';
+      }
+    },
+
+    hideEmpty: function() {
+      if (this.dom.emptyState) {
+        this.dom.emptyState.style.display = 'none';
+      }
+    },
+
+    // Public API
+    refresh: function() {
+      this.refreshData();
+    },
+
+    destroy: function() {
+      this.pauseRefresh();
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('🏠 Home module destroyed');
+    },
+  };
