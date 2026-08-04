@@ -3837,3 +3837,438 @@ h4 {
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
    }
+/* ----- Predictions ----- */
+#match-predictions {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+}
+
+#match-predictions .prediction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+#match-predictions .prediction span {
+  font-size: var(--font-size-sm);
+}
+
+#match-predictions .prediction .ai-prediction {
+  font-weight: var(--font-weight-semibold);
+  color: var(--accent-primary);
+}
+
+/* ----- AI Match Insight ----- */
+#match-ai-insight {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-secondary);
+}
+
+#match-ai-insight .ai-insight-content p {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
+}
+
+/* ----- Related Matches ----- */
+#related-matches .related-match {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+#related-matches .related-match .competition {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+#related-matches .related-match .teams {
+  flex: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+#related-matches .related-match .time {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+#related-matches .related-match button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#related-matches .related-match button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+/* ----- Search Page ----- */
+#search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+#search-panel .search-result-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+#search-panel .search-result-item:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(4px);
+}
+
+#search-panel .search-result-item .image {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+
+#search-panel .search-result-item .info {
+  flex: 1;
+}
+
+#search-panel .search-result-item .info .title {
+  font-weight: var(--font-weight-medium);
+}
+
+#search-panel .search-result-item .info .subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+#search-panel .search-result-item .info .category {
+  font-size: var(--font-size-xs);
+  color: var(--accent-primary);
+}
+
+/* ----- History Page ----- */
+#history .history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-sm);
+}
+
+#history .history-item:hover {
+  background: var(--bg-card-hover);
+}
+
+#history .history-item .thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+#history .history-item .info {
+  flex: 1;
+}
+
+#history .history-item .info .title {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+}
+
+#history .history-item .info .meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+#history .history-item .actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+#history .history-item .actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-base);
+}
+
+#history .history-item .actions button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#history .history-item .actions .delete-btn:hover {
+  color: var(--color-danger);
+}
+
+#history .end-of-history {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: var(--space-xl) 0;
+}
+
+/* ----- Notifications Page ----- */
+#notifications .notification-item {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--space-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+#notifications .notification-item:hover {
+  background: var(--bg-card-hover);
+}
+
+#notifications .notification-item.unread {
+  border-left: 4px solid var(--accent-primary);
+}
+
+#notifications .notification-item .notif-icon {
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+#notifications .notification-item .info {
+  flex: 1;
+}
+
+#notifications .notification-item .info .notif-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
+
+#notifications .notification-item .info .notif-message {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: var(--space-xs) 0;
+}
+
+#notifications .notification-item .info .notif-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  display: flex;
+  gap: var(--space-md);
+}
+
+#notifications .notification-item .info .notif-status {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+#notifications .notification-item .info .notif-status.unread {
+  color: var(--accent-primary);
+}
+
+#notifications .notification-item .actions {
+  display: flex;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+#notifications .notification-item .actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#notifications .notification-item .actions button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#notifications .notification-item .actions .delete-btn:hover {
+  color: var(--color-danger);
+}
+
+/* ----- Notification Controls ----- */
+#notifications-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+}
+
+#notifications-controls button {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+#notifications-controls button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+#notifications-controls input {
+  flex: 1;
+  min-width: 150px;
+  border-radius: var(--radius-full);
+}
+
+/* ============================================================
+   PART 8 — FINAL POLISH, PWA, ANIMATIONS, THEMES
+   ============================================================ */
+
+/* ----- Glass Effect ----- */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color-light);
+}
+
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ----- Floating Action Button ----- */
+.fab {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-xl));
+  right: var(--space-lg);
+  z-index: var(--z-ai-floating);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  border: none;
+  font-size: var(--font-size-xl);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(37, 99, 235, 0.3);
+  cursor: pointer;
+  transition: all var(--transition-bounce);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-xl), 0 0 40px rgba(37, 99, 235, 0.4);
+}
+
+.fab:active {
+  transform: scale(0.92);
+}
+
+/* ----- Page Transitions ----- */
+.page-transition {
+  animation: fadeSlideUp 0.3s ease;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ----- Card Hover Animations ----- */
+.card-hover {
+  transition: all var(--transition-base);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ----- Skeleton Shimmer (Enhanced) ----- */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ----- AI Typing Dots ----- */
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: var(--space-sm) 0;
+}
+
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
+     }
