@@ -4272,3 +4272,286 @@ h4 {
     transform: translateY(-8px);
   }
      }
+/* ----- Toast Animation (Enhanced) ----- */
+.toast {
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ----- Dialog Animation ----- */
+.dialog {
+  animation: scaleIn 0.25s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ----- Favorite Toggle Animation ----- */
+.favorite-btn {
+  transition: all var(--transition-bounce);
+}
+
+.favorite-btn.active {
+  color: var(--color-danger);
+  transform: scale(1.1);
+}
+
+.favorite-btn:active {
+  transform: scale(0.8);
+}
+
+/* ----- Live Pulse (Enhanced) ----- */
+.pulse-live {
+  animation: pulseLive 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseLive {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--color-live-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+/* ----- Notification Badge ----- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-full);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.badge-primary {
+  background: var(--accent-primary);
+}
+
+.badge-success {
+  background: var(--color-success);
+}
+
+.badge-warning {
+  background: var(--color-warning);
+}
+
+/* ----- Responsive Adjustments (Enhanced) ----- */
+@media (max-width: 480px) {
+  .featured-match .teams .team .badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .featured-match .teams .score {
+    font-size: var(--font-size-2xl);
+  }
+
+  #match-teams .team .club-badge {
+    width: 44px;
+    height: 44px;
+  }
+
+  #match-teams .team .score {
+    font-size: var(--font-size-2xl);
+  }
+
+  #match-teams .match-clock {
+    font-size: var(--font-size-lg);
+  }
+
+  #stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #lineups-container {
+    grid-template-columns: 1fr;
+  }
+
+  #ai-chat-screen {
+    height: 400px;
+    max-height: 60vh;
+  }
+
+  #ai-messages .message {
+    max-width: 92%;
+  }
+
+  #video-controls select {
+    max-width: 80px;
+  }
+}
+
+@media (min-width: 768px) {
+  .featured-match .teams .team .badge {
+    width: 72px;
+    height: 72px;
+  }
+
+  .featured-match .teams .score {
+    font-size: 48px;
+  }
+
+  #match-teams .team .club-badge {
+    width: 80px;
+    height: 80px;
+  }
+
+  #match-teams .team .score {
+    font-size: 48px;
+  }
+
+  #stats-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .carousel .carousel-item {
+    width: 320px;
+  }
+
+  .quick-access {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  #stats-grid {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+
+  .carousel .carousel-item {
+    width: 360px;
+  }
+
+  #ai-chat-screen {
+    height: 600px;
+  }
+}
+
+/* ----- Dark Theme Overrides (Light Theme Support) ----- */
+[data-theme="light"] .match-card {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .featured-match {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] #ai-entry-card {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* ----- Print Support (Enhanced) ----- */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt !important;
+  }
+
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+}
+
+/* ----- High Contrast Mode (Enhanced) ----- */
+@media (prefers-contrast: high) {
+  .match-card,
+  .featured-match,
+  .card {
+    border: 2px solid var(--border-color-light);
+  }
+
+  .btn-primary {
+    border: 2px solid var(--accent-primary);
+  }
+
+  input,
+  select,
+  textarea {
+    border: 2px solid var(--border-color-light);
+  }
+}
+
+/* ----- Reduced Motion (Enhanced) ----- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ----- Safe Area Fallback (Enhanced) ----- */
+@supports (padding: max(0px)) {
+  #global-header {
+    padding-top: max(var(--safe-top), var(--space-sm));
+    height: max(calc(var(--header-height) + var(--safe-top)), var(--header-height));
+  }
+
+  #bottom-tabs {
+    padding-bottom: max(var(--safe-bottom), var(--space-xs));
+    height: max(calc(var(--bottom-nav-height) + var(--safe-bottom)), var(--bottom-nav-height));
+  }
+
+  #side-drawer {
+    padding-top: max(var(--safe-top), var(--space-md));
+  }
+
+  #search-overlay {
+    padding-top: max(var(--safe-top), 0);
+    padding-bottom: max(var(--safe-bottom), 0);
+  }
+
+  body {
+    padding-top: max(var(--header-height) + var(--safe-top), var(--header-height));
+    padding-bottom: max(calc(var(--bottom-nav-height) + var(--safe-bottom)), var(--bottom-nav-height));
+    padding-left: max(var(--safe-left), 0);
+    padding-right: max(var(--safe-right), 0);
+  }
+}
+
+/* ============================================================
+   END OF STYLESHEET
+   ============================================================ */
