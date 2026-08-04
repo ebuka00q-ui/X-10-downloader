@@ -4609,12 +4609,11 @@ img:not([src]), img[src=""], img[src="undefined"] {
 /* --- STEP 2: DYNAMIC ERRORS & IMAGE FALLBACKS --- */
 
 /* 1. Hide error banners dynamically until specifically triggered */
-#no-internet, 
-#server-error, 
-.error-banner, 
-.offline-card {
+#home-offline,
+#home-server-error {
   display: none !important;
 }
+
 
 /* 2. Prevent broken images from squishing text layout */
 img {
