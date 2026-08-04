@@ -2134,3 +2134,370 @@
       if (App.config.debug) console.log('📺 Watch module destroyed');
     },
   };
+
+  // ============================================================
+  // PART 6 — ACCOUNT & AI ASSISTANT MODULE
+  // ============================================================
+
+  const Account = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      isAIOpen: false,
+      conversations: [],
+      currentConversation: null,
+      isThinking: false,
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.loadConversations();
+      this.renderConversations();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('👤 Account module initialized');
+    },
+
+    cacheDom: function() {
+      const section = document.getElementById('section-account');
+      if (!section) return;
+
+      this.dom = {
+        section: section,
+        profile: document.getElementById('profile-card'),
+        editProfile: document.getElementById('edit-profile-btn'),
+        aiEntry: document.getElementById('ai-entry-card'),
+        openAI: document.getElementById('open-ai-assistant-btn'),
+        aiPanel: document.getElementById('ai-assistant'),
+        chatList: document.getElementById('ai-chat-list'),
+        chatMessages: document.getElementById('ai-messages'),
+        chatInput: document.getElementById('ai-chat-input'),
+        chatForm: document.getElementById('ai-chat-form'),
+        sendBtn: document.getElementById('ai-send-btn'),
+        stopBtn: document.getElementById('ai-stop-btn'),
+        newChat: document.getElementById('ai-new-chat'),
+        deleteChat: document.getElementById('ai-delete-chat'),
+        renameChat: document.getElementById('ai-rename-chat'),
+        searchConv: document.getElementById('ai-search-conversations'),
+        memoryStatus: document.getElementById('ai-memory-status'),
+        thinkingIndicator: document.getElementById('ai-thinking-indicator'),
+        typingIndicator: document.getElementById('ai-typing-indicator'),
+        memoryToggle: document.getElementById('memory-toggle'),
+        memoryClear: document.getElementById('memory-clear'),
+        memoryManage: document.getElementById('memory-manage'),
+        aiSettings: document.getElementById('ai-settings'),
+        resetAI: document.getElementById('ai-reset-btn'),
+        fileInput: document.getElementById('ai-file-input'),
+        imageInput: document.getElementById('ai-image-input'),
+        docInput: document.getElementById('ai-doc-input'),
+        attachmentsPreview: document.getElementById('ai-attachments-preview'),
+        codeBlock: document.getElementById('ai-code-support'),
+        imagePreview: document.getElementById('ai-image-support'),
+        voiceSupport: document.getElementById('ai-voice-support'),
+        securityNotice: document.getElementById('ai-security-notice'),
+        emptyState: document.getElementById('ai-empty-state'),
+      };
+
+      // Quick settings
+      this.dom.quickSettings = document.querySelectorAll('.quick-setting-card');
+    },
+
+    bindEvents: function() {
+      // Page change
+      document.addEventListener('x10:pageChange', (e) => {
+        if (e.detail.page === 'account' && !this.state.isLoaded) {
+          this.init();
+        }
+      });
+
+      // Open AI from entry
+      if (this.dom.openAI) {
+        this.dom.openAI.addEventListener('click', () => this.openAI());
+      }
+
+      // Open AI from global event
+      document.addEventListener('x10:openAI', () => {
+        App.navigateTo('account');
+        setTimeout(() => this.openAI(), 300);
+      });
+
+      // Quick settings
+      if (this.dom.quickSettings) {
+        this.dom.quickSettings.forEach(setting => {
+          setting.addEventListener('click', () => {
+            const id = setting.id;
+            if (id) {
+              const target = document.getElementById(id);
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+              }
+            }
+          });
+        });
+      }
+
+      // Edit profile
+      if (this.dom.editProfile) {
+        this.dom.editProfile.addEventListener('click', () => {
+          this.showToast('✏️ Edit profile coming soon');
+        });
+      }
+
+      // AI Chat form
+      if (this.dom.chatForm) {
+        this.dom.chatForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.sendMessage();
+        });
+      }
+
+      // New chat
+      if (this.dom.newChat) {
+        this.dom.newChat.addEventListener('click', () => this.newConversation());
+      }
+
+      // Delete chat
+      if (this.dom.deleteChat) {
+        this.dom.deleteChat.addEventListener('click', () => this.deleteCurrentConversation());
+      }
+
+      // Rename chat
+      if (this.dom.renameChat) {
+        this.dom.renameChat.addEventListener('click', () => this.renameCurrentConversation());
+      }
+
+      // Search conversations
+      if (this.dom.searchConv) {
+        this.dom.searchConv.addEventListener('input', (e) => this.searchConversations(e.target.value));
+      }
+
+      // Stop generation
+      if (this.dom.stopBtn) {
+        this.dom.stopBtn.addEventListener('click', () => this.stopGeneration());
+      }
+
+      // Memory controls
+      if (this.dom.memoryToggle) {
+        this.dom.memoryToggle.addEventListener('click', () => this.toggleMemory());
+      }
+
+      if (this.dom.memoryClear) {
+        this.dom.memoryClear.addEventListener('click', () => this.clearMemory());
+      }
+
+      if (this.dom.memoryManage) {
+        this.dom.memoryManage.addEventListener('click', () => {
+          const target = document.getElementById('ai-memory-manager');
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+      }
+
+      // Reset AI
+      if (this.dom.resetAI) {
+        this.dom.resetAI.addEventListener('click', () => this.resetAI());
+      }
+
+      // File uploads
+      if (this.dom.fileInput) {
+        this.dom.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+      }
+
+      // Image uploads
+      if (this.dom.imageInput) {
+        this.dom.imageInput.addEventListener('change', (e) => this.handleImageUpload(e));
+      }
+
+      // Document uploads
+      if (this.dom.docInput) {
+        this.dom.docInput.addEventListener('change', (e) => this.handleDocUpload(e));
+      }
+
+      // Voice button
+      const voiceBtn = document.querySelector('#ai-voice-btn');
+      if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+          this.showToast('🎤 Voice input coming soon');
+        });
+      }
+
+      // Gallery button
+      const galleryBtn = document.querySelector('#ai-gallery-btn');
+      if (galleryBtn) {
+        galleryBtn.addEventListener('click', () => {
+          if (this.dom.imageInput) this.dom.imageInput.click();
+        });
+      }
+
+      // File upload button
+      const fileBtn = document.querySelector('#ai-file-upload-btn');
+      if (fileBtn) {
+        fileBtn.addEventListener('click', () => {
+          if (this.dom.fileInput) this.dom.fileInput.click();
+        });
+      }
+
+      // Document upload button
+      const docBtn = document.querySelector('#ai-doc-upload-btn');
+      if (docBtn) {
+        docBtn.addEventListener('click', () => {
+          if (this.dom.docInput) this.dom.docInput.click();
+        });
+      }
+
+      // AI Settings changes
+      const settings = ['ai-conversation-style', 'ai-response-length', 'ai-creativity', 'ai-memory-settings', 'ai-language'];
+      settings.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('change', () => {
+            this.saveSettings();
+          });
+        }
+      });
+    },
+
+    // ----- AI Panel -----
+    openAI: function() {
+      if (!this.dom.aiPanel) return;
+
+      this.state.isAIOpen = !this.state.isAIOpen;
+      this.dom.aiPanel.style.display = this.state.isAIOpen ? 'block' : 'none';
+
+      if (this.state.isAIOpen) {
+        this.dom.aiPanel.scrollIntoView({ behavior: 'smooth' });
+        if (this.state.conversations.length === 0) {
+          this.newConversation();
+        }
+      }
+
+      if (App.config.debug) console.log(`🧠 AI panel ${this.state.isAIOpen ? 'opened' : 'closed'}`);
+    },
+
+    // ----- Conversations -----
+    loadConversations: function() {
+      try {
+        const saved = localStorage.getItem('x10-ai-conversations');
+        this.state.conversations = saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        this.state.conversations = [];
+        if (App.config.debug) console.warn('⚠️ Failed to load AI conversations:', e);
+      }
+
+      if (this.state.conversations.length === 0) {
+        this.newConversation();
+      } else {
+        this.state.currentConversation = this.state.conversations[0];
+      }
+    },
+
+    saveConversations: function() {
+      try {
+        localStorage.setItem('x10-ai-conversations', JSON.stringify(this.state.conversations));
+      } catch (e) {
+        if (App.config.debug) console.warn('⚠️ Failed to save AI conversations:', e);
+      }
+    },
+
+    renderConversations: function() {
+      if (!this.dom.chatList) return;
+
+      if (this.state.conversations.length === 0) {
+        this.dom.chatList.innerHTML = '<div class="empty-state">No conversations</div>';
+        return;
+      }
+
+      this.dom.chatList.innerHTML = this.state.conversations.map(conv => `
+        <div class="chat-item ${conv.pinned ? 'pinned' : ''} ${conv.id === this.state.currentConversation?.id ? 'active' : ''}"
+             data-id="${conv.id}">
+          ${conv.pinned ? '📌 ' : ''}${conv.title || 'New Chat'}
+        </div>
+      `).join('');
+
+      // Bind click to load conversation
+      this.dom.chatList.querySelectorAll('.chat-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.dataset.id;
+          const conv = this.state.conversations.find(c => c.id === id);
+          if (conv) {
+            this.state.currentConversation = conv;
+            this.renderMessages();
+            this.renderConversations();
+          }
+        });
+      });
+    },
+
+    renderMessages: function() {
+      if (!this.dom.chatMessages) return;
+
+      const conv = this.state.currentConversation;
+      if (!conv || !conv.messages || conv.messages.length === 0) {
+        this.dom.chatMessages.innerHTML = `
+          <div class="empty-state">
+            <div class="illustration">💬</div>
+            <p>Start a conversation with X-10 AI</p>
+          </div>
+        `;
+        return;
+      }
+
+      this.dom.chatMessages.innerHTML = conv.messages.map(msg => `
+        <div class="message ${msg.role}">
+          <span class="msg-content">${msg.content}</span>
+          <span class="msg-time">${msg.time || 'Just now'}</span>
+          ${msg.role === 'assistant' ? `
+            <div class="msg-actions">
+              <button class="copy-msg" data-content="${msg.content}">📋</button>
+              <button class="delete-msg" data-id="${msg.id}">✕</button>
+              <button class="regenerate-msg">🔄</button>
+              <button class="like-msg">👍</button>
+              <button class="dislike-msg">👎</button>
+              <button class="share-msg">📤</button>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+
+      // Scroll to bottom
+      this.dom.chatMessages.scrollTop = this.dom.chatMessages.scrollHeight;
+
+      // Bind copy buttons
+      this.dom.chatMessages.querySelectorAll('.copy-msg').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const content = btn.dataset.content;
+          navigator.clipboard.writeText(content).then(() => {
+            this.showToast('📋 Copied to clipboard');
+          }).catch(() => {});
+        });
+      });
+
+      // Bind delete buttons
+      this.dom.chatMessages.querySelectorAll('.delete-msg').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          this.deleteMessage(id);
+        });
+      });
+
+      // Bind regenerate buttons
+      this.dom.chatMessages.querySelectorAll('.regenerate-msg').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.regenerateResponse();
+        });
+      });
+
+      // Bind like/dislike
+      this.dom.chatMessages.querySelectorAll('.like-msg').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.showToast('👍 Thanks for your feedback');
+        });
+      });
+
+      this.dom.chatMessages.querySelectorAll('.dislike-msg').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.showToast('👎 We\'ll improve');
+        });
+      });
+    },
