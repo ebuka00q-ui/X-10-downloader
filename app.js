@@ -5,51 +5,48 @@
  * Production Ready
  * ============================================================
  */
-
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Grab all navigation trigger links (Bottom Bar & Side Drawer)
+  // 1. Grab links
   const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
-  
-  // 2. Target top-level panels directly inside main-content container
-  const mainPages = document.querySelectorAll('#main-content > section, #main-content > div');
 
   function openPage(targetHref) {
     if (!targetHref) return;
 
-    // Clean up '#' symbol and match the 'section-' prefix
+    // Clean destination string
     const cleanId = targetHref.replace('#', '').replace('section-', '');
+    
+    // Attempt to find target section
     const selectedPage = document.getElementById('section-' + cleanId) || document.getElementById(cleanId);
 
+    console.log("Clicked tab for:", cleanId, "Found element:", selectedPage);
+
     if (selectedPage) {
-      // Hide all top-level main screens
-      mainPages.forEach(page => {
+      // Hide all main section elements across the app
+      document.querySelectorAll('main > section, #main-content > section, .app-page').forEach(page => {
         page.classList.remove('active');
         page.style.display = 'none';
       });
 
-      // Hide all internal sub-views so they don't overlay
+      // Hide sub-views
       document.querySelectorAll('.sub-page, .detail-view, #section-settings, #section-about').forEach(sub => sub.style.display = 'none');
 
-      // Show ONLY the chosen screen
+      // Show target
       selectedPage.classList.add('active');
       selectedPage.style.display = 'block';
 
-      // Update active highlight state on bottom tabs
-      document.querySelectorAll('#bottom-tabs .tab-item').forEach(btn => {
+      // Highlight active tab button
+      allNavLinks.forEach(btn => {
         const btnTarget = btn.getAttribute('href')?.replace('#', '').replace('section-', '');
-        if (btnTarget === cleanId) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
+        btn.classList.toggle('active', btnTarget === cleanId);
       });
 
-      // Reset scroll position to top when entering new page
       window.scrollTo(0, 0);
+    } else {
+      console.error("Could not find any HTML section matching ID:", 'section-' + cleanId, "or", cleanId);
     }
   }
 
-  // 3. Attach click event handlers to navigation links
+  // 2. Attach clicks
   allNavLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
