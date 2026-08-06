@@ -6,7 +6,6 @@
  * ============================================================
  */
 
-
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Grab all navigation trigger links (Bottom Bar & Side Drawer)
   const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
@@ -17,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function openPage(targetHref) {
     if (!targetHref) return;
 
-    // Clean up '#' symbol from href attribute
-    const cleanId = targetHref.replace('#', '');
-    const selectedPage = document.getElementById(cleanId);
+    // Clean up '#' symbol and match the 'section-' prefix
+    const cleanId = targetHref.replace('#', '').replace('section-', '');
+    const selectedPage = document.getElementById('section-' + cleanId) || document.getElementById(cleanId);
 
     if (selectedPage) {
       // Hide all top-level main screens
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update active highlight state on bottom tabs
       document.querySelectorAll('#bottom-tabs .tab-item').forEach(btn => {
-        const btnTarget = btn.getAttribute('href')?.replace('#', '');
+        const btnTarget = btn.getAttribute('href')?.replace('#', '').replace('section-', '');
         if (btnTarget === cleanId) {
           btn.classList.add('active');
         } else {
