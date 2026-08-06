@@ -6,6 +6,32 @@
  * ============================================================
  */
 
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Grab all navigation links (Bottom Bar & Side Drawer)
+  const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
+
+  // 2. Attach click event handlers safely
+  allNavLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const destination = link.getAttribute('href');
+      if (!destination) return;
+      
+      const cleanId = destination.replace('#', '');
+      
+      // Route through main navigation system
+      if (typeof app !== 'undefined' && app.navigateTo) {
+        app.navigateTo(cleanId);
+      }
+    });
+  });
+
+  // 3. Set initial active tab on page load
+  const currentHash = window.location.hash.replace('#', '') || 'home';
+  if (typeof app !== 'undefined' && app.navigateTo) {
+    app.navigateTo(currentHash);
+  }
+});
 
 
   // 4. Default active screen on app launch
