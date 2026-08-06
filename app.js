@@ -5,62 +5,6 @@
  * Production Ready
  * ============================================================
  */
-document.addEventListener('DOMContentLoaded', () => {
-  // 1. Grab links
-  const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
-
-  function openPage(targetHref) {
-    if (!targetHref) return;
-
-    // Clean destination string
-    const cleanId = targetHref.replace('#', '').replace('section-', '');
-    
-    // Attempt to find target section
-    const selectedPage = document.getElementById('section-' + cleanId) || document.getElementById(cleanId);
-
-    console.log("Clicked tab for:", cleanId, "Found element:", selectedPage);
-
-    if (selectedPage) {
-      // Hide all main section elements across the app
-      document.querySelectorAll('main > section, #main-content > section, .app-page').forEach(page => {
-        page.classList.remove('active');
-        page.style.display = 'none';
-      });
-
-      // Hide sub-views
-      document.querySelectorAll('.sub-page, .detail-view, #section-settings, #section-about').forEach(sub => sub.style.display = 'none');
-
-      // Show target
-      selectedPage.classList.add('active');
-      selectedPage.style.display = 'block';
-
-      // Highlight active tab button
-      allNavLinks.forEach(btn => {
-        const btnTarget = btn.getAttribute('href')?.replace('#', '').replace('section-', '');
-        btn.classList.toggle('active', btnTarget === cleanId);
-      });
-
-      window.scrollTo(0, 0);
-    } else {
-      console.error("Could not find any HTML section matching ID:", 'section-' + cleanId, "or", cleanId);
-    }
-  }
-
-  // 2. Attach clicks
-  allNavLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const destination = link.getAttribute('href');
-      openPage(destination);
-    });
-  });
-});
-
-
-  // 4. Default active screen on app launch
-  openPage('#section-home');
-});
-
 
 (function() {
   'use strict';
