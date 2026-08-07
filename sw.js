@@ -1,11 +1,12 @@
 const CACHE_NAME = 'x10-downloader-v1';
-const ASSETS_TO_CACHE = [
+
+const CACHE_ASSETS = [
   '/',
   '/index.html',
-  '/app.js',
   '/manifest.json',
-  '/icon.jpg'
+  '/file_0000000074e081f681d168ece0276989~2.jpg'
 ];
+
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
