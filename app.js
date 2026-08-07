@@ -6,6 +6,55 @@
  * ============================================================
  */
 
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Grab all navigation trigger links (Bottom Bar & Side Drawer)
+  const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
+  
+  // 2. Target top-level panels directly inside main-content container
+  const mainPages = document.querySelectorAll('#main-content > section, #main-content > div');
+
+  function openPage(targetHref) {
+    if (!targetHref) return;
+
+    // Clean up '#' symbol from href attribute
+    const cleanId = targetHref.replace('#', '');
+    const selectedPage = document.getElementById(cleanId);
+
+    if (selectedPage) {
+      // Hide all top-level main screens
+      mainPages.forEach(page => {
+        page.classList.remove('active');
+        page.style.display = 'none';
+      });
+
+      // Show ONLY the chosen screen
+      selectedPage.classList.add('active');
+      selectedPage.style.display = 'block';
+
+      // Update active highlight state on bottom tabs
+      document.querySelectorAll('#bottom-tabs .tab-item').forEach(btn => {
+        const btnTarget = btn.getAttribute('href')?.replace('#', '');
+        if (btnTarget === cleanId) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Reset scroll position to top when entering new page
+      window.scrollTo(0, 0);
+    }
+  }
+
+  // 3. Attach click event handlers to navigation links
+  allNavLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const destination = link.getAttribute('href');
+      openPage(destination);
+    });
+  });
+
 // 4. Default active screen on app launch
   openPage('#section-home');
 });
