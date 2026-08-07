@@ -6,6 +6,10 @@
  * ============================================================
  */
 
+// 4. Default active screen on app launch
+  openPage('#section-home');
+});
+
 (function() {
   'use strict';
 
