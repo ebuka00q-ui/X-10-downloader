@@ -3695,6 +3695,20 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
+// Register Service Worker for PWA Installation
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) {
+        console.log('X10 Service Worker registered successfully!', reg);
+      })
+      .catch(function(err) {
+        console.error('X10 Service Worker registration failed:', err);
+      });
+  });
+    }
+  
+  
   // ============================================================
   // END OF JAVASCRIPT
   // ============================================================
