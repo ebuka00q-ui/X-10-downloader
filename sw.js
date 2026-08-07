@@ -1,11 +1,11 @@
-const CACHE_NAME = 'x10-downloader-v2';
-
+const CACHE_NAME = 'x10-v4';
 const CACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/file_0000000074e081f681d168ece0276989~2.jpg'
+  '/X10_icon_192.png'
 ];
+
 
 // Install Event
 self.addEventListener('install', (event) => {
