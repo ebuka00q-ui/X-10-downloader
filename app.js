@@ -6,6 +6,12 @@
  * ============================================================
  */
 
+// Place it right at line 1 or near the top variables
+const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3C/svg%3E";
+
+// Your existing app initialization code continues below...
+
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Grab all navigation trigger links (Bottom Bar & Side Drawer)
   const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
