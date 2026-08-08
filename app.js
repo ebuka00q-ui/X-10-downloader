@@ -227,23 +227,28 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
     },
 
     renderPage: function(page) {
-      // Hide all pages
-      Object.values(this.dom.pages).forEach(el => {
-        if (el) el.style.display = 'none';
-      });
+  // Hide all main pages & remove active class
+  Object.values(this.dom.pages).forEach(el => {
+    if (el) {
+      el.classList.remove('active');
+      el.style.display = 'none';
+    }
+  });
 
-    // Hide all sub-views and filter containers
-    document.querySelectorAll('.sub-page, .detail-view, #section-settings, #section-about, .sports-category, .favorite-category').forEach(sub => {
-      if (sub) sub.style.display = 'none';
-    });
-      
-      
-      // Show target page
-      const target = this.dom.pages[page];
-      if (target) {
-        target.style.display = 'block';
-        target.style.animation = 'fadeSlideUp 0.3s ease';
-      }
+  // Hide sub-views
+  document.querySelectorAll('.sub-page, .detail-view, #section-settings, #section-about, .sports-category, .favorite-category').forEach(sub => {
+    if (sub) sub.style.display = 'none';
+  });
+
+  // Show target page & add active class
+  const target = this.dom.pages[page];
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'block';
+    target.style.animation = 'fadeSlideUp 0.3s ease';
+  }
+},
+    
 
       // Show/hide AI button based on page
       this.updateAIButtonVisibility(page);
