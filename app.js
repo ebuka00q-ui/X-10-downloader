@@ -226,7 +226,7 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
       if (this.config.debug) console.log(`📄 Navigated to: ${page}`);
     },
 
-    renderPage: function(page) {
+renderPage: function(page) {
   // Hide all main pages & remove active class
   Object.values(this.dom.pages).forEach(el => {
     if (el) {
@@ -248,22 +248,16 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
     target.style.animation = 'fadeSlideUp 0.3s ease';
   }
 },
-    
-    
 
-      // Show/hide AI button based on page
-      this.updateAIButtonVisibility(page);
-    },
-
-    updateTabs: function(page) {
+updateTabs: function(page) {
   if (!this.dom.tabs) return;
   this.dom.tabs.forEach(tab => {
     const target = tab.dataset.tab || tab.getAttribute('href')?.replace('#section-', '')?.replace('#', '');
     tab.classList.toggle('active', target === page);
   });
 },
-
-
+  
+    
     updateAIButtonVisibility: function(page) {
       const visibleOn = ['home', 'sports', 'favorites'];
       const shouldShow = visibleOn.includes(page);
