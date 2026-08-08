@@ -18,54 +18,6 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
 
 // Your existing app initialization code continues below...
 
-document.addEventListener('DOMContentLoaded', () => {
-  const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
-  const mainPages = document.querySelectorAll('#main-content > section, #main-content > div');
-
-  function openPage(targetHref) {
-    if (!targetHref) return;
-    const cleanId = targetHref.replace('#', '');
-    const selectedPage = document.getElementById(cleanId);
-
-    if (selectedPage) {
-      // Hide all panels
-      mainPages.forEach(page => {
-        page.classList.remove('active');
-        page.style.display = 'none';
-      });
-
-      // Show target panel
-      selectedPage.classList.add('active');
-      selectedPage.style.display = 'block';
-
-      // Update active tab highlight
-      document.querySelectorAll('#bottom-tabs .tab-item').forEach(btn => {
-        const btnTarget = btn.getAttribute('href')?.replace('#', '');
-        if (btnTarget === cleanId) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
-
-      window.scrollTo(0, 0);
-    }
-  }
-
-  allNavLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const destination = link.getAttribute('href');
-      openPage(destination);
-    });
-  });
-
-  // Launch default view
-  openPage('#section-home');
-});
-
-
-
 (function() {
   'use strict';
 
