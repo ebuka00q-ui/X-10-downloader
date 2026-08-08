@@ -256,10 +256,13 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
     },
 
     updateTabs: function(page) {
-      this.dom.tabs.forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.tab === page);
-      });
-    },
+  if (!this.dom.tabs) return;
+  this.dom.tabs.forEach(tab => {
+    const target = tab.dataset.tab || tab.getAttribute('href')?.replace('#section-', '')?.replace('#', '');
+    tab.classList.toggle('active', target === page);
+  });
+},
+
 
     updateAIButtonVisibility: function(page) {
       const visibleOn = ['home', 'sports', 'favorites'];
