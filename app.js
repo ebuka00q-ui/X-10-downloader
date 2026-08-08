@@ -249,6 +249,7 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
   }
 },
     
+    
 
       // Show/hide AI button based on page
       this.updateAIButtonVisibility(page);
