@@ -18,33 +18,27 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
 
 // Your existing app initialization code continues below...
 
-
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Grab all navigation trigger links (Bottom Bar & Side Drawer)
   const allNavLinks = document.querySelectorAll('#bottom-tabs .tab-item, #side-drawer .drawer-link');
-  
-  // 2. Target top-level panels directly inside main-content container
   const mainPages = document.querySelectorAll('#main-content > section, #main-content > div');
 
   function openPage(targetHref) {
     if (!targetHref) return;
-
-    // Clean up '#' symbol from href attribute
     const cleanId = targetHref.replace('#', '');
     const selectedPage = document.getElementById(cleanId);
 
     if (selectedPage) {
-      // Hide all top-level main screens
+      // Hide all panels
       mainPages.forEach(page => {
         page.classList.remove('active');
         page.style.display = 'none';
       });
 
-      // Show ONLY the chosen screen
+      // Show target panel
       selectedPage.classList.add('active');
       selectedPage.style.display = 'block';
 
-      // Update active highlight state on bottom tabs
+      // Update active tab highlight
       document.querySelectorAll('#bottom-tabs .tab-item').forEach(btn => {
         const btnTarget = btn.getAttribute('href')?.replace('#', '');
         if (btnTarget === cleanId) {
@@ -54,12 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Reset scroll position to top when entering new page
       window.scrollTo(0, 0);
     }
   }
 
-  // 3. Attach click event handlers to navigation links
   allNavLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -68,9 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-// 4. Default active screen on app launch
+  // Launch default view
   openPage('#section-home');
 });
+
+
 
 (function() {
   'use strict';
