@@ -108,14 +108,19 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
 
     // ----- Bind Events -----
     bindEvents: function() {
-      // Bottom navigation
-      this.dom.tabs.forEach(tab => {
-        tab.addEventListener('click', (e) => {
-          e.preventDefault();
-          const page = tab.dataset.tab;
-          if (page) this.navigateTo(page);
+            // Bottom navigation tabs
+      if (this.dom.tabs) {
+        this.dom.tabs.forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = tab.dataset.tab || tab.getAttribute('href')?.replace('#section-', '')?.replace('#', '');
+            if (page && typeof this.navigateTo === 'function') {
+              this.navigateTo(page);
+            }
+          });
         });
-      });
+      }
+      
 
       // Menu toggle
       if (this.dom.menuToggle) {
