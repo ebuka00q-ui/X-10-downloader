@@ -6,6 +6,13 @@
  * ============================================================
  */
 
+// Initialize Supabase Client
+const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
 // Place it right at line 1 or near the top variables
 const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3C/svg%3E";
 
