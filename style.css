@@ -4627,6 +4627,47 @@ img:not([src]), img[src=""], img[src="undefined"] {
   visibility: hidden;
 }
 
+/* ============================================================
+   GLOBAL LAYOUT & HEADER LOCK FIX
+   ============================================================ */
+
+/* Lock the outer screen to prevent double scrolling */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Make the top header stay fixed on every screen */
+#global-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: var(--bg-primary, #111827); /* Keeps background solid so text doesn't bleed */
+}
+
+/* Allow middle content to scroll smoothly on all pages */
+#main-content {
+  height: calc(100vh - 120px); /* Leaves exact space for top header & bottom nav */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide static server errors & offline banners across ALL pages until triggered */
+.server-error, 
+.offline-indicator,
+#home-server-error,
+#sports-server-error {
+  display: none !important;
+}
+
+/* Class used by JavaScript to reveal real errors dynamically */
+.server-error.active,
+.offline-indicator.active {
+  display: block !important;
+}
+
 
 /* ============================================================
    END OF STYLESHEET
