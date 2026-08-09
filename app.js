@@ -212,7 +212,7 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
       // Update hash
       if (window.location.hash !== `#${page}`) {
         window.location.hash = `#${page}`;
-        
+      }        
 
       this.renderPage(page);
       this.updateTabs(page);
