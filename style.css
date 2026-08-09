@@ -4628,44 +4628,52 @@ img:not([src]), img[src=""], img[src="undefined"] {
 }
 
 /* ============================================================
-   GLOBAL LAYOUT & HEADER LOCK FIX
+   GLOBAL ERROR BANNER & DISPLAY CONTROL (MASTER FIX)
    ============================================================ */
 
-/* Lock the outer screen to prevent double scrolling */
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Make the top header stay fixed on every screen */
-#global-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background-color: var(--bg-primary, #111827); /* Keeps background solid so text doesn't bleed */
-}
-
-/* Allow middle content to scroll smoothly on all pages */
-#main-content {
-  height: calc(100vh - 120px); /* Leaves exact space for top header & bottom nav */
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Hide static server errors & offline banners across ALL pages until triggered */
-.server-error, 
+/* 1. Hide all inline error banners & offline indicators globally */
+.server-error,
 .offline-indicator,
+.search-state,
+#search-error,
 #home-server-error,
-#sports-server-error {
+#sports-server-error,
+#favorites-server-error,
+#watch-server-error,
+#account-server-error,
+#history-server-error,
+#notifications-server-error,
+#match-server-error {
   display: none !important;
 }
 
-/* Class used by JavaScript to reveal real errors dynamically */
+/* 2. Hide dedicated error page sections until triggered */
+.hidden-page,
+#error-404,
+#error-403,
+#error-500,
+#maintenance-mode,
+#unsupported-browser {
+  display: none !important;
+}
+
+/* 3. Reveal error elements ONLY when JavaScript activates them */
 .server-error.active,
-.offline-indicator.active {
+.offline-indicator.active,
+.search-state.active,
+.hidden-page.active {
   display: block !important;
+}
+
+/* ============================================================
+   HEADER & SCROLL FIX
+   ============================================================ */
+
+#global-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  background-color: #0b0f19 !important;
 }
 
 
