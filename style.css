@@ -4627,6 +4627,23 @@ img:not([src]), img[src=""], img[src="undefined"] {
   visibility: hidden;
 }
 
+/* Fix bottom navigation tap blocking */
+nav, 
+.bottom-nav, 
+.navigation-bar, 
+[data-role="navigation"] {
+    position: relative !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
+
+.nav-item, 
+.tab-btn, 
+nav button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
 
 /* ============================================================
    END OF STYLESHEET
