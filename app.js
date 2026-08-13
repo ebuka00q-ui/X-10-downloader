@@ -204,7 +204,7 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
         return;
       }
 
-      if (this.state.currentPage === page) return;
+     // if (this.state.currentPage === page) return;
 
       this.state.previousPage = this.state.currentPage;
       this.state.currentPage = page;
