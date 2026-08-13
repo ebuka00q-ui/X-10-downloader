@@ -4666,17 +4666,5 @@ img:not([src]), img[src=""], img[src="undefined"] {
 }
 
 /* ============================================================
-   HEADER & SCROLL FIX
-   ============================================================ */
-
-#global-header {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 1000 !important;
-  background-color: #0b0f19 !important;
-}
-
-
-/* ============================================================
    END OF STYLESHEET
    ============================================================ */
