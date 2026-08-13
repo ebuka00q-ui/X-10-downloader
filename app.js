@@ -198,7 +198,9 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
 
     // ----- Navigation -----
     navigateTo: function(page) {
-      const validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
+  page = String(page).replace('#', '').replace('section-', '');
+  const validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
+      
       if (!validPages.includes(page)) {
         if (this.config.debug) console.warn(`⚠️ Invalid page: ${page}`);
         return;
