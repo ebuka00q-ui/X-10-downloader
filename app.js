@@ -201,34 +201,31 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
   page = String(page).replace('#', '').replace('section-', '');
   const validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
       
-      if (!validPages.includes(page)) {
-        if (this.config.debug) console.warn(`⚠️ Invalid page: ${page}`);
-        return;
-      }
+  if (!validPages.includes(page)) {
+    if (this.config.debug) console.warn(`⚠️ Invalid page: ${page}`);
+    return;
+  }
 
-     // if (this.state.currentPage === page) return;
+  this.state.previousPage = this.state.currentPage;
+  this.state.currentPage = page;
 
-      this.state.previousPage = this.state.currentPage;
-      this.state.currentPage = page;
+  // Update hash
+  if (window.location.hash !== `#${page}`) {
+    window.location.hash = `#${page}`;
+  }        
 
-      // Update hash
-      if (window.location.hash !== `#${page}`) {
-        window.location.hash = `#${page}`;
-      }        
+  this.renderPage(page);
+  this.updateTabs(page);
+  this.updateAIButtonVisibility(page);
+  this.scrollToTop();
 
-      this.renderPage(page);
-      this.updateTabs(page);
-      this.updateAIButtonVisibility(page);
-      this.scrollToTop();
+  document.dispatchEvent(new CustomEvent('x10:pageChange', {
+    detail: { page, previous: this.state.previousPage }
+  }));
 
-      document.dispatchEvent(new CustomEvent('x10:pageChange', {
-        detail: { page, previous: this.state.previousPage }
-      }));
-
-      if (this.config.debug) console.log(`📄 Navigated to: ${page}`);
-    },
-
-renderPage: function(page) {
+  if (this.config.debug) console.log(`📄 Navigated to: ${page}`);
+},
+    
   // Hide all main pages & remove active class
   Object.values(this.dom.pages).forEach(el => {
     if (el) {
