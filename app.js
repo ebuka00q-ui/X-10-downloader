@@ -113,7 +113,8 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
         this.dom.tabs.forEach(tab => {
           tab.addEventListener('click', (e) => {
             e.preventDefault();
-            const page = tab.dataset.tab || tab.getAttribute('href')?.replace('#section-', '')?.replace('#', '');
+            const page = tab.dataset.tab || tab.dataset.page || tab.getAttribute('href')?.replace('#section-', '')?.replace('#', '');
+            
             if (page && typeof this.navigateTo === 'function') {
               this.navigateTo(page);
             }
