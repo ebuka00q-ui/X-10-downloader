@@ -3222,3 +3222,422 @@
       if (App.config.debug) console.log('🔍 Search module destroyed');
     },
   };
+// ============================================================
+  // PART 8 — PWA, OFFLINE MODE, SMART REFRESH, MODULE INTEGRATION
+  // ============================================================
+
+  const PWA = {
+    state: {
+      isOnline: navigator.onLine,
+      isVisible: document.visibilityState === 'visible',
+      updateAvailable: false,
+      isInstalled: false,
+    },
+
+    init: function() {
+      this.bindEvents();
+      this.checkOnlineStatus();
+      this.setupVisibility();
+      this.setupInstallPrompt();
+
+      if (App.config.debug) console.log('📲 PWA module initialized');
+    },
+
+    bindEvents: function() {
+      // Online/Offline
+      window.addEventListener('online', () => {
+        this.state.isOnline = true;
+        this.updateStatus();
+        document.dispatchEvent(new CustomEvent('x10:online'));
+        this.showToast('🌐 Back online');
+      });
+
+      window.addEventListener('offline', () => {
+        this.state.isOnline = false;
+        this.updateStatus();
+        document.dispatchEvent(new CustomEvent('x10:offline'));
+        this.showToast('📡 You are offline');
+      });
+
+      // Visibility
+      document.addEventListener('visibilitychange', () => {
+        this.state.isVisible = document.visibilityState === 'visible';
+        document.dispatchEvent(new CustomEvent('x10:visibilityChange', {
+          detail: { isVisible: this.state.isVisible }
+        }));
+      });
+
+      // App installed
+      window.addEventListener('appinstalled', () => {
+        this.state.isInstalled = true;
+        document.dispatchEvent(new CustomEvent('x10:appInstalled'));
+        if (App.config.debug) console.log('✅ App installed');
+      });
+    },
+
+    checkOnlineStatus: function() {
+      // Check if we're in standalone mode
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        this.state.isInstalled = true;
+      }
+    },
+
+    setupVisibility: function() {
+      // Handle page visibility for refresh management
+      let refreshTimers = {};
+
+      document.addEventListener('x10:visibilityChange', (e) => {
+        if (e.detail.isVisible) {
+          // Resume all refreshes
+          document.dispatchEvent(new CustomEvent('x10:resumeRefreshes'));
+        } else {
+          // Pause all refreshes
+          document.dispatchEvent(new CustomEvent('x10:pauseRefreshes'));
+        }
+      });
+    },
+
+    setupInstallPrompt: function() {
+      let deferredPrompt;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.dispatchEvent(new CustomEvent('x10:installAvailable'));
+
+        // Show install button
+        const installBtn = document.createElement('button');
+        installBtn.id = 'install-app-btn';
+        installBtn.textContent = '📲 Install X-10';
+        installBtn.className = 'btn btn-primary';
+        installBtn.style.cssText = `
+          position: fixed;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 1000;
+          padding: 12px 24px;
+          border-radius: 9999px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          animation: fadeSlideUp 0.3s ease;
+        `;
+
+        installBtn.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const result = await deferredPrompt.userChoice;
+            if (result.outcome === 'accepted') {
+              this.showToast('✅ App installed successfully!');
+              installBtn.remove();
+            }
+            deferredPrompt = null;
+          }
+        });
+
+        document.body.appendChild(installBtn);
+      });
+    },
+
+    updateStatus: function() {
+      // Update any status indicators
+      const offlineIndicators = document.querySelectorAll('.offline-indicator');
+      offlineIndicators.forEach(el => {
+        el.style.display = this.state.isOnline ? 'none' : 'flex';
+      });
+
+      // Show offline screen if applicable
+      const offlinePages = document.querySelectorAll('.offline-page');
+      offlinePages.forEach(el => {
+        el.style.display = this.state.isOnline ? 'none' : 'flex';
+      });
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'info' }
+      }));
+    },
+
+    // Public API
+    getStatus: function() {
+      return { ...this.state };
+    },
+
+    isOnline: function() {
+      return this.state.isOnline;
+    },
+
+    isVisible: function() {
+      return this.state.isVisible;
+    },
+  };
+
+  // ============================================================
+  // SMART REFRESH MANAGER
+  // ============================================================
+
+  const RefreshManager = {
+    timers: {},
+    active: true,
+    paused: false,
+    intervals: {
+      live: 20000,      // 20 seconds
+      upcoming: 300000, // 5 minutes
+      tables: 1800000,  // 30 minutes
+      images: 86400000, // 24 hours
+    },
+
+    init: function() {
+      this.bindEvents();
+      this.startAll();
+
+      if (App.config.debug) console.log('🔄 Refresh Manager initialized');
+    },
+
+    bindEvents: function() {
+      document.addEventListener('x10:pageChange', (e) => {
+        // Only refresh active page
+        this.active = true;
+      });
+
+      document.addEventListener('x10:pauseRefreshes', () => {
+        this.pauseAll();
+      });
+
+      document.addEventListener('x10:resumeRefreshes', () => {
+        this.resumeAll();
+      });
+    },
+
+    startAll: function() {
+      this.startTimer('live', this.intervals.live);
+      this.startTimer('upcoming', this.intervals.upcoming);
+      this.startTimer('tables', this.intervals.tables);
+      this.startTimer('images', this.intervals.images);
+    },
+
+    startTimer: function(name, interval) {
+      if (this.timers[name]) {
+        clearInterval(this.timers[name]);
+      }
+
+      this.timers[name] = setInterval(() => {
+        if (!this.paused && this.active && App.state.isOnline) {
+          this.refresh(name);
+        }
+      }, interval);
+
+      if (App.config.debug) console.log(`⏱️ Refresh timer started: ${name}`);
+    },
+
+    refresh: function(type) {
+      if (App.config.debug) console.log(`🔄 Refreshing: ${type}`);
+
+      switch (type) {
+        case 'live':
+          // Refresh live data
+          if (Home.state.isActive) {
+            Home.refreshData();
+          }
+          if (Sports.state.isActive) {
+            Sports.refresh();
+          }
+          break;
+        case 'upcoming':
+          // Refresh upcoming matches
+          if (Home.state.isActive) {
+            Home.renderUpcomingMatches();
+          }
+          break;
+        case 'tables':
+          // Refresh league tables
+          if (Sports.state.isActive) {
+            Sports.renderStandings();
+          }
+          break;
+        case 'images':
+          // Refresh cached images (only if needed)
+          break;
+        default:
+          break;
+      }
+    },
+
+    pauseAll: function() {
+      this.paused = true;
+      if (App.config.debug) console.log('⏸️ All refreshes paused');
+    },
+
+    resumeAll: function() {
+      this.paused = false;
+      if (App.config.debug) console.log('▶️ All refreshes resumed');
+    },
+
+    stopAll: function() {
+      Object.keys(this.timers).forEach(key => {
+        clearInterval(this.timers[key]);
+        delete this.timers[key];
+      });
+      if (App.config.debug) console.log('⏹️ All refreshes stopped');
+    },
+
+    // Public API
+    getIntervals: function() {
+      return { ...this.intervals };
+    },
+
+    setInterval: function(name, ms) {
+      this.intervals[name] = ms;
+      if (this.timers[name]) {
+        clearInterval(this.timers[name]);
+        this.startTimer(name, ms);
+      }
+    },
+  };
+
+  // ============================================================
+  // TOAST SYSTEM
+  // ============================================================
+
+  const ToastSystem = {
+    container: null,
+    timers: [],
+
+    init: function() {
+      this.createContainer();
+      this.bindEvents();
+
+      if (App.config.debug) console.log('🍞 Toast system initialized');
+    },
+
+    createContainer: function() {
+      this.container = document.createElement('div');
+      this.container.className = 'toast-container';
+      this.container.id = 'toast-container';
+      document.body.appendChild(this.container);
+    },
+
+    bindEvents: function() {
+      document.addEventListener('x10:toast', (e) => {
+        if (e.detail) {
+          this.show(e.detail.message, e.detail.type || 'info');
+        }
+      });
+    },
+
+    show: function(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+
+      this.container.appendChild(toast);
+
+      // Auto dismiss after 3 seconds
+      const timer = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(40px)';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }, 3000);
+
+      this.timers.push(timer);
+
+      // Clean up timer on click
+      toast.addEventListener('click', () => {
+        clearTimeout(timer);
+        toast.remove();
+      });
+    },
+
+    clear: function() {
+      this.timers.forEach(t => clearTimeout(t));
+      this.timers = [];
+      if (this.container) {
+        this.container.innerHTML = '';
+      }
+    },
+  };
+
+  // ============================================================
+  // APPLICATION INITIALIZATION
+  // ============================================================
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize core
+    App.init();
+
+    // Initialize modules
+    Home.init();
+    Sports.init();
+    Favorites.init();
+    Watch.init();
+    Account.init();
+    SearchModule.init();
+    PWA.init();
+    RefreshManager.init();
+    ToastSystem.init();
+
+    // Handle initial hash
+    App.handleHash();
+
+    // Handle online/offline status on load
+    if (!navigator.onLine) {
+      document.dispatchEvent(new CustomEvent('x10:offline'));
+    }
+
+    if (App.config.debug) console.log('🚀 X-10 Downloader fully initialized');
+  });
+
+  // ============================================================
+  // EXPOSE PUBLIC API
+  // ============================================================
+
+  window.X10 = {
+    App: App,
+    Home: Home,
+    Sports: Sports,
+    Favorites: Favorites,
+    Watch: Watch,
+    Account: Account,
+    Search: SearchModule,
+    PWA: PWA,
+    RefreshManager: RefreshManager,
+    Toast: ToastSystem,
+
+    // Convenience methods
+    navigateTo: function(page) {
+      App.navigateTo(page);
+    },
+
+    getState: function() {
+      return App.getState();
+    },
+
+    getFavorites: function() {
+      return Favorites.getItems();
+    },
+
+    isFavorite: function(id) {
+      return Favorites.isFavorite(id);
+    },
+
+    playMedia: function(url) {
+      Watch.playMedia(url);
+    },
+
+    showToast: function(message, type) {
+      ToastSystem.show(message, type);
+    },
+
+    openAI: function() {
+      document.dispatchEvent(new CustomEvent('x10:openAI'));
+    },
+  };
+
+  // ============================================================
+  // END OF JAVASCRIPT
+  // ============================================================
+})();
