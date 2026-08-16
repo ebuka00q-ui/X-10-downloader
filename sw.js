@@ -1,4 +1,4 @@
-const CACHE_NAME = 'x10-v4';
+const CACHE_NAME = 'x10-v5';
 const CACHE_ASSETS = [
   '/',
   '/index.html',
