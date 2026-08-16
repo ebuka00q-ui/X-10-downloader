@@ -1941,3 +1941,301 @@
           </div>
         </div>
       `).join('');
+// Bind play buttons
+      this.dom.historyList.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          if (this.dom.linkInput) {
+            this.dom.linkInput.value = url;
+            this.loadMedia();
+          }
+        });
+      });
+
+      // Bind delete buttons
+      this.dom.historyList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          this.deleteHistoryItem(url);
+        });
+      });
+    },
+
+    deleteHistoryItem: function(url) {
+      this.state.history = this.state.history.filter(h => h.url !== url);
+      this.saveHistory();
+      this.renderHistory();
+      this.renderContinueWatching();
+    },
+
+    clearAllHistory: function() {
+      if (confirm('Are you sure you want to clear all watch history?')) {
+        this.state.history = [];
+        this.saveHistory();
+        this.renderHistory();
+        this.renderContinueWatching();
+        this.showToast('🗑️ All watch history cleared');
+      }
+    },
+
+    searchHistory: function(query) {
+      if (!this.dom.historyList) return;
+
+      const filtered = this.state.history.filter(item =>
+        item.title.toLowerCase().includes(query.toLowerCase()) ||
+        item.url.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        this.dom.historyList.innerHTML = '<div class="empty-state">No matches found</div>';
+        return;
+      }
+
+      this.dom.historyList.innerHTML = filtered.slice(0, 20).map(item => `
+        <div class="history-item" data-url="${item.url}">
+          <div class="thumbnail" style="background: var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:24px;">
+            ${item.type === 'video' ? '🎬' : '🖼️'}
+          </div>
+          <div class="info">
+            <div class="title">${item.title}</div>
+            <div class="meta">${new Date(item.date).toLocaleDateString()}</div>
+          </div>
+          <div class="actions">
+            <button class="play-btn" data-url="${item.url}">▶</button>
+            <button class="delete-btn" data-url="${item.url}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.historyList.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          if (this.dom.linkInput) {
+            this.dom.linkInput.value = url;
+            this.loadMedia();
+          }
+        });
+      });
+
+      this.dom.historyList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          this.deleteHistoryItem(url);
+        });
+      });
+    },
+
+    renderContinueWatching: function() {
+      if (!this.dom.continueList) return;
+
+      const recent = this.state.history.slice(0, 3);
+      if (recent.length === 0) {
+        this.dom.continueList.innerHTML = '<div class="empty-state">No media to continue</div>';
+        return;
+      }
+
+      this.dom.continueList.innerHTML = recent.map(item => `
+        <div class="continue-card" data-url="${item.url}">
+          <div class="thumbnail" style="background: var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:40px; min-height:120px;">
+            ${item.type === 'video' ? '🎬' : '🖼️'}
+          </div>
+          <div class="title">${item.title}</div>
+          <div class="progress">
+            <div class="progress-fill" style="width:${item.playbackPosition ? '30%' : '0%'}"></div>
+          </div>
+          <div class="actions">
+            <button class="continue-btn" data-url="${item.url}">▶ Continue</button>
+            <button class="delete-btn" data-url="${item.url}">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      this.dom.continueList.querySelectorAll('.continue-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const url = btn.dataset.url;
+          if (this.dom.linkInput) {
+            this.dom.linkInput.value = url;
+            this.loadMedia();
+          }
+        });
+      });
+
+      this.dom.continueList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = btn.dataset.url;
+          this.deleteHistoryItem(url);
+        });
+      });
+    },
+
+    // ----- Media Info -----
+    updateMediaInfo: function(title, type, source) {
+      if (this.dom.mediaTitle) this.dom.mediaTitle.textContent = title || 'Untitled Media';
+      if (this.dom.mediaDescription) this.dom.mediaDescription.textContent = 'Media loaded successfully';
+      if (this.dom.mediaSource) this.dom.mediaSource.textContent = `Source: ${source || 'Unknown'}`;
+      if (this.dom.mediaStatus) this.dom.mediaStatus.textContent = '✅ Loaded';
+      if (this.dom.mediaType) this.dom.mediaType.textContent = `Type: ${type || 'Unknown'}`;
+    },
+
+    // ----- Error Handling -----
+    showError: function(type) {
+      this.clearErrors();
+
+      const errorMap = {
+        'invalid': 'invalid',
+        'unsupported': 'unsupported',
+        'broken': 'broken',
+        'removed': 'removed',
+        'blocked': 'blocked',
+        'network': 'network',
+        'playback': 'playback',
+      };
+
+      const key = errorMap[type] || 'unsupported';
+      if (this.dom.errorStates && this.dom.errorStates[key]) {
+        this.dom.errorStates[key].style.display = 'block';
+      }
+
+      if (App.config.debug) console.warn(`⚠️ Watch error: ${type}`);
+    },
+
+    clearErrors: function() {
+      if (this.dom.errorStates) {
+        Object.values(this.dom.errorStates).forEach(el => {
+          if (el) el.style.display = 'none';
+        });
+      }
+    },
+
+    showToast: function(message) {
+      document.dispatchEvent(new CustomEvent('x10:toast', {
+        detail: { message, type: 'success' }
+      }));
+    },
+
+    // ----- Public API -----
+    playMedia: function(url) {
+      if (this.dom.linkInput) {
+        this.dom.linkInput.value = url;
+        this.loadMedia();
+      }
+    },
+
+    getHistory: function() {
+      return [...this.state.history];
+    },
+
+    destroy: function() {
+      this.clearMedia();
+      this.state.isLoaded = false;
+      if (App.config.debug) console.log('📺 Watch module destroyed');
+    },
+  };
+
+  // ============================================================
+  // PART 6 — ACCOUNT & AI ASSISTANT MODULE
+  // ============================================================
+
+  const Account = {
+    dom: {},
+    state: {
+      isLoaded: false,
+      isAIOpen: false,
+      conversations: [],
+      currentConversation: null,
+      isThinking: false,
+    },
+
+    init: function() {
+      if (this.state.isLoaded) return;
+      this.cacheDom();
+      this.bindEvents();
+      this.loadConversations();
+      this.renderConversations();
+      this.state.isLoaded = true;
+
+      if (App.config.debug) console.log('👤 Account module initialized');
+    },
+
+    cacheDom: function() {
+      const section = document.getElementById('section-account');
+      if (!section) return;
+
+      this.dom = {
+        section: section,
+        profile: document.getElementById('profile-card'),
+        editProfile: document.getElementById('edit-profile-btn'),
+        aiEntry: document.getElementById('ai-entry-card'),
+        openAI: document.getElementById('open-ai-assistant-btn'),
+        aiPanel: document.getElementById('ai-assistant'),
+        chatList: document.getElementById('ai-chat-list'),
+        chatMessages: document.getElementById('ai-messages'),
+        chatInput: document.getElementById('ai-chat-input'),
+        chatForm: document.getElementById('ai-chat-form'),
+        sendBtn: document.getElementById('ai-send-btn'),
+        stopBtn: document.getElementById('ai-stop-btn'),
+        newChat: document.getElementById('ai-new-chat'),
+        deleteChat: document.getElementById('ai-delete-chat'),
+        renameChat: document.getElementById('ai-rename-chat'),
+        searchConv: document.getElementById('ai-search-conversations'),
+        memoryStatus: document.getElementById('ai-memory-status'),
+        thinkingIndicator: document.getElementById('ai-thinking-indicator'),
+        typingIndicator: document.getElementById('ai-typing-indicator'),
+        memoryToggle: document.getElementById('memory-toggle'),
+        memoryClear: document.getElementById('memory-clear'),
+        memoryManage: document.getElementById('memory-manage'),
+        aiSettings: document.getElementById('ai-settings'),
+        resetAI: document.getElementById('ai-reset-btn'),
+        fileInput: document.getElementById('ai-file-input'),
+        imageInput: document.getElementById('ai-image-input'),
+        docInput: document.getElementById('ai-doc-input'),
+        attachmentsPreview: document.getElementById('ai-attachments-preview'),
+        codeBlock: document.getElementById('ai-code-support'),
+        imagePreview: document.getElementById('ai-image-support'),
+        voiceSupport: document.getElementById('ai-voice-support'),
+        securityNotice: document.getElementById('ai-security-notice'),
+        emptyState: document.getElementById('ai-empty-state'),
+      };
+
+      // Quick settings
+      this.dom.quickSettings = document.querySelectorAll('.quick-setting-card');
+    },
+
+    bindEvents: function() {
+      // Page change
+      document.addEventListener('x10:pageChange', (e) => {
+        if (e.detail.page === 'account' && !this.state.isLoaded) {
+          this.init();
+        }
+      });
+
+      // Open AI from entry
+      if (this.dom.openAI) {
+        this.dom.openAI.addEventListener('click', () => this.openAI());
+      }
+
+      // Open AI from global event
+      document.addEventListener('x10:openAI', () => {
+        App.navigateTo('account');
+        setTimeout(() => this.openAI(), 300);
+      });
+
+      // Quick settings
+      if (this.dom.quickSettings) {
+        this.dom.quickSettings.forEach(setting => {
+          setting.addEventListener('click', () => {
+            const id = setting.id;
+            if (id) {
+              const target = document.getElementById(id);
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+              }
+            }
+          });
+        });
+                                                               }
