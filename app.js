@@ -222,21 +222,26 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
     },
 
     renderPage: function(page) {
-      // Hide all pages
-      Object.values(this.dom.pages).forEach(el => {
-        if (el) el.style.display = 'none';
-      });
+  Object.entries(this.dom.pages).forEach(([pageName, el]) => {
+    if (!el) return;
 
-      // Show target page
-      const target = this.dom.pages[page];
-      if (target) {
-        target.style.display = 'block';
-        target.style.animation = 'fadeSlideUp 0.3s ease';
-      }
+    const isActive = pageName === page;
 
-      // Show/hide AI button based on page
-      this.updateAIButtonVisibility(page);
-    },
+    // Keep CSS and JavaScript in sync
+    el.classList.toggle('active', isActive);
+
+    // Hide every other page
+    el.style.display = isActive ? 'block' : 'none';
+
+    // Animate only the page being opened
+    el.style.animation = isActive
+      ? 'fadeSlideUp 0.3s ease'
+      : '';
+  });
+
+  // Show/hide AI button based on page
+  this.updateAIButtonVisibility(page);
+},
 
     updateTabs: function(page) {
       this.dom.tabs.forEach(tab => {
