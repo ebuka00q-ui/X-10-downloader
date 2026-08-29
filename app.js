@@ -11,7 +11,13 @@
 const SUPABASE_URL = "https://gkfivuvtpfetzatz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_T2Sxps8oB5ilNda3IU1SZQ_1LLxmVSE";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase?.createClient
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+if (!supabase) {
+  console.warn('Supabase client is unavailable. Navigation will continue without Supabase.');
+}
 
 
 // Place it right at line 1 or near the top variables
