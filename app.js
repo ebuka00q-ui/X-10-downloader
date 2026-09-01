@@ -228,26 +228,23 @@ const PLACEHOLDER_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
     },
 
     renderPage: function(page) {
-  Object.entries(this.dom.pages).forEach(([pageName, el]) => {
-    if (!el) return;
+      Object.entries(this.dom.pages).forEach(([pageName, el]) => {
+        if (!el) return;
 
-    const isActive = pageName === page;
+        const isActive = pageName === page;
 
-    // Keep CSS and JavaScript in sync
-    el.classList.toggle('active', isActive);
+        // Keep the active class, inline visibility, and accessibility state synchronized.
+        el.classList.toggle('active', isActive);
+        el.setAttribute('aria-hidden', String(!isActive));
 
-    // Hide every other page
-    el.style.display = isActive ? 'block' : 'none';
+        // Use inline !important so the page cannot remain visible because of a CSS rule.
+        el.style.setProperty('display', isActive ? 'block' : 'none', 'important');
+        el.style.animation = isActive ? 'fadeSlideUp 0.3s ease' : '';
+      });
 
-    // Animate only the page being opened
-    el.style.animation = isActive
-      ? 'fadeSlideUp 0.3s ease'
-      : '';
-  });
-
-  // Show/hide AI button based on page
-  this.updateAIButtonVisibility(page);
-},
+      // Show/hide AI button based on page
+      this.updateAIButtonVisibility(page);
+    },
 
     updateTabs: function(page) {
       this.dom.tabs.forEach(tab => {
