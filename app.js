@@ -1,3 +1,57 @@
+/* X10_NAVIGATION_SAFETY_NET */
+(function installNavigationSafetyNet() {
+  'use strict';
+  var validPages = ['home', 'sports', 'favorites', 'watch', 'account'];
+  function normalizePage(page) {
+    return validPages.indexOf(page) !== -1 ? page : 'home';
+  }
+  function renderNavigation(page) {
+    page = normalizePage(page);
+    var panels = document.querySelectorAll('#main-content > section.app-page');
+    for (var i = 0; i < panels.length; i += 1) {
+      var panel = panels[i];
+      var isActive = panel.id === 'section-' + page;
+      panel.classList.toggle('active', isActive);
+      panel.setAttribute('aria-hidden', String(!isActive));
+      panel.style.setProperty('display', isActive ? 'block' : 'none', 'important');
+    }
+    var tabs = document.querySelectorAll('#bottom-tabs .tab-item');
+    for (var j = 0; j < tabs.length; j += 1) {
+      tabs[j].classList.toggle('active', tabs[j].getAttribute('data-tab') === page);
+    }
+  }
+  function bindNavigation() {
+    var tabs = document.querySelectorAll('#bottom-tabs .tab-item');
+    for (var i = 0; i < tabs.length; i += 1) {
+      var tab = tabs[i];
+      if (tab.getAttribute('data-x10-navigation-bound') === 'true') continue;
+      tab.setAttribute('data-x10-navigation-bound', 'true');
+      tab.addEventListener('click', function(event) {
+        event.preventDefault();
+        var page = normalizePage(this.getAttribute('data-tab'));
+        renderNavigation(page);
+        if (window.location.hash !== '#' + page) window.location.hash = page;
+      });
+    }
+    renderNavigation(window.location.hash.slice(1));
+  }
+  function showGitHubProof() {
+    if (window.location.search.indexOf('github-check=1') === -1) return;
+    var proof = document.createElement('div');
+    proof.id = 'x10-github-proof';
+    proof.textContent = 'HELLO — LIVE BUILD FROM GITHUB';
+    proof.style.cssText = 'position:fixed;top:72px;left:12px;right:12px;z-index:99999;padding:18px 20px;background:#19c37d;color:#04130c;border:3px solid #b5ffe0;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.45);font:800 20px/1.2 system-ui,sans-serif;text-align:center;';
+    document.body.appendChild(proof);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { bindNavigation(); showGitHubProof(); }, { once: true });
+  } else {
+    bindNavigation();
+    showGitHubProof();
+  }
+  window.addEventListener('hashchange', function() { renderNavigation(window.location.hash.slice(1)); });
+})();
+
 
 /**
  * ============================================================
