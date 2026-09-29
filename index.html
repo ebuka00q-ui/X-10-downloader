@@ -1,1 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ============================================================
+  X10 — PRODUCTION HTML
+  Movies · Downloads · AI
+  Next: style.css
+  ============================================================ -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="X10" />
+  <meta name="application-name" content="X10" />
+  <meta name="description" content="X10 — Movies, Downloads & AI Assistant" />
+  <meta name="mobile-web-app-capable" content="yes" />
 
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon-180x180.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/android-icon-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/android-icon-512x512.png" />
+
+  <!-- Stylesheet (next stage) -->
+  <link rel="stylesheet" href="style.css" />
+
+  <title>X10 — Movies · Downloads · AI</title>
+</head>
+<body>
+
+  <!-- ============================================================
+  APP ROOT
+  ============================================================ -->
+  <div id="app-root">
+
+    <!-- ============================================================
+    GLOBAL HEADER
+    ============================================================ -->
+    <header id="global-header" role="banner">
+      <div id="brand">
+        <span id="brand-icon" aria-hidden="true">🎬</span>
+        <span id="brand-text">X10</span>
+      </div>
+
+      <button id="header-ai-btn" class="header-icon-btn" aria-label="Open AI assistant" title="Open AI">
+        <span aria-hidden="true">🤖</span>
+      </button>
+    </header>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <main id="main-content">
+
+      <!-- ==========================================================
+      SECTION 1 — MOVIES (default)
+      ========================================================== -->
+      <section id="page-movies" class="page active" aria-label="Movies">
+
+        <!-- Search Bar -->
+        <div id="movies-search-bar" role="search">
+          <form id="movies-search-form" autocomplete="off">
+            <label for="movies-search-input" class="sr-only">Search movies</label>
+            <input
+              type="search"
+              id="movies-search-input"
+              name="q"
+              placeholder="Search movies..."
+              aria-label="Search movies"
+            />
+            <button type="submit" id="movies-search-btn" aria-label="Search">
+              <span aria-hidden="true">🔍</span>
+            </button>
+            <button type="button" id="movies-search-clear" aria-label="Clear search" hidden>
+              <span aria-hidden="true">✕</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Categories -->
+        <nav id="movies-categories" aria-label="Movie categories">
+          <ul id="movies-categories-list">
+            <li><button class="category-chip active" data-category="all">All</button></li>
+            <li><button class="category-chip" data-category="action">Action</button></li>
+            <li><button class="category-chip" data-category="comedy">Comedy</button></li>
+            <li><button class="category-chip" data-category="drama">Drama</button></li>
+            <li><button class="category-chip" data-category="horror">Horror</button></li>
+            <li><button class="category-chip" data-category="sci-fi">Sci-Fi</button></li>
+            <li><button class="category-chip" data-category="animation">Animation</button></li>
+            <li><button class="category-chip" data-category="documentary">Documentary</button></li>
+            <li><button class="category-chip" data-category="romance">Romance</button></li>
+            <li><button class="category-chip" data-category="thriller">Thriller</button></li>
+          </ul>
+        </nav>
+
+        <!-- Year Filter -->
+        <div id="movies-year-filter">
+          <label for="movies-year-select" class="sr-only">Filter by year</label>
+          <select id="movies-year-select">
+            <option value="">Any year</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+            <option value="2019">2019</option>
+            <option value="2018">2018</option>
+            <option value="2017">2017</option>
+            <option value="2016">2016</option>
+            <option value="2015">2015</option>
+            <option value="2014">2014</option>
+            <option value="2013">2013</option>
+            <option value="2012">2012</option>
+            <option value="2011">2011</option>
+            <option value="2010">2010</option>
+            <option value="2005">2005</option>
+            <option value="2000">2000</option>
+            <option value="1990">1990</option>
+            <option value="1980">1980</option>
+            <option value="1970">1970</option>
+            <option value="1960">1960</option>
+            <option value="1950">1950</option>
+            <option value="1940">1940</option>
+            <option value="1930">1930</option>
+            <option value="1920">1920</option>
+          </select>
+        </div>
+
+        <!-- Movie Grid -->
+        <div id="movies-grid" aria-live="polite" aria-busy="false">
+          <!-- Movie cards injected by JavaScript -->
+        </div>
+
+        <!-- Movies Loading State -->
+        <div id="movies-loading" class="state-block" hidden>
+          <div class="skeleton-grid">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>
+        </div>
+
+        <!-- Movies Empty State -->
+        <div id="movies-empty" class="state-block empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">🎬</div>
+          <h3 class="empty-title">No movies found</h3>
+          <p class="empty-message">Try a different search or category.</p>
+        </div>
+
+        <!-- Movies Error State -->
+        <div id="movies-error" class="state-block error-state" hidden>
+          <div class="error-icon" aria-hidden="true">⚠️</div>
+          <h3 class="error-title">Couldn't load movies</h3>
+          <p class="error-message">Please check your connection and try again.</p>
+          <button type="button" id="movies-retry-btn" class="btn btn-primary">Retry</button>
+        </div>
+
+        <!-- Load More -->
+        <div id="movies-load-more-wrap" hidden>
+          <button type="button" id="movies-load-more-btn" class="btn btn-secondary">
+            Load more
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ==========================================================
+      SECTION 2 — DOWNLOADS
+      ========================================================== -->
+      <section id="page-downloads" class="page" aria-label="Downloads" hidden>
+
+        <header class="page-header">
+          <h1 class="page-title">Downloads</h1>
+        </header>
+
+        <!-- Active Downloads -->
+        <section id="downloads-active" aria-labelledby="downloads-active-title">
+          <h2 id="downloads-active-title" class="section-title">Downloading</h2>
+
+          <div id="downloads-active-list" aria-live="polite">
+            <!-- Active download items injected by JavaScript -->
+          </div>
+
+          <div id="downloads-active-empty" class="substate" hidden>
+            <p>Nothing downloading right now.</p>
+          </div>
+        </section>
+
+        <!-- Completed Downloads -->
+        <section id="downloads-completed" aria-labelledby="downloads-completed-title">
+          <h2 id="downloads-completed-title" class="section-title">Downloaded</h2>
+
+          <div id="downloads-completed-grid">
+            <!-- Completed download items injected by JavaScript -->
+          </div>
+
+          <div id="downloads-completed-empty" class="substate" hidden>
+            <p>No downloaded movies yet.</p>
+          </div>
+        </section>
+
+        <!-- Downloads Empty State (when nothing at all) -->
+        <div id="downloads-empty" class="state-block empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">⬇️</div>
+          <h3 class="empty-title">No downloads yet</h3>
+          <p class="empty-message">
+            Your downloaded movies will appear here.
+          </p>
+          <button type="button" id="downloads-browse-btn" class="btn btn-primary">
+            Browse Movies
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ==========================================================
+      SECTION 3 — AI ASSISTANT
+      ========================================================== -->
+      <section id="page-ai" class="page" aria-label="AI Assistant" hidden>
+
+        <!-- AI Header -->
+        <header id="ai-header" class="page-header">
+          <h1 class="page-title">
+            <span aria-hidden="true">🤖</span> X10 AI
+          </h1>
+          <button type="button" id="ai-new-chat-btn" class="btn-icon" aria-label="New chat" title="New chat">
+            <span aria-hidden="true">＋</span>
+          </button>
+        </header>
+
+        <!-- AI Conversation -->
+        <div id="ai-conversation" aria-live="polite" aria-busy="false">
+          <!-- Messages injected by JavaScript -->
+        </div>
+
+        <!-- AI Empty / Welcome Screen -->
+        <div id="ai-welcome" class="state-block">
+          <div class="ai-welcome-icon" aria-hidden="true">🤖</div>
+          <h2 class="ai-welcome-title">Hi, I'm X10 AI</h2>
+          <p class="ai-welcome-subtitle">
+            Ask me about movies, downloads, or anything else.
+          </p>
+
+          <div id="ai-suggestions" class="ai-suggestions">
+            <button type="button" class="ai-suggestion" data-prompt="How do I download a movie?">
+              How do I download a movie?
+            </button>
+            <button type="button" class="ai-suggestion" data-prompt="Where are my downloaded movies?">
+              Where are my downloaded movies?
+            </button>
+            <button type="button" class="ai-suggestion" data-prompt="Why don't I see Download on this movie?">
+              Why don't I see Download on this movie?
+            </button>
+            <button type="button" class="ai-suggestion" data-prompt="Recommend a good sci-fi movie">
+              Recommend a good sci-fi movie
+            </button>
+          </div>
+        </div>
+
+        <!-- AI Composer -->
+        <form id="ai-composer" autocomplete="off">
+          <button type="button" id="ai-attach-btn" class="composer-btn" aria-label="Attach file">
+            <span aria-hidden="true">＋</span>
+          </button>
+
+          <label for="ai-input" class="sr-only">Message X10 AI</label>
+          <textarea
+            id="ai-input"
+            name="message"
+            rows="1"
+            placeholder="Ask X10 anything..."
+            aria-label="Message X10 AI"
+          ></textarea>
+
+          <button type="button" id="ai-voice-btn" class="composer-btn" aria-label="Voice input">
+            <span aria-hidden="true">🎙</span>
+          </button>
+
+          <button type="submit" id="ai-send-btn" class="composer-send-btn" aria-label="Send message">
+            <span aria-hidden="true">↑</span>
+          </button>
+
+          <button type="button" id="ai-stop-btn" class="composer-stop-btn" aria-label="Stop generating" hidden>
+            <span aria-hidden="true">■</span>
+          </button>
+        </form>
+
+        <!-- Hidden file input -->
+        <input type="file" id="ai-file-input" accept="image/*,.pdf,.txt,.md" multiple hidden />
+
+        <!-- AI Error State -->
+        <div id="ai-error" class="state-block error-state" hidden>
+          <div class="error-icon" aria-hidden="true">⚠️</div>
+          <h3 class="error-title">AI unavailable</h3>
+          <p class="error-message">Something went wrong. Please try again.</p>
+          <button type="button" id="ai-retry-btn" class="btn btn-primary">Retry</button>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ============================================================
+    MOVIE DETAILS OVERLAY
+    ============================================================ -->
+    <div id="movie-details-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="movie-details-title" hidden>
+      <div class="overlay-panel">
+
+        <button type="button" id="movie-details-close" class="overlay-close-btn" aria-label="Close">
+          <span aria-hidden="true">✕</span>
+        </button>
+
+        <div id="movie-details-content">
+          <!-- Movie details injected by JavaScript -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================
+    VIDEO PLAYER OVERLAY
+    ============================================================ -->
+    <div id="player-overlay" class="overlay overlay-fullscreen" role="dialog" aria-modal="true" aria-label="Video player" hidden>
+
+      <div class="player-topbar">
+        <button type="button" id="player-close" class="overlay-close-btn" aria-label="Close player">
+          <span aria-hidden="true">✕</span>
+        </button>
+        <span id="player-title" class="player-title"></span>
+      </div>
+
+      <div class="player-stage">
+        <video id="player-video" controls playsinline preload="metadata">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      <div class="player-bottombar">
+        <span id="player-time" class="player-time">00:00 / 00:00</span>
+        <div class="player-quality-wrap">
+          <label for="player-quality" class="sr-only">Quality</label>
+          <select id="player-quality" class="player-quality">
+            <option value="">Auto</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+    DOWNLOAD CONFIRMATION DIALOG
+    ============================================================ -->
+    <div id="download-confirm-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="download-confirm-title" hidden>
+      <div class="overlay-panel overlay-panel-small">
+
+        <h2 id="download-confirm-title" class="dialog-title">Start download?</h2>
+
+        <p id="download-confirm-message" class="dialog-message">
+          This download may use approximately <strong id="download-confirm-size">—</strong> of data.
+        </p>
+
+        <div class="dialog-actions">
+          <button type="button" id="download-confirm-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="download-confirm-start" class="btn btn-primary">Download</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================
+    TOAST CONTAINER
+    ============================================================ -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ============================================================
+    BOTTOM NAVIGATION
+    ============================================================ -->
+    <nav id="bottom-tabs" role="navigation" aria-label="Main navigation">
+      <button type="button" class="tab-item active" data-tab="movies" aria-current="page">
+        <span class="tab-icon" aria-hidden="true">🎬</span>
+        <span class="tab-label">Movies</span>
+      </button>
+
+      <button type="button" class="tab-item" data-tab="downloads">
+        <span class="tab-icon" aria-hidden="true">⬇️</span>
+        <span class="tab-label">Downloads</span>
+        <span id="downloads-badge" class="tab-badge" hidden>0</span>
+      </button>
+
+      <button type="button" class="tab-item" data-tab="ai">
+        <span class="tab-icon" aria-hidden="true">🤖</span>
+        <span class="tab-label">AI</span>
+      </button>
+    </nav>
+
+    <!-- ============================================================
+    GLOBAL STATES
+    ============================================================ -->
+
+    <!-- Offline Notice -->
+    <div id="offline-notice" class="global-notice" hidden>
+      <span aria-hidden="true">📡</span> You are offline
+    </div>
+
+    <!-- Global Loading Bar -->
+    <div id="global-loading-bar" class="global-loading-bar" hidden></div>
+
+  </div>
+
+  <!-- ============================================================
+  JAVASCRIPT (next stage)
+  ============================================================ -->
+  <script src="app.js" defer></script>
+
+</body>
+      </html>
