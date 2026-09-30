@@ -972,3 +972,402 @@ const Downloads = {
     });
   },
 };
+
+/* ============================================================
+   AI — Chat interface with Gemini backend
+   ============================================================ */
+const AI = {
+  state: {
+    messages: [],
+    isStreaming: false,
+    abortController: null,
+    conversationId: 'default',
+  },
+
+  dom: {},
+
+  init() {
+    this.cacheDom();
+    this.bindEvents();
+    this.loadHistory();
+  },
+
+  cacheDom() {
+    this.dom = {
+      conversation: document.getElementById('ai-conversation'),
+      welcome: document.getElementById('ai-welcome'),
+      suggestions: document.getElementById('ai-suggestions'),
+      form: document.getElementById('ai-composer'),
+      input: document.getElementById('ai-input'),
+      sendBtn: document.getElementById('ai-send-btn'),
+      stopBtn: document.getElementById('ai-stop-btn'),
+      attachBtn: document.getElementById('ai-attach-btn'),
+      fileInput: document.getElementById('ai-file-input'),
+      voiceBtn: document.getElementById('ai-voice-btn'),
+      newChatBtn: document.getElementById('ai-new-chat-btn'),
+      error: document.getElementById('ai-error'),
+      retryBtn: document.getElementById('ai-retry-btn'),
+    };
+  },
+
+  bindEvents() {
+    this.dom.form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.send();
+    });
+
+    this.dom.input?.addEventListener('input', () => {
+      this.autoResize();
+    });
+
+    this.dom.input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.send();
+      }
+    });
+
+    this.dom.stopBtn?.addEventListener('click', () => this.stop());
+    this.dom.attachBtn?.addEventListener('click', () => this.dom.fileInput?.click());
+    this.dom.newChatBtn?.addEventListener('click', () => this.newChat());
+    this.dom.retryBtn?.addEventListener('click', () => this.retry());
+
+    this.dom.suggestions?.querySelectorAll('.ai-suggestion').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.dataset.prompt;
+        if (prompt) {
+          this.dom.input.value = prompt;
+          this.send();
+        }
+      });
+    });
+
+    this.dom.fileInput?.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length) Toast.show(`${files.length} file(s) attached`, 'info');
+      e.target.value = '';
+    });
+
+    this.dom.voiceBtn?.addEventListener('click', () => this.toggleVoice());
+  },
+
+  autoResize() {
+    const el = this.dom.input;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  },
+
+  /* -------- Sending -------- */
+  async send() {
+    const input = this.dom.input;
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text || this.state.isStreaming) return;
+
+    input.value = '';
+    this.autoResize();
+
+    this.addMessage('user', text);
+    this.hideWelcome();
+    this.state.isStreaming = true;
+    this.setComposerState('streaming');
+
+    const thinkingId = this.addThinking();
+
+    try {
+      const response = await this.callBackend(text);
+      this.removeThinking(thinkingId);
+      await this.appendAssistantStreaming(response);
+      this.saveHistory();
+    } catch (err) {
+      this.removeThinking(thinkingId);
+      if (err.name === 'AbortError') {
+        // stopped
+      } else {
+        this.showError();
+      }
+      if (App.config.debug) console.error(err);
+    } finally {
+      this.state.isStreaming = false;
+      this.setComposerState('idle');
+    }
+  },
+
+  async callBackend(message) {
+    // Backend endpoint — expects JSON { message, conversationId } → { reply }
+    // Never expose API keys here. The backend handles Gemini securely.
+    try {
+      this.state.abortController = new AbortController();
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          conversationId: this.state.conversationId,
+          history: this.state.messages.slice(-10),
+        }),
+        signal: this.state.abortController.signal,
+      });
+
+      if (!res.ok) throw new Error('AI request failed');
+      const data = await res.json();
+      return data.reply || data.message || 'No response.';
+    } catch (err) {
+      // Fallback reply if backend is not yet connected
+      if (err.name === 'AbortError') throw err;
+      return this.fallbackReply(message);
+    }
+  },
+
+  fallbackReply(message) {
+    const lower = message.toLowerCase();
+    if (lower.includes('download')) {
+      return "To download a movie:\n\n1. Open the movie's details.\n2. Tap **Download**.\n3. Confirm the data size.\n4. It will appear in the **Downloads** tab.\n\nNote: A Download button only appears when the source provides a downloadable video file.";
+    }
+    if (lower.includes('where') && lower.includes('download')) {
+      return "Your downloaded movies are in the **Downloads** tab at the bottom of the screen. Completed downloads appear in the *Downloaded* section.";
+    }
+    if (lower.includes('why') && lower.includes('download')) {
+      return "The Download button only appears when the movie's source provides a legitimate downloadable video file. Some items are streaming-only.";
+    }
+    return "I'm X10 AI. I can help you find movies, explain downloads, and answer general questions. What would you like to know?";
+  },
+
+  stop() {
+    if (this.state.abortController) {
+      this.state.abortController.abort();
+    }
+    this.state.isStreaming = false;
+    this.setComposerState('idle');
+  },
+
+  retry() {
+    this.dom.error?.setAttribute('hidden', '');
+    const lastUser = [...this.state.messages].reverse().find(m => m.role === 'user');
+    if (lastUser) {
+      this.dom.input.value = lastUser.content;
+      this.send();
+    }
+  },
+
+  /* -------- Messages -------- */
+  addMessage(role, content) {
+    const msg = { role, content, ts: Date.now() };
+    this.state.messages.push(msg);
+    this.renderMessage(msg);
+  },
+
+  renderMessage(msg, streaming) {
+    const container = this.dom.conversation;
+    if (!container) return null;
+
+    const el = document.createElement('div');
+    el.className = `ai-msg ${msg.role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-msg-bubble';
+    bubble.innerHTML = this.formatMessage(msg.content);
+
+    el.appendChild(bubble);
+
+    if (msg.role === 'assistant') {
+      const time = document.createElement('span');
+      time.className = 'ai-msg-time';
+      time.textContent = new Date(msg.ts).toLocaleTimeString();
+      el.appendChild(time);
+    }
+
+    container.appendChild(el);
+    this.scrollBottom();
+
+    return el;
+  },
+
+  formatMessage(text) {
+    if (!text) return '';
+    let safe = Movies.escape(text);
+
+    // Code blocks
+    safe = safe.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
+      return `<pre><code>${code.trim()}</code></pre>`;
+    });
+
+    // Inline code
+    safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bold
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    safe = safe.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Line breaks
+    safe = safe.replace(/\n/g, '<br />');
+
+    return safe;
+  },
+
+  addThinking() {
+    const container = this.dom.conversation;
+    if (!container) return null;
+    const el = document.createElement('div');
+    el.className = 'ai-typing';
+    el.id = 'ai-typing-' + Date.now();
+    el.innerHTML = `
+      <span class="ai-typing-dot"></span>
+      <span class="ai-typing-dot"></span>
+      <span class="ai-typing-dot"></span>
+    `;
+    container.appendChild(el);
+    this.scrollBottom();
+    return el.id;
+  },
+
+  removeThinking(id) {
+    if (!id) return;
+    document.getElementById(id)?.remove();
+  },
+
+  async appendAssistantStreaming(text) {
+    // Simulated streaming — chunks of words
+    const msg = { role: 'assistant', content: '', ts: Date.now() };
+    const el = this.renderMessage(msg);
+    if (!el) return;
+    const bubble = el.querySelector('.ai-msg-bubble');
+
+    const words = text.split(/(\s+)/);
+    let acc = '';
+    for (let i = 0; i < words.length; i++) {
+      acc += words[i];
+      bubble.innerHTML = this.formatMessage(acc);
+      this.scrollBottom();
+      await this.delay(12);
+    }
+    msg.content = text;
+    this.state.messages.push(msg);
+  },
+
+  delay(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  },
+
+  scrollBottom() {
+    const c = this.dom.conversation;
+    if (c) c.scrollTop = c.scrollHeight;
+  },
+
+  hideWelcome() {
+    if (this.dom.welcome) this.dom.welcome.hidden = true;
+    if (this.dom.error) this.dom.error.hidden = true;
+  },
+
+  showError() {
+    if (this.dom.error) this.dom.error.hidden = false;
+  },
+
+  setComposerState(state) {
+    const streaming = state === 'streaming';
+    if (this.dom.sendBtn) this.dom.sendBtn.hidden = streaming;
+    if (this.dom.stopBtn) this.dom.stopBtn.hidden = !streaming;
+  },
+
+  /* -------- Voice -------- */
+  toggleVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      Toast.show('Voice input not supported', 'warning');
+      return;
+    }
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.onstart = () => Toast.show('Listening...', 'info');
+    rec.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      if (this.dom.input) this.dom.input.value = t;
+      this.send();
+    };
+    rec.onerror = () => Toast.show('Could not hear you', 'warning');
+    rec.start();
+  },
+
+  /* -------- History -------- */
+  saveHistory() {
+    try {
+      localStorage.setItem('x10-ai-history', JSON.stringify(this.state.messages.slice(-50)));
+    } catch (_) {}
+  },
+
+  loadHistory() {
+    try {
+      const raw = localStorage.getItem('x10-ai-history');
+      if (raw) {
+        this.state.messages = JSON.parse(raw) || [];
+        if (this.state.messages.length) {
+          this.hideWelcome();
+          this.state.messages.forEach(m => this.renderMessage(m));
+        }
+      }
+    } catch (_) {}
+  },
+
+  newChat() {
+    this.state.messages = [];
+    this.state.conversationId = 'conv-' + Date.now();
+    if (this.dom.conversation) this.dom.conversation.innerHTML = '';
+    if (this.dom.welcome) this.dom.welcome.hidden = false;
+    try { localStorage.removeItem('x10-ai-history'); } catch (_) {}
+    Toast.show('New chat', 'info');
+  },
+};
+
+/* ============================================================
+   TOAST — Notifications
+   ============================================================ */
+const Toast = {
+  init() {
+    this.container = document.getElementById('toast-container');
+  },
+
+  show(message, type = 'info', duration = 3000) {
+    if (!this.container) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    this.container.appendChild(el);
+
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(20px)';
+      setTimeout(() => el.remove(), 300);
+    }, duration);
+  },
+};
+
+/* ============================================================
+   PWA — Service worker registration & online/offline
+   ============================================================ */
+const PWA = {
+  init() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('sw.js')
+        .catch(() => {
+          if (App.config.debug) console.warn('SW registration failed');
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      App.state.isInstalled = true;
+      Toast.show('✅ X10 installed', 'success');
+    });
+  },
+};
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+});
