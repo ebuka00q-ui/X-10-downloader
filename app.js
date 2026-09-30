@@ -681,3 +681,288 @@
       this.onConfirm = null;
     }
   };
+
+  // ============================================================
+  // DOWNLOADS MODULE
+  // ============================================================
+  const Downloads = {
+    items: [],
+    dom: {},
+    activeFetches: {}, // id → AbortController
+
+    init() {
+      this.cacheDom();
+      this.bindEvents();
+      this.load();
+      this.render();
+    },
+
+    cacheDom() {
+      this.dom = {
+        activeSection:   document.getElementById('downloads-active'),
+        activeList:      document.getElementById('downloads-active-list'),
+        activeEmpty:     document.getElementById('downloads-active-empty'),
+        completedSection:document.getElementById('downloads-completed'),
+        completedGrid:   document.getElementById('downloads-completed-grid'),
+        completedEmpty:  document.getElementById('downloads-completed-empty'),
+        empty:           document.getElementById('downloads-empty'),
+        browseBtn:       document.getElementById('downloads-browse-btn')
+      };
+    },
+
+    bindEvents() {
+      this.dom.browseBtn?.addEventListener('click', () => App.navigateTo('movies'));
+
+      // Delegate actions
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-dl-action]');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const action = btn.dataset.dlAction;
+        if (action === 'cancel') this.cancel(id);
+        if (action === 'remove') this.remove(id);
+      });
+    },
+
+    load() {
+      this.items = storage.get(CONFIG.storage.downloads, []) || [];
+      // Mark stale 'downloading' items as failed on reload (can't resume)
+      this.items.forEach(i => {
+        if (i.status === 'downloading') i.status = 'failed';
+      });
+      this.save();
+    },
+
+    save() {
+      storage.set(CONFIG.storage.downloads, this.items);
+    },
+
+    add(movie, file) {
+      const url = `${CONFIG.api.archiveDownload}/${movie.identifier}/${encodeURIComponent(file.name)}`;
+
+      const item = {
+        id:         'dl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        identifier: movie.identifier,
+        title:      movie.title,
+        thumb:      movie.thumb,
+        fileName:   file.name,
+        size:       Number(file.size) || 0,
+        url,
+        progress:   0,
+        downloaded: 0,
+        status:     'downloading',
+        createdAt:  Date.now()
+      };
+
+      this.items.unshift(item);
+      this.save();
+      this.render();
+      Toast.show('Download started', 'success');
+      this.startDownload(item.id);
+    },
+
+    async startDownload(id) {
+      const item = this.items.find(i => i.id === id);
+      if (!item) return;
+
+      // Very large files → direct browser download (no progress)
+      if (item.size > CONFIG.download.maxBlobSize) {
+        const a = document.createElement('a');
+        a.href = item.url;
+        a.download = item.fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        item.status = 'completed';
+        item.progress = 100;
+        item.downloaded = item.size;
+        this.save();
+        this.render();
+        App.updateDownloadsBadge();
+        return;
+      }
+
+      const controller = new AbortController();
+      this.activeFetches[id] = controller;
+
+      try {
+        const res = await fetch(item.url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const contentLength = Number(res.headers.get('content-length')) || item.size || 0;
+        item.size = contentLength;
+
+        const reader = res.body.getReader();
+        const chunks = [];
+        let received = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+          item.downloaded = received;
+          item.progress = contentLength
+            ? Math.min(100, Math.round((received / contentLength) * 100))
+            : 0;
+          this.updateProgressRow(item);
+        }
+
+        // Trigger browser save
+        const blob = new Blob(chunks);
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = item.fileName || `${item.title}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+
+        item.status = 'completed';
+        item.progress = 100;
+        item.downloaded = contentLength;
+        item.completedAt = Date.now();
+        this.save();
+        this.render();
+        App.updateDownloadsBadge();
+        Toast.show('Download complete', 'success');
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          log('Download cancelled:', id);
+          return;
+        }
+        error('Download failed:', err);
+        item.status = 'failed';
+        this.save();
+        this.render();
+        App.updateDownloadsBadge();
+        Toast.show('Download failed', 'error');
+      } finally {
+        delete this.activeFetches[id];
+      }
+    },
+
+    updateProgressRow(item) {
+      const row = this.dom.activeList?.querySelector(`[data-download-id="${item.id}"]`);
+      if (!row) return;
+
+      const fill = row.querySelector('.download-progress-fill');
+      const stats = row.querySelector('[data-stats]');
+
+      if (fill)  fill.style.width = item.progress + '%';
+      if (stats) {
+        stats.innerHTML = `
+          <span>${formatBytes(item.downloaded)} / ${formatBytes(item.size)}</span>
+          <strong>${item.progress}%</strong>`;
+      }
+    },
+
+    cancel(id) {
+      const controller = this.activeFetches[id];
+      if (controller) controller.abort();
+      this.items = this.items.filter(i => i.id !== id);
+      this.save();
+      this.render();
+      App.updateDownloadsBadge();
+      Toast.show('Download cancelled', 'info');
+    },
+
+    remove(id) {
+      this.items = this.items.filter(i => i.id !== id);
+      this.save();
+      this.render();
+      App.updateDownloadsBadge();
+      Toast.show('Removed', 'info');
+    },
+
+    render() {
+      const active    = this.items.filter(i => i.status === 'downloading');
+      const completed = this.items.filter(i => i.status === 'completed');
+      const failed    = this.items.filter(i => i.status === 'failed');
+
+      // Active section
+      if (active.length === 0) {
+        this.dom.activeList.innerHTML = '';
+        this.dom.activeEmpty.hidden = false;
+      } else {
+        this.dom.activeEmpty.hidden = true;
+        this.dom.activeList.innerHTML = active.map(i => this.renderActive(i)).join('');
+      }
+
+      // Completed + failed grouped as "Downloaded" section
+      const done = [...completed, ...failed];
+      if (done.length === 0) {
+        this.dom.completedGrid.innerHTML = '';
+        this.dom.completedEmpty.hidden = false;
+      } else {
+        this.dom.completedEmpty.hidden = true;
+        this.dom.completedGrid.innerHTML = done.map(i => this.renderCompleted(i)).join('');
+      }
+
+      // Global empty
+      const isEmpty = active.length === 0 && done.length === 0;
+      this.dom.empty.hidden = !isEmpty;
+      this.dom.activeSection.hidden = isEmpty;
+      this.dom.completedSection.hidden = isEmpty;
+    },
+
+    renderActive(item) {
+      return `
+        <div class="download-item" data-download-id="${item.id}">
+          <div class="download-item-head">
+            <div class="download-item-poster">
+              <img src="${escapeHtml(item.thumb)}" alt="" loading="lazy"
+                   onerror="this.style.display='none';this.parentElement.innerHTML='🎬';">
+            </div>
+            <div class="download-item-info">
+              <div class="download-item-title">${escapeHtml(item.title)}</div>
+              <div class="download-item-meta">
+                ${item.size ? formatBytes(item.size) : 'Downloading…'}
+              </div>
+            </div>
+            <div class="download-item-actions">
+              <button type="button" data-dl-action="cancel" data-id="${item.id}" aria-label="Cancel">✕</button>
+            </div>
+          </div>
+          <div class="download-progress">
+            <div class="download-progress-fill" style="width: ${item.progress}%"></div>
+          </div>
+          <div class="download-item-stats" data-stats>
+            <span>${formatBytes(item.downloaded)} / ${formatBytes(item.size)}</span>
+            <strong>${item.progress}%</strong>
+          </div>
+          <div class="download-warning">
+            ⚠️ This download may use approximately ${formatBytes(item.size)} of data.
+          </div>
+        </div>`;
+    },
+
+    renderCompleted(item) {
+      const failed = item.status === 'failed';
+      return `
+        <article class="movie-card" tabindex="0" role="button" aria-label="${escapeHtml(item.title)}">
+          <div class="movie-card-poster">
+            <img src="${escapeHtml(item.thumb)}" alt="" loading="lazy"
+                 onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex');">
+            <div class="movie-card-poster-placeholder" style="display:none">🎬</div>
+            <span class="movie-card-badge">${failed ? '⚠ Failed' : '✓ Downloaded'}</span>
+          </div>
+          <div class="movie-card-info">
+            <div class="movie-card-title">${escapeHtml(item.title)}</div>
+            <div class="movie-card-meta">
+              <span>${formatBytes(item.size)}</span>
+            </div>
+          </div>
+          <div class="download-item-actions" style="position:absolute;top:8px;right:8px;">
+            <button type="button" data-dl-action="remove" data-id="${item.id}" aria-label="Remove"
+                    style="background:rgba(0,0,0,0.6);color:#fff;border:none;width:32px;height:32px;border-radius:50%;">✕</button>
+          </div>
+        </article>`;
+    },
+
+    getActiveCount() {
+      return this.items.filter(i => i.status === 'downloading').length;
+    }
+  };
+  
