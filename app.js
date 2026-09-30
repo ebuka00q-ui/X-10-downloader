@@ -569,6 +569,7 @@ const Movies = {
     this.state.currentMovie = null;
   },
 
+  
   /* -------- Player -------- */
   playVideo(movie, file, meta) {
     const url = `${App.config.archiveDownload}/${encodeURIComponent(movie.identifier)}/${encodeURIComponent(file.name)}`;
@@ -601,4 +602,373 @@ const Movies = {
 
     sel.disabled = false;
     sel.innerHTML = videos.map(f => {
-      const q = this.g
+      const q = this.guessQuality(f.name) || f.name;
+      const selected = f.name === currentFile.name ? 'selected' : '';
+      return `<option value="${this.escapeAttr(f.name)}" ${selected}>${this.escape(q)}</option>`;
+    }).join('');
+
+    // Replace to remove old listeners
+    const newSel = sel.cloneNode(true);
+    sel.parentNode.replaceChild(newSel, sel);
+    this.dom.playerQuality = newSel;
+
+    newSel.addEventListener('change', (e) => {
+      const chosen = e.target.value;
+      if (!chosen) return;
+      const file = videos.find(f => f.name === chosen);
+      if (file) {
+        const url = `${App.config.archiveDownload}/${encodeURIComponent(movie.identifier)}/${encodeURIComponent(file.name)}`;
+        const currentTime = this.dom.playerVideo.currentTime;
+        this.dom.playerVideo.src = url;
+        this.dom.playerVideo.currentTime = currentTime;
+        this.dom.playerVideo.play().catch(() => {});
+      }
+    });
+  },
+
+  updatePlayerTime() {
+    const v = this.dom.playerVideo;
+    if (!v || !this.dom.playerTime) return;
+    this.dom.playerTime.textContent = `${this.formatTime(v.currentTime)} / ${this.formatTime(v.duration)}`;
+  },
+
+  closePlayer() {
+    if (this.dom.playerVideo) {
+      this.dom.playerVideo.pause();
+      this.dom.playerVideo.removeAttribute('src');
+      this.dom.playerVideo.load();
+    }
+    if (this.dom.playerOverlay) this.dom.playerOverlay.hidden = true;
+  },
+
+  /* -------- States -------- */
+  showLoading() {
+    this.dom.loading?.removeAttribute('hidden');
+    this.dom.empty?.setAttribute('hidden', '');
+    this.dom.error?.setAttribute('hidden', '');
+  },
+
+  showEmpty() {
+    this.dom.loading?.setAttribute('hidden', '');
+    this.dom.empty?.removeAttribute('hidden');
+    this.dom.error?.setAttribute('hidden', '');
+  },
+
+  showError(msg) {
+    this.dom.loading?.setAttribute('hidden', '');
+    this.dom.empty?.setAttribute('hidden', '');
+    if (this.dom.error) {
+      this.dom.error.removeAttribute('hidden');
+      const m = this.dom.error.querySelector('.error-message');
+      if (m && msg) m.textContent = msg;
+    }
+  },
+
+  hideStates() {
+    this.dom.loading?.setAttribute('hidden', '');
+    this.dom.empty?.setAttribute('hidden', '');
+    this.dom.error?.setAttribute('hidden', '');
+  },
+
+  /* -------- Utilities -------- */
+  escape(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  },
+
+  escapeAttr(str) {
+    return this.escape(str);
+  },
+
+  formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    let n = bytes;
+    while (n >= 1024 && i < units.length - 1) {
+      n /= 1024;
+      i++;
+    }
+    return `${n.toFixed(n >= 100 ? 0 : 1)} ${units[i]}`;
+  },
+
+  formatTime(sec) {
+    if (!sec || isNaN(sec)) return '00:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  },
+};
+
+/* ============================================================
+   DOWNLOADS — Manage downloads with IndexedDB persistence
+   ============================================================ */
+const Downloads = {
+  state: {
+    items: [], // { id, title, thumb, quality, size, downloaded, status }
+  },
+
+  dom: {},
+
+  db: null,
+  DB_NAME: 'x10-downloads',
+  STORE: 'items',
+
+  init() {
+    this.cacheDom();
+    this.openDB().then(() => this.loadFromDB());
+    this.bindEvents();
+    this.render();
+  },
+
+  cacheDom() {
+    this.dom = {
+      activeList: document.getElementById('downloads-active-list'),
+      activeEmpty: document.getElementById('downloads-active-empty'),
+      completedGrid: document.getElementById('downloads-completed-grid'),
+      completedEmpty: document.getElementById('downloads-completed-empty'),
+      emptyAll: document.getElementById('downloads-empty'),
+      browseBtn: document.getElementById('downloads-browse-btn'),
+      badge: document.getElementById('downloads-badge'),
+      activeSection: document.getElementById('downloads-active'),
+      completedSection: document.getElementById('downloads-completed'),
+    };
+  },
+
+  bindEvents() {
+    this.dom.browseBtn?.addEventListener('click', () => App.switchPage('movies'));
+  },
+
+  /* -------- IndexedDB -------- */
+  openDB() {
+    return new Promise((resolve) => {
+      if (!('indexedDB' in window)) return resolve(null);
+      const req = indexedDB.open(this.DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(this.STORE)) {
+          db.createObjectStore(this.STORE, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => {
+        this.db = req.result;
+        resolve(this.db);
+      };
+      req.onerror = () => resolve(null);
+    });
+  },
+
+  async loadFromDB() {
+    if (!this.db) return;
+    try {
+      const tx = this.db.transaction(this.STORE, 'readonly');
+      const store = tx.objectStore(this.STORE);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        this.state.items = req.result || [];
+        this.render();
+      };
+    } catch (_) {}
+  },
+
+  async saveToDB(item) {
+    if (!this.db) return;
+    try {
+      const tx = this.db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).put(item);
+    } catch (_) {}
+  },
+
+  async deleteFromDB(id) {
+    if (!this.db) return;
+    try {
+      const tx = this.db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).delete(id);
+    } catch (_) {}
+  },
+
+  /* -------- Public API -------- */
+  async add(movie) {
+    if (!movie || !movie.identifier) return;
+
+    const exists = this.state.items.some(i => i.id === movie.identifier);
+    if (exists) {
+      Toast.show('Already in downloads', 'warning');
+      return;
+    }
+
+    const item = {
+      id: movie.identifier,
+      title: movie.title || 'Untitled',
+      thumb: `${App.config.archiveThumb}/${encodeURIComponent(movie.identifier)}`,
+      quality: movie.quality || '',
+      size: movie.size || 0,
+      downloaded: 0,
+      status: 'downloading',
+      createdAt: Date.now(),
+    };
+
+    this.state.items.unshift(item);
+    this.render();
+    await this.saveToDB(item);
+
+    // Simulate progress (real download would be implemented via backend)
+    this.simulateProgress(item.id);
+  },
+
+  simulateProgress(id) {
+    const item = this.state.items.find(i => i.id === id);
+    if (!item) return;
+
+    const total = item.size || 500 * 1024 * 1024; // 500MB default
+    const stepTime = 250;
+    const totalSteps = 40;
+    const stepSize = total / totalSteps;
+    let step = 0;
+
+    const timer = setInterval(async () => {
+      step++;
+      item.downloaded = Math.min(step * stepSize, total);
+      if (step >= totalSteps) {
+        item.downloaded = total;
+        item.status = 'completed';
+        clearInterval(timer);
+        Toast.show(`✅ ${item.title} downloaded`, 'success');
+      }
+      this.render();
+      await this.saveToDB(item);
+    }, stepTime);
+  },
+
+  async remove(id) {
+    this.state.items = this.state.items.filter(i => i.id !== id);
+    await this.deleteFromDB(id);
+    this.render();
+  },
+
+  async clearCompleted() {
+    this.state.items = this.state.items.filter(i => i.status !== 'completed');
+    if (this.db) {
+      const tx = this.db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).clear();
+      for (const item of this.state.items) {
+        tx.objectStore(this.STORE).put(item);
+      }
+    }
+    this.render();
+  },
+
+  /* -------- Rendering -------- */
+  render() {
+    const downloading = this.state.items.filter(i => i.status === 'downloading');
+    const completed = this.state.items.filter(i => i.status === 'completed');
+
+    // Active
+    if (this.dom.activeList) {
+      this.dom.activeList.innerHTML = downloading.map(i => this.renderActive(i)).join('');
+      this.bindActiveActions();
+    }
+    if (this.dom.activeEmpty) this.dom.activeEmpty.hidden = downloading.length > 0;
+    if (this.dom.activeSection) this.dom.activeSection.hidden = downloading.length === 0;
+
+    // Completed
+    if (this.dom.completedGrid) {
+      this.dom.completedGrid.innerHTML = completed.map(i => this.renderCompleted(i)).join('');
+      this.bindCompletedActions();
+    }
+    if (this.dom.completedEmpty) this.dom.completedEmpty.hidden = completed.length > 0;
+    if (this.dom.completedSection) this.dom.completedSection.hidden = completed.length === 0;
+
+    // Empty all
+    if (this.dom.emptyAll) {
+      this.dom.emptyAll.hidden = this.state.items.length > 0;
+    }
+
+    // Badge
+    if (this.dom.badge) {
+      this.dom.badge.hidden = downloading.length === 0;
+      this.dom.badge.textContent = String(downloading.length);
+    }
+  },
+
+  renderActive(item) {
+    const pct = item.size ? Math.min(100, Math.round((item.downloaded / item.size) * 100)) : 0;
+    const sizeLabel = Movies.formatBytes(item.size);
+    const doneLabel = Movies.formatBytes(item.downloaded);
+
+    return `
+      <div class="download-item" data-id="${Movies.escapeAttr(item.id)}">
+        <div class="download-item-head">
+          <div class="download-item-poster">
+            ${item.thumb
+              ? `<img src="${Movies.escapeAttr(item.thumb)}" alt="" onerror="this.style.display='none';" />`
+              : ''}
+          </div>
+          <div class="download-item-info">
+            <div class="download-item-title">${Movies.escape(item.title)}</div>
+            <div class="download-item-meta">${item.quality || 'Video'} • ${sizeLabel || '—'}</div>
+          </div>
+          <div class="download-item-actions">
+            <button class="danger" data-action="cancel" aria-label="Cancel download">✕</button>
+          </div>
+        </div>
+        <div class="download-progress">
+          <div class="download-progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="download-item-stats">
+          <span><strong>${pct}%</strong></span>
+          <span>${doneLabel} / ${sizeLabel || '—'}</span>
+        </div>
+        ${sizeLabel ? `<div class="download-warning">⚠️ This download may use approximately ${sizeLabel} of data.</div>` : ''}
+      </div>
+    `;
+  },
+
+  bindActiveActions() {
+    this.dom.activeList?.querySelectorAll('[data-action="cancel"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const wrap = e.target.closest('.download-item');
+        const id = wrap?.dataset.id;
+        if (id) this.remove(id);
+      });
+    });
+  },
+
+  renderCompleted(item) {
+    return `
+      <article class="movie-card" data-id="${Movies.escapeAttr(item.id)}">
+        <div class="movie-card-poster">
+          ${item.thumb
+            ? `<img src="${Movies.escapeAttr(item.thumb)}" alt="${Movies.escapeAttr(item.title)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+               <div class="movie-card-poster-placeholder" style="display:none;">🎬</div>`
+            : `<div class="movie-card-poster-placeholder">🎬</div>`}
+          <div class="movie-card-badge">✓ Downloaded</div>
+        </div>
+        <div class="movie-card-info">
+          <h3 class="movie-card-title">${Movies.escape(item.title)}</h3>
+          <div class="movie-card-meta">
+            <span>💾 ${Movies.formatBytes(item.size)}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  },
+
+  bindCompletedActions() {
+    this.dom.completedGrid?.querySelectorAll('.movie-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        const item = this.state.items.find(i => i.id === id);
+        if (item) {
+          Toast.show(`Playing: ${item.title}`, 'info');
+          // Actual playback from IndexedDB blob can be added here
+        }
+      });
+    });
+  },
+};
