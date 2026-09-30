@@ -125,18 +125,22 @@ const App = {
   },
 
   detectOnline() {
-    window.addEventListener('online', () => {
-      this.state.isOnline = true;
-      this.setOfflineNotice(false);
-      Toast.show('Back online', 'success');
-    });
-    window.addEventListener('offline', () => {
-      this.state.isOnline = false;
-      this.setOfflineNotice(true);
-      Toast.show('You are offline', 'warning');
-    });
-    if (!navigator.onLine) this.setOfflineNotice(true);
-  },
+  // Trust the browser's live events — don't trust navigator.onLine at load
+  this.state.isOnline = true;
+  this.setOfflineNotice(false);
+
+  window.addEventListener('online', () => {
+    this.state.isOnline = true;
+    this.setOfflineNotice(false);
+    Toast.show('Back online', 'success');
+  });
+
+  window.addEventListener('offline', () => {
+    this.state.isOnline = false;
+    this.setOfflineNotice(true);
+    Toast.show('You are offline', 'warning');
+  });
+},
 
   setOfflineNotice(show) {
     if (this.dom.offlineNotice) {
@@ -298,11 +302,6 @@ const Movies = {
 
   async search(reset) {
     if (this.state.isLoading) return;
-    if (!App.state.isOnline) {
-      this.showError('You are offline');
-      return;
-    }
-
     this.state.isLoading = true;
     if (reset) this.showLoading();
     App.showLoadingBar(true);
