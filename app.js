@@ -575,4 +575,109 @@
 
       this.dom.video?.addEventListener('timeupdate',     () => this.updateTime());
       this.dom.video?.addEventListener('loadedmetadata', () => this.updateTime());
-      this.dom.vi
+      this.dom.video?.addEventListener('error',          () => Toast.show('Playback error', 'error'));
+
+      this.dom.quality?.addEventListener('change', () => {
+        const url = this.dom.quality.value;
+        if (!url || !this.dom.video) return;
+        const t = this.dom.video.currentTime;
+        const playing = !this.dom.video.paused;
+        this.dom.video.src = url;
+        this.dom.video.currentTime = t;
+        if (playing) this.dom.video.play().catch(() => {});
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.dom.overlay && !this.dom.overlay.hidden) this.close();
+      });
+    },
+
+    open({ title, url, files }) {
+      if (!this.dom.overlay || !this.dom.video) return;
+
+      this.dom.overlay.hidden = false;
+      this.dom.title.textContent = title || '';
+      document.body.classList.add('no-scroll');
+
+      // Quality options
+      this.dom.quality.innerHTML = '';
+      if (files && files.length > 1) {
+        files.forEach((f, i) => {
+          const opt = document.createElement('option');
+          opt.value       = f.url;
+          opt.textContent = f.format || `Quality ${i + 1}`;
+          if (i === 0) opt.selected = true;
+          this.dom.quality.appendChild(opt);
+        });
+        this.dom.quality.parentElement.style.display = '';
+        this.dom.video.src = files[0].url;
+      } else {
+        this.dom.quality.parentElement.style.display = 'none';
+        this.dom.video.src = url;
+      }
+
+      this.dom.video.play().catch(() => {});
+    },
+
+    updateTime() {
+      if (!this.dom.video || !this.dom.time) return;
+      this.dom.time.textContent = `${formatTime(this.dom.video.currentTime)} / ${formatTime(this.dom.video.duration)}`;
+    },
+
+    close() {
+      if (!this.dom.overlay) return;
+      this.dom.overlay.hidden = true;
+      document.body.classList.remove('no-scroll');
+      if (this.dom.video) {
+        this.dom.video.pause();
+        this.dom.video.removeAttribute('src');
+        this.dom.video.load();
+      }
+    }
+  };
+
+  // ============================================================
+  // DOWNLOAD CONFIRM DIALOG
+  // ============================================================
+  const DownloadConfirm = {
+    dom: {},
+    onConfirm: null,
+
+    init() {
+      this.cacheDom();
+      this.bindEvents();
+    },
+
+    cacheDom() {
+      this.dom = {
+        overlay: document.getElementById('download-confirm-overlay'),
+        size:    document.getElementById('download-confirm-size'),
+        cancel:  document.getElementById('download-confirm-cancel'),
+        start:   document.getElementById('download-confirm-start')
+      };
+    },
+
+    bindEvents() {
+      this.dom.cancel?.addEventListener('click', () => this.close());
+      this.dom.start?.addEventListener('click', () => {
+        if (typeof this.onConfirm === 'function') this.onConfirm();
+        this.close();
+      });
+      this.dom.overlay?.addEventListener('click', (e) => {
+        if (e.target === this.dom.overlay) this.close();
+      });
+    },
+
+    open({ size, onConfirm }) {
+      this.dom.size.textContent = formatBytes(size);
+      this.onConfirm = onConfirm;
+      this.dom.overlay.hidden = false;
+      document.body.classList.add('no-scroll');
+    },
+
+    close() {
+      this.dom.overlay.hidden = true;
+      document.body.classList.remove('no-scroll');
+      this.onConfirm = null;
+    }
+  };
