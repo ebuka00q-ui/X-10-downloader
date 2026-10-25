@@ -3,301 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<link rel="stylesheet" href="style.css">
-    
     <title>Vic-sound</title>
-    <!-- We will load Fonts and Icons here in the CSS step -->
+    <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- APP CONTAINER -->
     <div id="app-container">
 
-        <!-- ==================== SCREEN: HOME ==================== -->
+        <!-- ================= HOME SCREEN ================= -->
         <main id="screen-home" class="app-screen active">
-            <header class="home-header">
-                <div class="search-bar">
-                    <input type="text" id="home-search-input" placeholder="Search songs, creators, albums, categories...">
+            <header class="global-header">
+                <div class="logo-area">
+                    <div class="logo-icon"></div>
+                    <div class="logo-text"><h1>Vic-sound</h1><p>Music. Your Way.</p></div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="toggle-search">🔍</button>
+                    <button class="icon-btn" id="top-bell">🔔<span class="notification-dot"></span></button>
                 </div>
             </header>
 
-            <section class="offline-section">
-                <h3>Offline</h3>
-                <p><span id="offline-count">0</span> songs</p>
-            </section>
+            <div class="search-container" id="search-area">
+                <div class="search-bar"><input type="text" placeholder="Search songs, artists, albums..."></div>
+            </div>
 
-            <section class="categories-wrapper">
-                <div class="categories-scroll">
-                    <button class="cat-btn active" data-category="All">All</button>
-                    <button class="cat-btn" data-category="Rap">Rap</button>
-                    <button class="cat-btn" data-category="Pop">Pop</button>
-                    <button class="cat-btn" data-category="Hip-Hop">Hip-Hop</button>
-                    <button class="cat-btn" data-category="Trap">Trap</button>
-                    <button class="cat-btn" data-category="Calm">Calm</button>
-                    <button class="cat-btn" data-category="Sad">Sad</button>
-                    <button class="cat-btn" data-category="Moody">Moody</button>
-                    <button class="cat-btn" data-category="Love">Love</button>
-                    <button class="cat-btn" data-category="New">New</button>
+            <!-- Offline Card (No Arrow, Exact style) -->
+            <div class="offline-card">
+                <div class="offline-top">
+                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                    <span>Offline</span>
                 </div>
-            </section>
+                <div class="offline-count"><span id="offline-num">0</span> songs</div>
+            </div>
 
-            <section class="music-list-container">
-                <ul id="home-music-list">
-                    <!-- Dynamic songs populate here -->
-                </ul>
-            </section>
+            <div class="categories-scroll">
+                <button class="cat-btn active">All</button>
+                <button class="cat-btn">Rap</button>
+                <button class="cat-btn">Pop</button>
+                <button class="cat-btn">Hip-Hop</button>
+                <button class="cat-btn">Trap</button>
+                <button class="cat-btn">Calm</button>
+                <button class="cat-btn">Sad</button>
+                <button class="cat-btn">Moody</button>
+                <button class="cat-btn">Love</button>
+                <button class="cat-btn">New</button>
+            </div>
+
+            <div class="music-list-container" id="home-list">
+                <!-- Music items populate here -->
+            </div>
         </main>
 
-        <!-- ==================== SCREEN: FAVORITES ==================== -->
+        <!-- ================= FAVORITES SCREEN ================= -->
         <main id="screen-favorites" class="app-screen">
-            <!-- Permanent Vic-sound DJ -->
-            <section class="dj-section">
-                <div class="dj-card">
-                    <div class="dj-artwork"></div>
-                    <div class="dj-info">
-                        <h2>Vic-sound DJ</h2>
-                        <p>Describe your mood, I'll build the session.</p>
-                        <button class="btn-dj-start">Start DJ</button>
+            <header class="global-header">
+                <div class="logo-area">
+                    <div class="logo-icon"></div>
+                    <div class="logo-text"><h1>Vic-sound</h1><p>Music. Your Way.</p></div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="fav-bell">🔔<span class="notification-dot"></span></button>
+                </div>
+            </header>
+
+            <!-- Permanent DJ -->
+            <div class="dj-card">
+                <h2>Vic-sound DJ</h2>
+                <p>Your personal AI music assistant</p>
+                <button class="btn-dj" id="open-dj">Talk to DJ</button>
+            </div>
+
+            <div class="collections-header">
+                <h3>Your Collections</h3>
+                <button class="btn-add-collection" id="btn-add-collection">+</button>
+            </div>
+
+            <div class="collections-grid" id="collections-grid">
+                <!-- Collections populate here -->
+            </div>
+        </main>
+
+        <!-- ================= LATEST SCREEN ================= -->
+        <main id="screen-latest" class="app-screen">
+            <header class="global-header">
+                <div class="logo-area">
+                    <div class="logo-icon"></div>
+                    <div class="logo-text"><h1>Vic-sound</h1><p>Music. Your Way.</p></div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="latest-bell">🔔<span class="notification-dot active"></span></button>
+                </div>
+            </header>
+
+            <div class="latest-header">
+                <h2>Latest Releases</h2>
+            </div>
+
+            <div id="releases-container">
+                <div class="release-card" id="release-card-1">
+                    <div class="release-art"></div>
+                    <div class="release-details">
+                        <h3>Neon Skies</h3>
+                        <p>EP • Apr 25, 2025 • 5 songs</p>
+                        <button class="btn-download" id="btn-download">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download
+                        </button>
+                        <div class="download-progress" id="dl-progress">
+                            <span class="progress-text" id="dl-text">Downloading 0 of 5</span>
+                            <div class="progress-track"><div class="progress-fill" id="dl-fill"></div></div>
+                        </div>
                     </div>
                 </div>
-            </section>
-
-            <!-- User Collections -->
-            <section class="collections-section">
-                <div class="collections-header">
-                    <h3>Your Collections</h3>
-                    <button id="btn-create-collection">+ New</button>
-                </div>
-                <div class="collections-grid" id="collections-grid">
-                    <!-- Dynamic collections populate here -->
-                </div>
-            </section>
+            </div>
         </main>
 
-        <!-- ==================== SCREEN: LATEST ==================== -->
-        <main id="screen-latest" class="app-screen">
-            <header class="latest-header">
-                <h2>Latest</h2>
-                <div class="bell-container">
-                    <button id="notification-bell" class="bell-on">
-                        <!-- Icon placeholder -->
-                    </button>
-                    <span class="bell-text" id="bell-text">Notifications: ON</span>
-                </div>
-            </header>
-
-            <section class="releases-container" id="releases-list">
-                <!-- Dynamic release cards populate here -->
-            </section>
-        </main>
-
-        <!-- ==================== SCREEN: CREATOR DASHBOARD ==================== -->
-        <!-- Hidden from normal users, accessed via a specific trigger for the creator -->
-        <main id="screen-creator" class="app-screen">
-            <header class="creator-header">
-                <button class="btn-back" data-target="home">Back</button>
-                <h2>Creator Catalog</h2>
-            </header>
-            <section class="creator-upload-section">
-                <div class="upload-box">
-                    <h3>Batch Upload</h3>
-                    <p>Drag & drop 100+ audio files, metadata, and lyrics.</p>
-                    <button class="btn-upload">Select Files</button>
-                </div>
-                <div class="processing-status">
-                    <h4>Auto-Processing Pipeline</h4>
-                    <ul>
-                        <li>Audio & Metadata [Check]</li>
-                        <li>Lyrics Analysis & Grouping [Check]</li>
-                        <li>Genre/Mood Classification [Check]</li>
-                        <li>Artwork Generation [Check]</li>
-                    </ul>
-                    <button class="btn-publish">Review & Publish</button>
-                </div>
-            </section>
-        </main>
-
-        <!-- ==================== SCREEN: FULL PLAYER ==================== -->
+        <!-- ================= FULL PLAYER (NO 3 DOTS) ================= -->
         <main id="screen-full-player" class="app-screen">
             <header class="player-header">
-                <button class="btn-back-player" data-target="home">Down</button>
+                <button class="btn-back" id="close-player">﹀</button>
                 <div class="player-titles">
-                    <h3 id="player-song-title">Song Title</h3>
-                    <p id="player-song-artist">Artist Name</p>
+                    <h3 id="full-title">Lost in Thoughts</h3>
+                    <p id="full-artist">Jay Nova</p>
                 </div>
-                <button class="btn-more">...</button>
+                <div class="blank-space"></div> <!-- Red marked item removed completely -->
             </header>
 
-            <section class="player-artwork-container">
-                <div class="player-artwork" id="player-artwork"></div>
-            </section>
+            <div class="player-artwork-container">
+                <div class="player-artwork" id="full-art"></div>
+            </div>
 
-            <section class="player-controls-section">
+            <div class="player-controls">
+                <div class="player-actions">
+                    <button id="full-like" class="btn-action">♥</button>
+                    <button id="open-queue">☰</button> <!-- The Queue Button -->
+                    <button class="btn-show-lyrics">Show Lyrics</button>
+                </div>
+
                 <div class="progress-container">
-                    <span id="current-time">0:00</span>
-                    <input type="range" id="player-progress" min="0" max="100" value="0">
-                    <span id="total-time">0:00</span>
+                    <span>1:42</span>
+                    <input type="range" value="30">
+                    <span>3:56</span>
                 </div>
 
                 <div class="main-controls">
-                    <!-- Repeat States: None, Repeat (Current), Loop (Queue) -->
-                    <button id="btn-repeat" class="btn-control inactive">Repeat</button>
-                    <button id="btn-prev" class="btn-control">Prev</button>
-                    <button id="btn-play-pause" class="btn-control btn-play">Play</button>
-                    <button id="btn-next" class="btn-control">Next</button>
-                    <!-- Queue Icon: Stacked Lines -->
-                    <button id="btn-queue" class="btn-control">Queue</button>
+                    <button class="btn-control">🔀</button>
+                    <button class="btn-control">⏮</button>
+                    <button class="btn-control btn-play" id="full-play-btn">⏸</button>
+                    <button class="btn-control">⏭</button>
+                    <button class="btn-control">🔁</button>
                 </div>
-
-                <div class="secondary-controls">
-                    <button id="btn-show-lyrics" class="btn-text">Show Lyrics</button>
+                
+                <div class="bottom-visualizer">
+                    <span></span><span></span><span></span><span></span><span></span>
                 </div>
-            </section>
+            </div>
         </main>
 
-        <!-- ==================== SCREEN: LYRICS ==================== -->
-        <main id="screen-lyrics" class="app-screen">
-            <header class="lyrics-header">
-                <button class="btn-back-lyrics" data-target="player">Down</button>
-                <div class="lyrics-titles">
-                    <h3 id="lyrics-song-title">Song Title</h3>
-                    <p id="lyrics-song-artist">Artist Name</p>
-                </div>
-            </header>
-
-            <section class="lyrics-content" id="lyrics-display">
-                <!-- Synchronized Lyrics populate here -->
-            </section>
-
-            <section class="lyrics-controls">
-                <div class="progress-container">
-                    <span id="lyrics-current-time">0:00</span>
-                    <input type="range" id="lyrics-progress" min="0" max="100" value="0">
-                    <span id="lyrics-total-time">0:00</span>
-                </div>
-                <button id="btn-lyrics-play-pause" class="btn-play">Play</button>
-            </section>
-        </main>
-
-        <!-- ==================== OVERLAY: QUEUE PANEL ==================== -->
-        <div id="panel-queue" class="app-overlay">
-            <div class="queue-header">
-                <h2>Queue & Controls</h2>
-                <button id="btn-close-queue">Close</button>
-            </div>
-            
-            <!-- Timer Section (Only exists here) -->
-            <div class="timer-section">
-                <div class="timer-header">
-                    <span>Sleep Timer</span>
-                    <span id="active-timer-display">None</span>
-                </div>
-                <div class="timer-options" id="timer-options">
-                    <button class="timer-opt" data-time="2">2 min</button>
-                    <button class="timer-opt" data-time="5">5 min</button>
-                    <button class="timer-opt" data-time="10">10 min</button>
-                    <button class="timer-opt" data-time="15">15 min</button>
-                    <button class="timer-opt" data-time="30">30 min</button>
-                    <button class="timer-opt" data-time="60">1 hour</button>
-                    <button class="timer-opt" data-time="end">End of track</button>
-                </div>
-            </div>
-
-            <!-- Queue List -->
-            <div class="queue-list-container">
-                <ul id="queue-list">
-                    <!-- Dynamic queue items populate here -->
-                </ul>
-            </div>
-        </div>
-
-        <!-- ==================== MINI PLAYER ==================== -->
-        <div id="mini-player" class="mini-player">
-            <div class="mini-player-info" id="mini-player-open">
-                <div class="mini-cover" id="mini-artwork"></div>
+        <!-- ================= MINI PLAYER ================= -->
+        <div id="mini-player">
+            <div class="mini-left" id="open-full-player">
+                <div class="mini-cover"></div>
                 <div class="mini-text">
-                    <h4 id="mini-song-title">Song Title</h4>
-                    <p id="mini-song-artist">Artist Name</p>
+                    <h4 id="mini-title">Lost in Thoughts</h4>
+                    <p id="mini-artist">Jay Nova</p>
                 </div>
             </div>
             <div class="mini-controls">
-                <button id="mini-prev">Prev</button>
-                <button id="mini-play-pause">Play</button>
-                <button id="mini-next">Next</button>
+                <button>⏮</button>
+                <button id="mini-play-btn">⏸</button>
+                <button>⏭</button>
             </div>
         </div>
 
-        <!-- ==================== BOTTOM NAVIGATION (EXACT MATCH TO IMAGE) ==================== -->
+        <!-- ================= THE BOTTOM NAVIGATION ================= -->
         <nav id="bottom-nav">
-            <div class="nav-glowing-bg"></div>
-            
-            <!-- Audio Wave Icon on the Left -->
+            <!-- Left Side Equalizer -->
             <div class="nav-equalizer">
-                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
             </div>
-
+            
             <div class="nav-items">
                 <button class="nav-btn active" data-target="home">
-                    <div class="nav-icon home-icon"></div>
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                     <span>Home</span>
                 </button>
                 <button class="nav-btn" data-target="favorites">
-                    <div class="nav-icon favorites-icon"></div>
+                    <div class="icon-wrapper">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
                     <span>Favorites</span>
                 </button>
                 <button class="nav-btn" data-target="latest">
-                    <div class="nav-icon latest-icon"></div>
+                    <div style="position:relative;">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                        <span class="notification-dot active"></span>
+                    </div>
                     <span>Latest</span>
                 </button>
             </div>
         </nav>
 
-        <!-- ==================== MODALS ==================== -->
-        
-        <!-- Collection Selector Modal -->
-        <div id="modal-collection" class="app-modal">
-            <div class="modal-content">
-                <h3>Select Collections</h3>
-                <div class="collection-options" id="collection-options-list">
-                    <!-- Dynamic checkboxes populate here -->
+        <!-- ================= QUEUE BOTTOM SHEET ================= -->
+        <div class="bottom-sheet" id="queue-sheet">
+            <div class="sheet-header">
+                <h2>Queue</h2>
+                <button class="btn-close" id="close-queue">✕</button>
+            </div>
+            <div class="queue-list">
+                <div class="queue-item current">
+                    <div class="q-cover"></div>
+                    <div class="q-info"><div class="q-title">Lost in Thoughts</div><div class="q-artist">Jay Nova</div></div>
                 </div>
-                <button id="btn-create-collection-modal" class="btn-text">+ Create New Collection</button>
-                <div class="modal-actions">
-                    <button id="btn-cancel-collection" class="btn-text">Cancel</button>
-                    <button id="btn-done-collection" class="btn-primary">Done</button>
+                <div class="queue-item">
+                    <div class="q-cover"></div>
+                    <div class="q-info"><div class="q-title">Better Days</div><div class="q-artist">Kendrick Vibes</div></div>
+                    <span class="q-badge" style="display:block;">×2</span>
                 </div>
+                <div class="queue-item">
+                    <div class="q-cover"></div>
+                    <div class="q-info"><div class="q-title">Neon Dreams</div><div class="q-artist">The Vibe Collective</div></div>
+                </div>
+                <div class="queue-item">
+                    <div class="q-cover"></div>
+                    <div class="q-info"><div class="q-title">Sunset Vibes</div><div class="q-artist">The Weeknd</div></div>
+                    <span class="q-badge" style="display:block;">×3</span>
+                </div>
+            </div>
+            <div class="queue-controls">
+                <button class="q-btn">🔀</button>
+                <button class="q-btn">♥</button>
+                <button class="q-btn active">☰</button>
+                <button class="q-btn" id="btn-timer">🕒</button>
+                <button class="q-btn">🔁</button>
             </div>
         </div>
 
-        <!-- Queue Item Long-Press Modal -->
-        <div id="modal-queue-action" class="app-modal">
-            <div class="modal-content">
-                <h3>Song Options</h3>
-                <div class="modal-actions-vertical">
-                    <button class="btn-text" id="btn-play-next">Play Next</button>
-                    <button class="btn-text" id="btn-move-song">Move</button>
-                    <button class="btn-danger" id="btn-remove-queue">Remove from queue</button>
-                    <button class="btn-text" id="btn-cancel-queue-action">Cancel</button>
-                </div>
+        <!-- ================= TIMER BOTTOM SHEET ================= -->
+        <div class="bottom-sheet timer-sheet" id="timer-sheet">
+            <div class="sheet-header">
+                <h2>🕒 Timer</h2>
+                <button class="btn-close" id="close-timer">✕</button>
+            </div>
+            <div class="timer-grid">
+                <button class="timer-opt">2m</button>
+                <button class="timer-opt">5m</button>
+                <button class="timer-opt">10m</button>
+                <button class="timer-opt">15m</button>
+                <button class="timer-opt">30m</button>
+                <button class="timer-opt">1h</button>
+                <button class="timer-opt" style="grid-column: span 3;">End of track</button>
+                <button class="timer-opt" style="grid-column: span 3;">Off</button>
             </div>
         </div>
 
-        <!-- Exit Confirmation Modal -->
-        <div id="modal-exit" class="app-modal">
-            <div class="modal-content">
-                <h3>Exit Vic-sound?</h3>
-                <p>Are you sure you want to close the app?</p>
+        <!-- ================= NEW COLLECTION MODAL ================= -->
+        <div class="modal-overlay" id="modal-add-collection">
+            <div class="modal-box">
+                <h3>Name your collection</h3>
+                <input type="text" placeholder="e.g. Workout, Chill...">
                 <div class="modal-actions">
-                    <button id="btn-exit-cancel" class="btn-text">Cancel</button>
-                    <button id="btn-exit-confirm" class="btn-danger">Exit</button>
+                    <button class="btn-cancel" id="cancel-collection">Cancel</button>
+                    <button class="btn-save" id="save-collection">Done</button>
                 </div>
             </div>
         </div>
 
     </div>
 
-<script src="app.js"></script>
-    
+    <!-- Link to the JavaScript file -->
+    <script src="app.js"></script>
 </body>
-                    </html>
+    </html>
