@@ -461,4 +461,98 @@ document.addEventListener('DOMContentLoaded', () => {
             bellBtn.classList.remove('bell-on');
             bellBtn.classList.add('bell-off');
             bellText.textContent = "Notifications: OFF";
-            bellText.classList.
+            bellText.classList.remove('on');
+            // Permission revocation logic here
+        } else {
+            bellBtn.classList.remove('bell-off');
+            bellBtn.classList.add('bell-on');
+            bellText.textContent = "Notifications: ON";
+            bellText.classList.add('on');
+            // Request browser notification permission here
+        }
+    });
+
+    const downloadBtn = document.querySelector('.btn-download');
+    downloadBtn.addEventListener('click', () => {
+        downloadBtn.textContent = "Downloading...";
+        downloadBtn.disabled = true;
+        
+        let progress = 0;
+        const downloadInterval = setInterval(() => {
+            progress += 10;
+            downloadBtn.textContent = `Downloading ${progress/10} of 10`;
+            
+            if (progress >= 100) {
+                clearInterval(downloadInterval);
+                
+                // 1. Add songs to offline array
+                offlineSongs = [...allSongs];
+                
+                // 2. Update Home UI dynamically
+                updateOfflineCount(); 
+                renderHomeSongs();
+                
+                // 3. Remove release from Latest
+                document.querySelector('.release-card').style.display = 'none';
+                
+                // Reset button for future releases
+                downloadBtn.textContent = "Download";
+                downloadBtn.disabled = false;
+            }
+        }, 300); // 3 seconds total simulation
+    });
+
+    // ==========================================
+    // 12. SYSTEM BACK BUTTON HANDLING
+    // ==========================================
+    // Handle overlays first
+    window.addEventListener('popstate', (e) => {
+        
+        // 1. Close Modals
+        if (document.querySelector('.app-modal.active')) {
+            document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
+            history.pushState({ screen: 'home' }, '', '#home');
+            return;
+        }
+
+        // 2. Close Queue Panel
+        if (queuePanel.classList.contains('active')) {
+            queuePanel.classList.remove('active');
+            history.pushState({ screen: 'player' }, '', '#player');
+            return;
+        }
+
+        // 3. Handle Screen Navigation
+        const activeScreen = document.querySelector('.app-screen.active').id;
+        
+        if (activeScreen === 'screen-lyrics') {
+            showScreen('full-player');
+            history.pushState({ screen: 'player' }, '', '#player');
+        } 
+        else if (activeScreen === 'screen-full-player') {
+            showScreen('home');
+            history.pushState({ screen: 'home' }, '', '#home');
+        } 
+        else if (activeScreen === 'screen-favorites' || activeScreen === 'screen-latest') {
+            showScreen('home');
+            history.pushState({ screen: 'home' }, '', '#home');
+        } 
+        else {
+            // 4. We are at Home. Show Exit Confirmation
+            document.getElementById('modal-exit').classList.add('active');
+            history.pushState({ screen: 'home' }, '', '#home');
+        }
+    });
+
+    // Exit Modal Buttons
+    document.getElementById('btn-exit-cancel').addEventListener('click', () => {
+        document.getElementById('modal-exit').classList.remove('active');
+    });
+    
+    document.getElementById('btn-exit-confirm').addEventListener('click', () => {
+        document.getElementById('modal-exit').classList.remove('active');
+        // In a PWA or app wrapper, this would close the app
+        alert("App Exited safely."); 
+    });
+
+});
