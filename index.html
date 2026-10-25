@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<link rel="stylesheet" href="style.css">
-    
     <title>Vic-sound</title>
-    <!-- CSS and JS will be linked here later -->
+    <!-- We will load Fonts and Icons here in the CSS step -->
 </head>
 <body>
 
@@ -18,14 +15,13 @@
         <main id="screen-home" class="app-screen active">
             <header class="home-header">
                 <div class="search-bar">
-                    <i class="icon-search"></i>
-                    <input type="text" id="home-search-input" placeholder="Search songs, artists, albums...">
+                    <input type="text" id="home-search-input" placeholder="Search songs, creators, albums, categories...">
                 </div>
             </header>
 
             <section class="offline-section">
                 <h3>Offline</h3>
-                <p id="offline-count">299 songs</p>
+                <p><span id="offline-count">0</span> songs</p>
             </section>
 
             <section class="categories-wrapper">
@@ -45,23 +41,7 @@
 
             <section class="music-list-container">
                 <ul id="home-music-list">
-                    <!-- Dynamic songs will populate here -->
-                    <li class="music-item" data-id="1">
-                        <img src="" alt="Cover" class="song-cover">
-                        <div class="song-info">
-                            <h4 class="song-title active-playing">Midnight Echoes</h4>
-                            <p class="song-artist">Vic-sound</p>
-                        </div>
-                        <button class="btn-favorite active"><i class="icon-heart"></i></button>
-                    </li>
-                    <li class="music-item" data-id="2">
-                        <img src="" alt="Cover" class="song-cover">
-                        <div class="song-info">
-                            <h4 class="song-title">Neon Nights</h4>
-                            <p class="song-artist">Vic-sound</p>
-                        </div>
-                        <button class="btn-favorite"><i class="icon-heart"></i></button>
-                    </li>
+                    <!-- Dynamic songs populate here -->
                 </ul>
             </section>
         </main>
@@ -71,12 +51,10 @@
             <!-- Permanent Vic-sound DJ -->
             <section class="dj-section">
                 <div class="dj-card">
-                    <div class="dj-artwork">
-                        <i class="icon-dj"></i>
-                    </div>
+                    <div class="dj-artwork"></div>
                     <div class="dj-info">
                         <h2>Vic-sound DJ</h2>
-                        <p>Tell me how you feel, and I'll build your session.</p>
+                        <p>Describe your mood, I'll build the session.</p>
                         <button class="btn-dj-start">Start DJ</button>
                     </div>
                 </div>
@@ -84,17 +62,12 @@
 
             <!-- User Collections -->
             <section class="collections-section">
-                <h3>Your Collections</h3>
+                <div class="collections-header">
+                    <h3>Your Collections</h3>
+                    <button id="btn-create-collection">+ New</button>
+                </div>
                 <div class="collections-grid" id="collections-grid">
-                    <!-- Dynamic collection cards -->
-                    <div class="collection-card">
-                        <div class="collection-artwork"></div>
-                        <h4>Workout</h4>
-                    </div>
-                    <div class="collection-card">
-                        <div class="collection-artwork"></div>
-                        <h4>Late Night</h4>
-                    </div>
+                    <!-- Dynamic collections populate here -->
                 </div>
             </section>
         </main>
@@ -103,24 +76,41 @@
         <main id="screen-latest" class="app-screen">
             <header class="latest-header">
                 <h2>Latest</h2>
-                <!-- Interactive Notification Bell -->
-                <button id="notification-bell" class="bell-on">
-                    <i class="icon-bell"></i>
-                </button>
+                <div class="bell-container">
+                    <button id="notification-bell" class="bell-on">
+                        <!-- Icon placeholder -->
+                    </button>
+                    <span class="bell-text" id="bell-text">Notifications: ON</span>
+                </div>
             </header>
 
-            <section class="releases-container">
-                <div class="release-card">
-                    <div class="release-artwork"></div>
-                    <div class="release-info">
-                        <h3>EP 1: The Awakening</h3>
-                        <p>EP • 5 songs • Just Now</p>
-                        <button class="btn-download">Download</button>
-                        <div class="download-progress" style="display: none;">
-                            <span class="progress-text">Downloading 1 of 5</span>
-                            <div class="progress-bar-track"><div class="progress-fill"></div></div>
-                        </div>
-                    </div>
+            <section class="releases-container" id="releases-list">
+                <!-- Dynamic release cards populate here -->
+            </section>
+        </main>
+
+        <!-- ==================== SCREEN: CREATOR DASHBOARD ==================== -->
+        <!-- Hidden from normal users, accessed via a specific trigger for the creator -->
+        <main id="screen-creator" class="app-screen">
+            <header class="creator-header">
+                <button class="btn-back" data-target="home">Back</button>
+                <h2>Creator Catalog</h2>
+            </header>
+            <section class="creator-upload-section">
+                <div class="upload-box">
+                    <h3>Batch Upload</h3>
+                    <p>Drag & drop 100+ audio files, metadata, and lyrics.</p>
+                    <button class="btn-upload">Select Files</button>
+                </div>
+                <div class="processing-status">
+                    <h4>Auto-Processing Pipeline</h4>
+                    <ul>
+                        <li>Audio & Metadata [Check]</li>
+                        <li>Lyrics Analysis & Grouping [Check]</li>
+                        <li>Genre/Mood Classification [Check]</li>
+                        <li>Artwork Generation [Check]</li>
+                    </ul>
+                    <button class="btn-publish">Review & Publish</button>
                 </div>
             </section>
         </main>
@@ -128,36 +118,35 @@
         <!-- ==================== SCREEN: FULL PLAYER ==================== -->
         <main id="screen-full-player" class="app-screen">
             <header class="player-header">
-                <button class="btn-back"><i class="icon-chevron-down"></i></button>
+                <button class="btn-back-player" data-target="home">Down</button>
                 <div class="player-titles">
-                    <h3 class="player-song-title">Midnight Echoes</h3>
-                    <p class="player-artist">Vic-sound</p>
+                    <h3 id="player-song-title">Song Title</h3>
+                    <p id="player-song-artist">Artist Name</p>
                 </div>
-                <button class="btn-options"><i class="icon-more"></i></button>
+                <button class="btn-more">...</button>
             </header>
 
             <section class="player-artwork-container">
-                <div class="player-artwork"></div>
+                <div class="player-artwork" id="player-artwork"></div>
             </section>
 
             <section class="player-controls-section">
-                <!-- Progress Bar -->
                 <div class="progress-container">
                     <span id="current-time">0:00</span>
                     <input type="range" id="player-progress" min="0" max="100" value="0">
-                    <span id="total-time">3:45</span>
+                    <span id="total-time">0:00</span>
                 </div>
 
-                <!-- Main Controls -->
                 <div class="main-controls">
-                    <button id="btn-repeat" class="btn-control inactive"><i class="icon-repeat"></i></button>
-                    <button id="btn-prev" class="btn-control"><i class="icon-prev"></i></button>
-                    <button id="btn-play-pause" class="btn-control btn-play"><i class="icon-play"></i></button>
-                    <button id="btn-next" class="btn-control"><i class="icon-next"></i></button>
-                    <button id="btn-queue" class="btn-control"><i class="icon-queue"></i></button>
+                    <!-- Repeat States: None, Repeat (Current), Loop (Queue) -->
+                    <button id="btn-repeat" class="btn-control inactive">Repeat</button>
+                    <button id="btn-prev" class="btn-control">Prev</button>
+                    <button id="btn-play-pause" class="btn-control btn-play">Play</button>
+                    <button id="btn-next" class="btn-control">Next</button>
+                    <!-- Queue Icon: Stacked Lines -->
+                    <button id="btn-queue" class="btn-control">Queue</button>
                 </div>
 
-                <!-- Secondary Controls -->
                 <div class="secondary-controls">
                     <button id="btn-show-lyrics" class="btn-text">Show Lyrics</button>
                 </div>
@@ -167,41 +156,41 @@
         <!-- ==================== SCREEN: LYRICS ==================== -->
         <main id="screen-lyrics" class="app-screen">
             <header class="lyrics-header">
-                <button class="btn-back-lyrics"><i class="icon-chevron-down"></i></button>
+                <button class="btn-back-lyrics" data-target="player">Down</button>
                 <div class="lyrics-titles">
-                    <h3>Midnight Echoes</h3>
-                    <p>Vic-sound</p>
+                    <h3 id="lyrics-song-title">Song Title</h3>
+                    <p id="lyrics-song-artist">Artist Name</p>
                 </div>
             </header>
 
             <section class="lyrics-content" id="lyrics-display">
-                <!-- Synchronized Lyrics will populate here -->
-                <p class="lyric-line active">Walking through the neon glow...</p>
-                <p class="lyric-line">Shadows dancing on the floor...</p>
-                <p class="lyric-line">I can hear the echo...</p>
+                <!-- Synchronized Lyrics populate here -->
             </section>
 
             <section class="lyrics-controls">
                 <div class="progress-container">
                     <span id="lyrics-current-time">0:00</span>
                     <input type="range" id="lyrics-progress" min="0" max="100" value="0">
-                    <span id="lyrics-total-time">3:45</span>
+                    <span id="lyrics-total-time">0:00</span>
                 </div>
-                <button id="btn-lyrics-play-pause" class="btn-control btn-play"><i class="icon-play"></i></button>
+                <button id="btn-lyrics-play-pause" class="btn-play">Play</button>
             </section>
         </main>
 
-        <!-- ==================== QUEUE PANEL (OVERLAY) ==================== -->
+        <!-- ==================== OVERLAY: QUEUE PANEL ==================== -->
         <div id="panel-queue" class="app-overlay">
             <div class="queue-header">
                 <h2>Queue & Controls</h2>
-                <button id="btn-close-queue"><i class="icon-x"></i></button>
+                <button id="btn-close-queue">Close</button>
             </div>
             
-            <!-- Timer Section -->
+            <!-- Timer Section (Only exists here) -->
             <div class="timer-section">
-                <button id="btn-timer-toggle">Set Timer <i class="icon-chevron-up"></i></button>
-                <div id="timer-options" class="hidden">
+                <div class="timer-header">
+                    <span>Sleep Timer</span>
+                    <span id="active-timer-display">None</span>
+                </div>
+                <div class="timer-options" id="timer-options">
                     <button class="timer-opt" data-time="2">2 min</button>
                     <button class="timer-opt" data-time="5">5 min</button>
                     <button class="timer-opt" data-time="10">10 min</button>
@@ -215,16 +204,7 @@
             <!-- Queue List -->
             <div class="queue-list-container">
                 <ul id="queue-list">
-                    <!-- Queue items populate here -->
-                    <li class="queue-item current">
-                        <i class="icon-drag"></i>
-                        <img src="" alt="Cover" class="queue-cover">
-                        <div class="queue-info">
-                            <h4>Midnight Echoes</h4>
-                            <p>Vic-sound</p>
-                        </div>
-                        <span class="queue-count">×1</span>
-                    </li>
+                    <!-- Dynamic queue items populate here -->
                 </ul>
             </div>
         </div>
@@ -232,33 +212,42 @@
         <!-- ==================== MINI PLAYER ==================== -->
         <div id="mini-player" class="mini-player">
             <div class="mini-player-info" id="mini-player-open">
-                <img src="" alt="Cover" class="mini-cover">
+                <div class="mini-cover" id="mini-artwork"></div>
                 <div class="mini-text">
-                    <h4>Midnight Echoes</h4>
-                    <p>Vic-sound</p>
+                    <h4 id="mini-song-title">Song Title</h4>
+                    <p id="mini-song-artist">Artist Name</p>
                 </div>
             </div>
             <div class="mini-controls">
-                <button id="mini-prev"><i class="icon-prev"></i></button>
-                <button id="mini-play-pause"><i class="icon-play"></i></button>
-                <button id="mini-next"><i class="icon-next"></i></button>
+                <button id="mini-prev">Prev</button>
+                <button id="mini-play-pause">Play</button>
+                <button id="mini-next">Next</button>
             </div>
         </div>
 
-        <!-- ==================== BOTTOM NAVIGATION ==================== -->
+        <!-- ==================== BOTTOM NAVIGATION (EXACT MATCH TO IMAGE) ==================== -->
         <nav id="bottom-nav">
-            <button class="nav-btn active" data-target="home">
-                <i class="icon-home"></i>
-                <span>Home</span>
-            </button>
-            <button class="nav-btn" data-target="favorites">
-                <i class="icon-heart"></i>
-                <span>Favorites</span>
-            </button>
-            <button class="nav-btn" data-target="latest">
-                <i class="icon-bell-outline"></i>
-                <span>Latest</span>
-            </button>
+            <div class="nav-glowing-bg"></div>
+            
+            <!-- Audio Wave Icon on the Left -->
+            <div class="nav-equalizer">
+                <span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="nav-items">
+                <button class="nav-btn active" data-target="home">
+                    <div class="nav-icon home-icon"></div>
+                    <span>Home</span>
+                </button>
+                <button class="nav-btn" data-target="favorites">
+                    <div class="nav-icon favorites-icon"></div>
+                    <span>Favorites</span>
+                </button>
+                <button class="nav-btn" data-target="latest">
+                    <div class="nav-icon latest-icon"></div>
+                    <span>Latest</span>
+                </button>
+            </div>
         </nav>
 
         <!-- ==================== MODALS ==================== -->
@@ -267,14 +256,26 @@
         <div id="modal-collection" class="app-modal">
             <div class="modal-content">
                 <h3>Select Collections</h3>
-                <div class="collection-options">
-                    <label><input type="checkbox" value="Workout"> Workout</label>
-                    <label><input type="checkbox" value="Sleep"> Sleep</label>
-                    <label><input type="checkbox" value="Sad"> Sad</label>
+                <div class="collection-options" id="collection-options-list">
+                    <!-- Dynamic checkboxes populate here -->
                 </div>
+                <button id="btn-create-collection-modal" class="btn-text">+ Create New Collection</button>
                 <div class="modal-actions">
-                    <button id="btn-cancel-collection">Cancel</button>
-                    <button id="btn-done-collection">Done</button>
+                    <button id="btn-cancel-collection" class="btn-text">Cancel</button>
+                    <button id="btn-done-collection" class="btn-primary">Done</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Item Long-Press Modal -->
+        <div id="modal-queue-action" class="app-modal">
+            <div class="modal-content">
+                <h3>Song Options</h3>
+                <div class="modal-actions-vertical">
+                    <button class="btn-text" id="btn-play-next">Play Next</button>
+                    <button class="btn-text" id="btn-move-song">Move</button>
+                    <button class="btn-danger" id="btn-remove-queue">Remove from queue</button>
+                    <button class="btn-text" id="btn-cancel-queue-action">Cancel</button>
                 </div>
             </div>
         </div>
@@ -283,16 +284,15 @@
         <div id="modal-exit" class="app-modal">
             <div class="modal-content">
                 <h3>Exit Vic-sound?</h3>
+                <p>Are you sure you want to close the app?</p>
                 <div class="modal-actions">
-                    <button id="btn-exit-cancel">Cancel</button>
-                    <button id="btn-exit-confirm">Exit</button>
+                    <button id="btn-exit-cancel" class="btn-text">Cancel</button>
+                    <button id="btn-exit-confirm" class="btn-danger">Exit</button>
                 </div>
             </div>
         </div>
 
     </div>
 
-<script src="app.js"></script>
-    
 </body>
-  </html>
+                    </html>
