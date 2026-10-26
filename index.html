@@ -1,1 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#06100d"
+    >
+
+    <meta
+        name="description"
+        content="Vic-sound — Music. Your Way."
+    >
+
+    <link rel="manifest" href="manifest.json">
+
+    <title>Vic-sound</title>
+</head>
+
+<body>
+
+    <!-- =========================================================
+         APP
+    ========================================================== -->
+
+    <main id="app">
+
+        <!-- =====================================================
+             HOME SCREEN
+        ====================================================== -->
+
+        <section
+            id="home-screen"
+            class="screen active-screen"
+            aria-label="Home"
+        >
+
+            <!-- HOME HEADER -->
+
+            <header class="app-header">
+
+                <div class="brand-area">
+
+                    <div class="app-logo">
+                        <img
+                            src="assets/vic-sound-logo.png"
+                            alt="Vic-sound logo"
+                        >
+                    </div>
+
+                    <div class="brand-text">
+                        <h1>Vic-sound</h1>
+                        <p>Music. Your Way.</p>
+                    </div>
+
+                </div>
+
+
+                <div class="header-actions">
+
+                    <!-- Search button -->
+                    <button
+                        id="search-toggle"
+                        class="icon-button"
+                        type="button"
+                        aria-label="Search music"
+                    >
+                        <span class="search-icon"></span>
+                    </button>
+
+
+                    <!-- Notification button -->
+                    <button
+                        id="notification-button"
+                        class="icon-button notification-button"
+                        type="button"
+                        aria-label="Notifications"
+                        aria-expanded="false"
+                    >
+                        <span class="notification-icon"></span>
+
+                        <!-- New-release notification dot -->
+                        <span
+                            id="notification-dot"
+                            class="notification-dot hidden"
+                            aria-hidden="true"
+                        ></span>
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- SEARCH -->
+
+            <div
+                id="search-container"
+                class="search-container hidden"
+            >
+
+                <label
+                    for="music-search"
+                    class="visually-hidden"
+                >
+                    Search music
+                </label>
+
+                <input
+                    id="music-search"
+                    type="search"
+                    placeholder="Search songs, artists, albums, etc..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <!-- NOTIFICATION POPUP -->
+
+            <div
+                id="notification-popup"
+                class="notification-popup hidden"
+                role="dialog"
+                aria-label="Notification settings"
+            >
+
+                <div class="notification-popup-content">
+
+                    <div>
+                        <h2>Notifications</h2>
+                        <p>Get notified about new releases.</p>
+                    </div>
+
+                    <label
+                        class="switch"
+                        for="notification-switch"
+                    >
+                        <input
+                            id="notification-switch"
+                            type="checkbox"
+                        >
+
+                        <span class="switch-slider"></span>
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <!-- OFFLINE MUSIC -->
+
+            <button
+                id="offline-music-card"
+                class="offline-card"
+                type="button"
+            >
+
+                <div class="offline-icon">
+                    <span class="download-icon"></span>
+                </div>
+
+                <div class="offline-info">
+                    <h2>Offline</h2>
+
+                    <p>
+                        <span id="offline-song-count">0</span>
+                        <span id="offline-song-word">songs</span>
+                    </p>
+                </div>
+
+            </button>
+
+
+            <!-- MUSIC CATEGORIES -->
+
+            <nav
+                id="music-categories"
+                class="category-scroller"
+                aria-label="Music categories"
+            >
+
+                <button
+                    class="category-button active-category"
+                    type="button"
+                    data-category="all"
+                >
+                    All
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="rap"
+                >
+                    Rap
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="pop"
+                >
+                    Pop
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="hip-hop"
+                >
+                    Hip-Hop
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="trap"
+                >
+                    Trap
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="calm"
+                >
+                    Calm
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="sad"
+                >
+                    Sad
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="moody"
+                >
+                    Moody
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="love"
+                >
+                    Love
+                </button>
+
+                <button
+                    class="category-button"
+                    type="button"
+                    data-category="new"
+                >
+                    New
+                </button>
+
+            </nav>
+
+
+            <!-- YOUR MUSIC -->
+
+            <section
+                id="your-music-section"
+                class="music-section"
+            >
+
+                <div class="section-heading">
+
+                    <h2>Your Music</h2>
+
+                    <button
+                        id="music-list-control"
+                        class="section-icon-button"
+                        type="button"
+                        aria-label="Music list controls"
+                    >
+                        <span class="list-filter-icon"></span>
+                    </button>
+
+                </div>
+
+
+                <!-- MUSIC LIST -->
+
+                <div
+                    id="music-list"
+                    class="music-list"
+                >
+
+                    <!--
+                        JavaScript will create music cards here.
+                    -->
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             FAVORITES SCREEN
+        ====================================================== -->
+
+        <section
+            id="favorites-screen"
+            class="screen"
+            aria-label="Favorites"
+        >
+
+            <header class="section-page-header">
+
+                <div>
+                    <h1>Favorites</h1>
+                    <p>Your saved music</p>
+                </div>
+
+            </header>
+
+
+            <!-- COLLECTIONS -->
+
+            <section
+                id="collections-section"
+                class="collections-section"
+            >
+
+                <div class="section-heading">
+
+                    <h2>Your Collections</h2>
+
+                    <!-- Decorative only — NOT a button -->
+                    <span
+                        class="decorative-plus"
+                        aria-hidden="true"
+                    >
+                        +
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="collections-grid"
+                    class="collections-grid"
+                >
+
+                    <!--
+                        JavaScript will create collection cards here.
+                    -->
+
+                </div>
+
+            </section>
+
+
+            <!-- FAVORITE SONGS -->
+
+            <section
+                id="favorite-songs-section"
+                class="favorite-songs-section"
+            >
+
+                <div class="section-heading">
+
+                    <h2>Favorite Songs</h2>
+
+                </div>
+
+                <div
+                    id="favorite-song-list"
+                    class="music-list"
+                >
+
+                    <!--
+                        JavaScript will create favorite songs here.
+                    -->
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             LATEST SCREEN
+        ====================================================== -->
+
+        <section
+            id="latest-screen"
+            class="screen"
+            aria-label="Latest releases"
+        >
+
+            <header class="section-page-header">
+
+                <div>
+                    <h1>Latest</h1>
+                    <p>New music releases</p>
+                </div>
+
+            </header>
+
+
+            <!-- EMPTY LATEST STATE -->
+
+            <div
+                id="latest-empty-state"
+                class="latest-empty-state"
+            >
+
+                <h2>No release yet</h2>
+
+            </div>
+
+
+            <!-- RELEASE LIST -->
+
+            <section
+                id="latest-release-list"
+                class="latest-release-list"
+            >
+
+                <!--
+                    JavaScript will create release cards here.
+
+                    IMPORTANT:
+                    These cards are for viewing/downloading only.
+                    They are NOT music playback cards.
+                -->
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             NORMAL MINI PLAYER
+        ====================================================== -->
+
+        <aside
+            id="mini-player"
+            class="mini-player hidden"
+            aria-label="Now playing"
+        >
+
+            <button
+                id="mini-player-main"
+                class="mini-player-main"
+                type="button"
+            >
+
+                <img
+                    id="mini-player-cover"
+                    class="mini-player-cover"
+                    src=""
+                    alt=""
+                >
+
+                <div class="mini-player-info">
+
+                    <h2 id="mini-player-title">
+                        —
+                    </h2>
+
+                    <p id="mini-player-artist">
+                        —
+                    </p>
+
+                </div>
+
+            </button>
+
+
+            <div class="mini-player-controls">
+
+                <button
+                    id="mini-player-previous"
+                    class="mini-control"
+                    type="button"
+                    aria-label="Previous song"
+                >
+                    <span class="previous-icon"></span>
+                </button>
+
+                <button
+                    id="mini-player-play"
+                    class="mini-control mini-play-button"
+                    type="button"
+                    aria-label="Play or pause"
+                >
+                    <span class="play-icon"></span>
+                </button>
+
+                <button
+                    id="mini-player-next"
+                    class="mini-control"
+                    type="button"
+                    aria-label="Next song"
+                >
+                    <span class="next-icon"></span>
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================================
+             NORMAL FULL-SCREEN PLAYER
+             "VICTOR 2"
+        ====================================================== -->
+
+        <section
+            id="music-player-screen"
+            class="player-screen hidden"
+            aria-label="Music player"
+        >
+
+            <header class="player-header">
+
+                <button
+                    id="player-close"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Close player"
+                >
+                    <span class="down-chevron"></span>
+                </button>
+
+                <div class="player-title-area">
+
+                    <h1 id="player-song-title">Lost in Thoughts</h1>
+                    <p id="player-song-artist">Jay Nova</p>
+
+                </div>
+
+                <button
+                    id="player-more"
+                    class="icon-button"
+                    type="button"
+                    aria-label="More options"
+                >
+                    <span class="more-icon"></span>
+                </button>
+
+            </header>
+
+
+            <!-- MUSIC COVER -->
+
+            <div class="player-cover-container">
+
+                <img
+                    id="player-cover"
+                    class="player-cover"
+                    src=""
+                    alt=""
+                >
+
+            </div>
+
+
+            <!-- PLAYER ACTIONS -->
+
+            <div class="player-actions">
+
+                <button
+                    id="player-favorite"
+                    class="player-action-button favorite-action"
+                    type="button"
+                    aria-label="Favorite song"
+                >
+                    <span class="heart-icon"></span>
+                </button>
+
+                <button
+                    id="player-queue"
+                    class="player-action-button queue-action"
+                    type="button"
+                    aria-label="Open queue"
+                >
+                    <span class="queue-icon"></span>
+                </button>
+
+                <button
+                    id="player-repeat"
+                    class="player-action-button repeat-action"
+                    type="button"
+                    aria-label="Repeat mode"
+                    data-repeat-mode="none"
+                >
+                    <span class="repeat-icon"></span>
+                </button>
+
+                <button
+                    id="player-lyrics"
+                    class="lyrics-button"
+                    type="button"
+                >
+                    <span class="lyrics-icon"></span>
+                    <span>Show Lyrics</span>
+                </button>
+
+            </div>
+
+
+            <!-- SEEK BAR -->
+
+            <div class="seek-section">
+
+                <input
+                    id="player-seek"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="0"
+                    aria-label="Music progress"
+                >
+
+                <div class="time-display">
+
+                    <span id="player-current-time">
+                        0:00
+                    </span>
+
+                    <span id="player-duration">
+                        0:00
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- MAIN PLAYBACK CONTROLS -->
+
+            <div class="player-controls">
+
+                <button
+                    id="player-shuffle"
+                    class="player-control-button"
+                    type="button"
+                    aria-label="Shuffle"
+                    aria-pressed="false"
+                >
+                    <span class="shuffle-icon"></span>
+                </button>
+
+
+                <button
+                    id="player-previous"
+                    class="player-control-button"
+                    type="button"
+                    aria-label="Previous song"
+                >
+                    <span class="previous-icon"></span>
+                </button>
+
+
+                <button
+                    id="player-play-pause"
+                    class="main-play-button"
+                    type="button"
+                    aria-label="Play or pause"
+                >
+                    <span class="play-icon"></span>
+                </button>
+
+
+                <button
+                    id="player-next"
+                    class="player-control-button"
+                    type="button"
+                    aria-label="Next song"
+                >
+                    <span class="next-icon"></span>
+                </button>
+
+
+                <button
+                    id="player-repeat-main"
+                    class="player-control-button"
+                    type="button"
+                    aria-label="Repeat"
+                    data-repeat-mode="none"
+                >
+                    <span class="repeat-icon"></span>
+                </button>
+
+            </div>
+
+
+            <!-- DECORATIVE PLAYBACK WAVE -->
+
+            <div
+                id="player-waveform"
+                class="player-waveform"
+                aria-hidden="true"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             DJ FULL-SCREEN PLAYER
+        ====================================================== -->
+
+        <section
+            id="dj-player-screen"
+            class="dj-player-screen hidden"
+            aria-label="Vic-sound DJ"
+        >
+
+            <header class="dj-player-header">
+
+                <button
+                    id="dj-player-close"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Close DJ player"
+                >
+                    <span class="down-chevron"></span>
+                </button>
+
+                <div class="dj-header-title">
+
+                    <h1>Vic-sound DJ</h1>
+                    <p>Your Personal AI Music Assistant</p>
+
+                </div>
+
+                <div class="dj-header-icon">
+                    <span>DJ</span>
+                </div>
+
+            </header>
+
+
+            <!-- EXACT DJ ARTWORK SPACE -->
+
+            <div class="dj-cover-container">
+
+                <img
+                    id="dj-cover"
+                    class="dj-cover"
+                    src="assets/vic-sound-dj.png"
+                    alt="Vic-sound DJ"
+                >
+
+            </div>
+
+
+            <!-- DJ RESPONSE / CONVERSATION -->
+
+            <section
+                id="dj-conversation"
+                class="dj-conversation"
+                aria-label="DJ conversation"
+            >
+
+             
