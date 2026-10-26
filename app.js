@@ -3030,3 +3030,287 @@ if (navLatest) {
 
                }
 
+
+/* =========================================================
+   43. LATEST NOTIFICATION
+   ========================================================= */
+
+function showLatestDot() {
+
+    if (!latestDot) {
+        return;
+    }
+
+    latestDot.classList.remove(
+        "hidden"
+    );
+
+    appState.latestViewed =
+        false;
+
+}
+
+
+function markLatestViewed() {
+
+    if (!latestDot) {
+        return;
+    }
+
+    latestDot.classList.add(
+        "hidden"
+    );
+
+    appState.latestViewed =
+        true;
+
+}
+
+
+/* =========================================================
+   44. SEARCH
+   ========================================================= */
+
+function openSearch() {
+
+    const search =
+        document.querySelector(
+            "#search"
+        );
+
+    if (!search) {
+        return;
+    }
+
+    search.classList.remove(
+        "hidden"
+    );
+
+    appState.searchOpen =
+        true;
+
+    search.focus();
+
+}
+
+
+function closeSearch() {
+
+    const search =
+        document.querySelector(
+            "#search"
+        );
+
+    if (!search) {
+        return;
+    }
+
+    search.classList.add(
+        "hidden"
+    );
+
+    search.value = "";
+
+    appState.searchOpen =
+        false;
+
+    filterMusic("");
+
+}
+
+
+document
+    .querySelectorAll(
+        "#search-button, .search-button"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    appState.searchOpen
+                ) {
+
+                    closeSearch();
+
+                } else {
+
+                    openSearch();
+
+                }
+
+            }
+        );
+
+    });
+
+
+const searchInput =
+    document.getElementById(
+        "search"
+    );
+
+if (searchInput) {
+
+    searchInput.addEventListener(
+        "input",
+        event => {
+
+            filterMusic(
+                event.target.value
+            );
+
+        }
+    );
+
+}
+
+
+function filterMusic(
+    query
+) {
+
+    const text =
+        query
+            .toLowerCase()
+            .trim();
+
+    document
+        .querySelectorAll(
+            "[data-song-id]"
+        )
+        .forEach(item => {
+
+            const id =
+                item.dataset.songId;
+
+            const song =
+                findSong(id);
+
+            if (!song) {
+                return;
+            }
+
+            const searchable =
+                (
+                    song.title +
+                    " " +
+                    song.artist +
+                    " " +
+                    song.categories.join(" ")
+                ).toLowerCase();
+
+            item.classList.toggle(
+                "hidden",
+                text !== "" &&
+                !searchable.includes(text)
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   45. CATEGORY FILTER
+   ========================================================= */
+
+document
+    .querySelectorAll(
+        "[data-category]"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const category =
+                    button.dataset.category;
+
+                document
+                    .querySelectorAll(
+                        "[data-category]"
+                    )
+                    .forEach(
+                        categoryButton => {
+
+                            categoryButton.classList.toggle(
+                                "active",
+                                categoryButton ===
+                                button
+                            );
+
+                        }
+                    );
+
+                filterCategory(
+                    category
+                );
+
+            }
+        );
+
+    });
+
+
+function filterCategory(
+    category
+) {
+
+    if (
+        !category ||
+        category.toLowerCase() ===
+        "all"
+    ) {
+
+        document
+            .querySelectorAll(
+                "[data-song-id]"
+            )
+            .forEach(item => {
+
+                item.classList.remove(
+                    "hidden"
+                );
+
+            });
+
+        return;
+
+    }
+
+    document
+        .querySelectorAll(
+            "[data-song-id]"
+        )
+        .forEach(item => {
+
+            const song =
+                findSong(
+                    item.dataset.songId
+                );
+
+            if (!song) {
+                return;
+            }
+
+            const matches =
+                song.categories.some(
+                    itemCategory =>
+                        itemCategory.toLowerCase() ===
+                        category.toLowerCase()
+                );
+
+            item.classList.toggle(
+                "hidden",
+                !matches
+            );
+
+        });
+
+}
+
+
