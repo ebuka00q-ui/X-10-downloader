@@ -1,1 +1,9 @@
-
+{
+  "name": "Vic-sound",
+  "short_name": "Vic-sound",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#020605",
+  "theme_color": "#020605",
+  "description": "Vic-sound music PWA"
+}
