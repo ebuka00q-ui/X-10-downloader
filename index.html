@@ -1457,3 +1457,114 @@ GLOBAL AUDIO
     id="audio-player"
     preload="metadata"
 ></audio>
+
+        <!--
+===============================================================
+BOTTOM NAVIGATION
+===============================================================
+-->
+
+<nav
+    id="bottom-navigation"
+    class="bottom-navigation"
+    aria-label="Main navigation"
+>
+
+    <!-- LEFT FUNCTIONAL WAVE -->
+
+    <div
+        id="navigation-wave"
+        class="navigation-wave"
+        aria-hidden="true"
+    >
+
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+
+    </div>
+
+    <!-- HOME -->
+
+    <button
+        id="nav-home"
+        class="navigation-button active-navigation"
+        type="button"
+        data-screen="home-screen"
+        aria-label="Home"
+        aria-current="page"
+    >
+
+        <span class="navigation-icon home-icon"></span>
+
+        <span class="navigation-label">
+            Home
+        </span>
+
+    </button>
+
+    <!-- FAVORITES -->
+
+    <button
+        id="nav-favorites"
+        class="navigation-button"
+        type="button"
+        data-screen="favorites-screen"
+        aria-label="Favorites"
+    >
+
+        <span class="navigation-icon favorite-nav-icon"></span>
+
+        <span class="navigation-label">
+            Favorites
+        </span>
+
+    </button>
+
+    <!-- LATEST -->
+
+    <button
+        id="nav-latest"
+        class="navigation-button"
+        type="button"
+        data-screen="latest-screen"
+        aria-label="Latest"
+    >
+
+        <span class="navigation-icon latest-nav-icon"></span>
+
+        <!-- New-release dot -->
+
+        <span
+            id="latest-dot"
+            class="latest-dot hidden"
+            aria-hidden="true"
+        ></span>
+
+        <span class="navigation-label">
+            Latest
+        </span>
+
+    </button>
+
+</nav>
+
+</main>
+
+<!--
+===============================================================
+APPLICATION SCRIPTS
+CSS and JavaScript will be connected in their own stages.
+===============================================================
+-->
+
+<script src="app.js"></script>
+
+</body>
+</html>
