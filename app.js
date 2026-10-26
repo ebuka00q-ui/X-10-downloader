@@ -1246,3 +1246,224 @@ function renderQueue() {
 
                }
 
+
+/* =========================================================
+   24. QUEUE LONG PRESS = REARRANGE
+   ========================================================= */
+
+function enableQueueLongPress(
+    element,
+    index
+) {
+
+    let timer = null;
+
+    let startY = 0;
+
+    element.addEventListener(
+        "pointerdown",
+        event => {
+
+            startY =
+                event.clientY;
+
+            timer =
+                setTimeout(() => {
+
+                    element.classList.add(
+                        "dragging"
+                    );
+
+                    element.setPointerCapture(
+                        event.pointerId
+                    );
+
+                }, 450);
+
+        }
+    );
+
+    element.addEventListener(
+        "pointermove",
+        event => {
+
+            if (
+                !element.classList.contains(
+                    "dragging"
+                )
+            ) {
+                return;
+            }
+
+            const difference =
+                event.clientY - startY;
+
+            if (
+                Math.abs(difference) < 25
+            ) {
+                return;
+            }
+
+            const direction =
+                difference < 0
+                    ? -1
+                    : 1;
+
+            const newIndex =
+                index + direction;
+
+            if (
+                newIndex >= 0 &&
+                newIndex <
+                appState.queue.length
+            ) {
+
+                const moved =
+                    appState.queue.splice(
+                        index,
+                        1
+                    )[0];
+
+                appState.queue.splice(
+                    newIndex,
+                    0,
+                    moved
+                );
+
+                appState.queueIndex =
+                    newIndex;
+
+                renderQueue();
+
+            }
+
+        }
+    );
+
+    element.addEventListener(
+        "pointerup",
+        () => {
+
+            clearTimeout(timer);
+
+            element.classList.remove(
+                "dragging"
+            );
+
+        }
+    );
+
+    element.addEventListener(
+        "pointercancel",
+        () => {
+
+            clearTimeout(timer);
+
+            element.classList.remove(
+                "dragging"
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   25. SWIPE QUEUE ITEM AWAY
+   ========================================================= */
+
+function enableQueueSwipe(
+    element,
+    index
+) {
+
+    let startX = null;
+
+    element.addEventListener(
+        "touchstart",
+        event => {
+
+            startX =
+                event.touches[0].clientX;
+
+        },
+        {
+            passive: true
+        }
+    );
+
+    element.addEventListener(
+        "touchend",
+        event => {
+
+            if (startX === null) {
+                return;
+            }
+
+            const endX =
+                event.changedTouches[0].clientX;
+
+            const distance =
+                endX - startX;
+
+            if (
+                Math.abs(distance) > 90
+            ) {
+
+                appState.queue.splice(
+                    index,
+                    1
+                );
+
+                if (
+                    appState.queueIndex >=
+                    appState.queue.length
+                ) {
+
+                    appState.queueIndex =
+                        Math.max(
+                            0,
+                            appState.queue.length - 1
+                        );
+
+                }
+
+                renderQueue();
+
+            }
+
+            startX = null;
+
+        },
+        {
+            passive: true
+        }
+    );
+
+}
+
+
+/* =========================================================
+   26. SHUFFLE
+   ========================================================= */
+
+if (queueShuffle) {
+
+    queueShuffle.addEventListener(
+        "click",
+        () => {
+
+            appState.shuffle =
+                !appState.shuffle;
+
+            queueShuffle.classList.toggle(
+                "active",
+                appState.shuffle
+            );
+
+        }
+    );
+
+}
+
