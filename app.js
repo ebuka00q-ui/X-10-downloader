@@ -1467,3 +1467,294 @@ if (queueShuffle) {
 
 }
 
+/* =========================================================
+   27. REPEAT
+   ========================================================= */
+
+if (queueRepeat) {
+
+    queueRepeat.addEventListener(
+        "click",
+        () => {
+
+            if (
+                appState.repeatMode ===
+                "none"
+            ) {
+
+                appState.repeatMode =
+                    "queue";
+
+            } else if (
+                appState.repeatMode ===
+                "queue"
+            ) {
+
+                appState.repeatMode =
+                    "current";
+
+            } else {
+
+                appState.repeatMode =
+                    "none";
+
+            }
+
+            updateRepeatButton();
+
+        }
+    );
+
+}
+
+
+function updateRepeatButton() {
+
+    if (!queueRepeat) {
+        return;
+    }
+
+    queueRepeat.dataset.repeatMode =
+        appState.repeatMode;
+
+    queueRepeat.classList.toggle(
+        "active",
+        appState.repeatMode !== "none"
+    );
+
+    if (
+        appState.repeatMode ===
+        "current"
+    ) {
+
+        queueRepeat.setAttribute(
+            "data-repeat-number",
+            "1"
+        );
+
+    } else {
+
+        queueRepeat.removeAttribute(
+            "data-repeat-number"
+        );
+
+    }
+
+}
+
+
+updateRepeatButton();
+
+
+/* =========================================================
+   28. TIMER
+   ========================================================= */
+
+if (queueTimer) {
+
+    queueTimer.addEventListener(
+        "click",
+        () => {
+
+            openTimer();
+
+        }
+    );
+
+}
+
+
+function openTimer() {
+
+    if (!timerSheet) {
+        return;
+    }
+
+    timerSheet.classList.remove(
+        "hidden"
+    );
+
+    timerSheet.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+}
+
+
+function closeTimer() {
+
+    if (!timerSheet) {
+        return;
+    }
+
+    timerSheet.classList.add(
+        "hidden"
+    );
+
+    timerSheet.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+}
+
+
+document
+    .querySelectorAll(
+        ".timer-option"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const minutes =
+                    Number(
+                        button.dataset.timer
+                    );
+
+                setPlaybackTimer(
+                    minutes
+                );
+
+                closeTimer();
+
+            }
+        );
+
+    });
+
+
+if (timerEndOfTrack) {
+
+    timerEndOfTrack.addEventListener(
+        "click",
+        () => {
+
+            appState.timerMode =
+                "end";
+
+            appState.timerEnd =
+                null;
+
+            updateTimerSelection();
+
+            closeTimer();
+
+        }
+    );
+
+}
+
+
+if (timerOff) {
+
+    timerOff.addEventListener(
+        "click",
+        () => {
+
+            clearPlaybackTimer();
+
+            closeTimer();
+
+        }
+    );
+
+}
+
+
+function setPlaybackTimer(minutes) {
+
+    appState.timerMode =
+        "countdown";
+
+    appState.timerEnd =
+        Date.now() +
+        minutes * 60 * 1000;
+
+    updateTimerSelection();
+
+}
+
+
+function clearPlaybackTimer() {
+
+    appState.timerMode =
+        "off";
+
+    appState.timerEnd =
+        null;
+
+    updateTimerSelection();
+
+}
+
+
+function checkPlaybackTimer() {
+
+    if (
+        appState.timerMode !==
+        "countdown"
+    ) {
+        return;
+    }
+
+    if (
+        Date.now() >=
+        appState.timerEnd
+    ) {
+
+        pauseSong();
+
+        clearPlaybackTimer();
+
+    }
+
+}
+
+
+function updateTimerSelection() {
+
+    document
+        .querySelectorAll(
+            ".timer-option"
+        )
+        .forEach(button => {
+
+            const minutes =
+                Number(
+                    button.dataset.timer
+                );
+
+            const selected =
+                appState.timerMode ===
+                    "countdown" &&
+                appState.timerEnd &&
+                Math.round(
+                    (
+                        appState.timerEnd -
+                        Date.now()
+                    ) /
+                    60000
+                ) === minutes;
+
+            button.classList.toggle(
+                "selected",
+                selected
+            );
+
+        });
+
+    if (timerEndOfTrack) {
+
+        timerEndOfTrack.classList.toggle(
+            "selected",
+            appState.timerMode === "end"
+        );
+
+    }
+
+}
+
