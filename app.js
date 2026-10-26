@@ -1085,7 +1085,6 @@ if (queueOpenList) {
 
 }
 
-
 /* =========================================================
    23. QUEUE CREATION
    ========================================================= */
@@ -1141,4 +1140,109 @@ function renderQueue() {
 
                 item.classList.add(
                     "current"
-     
+                );
+
+            }
+
+            item.innerHTML = `
+
+                <span class="queue-number">
+                    ${index + 1}
+                </span>
+
+                <img
+                    class="queue-item-cover"
+                    src="${song.cover}"
+                    alt=""
+                >
+
+                <div class="queue-item-info">
+
+                    <h3>
+                        ${escapeHTML(song.title)}
+                    </h3>
+
+                    <p>
+                        ${escapeHTML(song.artist)}
+                    </p>
+
+                </div>
+
+                <button
+                    class="queue-item-favorite"
+                    type="button"
+                    aria-label="Favorite ${escapeHTML(song.title)}"
+                >
+                    ♡
+                </button>
+
+                <button
+                    class="queue-item-menu"
+                    type="button"
+                    aria-label="Queue options"
+                >
+                    ☰
+                </button>
+
+            `;
+
+            const favorite =
+                item.querySelector(
+                    ".queue-item-favorite"
+                );
+
+            favorite.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+                    openCollectionPicker(
+                        song
+                    );
+
+                }
+            );
+
+            item.addEventListener(
+                "click",
+                event => {
+
+                    if (
+                        event.target.closest(
+                            "button"
+                        )
+                    ) {
+                        return;
+                    }
+
+                    appState.queueIndex =
+                        index;
+
+                    appState.djActive =
+                        false;
+
+                    playSong(
+                        song,
+                        "queue"
+                    );
+
+                }
+            );
+
+            enableQueueSwipe(item, index);
+
+            enableQueueLongPress(
+                item,
+                index
+            );
+
+            queueList.appendChild(
+                item
+            );
+
+        }
+    );
+
+               }
+
