@@ -2588,3 +2588,173 @@ function sendDJText() {
 
 
    
+/* =========================================================
+   38. HIDE DJ PLAYBACK WHILE TYPING
+   ========================================================= */
+
+function hideDJPlaybackControls() {
+
+    if (djCurrentWave) {
+
+        djCurrentWave.classList.add(
+            "hidden"
+        );
+
+    }
+
+    const controls =
+        document.getElementById(
+            "dj-playback-controls"
+        );
+
+    const seek =
+        document.getElementById(
+            "dj-seek-section"
+        );
+
+    if (controls) {
+
+        controls.classList.add(
+            "hidden"
+        );
+
+    }
+
+    if (seek) {
+
+        seek.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+function showDJPlaybackControls() {
+
+    const controls =
+        document.getElementById(
+            "dj-playback-controls"
+        );
+
+    const seek =
+        document.getElementById(
+            "dj-seek-section"
+        );
+
+    if (controls) {
+
+        controls.classList.remove(
+            "hidden"
+        );
+
+    }
+
+    if (seek) {
+
+        seek.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   39. DJ VOICE INPUT
+   ========================================================= */
+
+let recognition = null;
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.continuous =
+        true;
+
+    recognition.interimResults =
+        true;
+
+    recognition.lang =
+        "en-NG";
+
+    recognition.onstart = () => {
+
+        appState.djListening =
+            true;
+
+        appState.voiceStartTime =
+            Date.now();
+
+        if (djVoiceInput) {
+
+            djVoiceInput.classList.add(
+                "listening"
+            );
+
+        }
+
+        startVoiceLimit();
+
+    };
+
+    recognition.onresult =
+        event => {
+
+            let finalText = "";
+
+            for (
+                let i =
+                    event.resultIndex;
+                i <
+                    event.results.length;
+                i++
+            ) {
+
+                const result =
+                    event.results[i];
+
+                if (
+                    result.isFinal
+                ) {
+
+                    finalText +=
+                        result[0].transcript;
+
+                }
+
+            }
+
+            if (finalText.trim()) {
+
+                handleDJRequest(
+                    finalText.trim()
+                );
+
+            }
+
+        };
+
+    recognition.onend = () => {
+
+        stopVoiceInput();
+
+    };
+
+    recognition.onerror = () => {
+
+        stopVoiceInput();
+
+    };
+
+}
+
+
