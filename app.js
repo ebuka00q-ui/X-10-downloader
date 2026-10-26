@@ -3597,3 +3597,233 @@ function closeExitModal() {
 
            }
 
+/* =========================================================
+   50. EXIT APPLICATION
+   ========================================================= */
+
+function exitApplication() {
+
+    /*
+        Stop music before attempting to leave.
+    */
+
+    if (audio) {
+
+        audio.pause();
+
+    }
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        window.speechSynthesis.cancel();
+
+    }
+
+    /*
+        Try the normal browser/PWA close request.
+        Browsers may refuse this when the window was not
+        opened by JavaScript.
+    */
+
+    try {
+
+        window.close();
+
+    } catch (error) {}
+
+    /*
+        If the browser does not permit window.close(),
+        move backward in the app history where possible.
+    */
+
+    setTimeout(
+        () => {
+
+            try {
+
+                history.back();
+
+            } catch (error) {}
+
+        },
+        100
+    );
+
+}
+
+
+/* =========================================================
+   51. BACK BUTTON CONTROL
+   =========================================================
+
+   First Android/browser Back:
+       show Exit VixSound.
+
+   Second Back:
+       show the same confirmation again rather than
+       immediately throwing the user out.
+
+   The user must explicitly press EXIT.
+   ========================================================= */
+
+let backGuardActive = false;
+
+function installBackGuard() {
+
+    history.pushState(
+        {
+            vixsoundGuard: true
+        },
+        "",
+        location.href
+    );
+
+    backGuardActive =
+        true;
+
+}
+
+
+installBackGuard();
+
+
+window.addEventListener(
+    "popstate",
+    () => {
+
+        /*
+            Restore the history entry immediately.
+            This prevents one Back press from simply
+            throwing the PWA out.
+        */
+
+        history.pushState(
+            {
+                vixsoundGuard: true
+            },
+            "",
+            location.href
+        );
+
+        openExitModal();
+
+    }
+);
+
+
+/* =========================================================
+   52. ESCAPE KEY
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key !==
+            "Escape"
+        ) {
+            return;
+        }
+
+        const exitModal =
+            document.getElementById(
+                "exit-modal"
+            );
+
+        if (
+            exitModal &&
+            !exitModal.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            closeExitModal();
+
+            return;
+
+        }
+
+        if (
+            timerSheet &&
+            !timerSheet.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            closeTimer();
+
+            return;
+
+        }
+
+        if (
+            queueScreen &&
+            !queueScreen.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            closeQueue();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   53. INITIAL QUEUE
+   ========================================================= */
+
+if (songs.length) {
+
+    createQueue(
+        songs
+    );
+
+}
+
+
+/* =========================================================
+   54. INITIAL UI
+   ========================================================= */
+
+updatePlayingIndicators();
+
+updateNavigationWave();
+
+updateFavoriteState(
+    appState.currentSong
+);
+
+
+/* =========================================================
+   55. PREVENT ACCIDENTAL PAGE DRAGGING
+   ========================================================= */
+
+document.addEventListener(
+    "touchmove",
+    event => {
+
+        const target =
+            event.target;
+
+        if (
+            target.closest(
+                ".queue-list, .bottom-sheet, input"
+            )
+        ) {
+
+            return;
+
+        }
+
+    },
+    {
+        passive: true
+    }
+);
+       
