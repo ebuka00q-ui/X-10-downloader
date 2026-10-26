@@ -2121,4 +2121,225 @@ function updateAllFavoriteButtons() {
 
 }
 
-   
+/* =========================================================
+   32. LYRICS
+   ========================================================= */
+
+function openLyrics(song) {
+
+    if (!lyricsSheet || !song) {
+        return;
+    }
+
+    if (lyricsSongName) {
+
+        lyricsSongName.textContent =
+            song.title;
+
+    }
+
+    if (lyricsContent) {
+
+        lyricsContent.textContent =
+            song.lyrics ||
+            "Lyrics are not available yet.";
+
+    }
+
+    lyricsSheet.classList.remove(
+        "hidden"
+    );
+
+    lyricsSheet.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+}
+
+
+function closeLyrics() {
+
+    if (!lyricsSheet) {
+        return;
+    }
+
+    lyricsSheet.classList.add(
+        "hidden"
+    );
+
+    lyricsSheet.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+}
+
+
+/* =========================================================
+   33. DJ MODE
+   ========================================================= */
+
+function startDJ(song) {
+
+    if (!song) {
+
+        song =
+            songs[
+                Math.floor(
+                    Math.random() *
+                    songs.length
+                )
+            ];
+
+    }
+
+    appState.djActive =
+        true;
+
+    playSong(
+        song,
+        "dj"
+    );
+
+    updatePlayerDisplays();
+
+}
+
+
+/* =========================================================
+   34. DJ MESSAGE
+   ========================================================= */
+
+function addDJMessage(
+    text,
+    type = "dj"
+) {
+
+    if (!djMessages) {
+        return;
+    }
+
+    const message =
+        document.createElement(
+            "div"
+        );
+
+    message.className =
+        "dj-message " +
+        type;
+
+    message.textContent =
+        text;
+
+    djMessages.appendChild(
+        message
+    );
+
+    message.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+
+    return message;
+
+}
+
+
+/* =========================================================
+   35. DJ SPEAK + TYPE AT SAME TIME
+   ========================================================= */
+
+function djSpeak(
+    text
+) {
+
+    if (!text) {
+        return;
+    }
+
+    appState.djSpeaking =
+        true;
+
+    const message =
+        addDJMessage(
+            "",
+            "dj"
+        );
+
+    let character =
+        0;
+
+    const writingSpeed =
+        25;
+
+    const typing =
+        setInterval(
+            () => {
+
+                message.textContent =
+                    text.substring(
+                        0,
+                        character
+                    );
+
+                character++;
+
+                if (
+                    character >
+                    text.length
+                ) {
+
+                    clearInterval(
+                        typing
+                    );
+
+                }
+
+            },
+            writingSpeed
+        );
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        window.speechSynthesis.cancel();
+
+        const speech =
+            new SpeechSynthesisUtterance(
+                text
+            );
+
+        speech.rate = 0.95;
+
+        speech.pitch = 1;
+
+        speech.volume = 1;
+
+        speech.onend = () => {
+
+            appState.djSpeaking =
+                false;
+
+        };
+
+        window.speechSynthesis.speak(
+            speech
+        );
+
+    } else {
+
+        setTimeout(
+            () => {
+
+                appState.djSpeaking =
+                    false;
+
+            },
+            text.length * writingSpeed
+        );
+
+    }
+
+       }   
