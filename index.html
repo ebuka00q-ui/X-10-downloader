@@ -1154,3 +1154,306 @@ QUEUE SCREEN
             </section>
 
         
+<!--
+===============================================================
+TIMER BOTTOM SHEET
+===============================================================
+-->
+
+<section
+    id="timer-sheet"
+    class="bottom-sheet hidden"
+    aria-label="Playback timer"
+    aria-hidden="true"
+>
+
+    <div class="bottom-sheet-handle"></div>
+
+    <div class="timer-header">
+
+        <div class="timer-icon">
+            <span class="clock-icon"></span>
+        </div>
+
+        <div>
+
+            <h2>Timer</h2>
+
+            <p>
+                Playback will stop after the selected time.
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="timer-options">
+
+        <button
+            class="timer-option"
+            type="button"
+            data-timer="2"
+        >
+            2m
+        </button>
+
+        <button
+            class="timer-option"
+            type="button"
+            data-timer="5"
+        >
+            5m
+        </button>
+
+        <button
+            class="timer-option"
+            type="button"
+            data-timer="10"
+        >
+            10m
+        </button>
+
+        <button
+            class="timer-option"
+            type="button"
+            data-timer="15"
+        >
+            15m
+        </button>
+
+        <button
+            class="timer-option"
+            type="button"
+            data-timer="30"
+        >
+            30m
+        </button>
+
+        <button
+            class="timer-option"
+            type="button"
+            data-timer="60"
+        >
+            1h
+        </button>
+
+    </div>
+
+    <button
+        id="timer-end-of-track"
+        class="timer-special-option"
+        type="button"
+        data-timer="end"
+    >
+
+        <span class="end-track-icon"></span>
+
+        <span>End of track</span>
+
+        <span
+            id="timer-end-check"
+            class="timer-check hidden"
+        >
+            ✓
+        </span>
+
+    </button>
+
+    <button
+        id="timer-off"
+        class="timer-special-option"
+        type="button"
+        data-timer="off"
+    >
+
+        <span class="timer-off-icon"></span>
+
+        <span>Off</span>
+
+    </button>
+
+</section>
+
+<!--
+===============================================================
+FAVORITE / COLLECTION SELECTION
+===============================================================
+-->
+
+<section
+    id="collection-picker"
+    class="bottom-sheet hidden"
+    aria-label="Add music to collection"
+    aria-hidden="true"
+>
+
+    <div class="bottom-sheet-handle"></div>
+
+    <header class="picker-header">
+
+        <div>
+
+            <h2>Add to collection</h2>
+
+            <p>
+                Select where this music should be saved.
+            </p>
+
+        </div>
+
+        <button
+            id="collection-picker-close"
+            class="icon-button"
+            type="button"
+            aria-label="Close"
+        >
+            <span class="close-icon"></span>
+        </button>
+
+    </header>
+
+    <div
+        id="collection-options"
+        class="collection-options"
+    >
+
+        <!--
+            Existing collections will be generated here.
+            "All" will also be generated when collections exist.
+        -->
+
+    </div>
+
+    <button
+        id="create-collection"
+        class="create-collection-button"
+        type="button"
+    >
+        Create collection
+    </button>
+
+</section>
+
+<!--
+===============================================================
+CREATE COLLECTION
+===============================================================
+-->
+
+<section
+    id="create-collection-sheet"
+    class="bottom-sheet hidden"
+    aria-label="Create collection"
+    aria-hidden="true"
+>
+
+    <div class="bottom-sheet-handle"></div>
+
+    <div class="create-collection-content">
+
+        <h2>Create collection</h2>
+
+        <p>
+            Give your new collection a name.
+        </p>
+
+        <label
+            for="collection-name"
+            class="visually-hidden"
+        >
+            Collection name
+        </label>
+
+        <input
+            id="collection-name"
+            type="text"
+            placeholder="Collection name"
+            maxlength="50"
+            autocomplete="off"
+        >
+
+        <button
+            id="save-collection"
+            type="button"
+        >
+            Create
+        </button>
+
+    </div>
+
+</section>
+
+<!--
+===============================================================
+LYRICS SHEET
+===============================================================
+-->
+
+<section
+    id="lyrics-sheet"
+    class="bottom-sheet hidden"
+    aria-label="Lyrics"
+    aria-hidden="true"
+>
+
+    <div class="bottom-sheet-handle"></div>
+
+    <header class="lyrics-header">
+
+        <div>
+
+            <h2>Lyrics</h2>
+
+            <p id="lyrics-song-name">-</p>
+
+        </div>
+
+        <button
+            id="lyrics-close"
+            class="icon-button"
+            type="button"
+            aria-label="Close lyrics"
+        >
+            <span class="close-icon"></span>
+        </button>
+
+    </header>
+
+    <article
+        id="lyrics-content"
+        class="lyrics-content"
+    >
+
+        <!-- Lyrics will be inserted here. -->
+
+    </article>
+
+</section>
+
+<!--
+===============================================================
+DOWNLOAD STATUS
+===============================================================
+-->
+
+<div
+    id="download-status"
+    class="download-status hidden"
+    role="status"
+    aria-live="polite"
+>
+
+    <span id="download-status-text"></span>
+
+</div>
+
+<!--
+===============================================================
+GLOBAL AUDIO
+===============================================================
+-->
+
+<audio
+    id="audio-player"
+    preload="metadata"
+></audio>
