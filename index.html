@@ -1,1 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#020605">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Vic-sound</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
 
+    <header class="app-header">
+      <div class="brand-area">
+        <button class="icon-button brand-button" id="brandButton" type="button" aria-label="Vic-sound home">
+          <span class="brand-logo">VS</span>
+        </button>
+        <div class="brand-text">
+          <h1>Vic-sound</h1>
+          <p>Music. Your Way.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-button" id="searchToggle" type="button" aria-label="Search">⌕</button>
+        <button class="icon-button notification-button" id="notificationButton" type="button" aria-label="Latest releases">
+          ♧<span class="notification-dot hidden" id="latestDot"></span>
+        </button>
+      </div>
+    </header>
+
+    <section class="search-section hidden" id="searchSection">
+      <label class="search-box" for="searchInput">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Search songs, artists, albums, etc..." autocomplete="off" spellcheck="false">
+      </label>
+    </section>
+
+    <main class="main-content" id="mainContent">
+
+      <section class="screen active" id="homeScreen" data-screen="home">
+
+        <button class="offline-card" id="offlineButton" type="button">
+          <span class="offline-icon">⇩</span>
+          <span class="offline-text">
+            <strong>Offline</strong>
+            <span><span id="offlineCount">0</span> <span id="offlineLabel">songs</span></span>
+          </span>
+        </button>
+
+        <section class="category-section" aria-label="Music categories">
+          <div class="category-row" id="categoryRow">
+            <button class="category active" type="button" data-category="all">All</button>
+            <button class="category" type="button" data-category="rap">Rap</button>
+            <button class="category" type="button" data-category="pop">Pop</button>
+            <button class="category" type="button" data-category="hip-hop">Hip-Hop</button>
+            <button class="category" type="button" data-category="trap">Trap</button>
+            <button class="category" type="button" data-category="calm">Calm</button>
+            <button class="category" type="button" data-category="sad">Sad</button>
+            <button class="category" type="button" data-category="moody">Moody</button>
+            <button class="category" type="button" data-category="love">Love</button>
+            <button class="category" type="button" data-category="new">New</button>
+          </div>
+        </section>
+
+        <section class="music-section">
+          <div class="section-heading">
+            <h2>Your Music</h2>
+            <button class="icon-button small" id="musicSortButton" type="button" aria-label="Music options">≡</button>
+          </div>
+          <div class="music-list" id="homeMusicList"></div>
+        </section>
+      </section>
+
+      <section class="screen" id="favoritesScreen" data-screen="favorites">
+        <div class="screen-heading">
+          <div>
+            <h2>Favorites</h2>
+            <p>Your saved music and collections.</p>
+          </div>
+          <button class="icon-button small" id="createCollectionTop" type="button" aria-label="Create collection">+</button>
+        </div>
+
+        <section class="collections-section">
+          <div class="section-heading">
+            <h2>Your Collections</h2>
+            <button class="icon-button small" id="createCollectionButton" type="button" aria-label="Create collection">+</button>
+          </div>
+          <div class="collection-grid" id="collectionGrid"></div>
+        </section>
+
+        <section class="music-section">
+          <div class="section-heading"><h2>Favorite Music</h2></div>
+          <div class="music-list" id="favoriteMusicList"></div>
+        </section>
+      </section>
+
+      <section class="screen" id="latestScreen" data-screen="latest">
+        <div class="screen-heading">
+          <div>
+            <h2>Latest</h2>
+            <p>New releases and recently added music.</p>
+          </div>
+        </div>
+        <div class="music-list" id="latestMusicList"></div>
+      </section>
+
+    </main>
+
+    <section class="dj-entry-section" id="djEntrySection">
+      <div class="dj-entry-card">
+        <div class="dj-entry-image" id="djEntryImage">
+          <div class="dj-image-placeholder">
+            <span class="dj-symbol">VS</span>
+            <strong>DJ</strong>
+          </div>
+        </div>
+        <div class="dj-entry-info">
+          <div>
+            <h2>Vic-sound DJ</h2>
+            <p>Your personal AI music assistant</p>
+          </div>
+          <button class="dj-play-button" id="djPlayButton" type="button">
+            <span>▶</span><span>Play</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="mini-player hidden" id="miniPlayer" aria-label="Mini music player">
+      <button class="mini-player-main" id="miniPlayerOpen" type="button">
+        <div class="mini-cover" id="miniCover"><div class="cover-placeholder">VS</div></div>
+        <div class="mini-song-info">
+          <strong id="miniTitle">No music playing</strong>
+          <span id="miniArtist">Vic-sound</span>
+        </div>
+      </button>
+      <div class="mini-player-wave" id="miniWave" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="mini-controls">
+        <button class="mini-control" id="miniPrevious" type="button" aria-label="Previous music">◀</button>
+        <button class="mini-control mini-play-control" id="miniPlayPause" type="button" aria-label="Play or pause">Ⅱ</button>
+        <button class="mini-control" id="miniNext" type="button" aria-label="Next music">▶</button>
+      </div>
+    </aside>
+
+    <section class="player-screen hidden" id="musicPlayerScreen">
+      <header class="player-header">
+        <button class="icon-button" id="musicPlayerBack" type="button" aria-label="Back">⌄</button>
+        <div class="player-heading">
+          <h2 id="playerTitle">Lost in Thoughts</h2>
+          <p id="playerArtist">Jay Nova</p>
+        </div>
+        <button class="icon-button" id="playerMoreButton" type="button" aria-label="More options">⋮</button>
+      </header>
+
+      <div class="player-cover-area">
+        <div class="player-cover" id="playerCover"><div class="cover-placeholder large">VS</div></div>
+      </div>
+
+      <div class="player-actions">
+        <button class="player-action favorite-action" id="playerFavoriteButton" type="button" aria-label="Favorite">♡</button>
+        <button class="player-action" id="playerQueueButton" type="button" aria-label="Queue">≡</button>
+        <button class="player-action" id="playerRepeatButton" type="button" aria-label="Repeat">↻</button>
+        <button class="lyrics-button" id="lyricsButton" type="button">♪ <span>Show Lyrics</span></button>
+      </div>
+
+      <div class="progress-area">
+        <input id="playerProgress" type="range" min="0" max="100" value="0" aria-label="Music progress">
+        <div class="time-row"><span id="currentTime">0:00</span><span id="duration">0:00</span></div>
+      </div>
+
+      <div class="main-player-controls">
+        <button class="player-control" id="playerShuffleButton" type="button" aria-label="Shuffle">⤨</button>
+        <button class="player-control" id="playerPreviousButton" type="button" aria-label="Previous">◀</button>
+        <button class="player-main-button" id="playerPlayPause" type="button" aria-label="Play or pause">Ⅱ</button>
+        <button class="player-control" id="playerNextButton" type="button" aria-label="Next">▶</button>
+        <button class="player-control" id="playerRepeatControl" type="button" aria-label="Repeat mode">↻</button>
+      </div>
+
+      <div class="player-wave" id="playerWave" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </section>
+
+    <section class="player-screen dj-player-screen hidden" id="djPlayerScreen">
+      <header class="player-header">
+        <button class="icon-button" id="djPlayerBack" type="button" aria-label="Back">⌄</button>
+        <div class="player-heading">
+          <h2>Vic-sound DJ</h2>
+          <p>Your Personal AI Music Assistant</p>
+        </div>
+        <button class="icon-button" id="djChatTopButton" type="button" aria-label="Chat with Vic-sound DJ">♧</button>
+      </header>
+
+      <div class="dj-cover-area">
+        <div class="dj-cover" id="djCover">
+          <div class="dj-image-placeholder large"><span class="dj-symbol">VS</span><strong>DJ</strong></div>
+        </div>
+      </div>
+
+      <section class="dj-conversation" id="djConversation" aria-live="polite">
+        <div class="dj-message dj-user-message hidden" id="djUserMessage">
+          <span id="djUserText"></span>
+        </div>
+        <div class="dj-message dj-reply-message" id="djReplyMessage">
+          <div class="dj-avatar">DJ</div>
+          <div class="dj-reply-content">
+            <p id="djReplyText">Tell me what kind of music you want.</p>
+            <span class="dj-typing-indicator hidden" id="djTypingIndicator"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="dj-current-song hidden" id="djCurrentSong">
+        <div class="dj-song-cover" id="djSongCover"><div class="cover-placeholder">DJ</div></div>
+        <div class="dj-song-info">
+          <strong id="djSongTitle">Dreams Never End</strong>
+          <span id="djSongArtist">Vic-sound • Asake</span>
+        </div>
+        <div class="song-wave" id="djSongWave" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="dj-input-area" id="djInputArea">
+        <button class="dj-chat-button" id="djChatButton" type="button">
+          <span class="dj-chat-icon">♧</span><span>Tap to chat with Vic-sound DJ</span>
+        </button>
+
+        <div class="dj-text-input-wrap hidden" id="djTextInputWrap">
+          <textarea id="djTextInput" rows="1" placeholder="Tell Vic-sound DJ what you want..." maxlength="1000" autocomplete="off" spellcheck="false"></textarea>
+          <button class="dj-send-button" id="djSendButton" type="button" aria-label="Send">➤</button>
+        </div>
+
+        <button class="dj-voice-button" id="djVoiceButton" type="button" aria-label="Hold to speak to Vic-sound DJ">
+          <span class="voice-wave"><i></i><i></i><i></i><i></i><i></i></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="overlay-screen hidden" id="queueScreen">
+      <header class="overlay-header">
+        <button class="icon-button" id="queueBackButton" type="button" aria-label="Close queue">⌄</button>
+        <div><h2>Queue</h2><p><span id="queueCount">0</span> songs</p></div>
+        <button class="icon-button" id="queueCloseButton" type="button" aria-label="Close queue">×</button>
+      </header>
+
+      <div class="queue-current" id="queueCurrent">
+        <div class="queue-cover"><div class="cover-placeholder">VS</div></div>
+        <div class="queue-current-info">
+          <strong id="queueCurrentTitle">No music playing</strong>
+          <span id="queueCurrentArtist">Vic-sound</span>
+        </div>
+        <div class="song-wave small-wave" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="queue-list" id="queueList"></div>
+
+      <div class="queue-controls">
+        <button class="queue-control" id="queueShuffleButton" type="button" aria-label="Shuffle">⤨</button>
+        <button class="queue-control" id="queueFavoriteButton" type="button" aria-label="Favorite">♡</button>
+        <button class="queue-control active" id="queueButton" type="button" aria-label="Queue">≡</button>
+        <button class="queue-control" id="timerButton" type="button" aria-label="Timer">◷</button>
+        <button class="queue-control" id="queueRepeatButton" type="button" aria-label="Repeat">↻</button>
+      </div>
+    </section>
+
+    <section class="bottom-sheet hidden" id="timerSheet" aria-label="Playback timer">
+      <div class="sheet-handle"></div>
+      <div class="sheet-heading">
+        <span class="sheet-icon">◷</span>
+        <div><h2>Timer</h2><p>Playback will stop after the selected time.</p></div>
+      </div>
+      <div class="timer-options">
+        <button class="timer-option" type="button" data-timer="120">2m</button>
+        <button class="timer-option" type="button" data-timer="300">5m</button>
+        <button class="timer-option" type="button" data-timer="600">10m</button>
+        <button class="timer-option" type="button" data-timer="900">15m</button>
+        <button class="timer-option" type="button" data-timer="1800">30m</button>
+        <button class="timer-option" type="button" data-timer="3600">1h</button>
+      </div>
+      <button class="timer-special active" id="endOfTrackTimer" type="button" data-timer="end"><span>◉</span><span>End of track</span><span class="timer-check">✓</span></button>
+      <button class="timer-special" id="timerOff" type="button" data-timer="off"><span>⊘</span><span>Off</span><span class="timer-check hidden">✓</span></button>
+    </section>
+
+    <section class="bottom-sheet hidden" id="collectionSheet" aria-label="Choose collection">
+      <div class="sheet-handle"></div>
+      <div class="sheet-heading"><div><h2>Save to Collection</h2><p>Select one or more collections.</p></div></div>
+      <div class="collection-select-list" id="collectionSelectList"></div>
+      <button class="sheet-action-button" id="createCollectionFromSheet" type="button">Create collection</button>
+      <button class="sheet-action-button primary" id="saveCollectionsButton" type="button">Save</button>
+    </section>
+
+    <section class="bottom-sheet hidden" id="createCollectionSheet" aria-label="Create collection">
+      <div class="sheet-handle"></div>
+      <div class="sheet-heading"><div><h2>Create collection</h2><p>Give your new collection a name.</p></div></div>
+      <label class="collection-name-input">
+        <span>Collection name</span>
+        <input id="collectionNameInput" type="text" maxlength="50" placeholder="Enter a name..." autocomplete="off">
+      </label>
+      <button class="sheet-action-button primary" id="confirmCreateCollection" type="button">Create collection</button>
+    </section>
+
+    <section class="overlay-screen hidden" id="lyricsScreen">
+      <header class="overlay-header">
+        <button class="icon-button" id="lyricsBackButton" type="button" aria-label="Back">⌄</button>
+        <div><h2>Lyrics</h2><p id="lyricsSongTitle">Current song</p></div>
+        <span></span>
+      </header>
+      <div class="lyrics-content" id="lyricsContent"><p>Lyrics will appear here when they are available.</p></div>
+    </section>
+
+    <section class="modal-backdrop hidden" id="exitModal" aria-modal="true" role="dialog">
+      <div class="exit-modal">
+        <h2>Exit Vic-sound?</h2>
+        <p>Do you want to exit Vic-sound?</p>
+        <div class="exit-actions">
+          <button class="modal-button secondary" id="cancelExitButton" type="button">Cancel</button>
+          <button class="modal-button danger" id="confirmExitButton" type="button">Exit</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast hidden" id="toast" role="status" aria-live="polite">
+      <span id="toastMessage"></span>
+    </div>
+
+    <audio id="audioPlayer" preload="metadata"></audio>
+
+    <nav class="bottom-navigation" id="bottomNavigation" aria-label="Main navigation">
+      <div class="navigation-wave" id="navigationWave" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <button class="nav-button active" id="navHome" type="button" data-screen="home">
+        <span class="nav-icon nav-home-icon">⌂</span><span>Home</span>
+      </button>
+
+      <button class="nav-button" id="navFavorites" type="button" data-screen="favorites">
+        <span class="nav-icon nav-heart-icon">♡</span><span>Favorites</span>
+      </button>
+
+      <button class="nav-button" id="navLatest" type="button" data-screen="latest">
+        <span class="nav-icon nav-latest-icon">♧</span><span>Latest</span>
+        <span class="nav-dot hidden" id="navLatestDot"></span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
+</body>
+</html>
