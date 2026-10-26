@@ -2343,3 +2343,248 @@ function djSpeak(
     }
 
        }   
+
+/* =========================================================
+   36. DJ COMMAND UNDERSTANDING
+   =========================================================
+
+   This is the local version.
+
+   It does NOT require an external AI.
+
+   A real AI/backend can replace this function later.
+   ========================================================= */
+
+function handleDJRequest(
+    text
+) {
+
+    const request =
+        text
+            .toLowerCase()
+            .trim();
+
+    if (!request) {
+        return;
+    }
+
+    addDJMessage(
+        text,
+        "user"
+    );
+
+    let response =
+        "I understand. I'll find something that matches your vibe.";
+
+    if (
+        request.includes("calm") ||
+        request.includes("chill") ||
+        request.includes("study")
+    ) {
+
+        response =
+            "Got you. I'm going with something calm and smooth for you.";
+
+        playDJByCategory(
+            "Calm"
+        );
+
+    } else if (
+        request.includes("sad") ||
+        request.includes("emotional") ||
+        request.includes("moody")
+    ) {
+
+        response =
+            "I got you. I'm bringing up something with a deeper mood.";
+
+        playDJByCategory(
+            "Sad"
+        );
+
+    } else if (
+        request.includes("rap") ||
+        request.includes("hip hop") ||
+        request.includes("hip-hop")
+    ) {
+
+        response =
+            "Alright. Let's go with some rap and hip-hop energy.";
+
+        playDJByCategory(
+            "Rap"
+        );
+
+    } else if (
+        request.includes("love") ||
+        request.includes("romantic")
+    ) {
+
+        response =
+            "Okay. I'll put you in a love mood.";
+
+        playDJByCategory(
+            "Love"
+        );
+
+    } else if (
+        request.includes("party") ||
+        request.includes("dance")
+    ) {
+
+        response =
+            "Let's turn the energy up. Party mode is on.";
+
+        playDJByCategory(
+            "Party"
+        );
+
+    }
+
+    setTimeout(
+        () => {
+
+            djSpeak(
+                response
+            );
+
+        },
+        250
+    );
+
+}
+
+
+function playDJByCategory(
+    category
+) {
+
+    const matches =
+        songs.filter(
+            song =>
+                song.categories &&
+                song.categories.some(
+                    item =>
+                        item.toLowerCase() ===
+                        category.toLowerCase()
+                )
+        );
+
+    if (!matches.length) {
+        return;
+    }
+
+    appState.djActive =
+        true;
+
+    createQueue(
+        matches
+    );
+
+    playSong(
+        matches[0],
+        "dj"
+    );
+
+}
+
+
+/* =========================================================
+   37. DJ TEXT INPUT
+   ========================================================= */
+
+if (djChatTrigger) {
+
+    djChatTrigger.addEventListener(
+        "click",
+        () => {
+
+            if (!djTextContainer) {
+                return;
+            }
+
+            djTextContainer.classList.remove(
+                "hidden"
+            );
+
+            djChatTrigger.classList.add(
+                "hidden"
+            );
+
+            hideDJPlaybackControls();
+
+            if (djTextInput) {
+
+                setTimeout(
+                    () => {
+
+                        djTextInput.focus();
+
+                    },
+                    100
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+if (djSendMessage) {
+
+    djSendMessage.addEventListener(
+        "click",
+        sendDJText
+    );
+
+}
+
+
+if (djTextInput) {
+
+    djTextInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                event.preventDefault();
+
+                sendDJText();
+
+            }
+
+        }
+    );
+
+}
+
+
+function sendDJText() {
+
+    if (!djTextInput) {
+        return;
+    }
+
+    const text =
+        djTextInput.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    djTextInput.value = "";
+
+    handleDJRequest(
+        text
+    );
+
+       }
+
+
+   
