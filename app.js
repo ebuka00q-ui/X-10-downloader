@@ -1758,3 +1758,367 @@ function updateTimerSelection() {
 
 }
 
+/* =========================================================
+   29. FAVORITES
+   ========================================================= */
+
+function isFavorite(songId) {
+
+    return appState.favorites.includes(
+        songId
+    );
+
+}
+
+
+function openCollectionPicker(song) {
+
+    if (!song) {
+        return;
+    }
+
+    appState.favoriteTarget =
+        song;
+
+    if (!collectionPicker) {
+        return;
+    }
+
+    renderCollectionOptions();
+
+    collectionPicker.classList.remove(
+        "hidden"
+    );
+
+    collectionPicker.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+}
+
+
+function closeCollectionPicker() {
+
+    if (!collectionPicker) {
+        return;
+    }
+
+    collectionPicker.classList.add(
+        "hidden"
+    );
+
+    collectionPicker.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+}
+
+
+function renderCollectionOptions() {
+
+    if (!collectionOptions) {
+        return;
+    }
+
+    collectionOptions.innerHTML = "";
+
+    if (!appState.collections.length) {
+
+        const empty =
+            document.createElement(
+                "p"
+            );
+
+        empty.className =
+            "collection-empty";
+
+        empty.textContent =
+            "No collections yet.";
+
+        collectionOptions.appendChild(
+            empty
+        );
+
+        return;
+
+    }
+
+    appState.collections.forEach(
+        collection => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type = "button";
+
+            button.className =
+                "collection-option";
+
+            button.innerHTML = `
+
+                <span class="collection-check">
+                    ✓
+                </span>
+
+                <span>
+                    ${escapeHTML(collection.name)}
+                </span>
+
+            `;
+
+            const selected =
+                collection.songIds.includes(
+                    appState.favoriteTarget.id
+                );
+
+            button.classList.toggle(
+                "selected",
+                selected
+            );
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    toggleSongInCollection(
+                        appState.favoriteTarget,
+                        collection
+                    );
+
+                }
+            );
+
+            collectionOptions.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   30. ADD / REMOVE SONG FROM COLLECTION
+   ========================================================= */
+
+function toggleSongInCollection(
+    song,
+    collection
+) {
+
+    const position =
+        collection.songIds.indexOf(
+            song.id
+        );
+
+    if (position === -1) {
+
+        collection.songIds.push(
+            song.id
+        );
+
+    } else {
+
+        collection.songIds.splice(
+            position,
+            1
+        );
+
+    }
+
+    saveSavedData();
+
+    updateFavoriteState(song);
+
+    renderCollectionOptions();
+
+}
+
+
+/* =========================================================
+   31. CREATE COLLECTION
+   ========================================================= */
+
+if (createCollectionButton) {
+
+    createCollectionButton.addEventListener(
+        "click",
+        () => {
+
+            if (!appState.favoriteTarget) {
+                return;
+            }
+
+            if (createCollectionSheet) {
+
+                createCollectionSheet.classList.remove(
+                    "hidden"
+                );
+
+                createCollectionSheet.setAttribute(
+                    "aria-hidden",
+                    "false"
+                );
+
+            }
+
+            if (collectionName) {
+
+                collectionName.value = "";
+
+                setTimeout(
+                    () => collectionName.focus(),
+                    150
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+if (saveCollection) {
+
+    saveCollection.addEventListener(
+        "click",
+        () => {
+
+            const name =
+                collectionName
+                    ? collectionName.value.trim()
+                    : "";
+
+            if (!name) {
+                return;
+            }
+
+            const song =
+                appState.favoriteTarget;
+
+            const newCollection = {
+
+                id:
+                    "collection-" +
+                    Date.now(),
+
+                name: name,
+
+                songIds: [
+                    song.id
+                ]
+
+            };
+
+            appState.collections.push(
+                newCollection
+            );
+
+            saveSavedData();
+
+            closeCreateCollection();
+
+            renderCollectionOptions();
+
+            updateFavoriteState(song);
+
+        }
+    );
+
+}
+
+
+function closeCreateCollection() {
+
+    if (!createCollectionSheet) {
+        return;
+    }
+
+    createCollectionSheet.classList.add(
+        "hidden"
+    );
+
+    createCollectionSheet.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+}
+
+
+function updateFavoriteState(song) {
+
+    const belongsToCollection =
+        appState.collections.some(
+            collection =>
+                collection.songIds.includes(
+                    song.id
+                )
+        );
+
+    if (belongsToCollection) {
+
+        if (
+            !appState.favorites.includes(
+                song.id
+            )
+        ) {
+
+            appState.favorites.push(
+                song.id
+            );
+
+        }
+
+    } else {
+
+        appState.favorites =
+            appState.favorites.filter(
+                id => id !== song.id
+            );
+
+    }
+
+    saveSavedData();
+
+    updateAllFavoriteButtons();
+
+}
+
+
+function updateAllFavoriteButtons() {
+
+    document
+        .querySelectorAll(
+            "[data-song-id]"
+        )
+        .forEach(element => {
+
+            const id =
+                element.dataset.songId;
+
+            const heart =
+                element.querySelector(
+                    ".heart-icon, .favorite-icon, .heart"
+                );
+
+            if (!heart) {
+                return;
+            }
+
+            heart.classList.toggle(
+                "filled",
+                isFavorite(id)
+            );
+
+        });
+
+}
+
+   
