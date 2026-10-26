@@ -3313,4 +3313,57 @@ function filterCategory(
 
 }
 
+/* =========================================================
+   46. OFFLINE SONG COUNT
+   ========================================================= */
+
+function updateOfflineCount() {
+
+    const offlineCount =
+        document.querySelector(
+            "#offline-count"
+        );
+
+    if (!offlineCount) {
+        return;
+    }
+
+    const offlineSongs =
+        songs.filter(
+            song =>
+                song.offline === true
+        );
+
+    const count =
+        offlineSongs.length;
+
+    offlineCount.textContent =
+        count;
+
+}
+
+
+updateOfflineCount();
+
+
+/* =========================================================
+   47. SAFE TEXT
+   ========================================================= */
+
+function escapeHTML(
+    text
+) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        String(text);
+
+    return div.innerHTML;
+
+}
+
 
