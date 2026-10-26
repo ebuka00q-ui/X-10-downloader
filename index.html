@@ -760,11 +760,142 @@
 
             </header>
 
+<!-- EXACT DJ ARTWORK SPACE -->
 
-            <!-- EXACT DJ ARTWORK SPACE -->
+<div class="dj-cover-container">
 
-            <div class="dj-cover-container">
+    <img
+        id="dj-cover"
+        class="dj-cover"
+        src="assets/vic-sound-dj.png"
+        alt="Vic-sound DJ"
+    >
 
-                <img
-                    id="dj-cover"
-        
+</div>
+
+<!-- DJ RESPONSE / CONVERSATION -->
+
+<section
+    id="dj-conversation"
+    class="dj-conversation"
+    aria-label="DJ conversation"
+>
+
+    <div
+        id="dj-messages"
+        class="dj-messages"
+    >
+
+        <!--
+            JavaScript will insert actual DJ messages here.
+
+            The example messages from the design are NOT
+            hardcoded into the application.
+        -->
+
+    </div>
+
+</section>
+
+<!-- DJ CURRENT MUSIC -->
+
+<section
+    id="dj-current-track"
+    class="dj-current-track"
+>
+
+    <img
+        id="dj-current-cover"
+        src="assets/vic-sound-dj.png"
+        alt="DJ music"
+    >
+
+    <div class="dj-current-info">
+
+        <h2 id="dj-current-title">-</h2>
+
+        <p id="dj-current-artist">-</p>
+
+    </div>
+
+    <div
+        id="dj-current-wave"
+        class="dj-current-wave"
+        aria-hidden="true"
+    >
+
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+
+    </div>
+
+</section>
+
+<!-- DJ PLAYBACK CONTROLS -->
+
+<div
+    id="dj-playback-controls"
+    class="dj-playback-controls"
+>
+
+    <button
+        id="dj-start-over"
+        class="dj-control-button"
+        type="button"
+        aria-label="Start over or previous"
+    >
+        <span class="start-over-icon"></span>
+    </button>
+
+    <button
+        id="dj-play-pause"
+        class="dj-main-play-button"
+        type="button"
+        aria-label="Play or pause DJ music"
+    >
+        <span class="pause-icon"></span>
+    </button>
+
+    <button
+        id="dj-next"
+        class="dj-control-button"
+        type="button"
+        aria-label="Next DJ song"
+    >
+        <span class="next-icon"></span>
+    </button>
+
+</div>
+
+<!-- DJ SEEK BAR -->
+
+<div
+    id="dj-seek-section"
+    class="dj-seek-section"
+>
+
+    <input
+        id="dj-seek"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        aria-label="DJ music progress"
+    >
+
+    <div class="time-display">
+
+        <span id="dj-current-time">
+            0:00
+        </span>
+
+        <span id="dj-duration">
+            0:00
+        </span>
+
+    </div>
+
+</div>
