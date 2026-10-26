@@ -3367,3 +3367,233 @@ function escapeHTML(
 }
 
 
+/* =========================================================
+   48. DISABLE LONG-PRESS COPYING
+   ========================================================= */
+
+document.addEventListener(
+    "contextmenu",
+    event => {
+
+        event.preventDefault();
+
+    }
+);
+
+
+document.addEventListener(
+    "copy",
+    event => {
+
+        event.preventDefault();
+
+    }
+);
+
+
+document.addEventListener(
+    "cut",
+    event => {
+
+        event.preventDefault();
+
+    }
+);
+
+
+document.addEventListener(
+    "dragstart",
+    event => {
+
+        event.preventDefault();
+
+    }
+);
+
+
+document.addEventListener(
+    "selectstart",
+    event => {
+
+        /*
+            Don't interfere with actual text inputs.
+        */
+
+        if (
+            event.target.matches(
+                "input, textarea"
+            )
+        ) {
+
+            return;
+
+        }
+
+        event.preventDefault();
+
+    }
+);
+
+
+/* =========================================================
+   49. EXIT CONFIRMATION
+   ========================================================= */
+
+function createExitModal() {
+
+    if (
+        document.getElementById(
+            "exit-modal"
+        )
+    ) {
+        return;
+    }
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+    modal.id =
+        "exit-modal";
+
+    modal.className =
+        "exit-modal hidden";
+
+    modal.innerHTML = `
+
+        <div
+            class="exit-modal-backdrop"
+        ></div>
+
+        <div
+            class="exit-modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="exit-title"
+        >
+
+            <h2 id="exit-title">
+                Exit Vic-sound 
+            </h2>
+
+            <p>
+                Do you want to exit Vic-sound?
+            </p>
+
+            <div class="exit-modal-buttons">
+
+                <button
+                    id="exit-cancel"
+                    type="button"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    id="exit-confirm"
+                    type="button"
+                >
+                    Exit
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+    document.body.appendChild(
+        modal
+    );
+
+    const cancel =
+        document.getElementById(
+            "exit-cancel"
+        );
+
+    const confirm =
+        document.getElementById(
+            "exit-confirm"
+        );
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            closeExitModal
+        );
+
+    }
+
+    if (confirm) {
+
+        confirm.addEventListener(
+            "click",
+            exitApplication
+        );
+
+    }
+
+    const backdrop =
+        modal.querySelector(
+            ".exit-modal-backdrop"
+        );
+
+    if (backdrop) {
+
+        backdrop.addEventListener(
+            "click",
+            closeExitModal
+        );
+
+    }
+
+}
+
+
+function openExitModal() {
+
+    createExitModal();
+
+    const modal =
+        document.getElementById(
+            "exit-modal"
+        );
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove(
+        "hidden"
+    );
+
+    document.body.classList.add(
+        "exit-confirmation-open"
+    );
+
+}
+
+
+function closeExitModal() {
+
+    const modal =
+        document.getElementById(
+            "exit-modal"
+        );
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.add(
+        "hidden"
+    );
+
+    document.body.classList.remove(
+        "exit-confirmation-open"
+    );
+
+           }
+
