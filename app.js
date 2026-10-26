@@ -2757,4 +2757,276 @@ if (SpeechRecognition) {
 
 }
 
+/* =========================================================
+   40. HOLD TO SPEAK
+   ========================================================= */
+
+if (djVoiceInput) {
+
+    djVoiceInput.addEventListener(
+        "pointerdown",
+        event => {
+
+            event.preventDefault();
+
+            startVoiceInput();
+
+        }
+    );
+
+    djVoiceInput.addEventListener(
+        "pointerup",
+        event => {
+
+            event.preventDefault();
+
+            stopVoiceInput();
+
+        }
+    );
+
+    djVoiceInput.addEventListener(
+        "pointercancel",
+        stopVoiceInput
+    );
+
+    djVoiceInput.addEventListener(
+        "pointerleave",
+        event => {
+
+            if (
+                appState.djListening
+            ) {
+
+                stopVoiceInput();
+
+            }
+
+        }
+    );
+
+}
+
+
+function startVoiceInput() {
+
+    if (!recognition) {
+
+        djSpeak(
+            "Voice input is not supported by this browser. You can type your request instead."
+        );
+
+        return;
+
+    }
+
+    if (appState.djListening) {
+        return;
+    }
+
+    try {
+
+        recognition.start();
+
+    } catch (error) {
+
+        stopVoiceInput();
+
+    }
+
+}
+
+
+function stopVoiceInput() {
+
+    if (!appState.djListening) {
+        return;
+    }
+
+    appState.djListening =
+        false;
+
+    if (djVoiceInput) {
+
+        djVoiceInput.classList.remove(
+            "listening"
+        );
+
+    }
+
+    clearInterval(
+        appState.voiceTimer
+    );
+
+    if (recognition) {
+
+        try {
+
+            recognition.stop();
+
+        } catch (error) {}
+
+    }
+
+}
+
+
+/* =========================================================
+   41. 50 SECOND VOICE LIMIT
+   ========================================================= */
+
+function startVoiceLimit() {
+
+    clearInterval(
+        appState.voiceTimer
+    );
+
+    appState.voiceTimer =
+        setInterval(
+            () => {
+
+                if (!appState.djListening) {
+
+                    clearInterval(
+                        appState.voiceTimer
+                    );
+
+                    return;
+
+                }
+
+                const elapsed =
+                    Date.now() -
+                    appState.voiceStartTime;
+
+                if (
+                    elapsed >=
+                    50000
+                ) {
+
+                    stopVoiceInput();
+
+                }
+
+            },
+            250
+        );
+
+}
+
+
+/* =========================================================
+   42. NAVIGATION
+   ========================================================= */
+
+function switchScreen(
+    screenId
+) {
+
+    document
+        .querySelectorAll(
+            ".screen, [data-screen-panel]"
+        )
+        .forEach(screen => {
+
+            screen.classList.toggle(
+                "hidden",
+                screen.id !== screenId
+            );
+
+        });
+
+    document
+        .querySelectorAll(
+            ".navigation-button"
+        )
+        .forEach(button => {
+
+            const active =
+                button.dataset.screen ===
+                screenId;
+
+            button.classList.toggle(
+                "active-navigation",
+                active
+            );
+
+            if (active) {
+
+                button.setAttribute(
+                    "aria-current",
+                    "page"
+                );
+
+            } else {
+
+                button.removeAttribute(
+                    "aria-current"
+                );
+
+            }
+
+        });
+
+    appState.currentScreen =
+        screenId;
+
+    if (
+        screenId ===
+        "latest-screen"
+    ) {
+
+        markLatestViewed();
+
+    }
+
+}
+
+
+if (navHome) {
+
+    navHome.addEventListener(
+        "click",
+        () => {
+
+            switchScreen(
+                "home-screen"
+            );
+
+        }
+    );
+
+}
+
+
+if (navFavorites) {
+
+    navFavorites.addEventListener(
+        "click",
+        () => {
+
+            switchScreen(
+                "favorites-screen"
+            );
+
+        }
+    );
+
+}
+
+
+if (navLatest) {
+
+    navLatest.addEventListener(
+        "click",
+        () => {
+
+            switchScreen(
+                "latest-screen"
+            );
+
+        }
+    );
+
+               }
 
