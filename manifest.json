@@ -1,9 +1,24 @@
 {
   "name": "Vic-sound",
   "short_name": "Vic-sound",
-  "start_url": "file_000000008d2881f49ddcc5378e7331fa.png./",
+  "description": "Vic-sound music player and personal AI music assistant.",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#020605",
-  "theme_color": "#020605",
-  "description": "Vic-sound music PWA"
+  "background_color": "#020908",
+  "theme_color": "#00f5a0",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "YOUR-ICON-FILENAME-HERE",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "YOUR-ICON-FILENAME-HERE",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
