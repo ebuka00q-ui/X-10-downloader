@@ -572,4 +572,247 @@
       return;
     }
 
-    // On Home, t
+    
+    // On Home, the first back press arms exit; it does NOT stop music.
+    if (!state.exitArmed) {
+      state.exitArmed = true;
+      toast("Press back again to exit Vic-sound");
+      setTimeout(() => { state.exitArmed = false; }, 2200);
+      return;
+    }
+
+    // A web app cannot force-close every browser/PWA window. The browser decides whether
+    // the history entry/window can actually be closed.
+    state.exitArmed = false;
+    toast("Exit Vic-sound");
+    try { window.close(); } catch {}
+  }
+
+  function installBackHandling() {
+    // Keep an in-app history stack so one Back moves one UI level at a time.
+    history.replaceState({ vicsound: true, view: "homeView" }, "", location.href);
+    window.addEventListener("popstate", () => {
+      history.pushState({ vicsound: true }, "", location.href);
+      goBackOneStep();
+    });
+    window.addEventListener("beforeunload", () => {
+      // Do not stop the audio here. The browser controls actual process/window lifetime.
+    });
+  }
+
+  function disableCopying() {
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+    document.addEventListener("selectstart", (e) => {
+      if (!e.target.matches("input, textarea")) e.preventDefault();
+    });
+    document.addEventListener("dragstart", (e) => e.preventDefault());
+  }
+
+  function injectPolish() {
+    if ($("vicsound-js-polish")) return;
+    const style = document.createElement("style");
+    style.id = "vicsound-js-polish";
+    style.textContent = `
+      :root{--vs-green:#38f58a;--vs-green-soft:rgba(56,245,138,.16);--vs-black:#050907;--vs-panel:rgba(11,19,15,.96)}
+      body{background:radial-gradient(circle at 50% -10%,rgba(56,245,138,.08),transparent 35%),var(--vs-black)}
+      .nav-wave,.play-wave,.player-wave,.mini-wave{color:var(--vs-green);text-shadow:0 0 14px rgba(56,245,138,.25)}
+      .nav-wave.playing,.play-wave:not(.stopped),.player-wave.playing{animation:vsWave 900ms ease-in-out infinite alternate}
+      .nav-wave{opacity:.42}
+      .mini-player{box-shadow:0 -10px 30px rgba(0,0,0,.28),0 0 24px rgba(56,245,138,.08)}
+      .card-heart.liked{color:var(--vs-green);text-shadow:0 0 12px rgba(56,245,138,.5)}
+      .notification-dot{background:var(--vs-green);box-shadow:0 0 10px var(--vs-green)}
+      .download-progress{background:var(--vs-green)!important;box-shadow:0 0 12px rgba(56,245,138,.35)}
+      .empty-state{opacity:.72;text-align:center;padding:40px 20px}
+      .cover-image{display:block;width:100%;height:100%;background-size:cover;background-position:center;border-radius:inherit}
+      .collection-main{display:block;width:100%;background:transparent;border:0;color:inherit;text-align:left;padding:0;font:inherit}
+      .collection-card{position:relative}
+      .collection-menu{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.45);border:0;color:inherit;border-radius:50%;width:36px;height:36px}
+      .lyrics-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.62);display:grid;place-items:end center;padding:16px}
+      .lyrics-panel{width:min(720px,100%);max-height:88vh;overflow:auto;background:var(--vs-panel);border:1px solid rgba(56,245,138,.2);border-radius:26px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+      .lyrics-close{float:right;border:0;background:transparent;color:inherit;font-size:28px}
+      .lyrics-body{margin-top:24px;line-height:1.9;white-space:pre-wrap;opacity:.9}
+      @keyframes vsWave{from{transform:scaleY(.65);opacity:.42}to{transform:scaleY(1.35);opacity:1}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function bindEvents() {
+    $("searchToggle")?.addEventListener("click", toggleSearch);
+    $("searchInput")?.addEventListener("input", renderHome);
+
+    $("categories")?.addEventListener("click", (e) => {
+      const button = e.target.closest(".category");
+      if (!button) return;
+      state.category = button.dataset.category || "all";
+      $$(".category").forEach((b) => b.classList.toggle("active", b === button));
+      renderHome();
+    });
+
+    $("homeSongs")?.addEventListener("click", (e) => {
+      const heart = e.target.closest("[data-like]");
+      if (heart) { addToCollections(heart.dataset.like); return; }
+      const card = e.target.closest(".song-card");
+      if (card) startSong(card.dataset.id);
+    });
+
+    $("collections")?.addEventListener("click", (e) => {
+      const menu = e.target.closest("[data-collection-menu]");
+      if (menu) { collectionMenu(Number(menu.dataset.collectionMenu)); return; }
+      const open = e.target.closest("[data-open-collection]");
+      if (open) {
+        const c = state.collections[Number(open.dataset.openCollection)];
+        if (!c) return;
+        state.queue = c.songIds.slice();
+        if (state.queue.length) startSong(state.queue[0]);
+      }
+    });
+
+    $("latestList")?.addEventListener("click", (e) => {
+      const button = e.target.closest("[data-release]");
+      if (button) simulateReleaseDownload(button.dataset.release);
+    });
+
+    $("bellButton")?.addEventListener("click", () => {
+      if (state.view === "latestView") openNotifications();
+    });
+    $("notificationSwitch")?.addEventListener("change", toggleNotifications);
+
+    $$(".nav-button").forEach((button) => button.addEventListener("click", () => {
+      setView(button.dataset.view);
+      if (button.dataset.view === "latestView") closeNotifications();
+    }));
+
+    $("djPlay")?.addEventListener("click", () => {
+      // DJ backend is intentionally not hardcoded here. This starts the catalog's DJ slot.
+      const first = state.queue[0] || songs[0]?.id;
+      if (first) startSong(first);
+    });
+
+    [$("miniCover"), $("miniInfo")].forEach((el) => el?.addEventListener("click", openPlayer));
+    $("miniPlay")?.addEventListener("click", togglePlay);
+    $("miniNext")?.addEventListener("click", nextSong);
+    $("miniPrev")?.addEventListener("click", previousOrRestart);
+
+    $("playerBack")?.addEventListener("click", closePlayer);
+    $("playerPlay")?.addEventListener("click", togglePlay);
+    $("playerNext")?.addEventListener("click", nextSong);
+    $("playerPrev")?.addEventListener("click", previousOrRestart);
+    $("queueOpen")?.addEventListener("click", openQueue);
+    $("queueClose")?.addEventListener("click", closeQueue);
+    $("timerButton")?.addEventListener("click", openTimer);
+    $("playerTimer")?.addEventListener("click", openTimer);
+    $("timerClose")?.addEventListener("click", closeTimer);
+    $("lyricsButton")?.addEventListener("click", showLyrics);
+
+    $("timerOptions")?.addEventListener("click", (e) => {
+      const option = e.target.closest("[data-minutes]");
+      if (option) setTimer(option.dataset.minutes);
+    });
+
+    $("queueList")?.addEventListener("click", (e) => {
+      const repeat = e.target.closest("[data-repeat]");
+      if (repeat) { cycleRepeat(repeat.dataset.repeat); return; }
+      const row = e.target.closest(".queue-item");
+      if (row) startSong(row.dataset.id);
+    });
+
+    // Long press + drag/drop rearranges the queue. Swipe left/right removes it.
+    let dragId = null;
+    $("queueList")?.addEventListener("dragstart", (e) => {
+      const row = e.target.closest(".queue-item");
+      if (!row) return;
+      dragId = Number(row.dataset.id);
+      e.dataTransfer.setData("text/plain", String(dragId));
+    });
+    $("queueList")?.addEventListener("dragover", (e) => e.preventDefault());
+    $("queueList")?.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const target = e.target.closest(".queue-item");
+      if (!target || dragId == null) return;
+      const targetId = Number(target.dataset.id);
+      if (dragId === targetId) return;
+      const from = state.queue.indexOf(dragId);
+      const to = state.queue.indexOf(targetId);
+      if (from < 0 || to < 0) return;
+      state.queue.splice(from, 1);
+      state.queue.splice(to, 0, dragId);
+      renderQueue();
+      dragId = null;
+    });
+
+    audio.addEventListener("play", () => { state.playing = true; updateUI(); renderHome(); });
+    audio.addEventListener("pause", () => { state.playing = false; updateUI(); renderHome(); });
+    audio.addEventListener("timeupdate", updateUI);
+    audio.addEventListener("ended", handleEnded);
+    $("progress")?.addEventListener("input", (e) => {
+      if (!audio.duration) return;
+      audio.currentTime = (Number(e.target.value) / 100) * audio.duration;
+      updateUI();
+    });
+
+    // A simple touch gesture for queue removal; no trash button is shown.
+    let touchStartX = 0;
+    let touchId = null;
+    $("queueList")?.addEventListener("touchstart", (e) => {
+      const row = e.target.closest(".queue-item");
+      if (!row) return;
+      touchId = Number(row.dataset.id);
+      touchStartX = e.changedTouches[0].clientX;
+    }, { passive: true });
+    $("queueList")?.addEventListener("touchend", (e) => {
+      if (touchId == null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 80) {
+        state.queue = state.queue.filter((id) => id !== touchId);
+        state.repeat.delete(touchId);
+        renderQueue();
+      }
+      touchId = null;
+    }, { passive: true });
+
+    // Any touch outside the notification panel/switch closes its popup.
+    document.addEventListener("pointerdown", (e) => {
+      const panel = $("notificationPanel");
+      if (!panel || panel.classList.contains("hidden")) return;
+      if (!e.target.closest("#notificationPanel") && !e.target.closest("#bellButton")) closeNotifications();
+    });
+
+    window.addEventListener("online", () => {
+      renderLatest();
+      toast("Back online");
+      state.releases.filter((r) => r.downloading).forEach((r) => simulateReleaseDownload(r.id));
+    });
+    window.addEventListener("offline", () => {
+      toast("You are offline");
+      renderLatest();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") goBackOneStep();
+    });
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("./sw.js", { scope: "./" })
+      .then((registration) => registration.update().catch(() => {}))
+      .catch((error) => console.warn("Vic-sound service worker registration failed:", error));
+  }
+
+  function init() {
+    injectPolish();
+    bindEvents();
+    installBackHandling();
+    disableCopying();
+    renderHome();
+    renderCollections();
+    renderLatest();
+    if ($("notificationSwitch")) $("notificationSwitch").checked = state.notifications;
+    updateUI();
+    registerServiceWorker();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+        
