@@ -12,7 +12,9 @@
 <body>
 <main class="app-shell">
   <header class="app-header">
-    <button class="app-icon" aria-label="Vic-sound app icon placeholder"><span>VS</span></button>
+    <button class="app-icon" aria-label="Vic-sound">
+  <img src="./YOUR-ICON-FILENAME.png" alt="Vic-sound">
+    </button>
     <div class="brand"><h1>Vic-sound</h1><p>Music. Your Way.</p></div>
     <div class="header-actions">
       <button class="header-button home-only" id="searchToggle" aria-label="Search">⌕</button>
@@ -26,7 +28,14 @@
 
   <!-- ==================== HOME ==================== -->
   <section class="screen active" id="homeScreen">
-    <div class="offline-card"><div class="offline-icon">⇩</div><div><b>Offline</b><small>299 songs</small></div><strong>›</strong></div>
+    <div class="offline-card">
+  <div class="offline-icon">⇩</div>
+  <div>
+    <b>Offline</b>
+    <small id="offlineCount">0 songs</small>
+  </div>
+  <strong>›</strong>
+    </div>
     <div class="category-row" id="categoryRow">
       <button class="category active" data-category="All">All</button><button class="category" data-category="Rap">Rap</button><button class="category" data-category="Pop">Pop</button><button class="category" data-category="Hip-Hop">Hip-Hop</button><button class="category" data-category="Trap">Trap</button><button class="category" data-category="Calm">Calm</button><button class="category" data-category="Sad">Sad</button><button class="category" data-category="Moody">Moody</button><button class="category" data-category="Love">Love</button><button class="category" data-category="New">New</button>
     </div>
