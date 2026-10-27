@@ -1,4 +1,4 @@
-const CACHE = "vicsound-v1";
+const CACHE = "vicsound-v2";
 const ASSETS = ["./file_000000008d2881f49ddcc5378e7331fa.png", "./index.html", "./style.css", "./app.js", "./manifest.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
