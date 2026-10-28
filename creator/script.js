@@ -1693,3 +1693,1190 @@ async function publishMusic() {
   }
 
        }
+
+/* =========================================================
+   21. DELETE FILTER
+   ========================================================= */
+
+function getFilteredDeleteMusic() {
+
+  let list =
+    [...creatorState.music];
+
+
+  const query =
+    creatorState.searchDelete
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    creatorState.deleteFilter !==
+    "all"
+  ) {
+
+    list =
+      list.filter(
+        song =>
+          song.releaseType ===
+          creatorState.deleteFilter
+      );
+
+  }
+
+
+  if (query) {
+
+    list =
+      list.filter(song =>
+
+        song.title
+          .toLowerCase()
+          .includes(query)
+
+        ||
+
+        song.author
+          .toLowerCase()
+          .includes(query)
+
+        ||
+
+        song.releaseType
+          .toLowerCase()
+          .includes(query)
+
+      );
+
+  }
+
+
+  return list;
+
+}
+
+
+/* =========================================================
+   22. DELETE MUSIC LIST
+   ========================================================= */
+
+function renderDeleteMusic() {
+
+  const box =
+    $("#deleteMusicList");
+
+  if (!box) return;
+
+
+  const list =
+    getFilteredDeleteMusic();
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        No music available.
+      </p>
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    list.map(song => {
+
+      const checked =
+        creatorState.selectedMusic
+          .has(song.id)
+          ? "checked"
+          : "";
+
+
+      return `
+
+        <article class="delete-song">
+
+          <input
+            type="checkbox"
+            data-delete-select="${song.id}"
+            ${checked}
+          >
+
+          <div class="delete-song-info">
+
+            <strong>
+              ${escapeHTML(song.title)}
+            </strong>
+
+            <small>
+              ${escapeHTML(
+                song.author || "Victor"
+              )}
+              ·
+              ${escapeHTML(
+                song.releaseType ||
+                "single"
+              )}
+            </small>
+
+          </div>
+
+          <div class="delete-song-stats">
+
+            <strong>
+              ${Number(
+                song.streams || 0
+              ).toLocaleString()}
+            </strong>
+
+            <small>
+              streams
+            </small>
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* =========================================================
+   23. SELECT ALL
+   ========================================================= */
+
+function selectAllDelete() {
+
+  const list =
+    getFilteredDeleteMusic();
+
+
+  const allSelected =
+    list.length &&
+    list.every(song =>
+      creatorState.selectedMusic.has(
+        song.id
+      )
+    );
+
+
+  if (allSelected) {
+
+    list.forEach(song =>
+      creatorState.selectedMusic.delete(
+        song.id
+      )
+    );
+
+  } else {
+
+    list.forEach(song =>
+      creatorState.selectedMusic.add(
+        song.id
+      )
+    );
+
+  }
+
+
+  renderDeleteMusic();
+
+  renderUploadedMusic();
+
+}
+
+
+/* =========================================================
+   24. DELETE SELECTED
+   ========================================================= */
+
+async function deleteSelectedMusic() {
+
+  const selected =
+    getSelectedSongs();
+
+
+  if (!selected.length) {
+
+    alert(
+      "Select music first."
+    );
+
+    return;
+
+  }
+
+
+  const confirmed =
+    confirm(
+      `Delete ${
+        selected.length
+      } selected music ${
+        selected.length === 1
+          ? "item"
+          : "items"
+      }?`
+    );
+
+
+  if (!confirmed) return;
+
+
+  selected.forEach(song => {
+
+    creatorState.deletedMusic.push({
+
+      ...song,
+
+      deletedAt:
+        new Date().toISOString()
+
+    });
+
+  });
+
+
+  creatorState.music =
+    creatorState.music.filter(
+      song =>
+        !creatorState.selectedMusic
+          .has(song.id)
+    );
+
+
+  creatorState.selectedMusic.clear();
+
+
+  saveState();
+
+
+  try {
+
+    if (
+      window.VicSoundCreatorBackend &&
+      typeof
+        window.VicSoundCreatorBackend
+          .deleteMusic ===
+        "function"
+    ) {
+
+      await
+        window.VicSoundCreatorBackend
+          .deleteMusic(
+            selected.map(
+              song => song.id
+            )
+          );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+
+  renderDeleteMusic();
+
+  renderRestoreList();
+
+  renderUploadedMusic();
+
+  renderAllMusic();
+
+  renderDashboard();
+
+  updateStatistics();
+
+}
+
+
+/* =========================================================
+   25. RESTORE
+   ========================================================= */
+
+function renderRestoreList() {
+
+  const box =
+    $("#restoreList");
+
+  if (!box) return;
+
+
+  if (
+    !creatorState.deletedMusic.length
+  ) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        Nothing recently deleted.
+      </p>
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    creatorState.deletedMusic
+      .slice()
+      .reverse()
+      .map(song => {
+
+        return `
+
+          <article class="restore-item">
+
+            <div class="restore-info">
+
+              <strong>
+                ${escapeHTML(
+                  song.title
+                )}
+              </strong>
+
+              <small>
+                ${escapeHTML(
+                  song.author ||
+                  "Victor"
+                )}
+              </small>
+
+            </div>
+
+            <button
+              type="button"
+              data-restore="${song.id}"
+            >
+              Restore
+            </button>
+
+          </article>
+
+        `;
+
+      }).join("");
+
+}
+
+
+function restoreMusic(id) {
+
+  const index =
+    creatorState.deletedMusic
+      .findIndex(
+        song => song.id === id
+      );
+
+
+  if (index === -1) return;
+
+
+  const song =
+    creatorState.deletedMusic[
+      index
+    ];
+
+
+  creatorState.deletedMusic.splice(
+    index,
+    1
+  );
+
+
+  creatorState.music.push(
+    song
+  );
+
+
+  saveState();
+
+  renderRestoreList();
+
+  renderDeleteMusic();
+
+  renderUploadedMusic();
+
+  renderAllMusic();
+
+  renderDashboard();
+
+  updateStatistics();
+
+}
+
+
+/* =========================================================
+   26. ALL MUSIC
+   ========================================================= */
+
+function renderAllMusic() {
+
+  const box =
+    $("#allMusicList");
+
+  if (!box) return;
+
+
+  let list =
+    [...creatorState.music];
+
+
+  const query =
+    creatorState.searchAll
+      .trim()
+      .toLowerCase();
+
+
+  if (query) {
+
+    list =
+      list.filter(song =>
+
+        song.title
+          .toLowerCase()
+          .includes(query)
+
+        ||
+
+        song.author
+          .toLowerCase()
+          .includes(query)
+
+      );
+
+  }
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        No music uploaded yet.
+      </p>
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    list.map((song, index) => {
+
+      return `
+
+        <article class="delete-song">
+
+          <div class="delete-song-info">
+
+            <strong>
+              ${escapeHTML(
+                song.title
+              )}
+            </strong>
+
+            <small>
+              ${escapeHTML(
+                song.author ||
+                "Victor"
+              )}
+              ·
+              ${escapeHTML(
+                song.releaseType ||
+                "single"
+              )}
+              · #${index + 1}
+            </small>
+
+          </div>
+
+          <div class="delete-song-stats">
+
+            <strong>
+              ${Number(
+                song.streams || 0
+              ).toLocaleString()}
+            </strong>
+
+            <small>
+              streams
+            </small>
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* =========================================================
+   27. DASHBOARD
+   ========================================================= */
+
+function renderDashboard() {
+
+  const musicCount =
+    creatorState.music.length;
+
+
+  const totalStreams =
+    creatorState.music.reduce(
+      (total, song) =>
+        total +
+        Number(song.streams || 0),
+      0
+    );
+
+
+  const totalDownloads =
+    creatorState.music.reduce(
+      (total, song) =>
+        total +
+        Number(song.downloads || 0),
+      0
+    );
+
+
+  $("#dashboardMusic")
+    .textContent =
+      musicCount.toLocaleString();
+
+
+  $("#dashboardStreams")
+    .textContent =
+      totalStreams.toLocaleString();
+
+
+  $("#dashboardDownloads")
+    .textContent =
+      totalDownloads.toLocaleString();
+
+
+  $("#dashboardUsers")
+    .textContent =
+      "0";
+
+
+  renderStreamList(
+    $("#dashboardMostStreamed"),
+    creatorState.music,
+    true
+  );
+
+
+  renderStreamList(
+    $("#dashboardLeastStreamed"),
+    creatorState.music,
+    false
+  );
+
+}
+
+
+/* =========================================================
+   28. STREAM LISTS
+   ========================================================= */
+
+function renderStreamList(
+  box,
+  songs,
+  descending
+) {
+
+  if (!box) return;
+
+
+  if (!songs.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        No streaming data yet.
+      </p>
+    `;
+
+    return;
+
+  }
+
+
+  const sorted =
+    [...songs]
+      .sort((a, b) => {
+
+        const aValue =
+          Number(
+            a.streams || 0
+          );
+
+
+        const bValue =
+          Number(
+            b.streams || 0
+          );
+
+
+        return descending
+          ? bValue - aValue
+          : aValue - bValue;
+
+      })
+      .slice(0, 3);
+
+
+  box.innerHTML =
+    sorted.map(
+      (song, index) => {
+
+        return `
+
+          <div class="stream-row">
+
+            <span class="stream-number">
+              ${index + 1}
+            </span>
+
+            <span class="stream-name">
+              ${escapeHTML(
+                song.title
+              )}
+            </span>
+
+            <span class="stream-value">
+              ${Number(
+                song.streams || 0
+              ).toLocaleString()}
+            </span>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+         /* =========================================================
+   29. QUICK STATISTICS
+   ========================================================= */
+
+function updateStatistics() {
+
+  const musicCount =
+    creatorState.music.length;
+
+
+  const totalStreams =
+    creatorState.music.reduce(
+      (total, song) =>
+        total +
+        Number(song.streams || 0),
+      0
+    );
+
+
+  $("#musicCount")
+    .textContent =
+      musicCount.toLocaleString();
+
+
+  $("#streamCount")
+    .textContent =
+      totalStreams.toLocaleString();
+
+
+  $("#userCount")
+    .textContent =
+      "0";
+
+
+  renderStreamList(
+    $("#mostStreamed"),
+    creatorState.music,
+    true
+  );
+
+
+  renderStreamList(
+    $("#leastStreamed"),
+    creatorState.music,
+    false
+  );
+
+}
+
+
+/* =========================================================
+   30. EVENT LISTENERS
+   ========================================================= */
+
+/* Navigation */
+
+$$(".creator-nav-item")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        goCreatorScreen(
+          button.dataset.screen
+        );
+
+      }
+    );
+
+  });
+
+
+/* Music upload */
+
+$("#musicFiles")
+  .addEventListener(
+    "change",
+    handleMusicUpload
+  );
+
+
+/* Remove uploaded music */
+
+$("#uploadedMusicList")
+  .addEventListener(
+    "click",
+    event => {
+
+      const button =
+        event.target.closest(
+          "[data-remove-upload]"
+        );
+
+
+      if (!button) return;
+
+
+      removeUploadedSong(
+        Number(
+          button.dataset.removeUpload
+        )
+      );
+
+    }
+  );
+
+
+/* Release type */
+
+$("#releaseType")
+  .addEventListener(
+    "change",
+    updateReleaseControls
+  );
+
+
+/* Release number */
+
+$("#releaseNumber")
+  .addEventListener(
+    "change",
+    () => {
+
+      creatorState.releaseNumber =
+        $("#releaseNumber").value;
+
+    }
+  );
+
+
+/* Music title */
+
+$("#musicTitle")
+  .addEventListener(
+    "input",
+    () => {
+
+      const selected =
+        getSelectedSongs();
+
+
+      if (selected.length === 1) {
+
+        selected[0].title =
+          $("#musicTitle").value;
+
+      }
+
+    }
+  );
+
+
+/* Music author */
+
+$("#musicAuthor")
+  .addEventListener(
+    "input",
+    () => {
+
+      const author =
+        $("#musicAuthor")
+          .value
+          .trim();
+
+
+      getSelectedSongs()
+        .forEach(song => {
+
+          song.author =
+            author || "Victor";
+
+        });
+
+    }
+  );
+
+
+/* Lyrics */
+
+$("#generateLyrics")
+  .addEventListener(
+    "click",
+    generateLyrics
+  );
+
+
+/* Cover */
+
+$("#generateCover")
+  .addEventListener(
+    "click",
+    generateCover
+  );
+
+
+/* Manual cover */
+
+$("#customCover")
+  .addEventListener(
+    "change",
+    handleCustomCover
+  );
+
+
+/* Publish */
+
+$("#publishMusic")
+  .addEventListener(
+    "click",
+    publishMusic
+  );
+
+
+/* Delete search */
+
+$("#deleteSearch")
+  .addEventListener(
+    "input",
+    event => {
+
+      creatorState.searchDelete =
+        event.target.value;
+
+      renderDeleteMusic();
+
+    }
+  );
+
+
+$("#deleteSearchButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      creatorState.searchDelete =
+        $("#deleteSearch").value;
+
+      renderDeleteMusic();
+
+    }
+  );
+
+
+/* Delete filters */
+
+$$(".delete-filter")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        creatorState.deleteFilter =
+          button.dataset.filter;
+
+
+        $$(".delete-filter")
+          .forEach(item => {
+
+            item.classList.toggle(
+              "active",
+              item === button
+            );
+
+          });
+
+
+        renderDeleteMusic();
+
+      }
+    );
+
+  });
+
+
+/* Delete selection */
+
+$("#deleteMusicList")
+  .addEventListener(
+    "change",
+    event => {
+
+      const checkbox =
+        event.target.closest(
+          "[data-delete-select]"
+        );
+
+
+      if (!checkbox) return;
+
+
+      const id =
+        Number(
+          checkbox.dataset.deleteSelect
+        );
+
+
+      if (checkbox.checked) {
+
+        creatorState.selectedMusic
+          .add(id);
+
+      } else {
+
+        creatorState.selectedMusic
+          .delete(id);
+
+      }
+
+
+      renderUploadedMusic();
+
+    }
+  );
+
+
+/* Select all */
+
+$("#selectAllDelete")
+  .addEventListener(
+    "click",
+    selectAllDelete
+  );
+
+
+/* Delete */
+
+$("#deleteSelected")
+  .addEventListener(
+    "click",
+    deleteSelectedMusic
+  );
+
+
+/* Restore */
+
+$("#restoreList")
+  .addEventListener(
+    "click",
+    event => {
+
+      const button =
+        event.target.closest(
+          "[data-restore]"
+        );
+
+
+      if (!button) return;
+
+
+      restoreMusic(
+        Number(
+          button.dataset.restore
+        )
+      );
+
+    }
+  );
+
+
+/* All music search */
+
+$("#allMusicSearch")
+  .addEventListener(
+    "input",
+    event => {
+
+      creatorState.searchAll =
+        event.target.value;
+
+      renderAllMusic();
+
+    }
+  );
+
+
+$("#allMusicSearchButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      creatorState.searchAll =
+        $("#allMusicSearch").value;
+
+      renderAllMusic();
+
+    }
+  );
+
+
+/* =========================================================
+   31. CREATOR BACKEND
+   ========================================================= */
+
+window.VicSoundCreatorBackend = {
+
+  async generateLyrics(song) {
+
+    console.log(
+      "Lyrics request:",
+      song
+    );
+
+
+    throw new Error(
+      "Lyrics backend not connected."
+    );
+
+  },
+
+
+  async generateCover(song) {
+
+    console.log(
+      "Cover request:",
+      song
+    );
+
+
+    throw new Error(
+      "Cover backend not connected."
+    );
+
+  },
+
+
+  async askDJ(payload) {
+
+    console.log(
+      "DJ request:",
+      payload
+    );
+
+
+    throw new Error(
+      "DJ backend not connected."
+    );
+
+  },
+
+
+  async publishMusic(songs) {
+
+    console.log(
+      "Publish request:",
+      songs
+    );
+
+
+    return {
+      success: true
+    };
+
+  },
+
+
+  async deleteMusic(ids) {
+
+    console.log(
+      "Delete request:",
+      ids
+    );
+
+
+    return {
+      success: true
+    };
+
+  }
+
+};
+
+
+/* =========================================================
+   32. START
+   ========================================================= */
+
+function initCreator() {
+
+  loadState();
+
+  updateReleaseNumberOptions();
+
+  renderUploadedMusic();
+
+  renderDeleteMusic();
+
+  renderRestoreList();
+
+  renderDashboard();
+
+  renderAllMusic();
+
+  updateStatistics();
+
+  renderDJControls();
+
+  goCreatorScreen(
+    "upload"
+  );
+
+}
+
+
+initCreator();
+
+
+/* =========================================================
+   END OF CREATOR/APP.JS
+   ========================================================= */
