@@ -173,7 +173,10 @@ window.VicSoundBackend={
  async sendDJCommand(text){console.log('Vic-sound backend DJ:',text);return{success:true,text}},
  async getLatestReleases(){return RELEASES}
 };
-
 /* ==================== 18. START ==================== */
 function init(){try{let n=localStorage.getItem('vicSoundNotifications');if(n!==null){state.notifications=n==='true';$("#notificationSwitch").checked=state.notifications}}catch(e){}setupVoice();go('home');load(0,false);state.playing=false;updatePlayer();updateDots();updateOfflineCount()}
-init()
+init();
+/* =========================================================
+   END OF APP.JS
+   ========================================================= */
+Important: this version is
