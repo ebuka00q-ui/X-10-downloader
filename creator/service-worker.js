@@ -1,11 +1,11 @@
-const CACHE_NAME = "vic-sound-creator-v2";
+const CACHE_NAME = "vic-sound-creator-v3";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./color.css",
   "./script.js",
-  "./manifest.json"
+  "./manifestc.json"
 ];
 
 self.addEventListener("install", event => {
