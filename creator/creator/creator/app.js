@@ -1,1 +1,1207 @@
+/* =========================================================
+   VIC-SOUND CREATOR — CREATOR/APP.JS
+   ========================================================= */
 
+/* ==================== 01. STATE ==================== */
+
+const creatorState = {
+  screen: "upload",
+
+  music: [],
+  deletedMusic: [],
+
+  selectedMusic: new Set(),
+
+  releaseType: "single",
+  releaseNumber: "auto",
+
+  searchDelete: "",
+  deleteFilter: "all",
+
+  searchAll: "",
+
+  generatedLyrics: {},
+  generatedCovers: {},
+
+  customCovers: {},
+
+  streams: {},
+  downloads: {},
+
+  nextId: 1
+};
+
+
+/* ==================== 02. HELPERS ==================== */
+
+const $ = (selector) => document.querySelector(selector);
+
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+
+function saveState() {
+  try {
+    localStorage.setItem(
+      "vicSoundCreatorState",
+      JSON.stringify({
+        music: creatorState.music.map(song => ({
+          ...song,
+          file: undefined,
+          objectUrl: undefined
+        })),
+        deletedMusic: creatorState.deletedMusic.map(song => ({
+          ...song,
+          file: undefined,
+          objectUrl: undefined
+        })),
+        streams: creatorState.streams,
+        downloads: creatorState.downloads,
+        nextId: creatorState.nextId
+      })
+    );
+  } catch (error) {
+    console.warn("Creator state could not be saved.", error);
+  }
+}
+
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem("vicSoundCreatorState");
+
+    if (!saved) return;
+
+    const data = JSON.parse(saved);
+
+    if (Array.isArray(data.music)) {
+      creatorState.music = data.music;
+    }
+
+    if (Array.isArray(data.deletedMusic)) {
+      creatorState.deletedMusic = data.deletedMusic;
+    }
+
+    if (data.streams) {
+      creatorState.streams = data.streams;
+    }
+
+    if (data.downloads) {
+      creatorState.downloads = data.downloads;
+    }
+
+    if (Number.isFinite(data.nextId)) {
+      creatorState.nextId = data.nextId;
+    }
+
+  } catch (error) {
+    console.warn("Creator state could not be loaded.", error);
+  }
+}
+
+
+function makeId() {
+  const id = creatorState.nextId;
+  creatorState.nextId++;
+  return id;
+}
+
+
+function formatSize(bytes) {
+  if (!bytes) return "0 KB";
+
+  const mb = bytes / (1024 * 1024);
+
+  if (mb >= 1) {
+    return `${mb.toFixed(1)} MB`;
+  }
+
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+
+function getMusicById(id) {
+  return creatorState.music.find(song => song.id === id);
+}
+
+
+function getSelectedSongs() {
+  return creatorState.music.filter(song =>
+    creatorState.selectedMusic.has(song.id)
+  );
+}
+
+
+function getReleaseNumber(type) {
+  const releases = creatorState.music.filter(
+    song => song.releaseType === type
+  );
+
+  return releases.length + 1;
+}
+
+
+/* ==================== 03. SCREEN NAVIGATION ==================== */
+
+function goCreatorScreen(screen) {
+
+  creatorState.screen = screen;
+
+  $("#uploadScreen").classList.toggle(
+    "active",
+    screen === "upload"
+  );
+
+  $("#deleteScreen").classList.toggle(
+    "active",
+    screen === "delete"
+  );
+
+  $("#dashboardScreen").classList.toggle(
+    "active",
+    screen === "dashboard"
+  );
+
+  $$(".creator-nav-item").forEach(button => {
+
+    button.classList.toggle(
+      "active",
+      button.dataset.screen === screen
+    );
+
+  });
+
+  if (screen === "upload") {
+    renderUploadedMusic();
+  }
+
+  if (screen === "delete") {
+    renderDeleteMusic();
+    renderRestoreList();
+  }
+
+  if (screen === "dashboard") {
+    renderDashboard();
+    renderAllMusic();
+  }
+}
+
+
+/* ==================== 04. MUSIC UPLOAD ==================== */
+
+function handleMusicUpload(event) {
+
+  const files = [...event.target.files];
+
+  if (!files.length) return;
+
+  files.forEach(file => {
+
+    if (!file.type.startsWith("audio/")) {
+      return;
+    }
+
+    const song = {
+      id: makeId(),
+
+      title: file.name
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[_-]/g, " "),
+
+      author: $("#musicAuthor").value.trim() || "Victor",
+
+      fileName: file.name,
+
+      fileSize: file.size,
+
+      fileType: file.type,
+
+      releaseType: creatorState.releaseType,
+
+      releaseNumber: creatorState.releaseNumber,
+
+      lyrics: "",
+
+      cover: "",
+
+      streams: 0,
+
+      downloads: 0,
+
+      uploadedAt: new Date().toISOString(),
+
+      file: file,
+
+      objectUrl: URL.createObjectURL(file)
+    };
+
+    creatorState.music.push(song);
+  });
+
+  event.target.value = "";
+
+  saveState();
+
+  renderUploadedMusic();
+
+  updateStatistics();
+
+}
+
+
+/* ==================== 05. UPLOADED MUSIC LIST ==================== */
+
+function renderUploadedMusic() {
+
+  const box = $("#uploadedMusicList");
+
+  if (!creatorState.music.length) {
+
+    box.innerHTML = `
+      <div class="empty-state">
+        <b>No music uploaded yet</b>
+        <span>Your uploaded songs will appear here.</span>
+      </div>
+    `;
+
+    updateStatistics();
+
+    return;
+  }
+
+
+  box.innerHTML = creatorState.music.map(song => {
+
+    return `
+      <article class="uploaded-song">
+
+        <div class="uploaded-song-icon">
+          ♪
+        </div>
+
+        <div class="uploaded-song-info">
+
+          <strong>${escapeHTML(song.title)}</strong>
+
+          <small>
+            ${escapeHTML(song.author || "Victor")}
+            · ${formatSize(song.fileSize)}
+          </small>
+
+        </div>
+
+        <button
+          class="uploaded-song-remove"
+          type="button"
+          data-remove-upload="${song.id}"
+          aria-label="Remove ${escapeHTML(song.title)}"
+        >
+          ×
+        </button>
+
+      </article>
+    `;
+
+  }).join("");
+
+  updateStatistics();
+}
+
+
+/* ==================== 06. REMOVE UPLOADED SONG ==================== */
+
+function removeUploadedSong(id) {
+
+  const index = creatorState.music.findIndex(
+    song => song.id === id
+  );
+
+  if (index === -1) return;
+
+  const song = creatorState.music[index];
+
+  if (song.objectUrl) {
+    try {
+      URL.revokeObjectURL(song.objectUrl);
+    } catch (_) {}
+  }
+
+  creatorState.music.splice(index, 1);
+
+  creatorState.selectedMusic.delete(id);
+
+  saveState();
+
+  renderUploadedMusic();
+
+  renderDeleteMusic();
+
+  renderAllMusic();
+
+  updateStatistics();
+}
+
+
+/* ==================== 07. RELEASE CONTROL ==================== */
+
+function updateReleaseControls() {
+
+  creatorState.releaseType = $("#releaseType").value;
+
+  creatorState.releaseNumber = $("#releaseNumber").value;
+
+  updateReleaseNumberOptions();
+}
+
+
+function updateReleaseNumberOptions() {
+
+  const select = $("#releaseNumber");
+
+  if (!select) return;
+
+  const type = $("#releaseType").value;
+
+  const nextNumber = getReleaseNumber(type);
+
+  select.innerHTML = `
+    <option value="auto">
+      Auto — ${nextNumber}
+    </option>
+  `;
+
+  creatorState.releaseNumber = "auto";
+}
+
+
+/* ==================== 08. MUSIC INFORMATION ==================== */
+
+function updateSelectedMusicInformation() {
+
+  const title = $("#musicTitle").value.trim();
+
+  const author =
+    $("#musicAuthor").value.trim() || "Victor";
+
+  const selected = getSelectedSongs();
+
+  if (selected.length) {
+
+    selected.forEach(song => {
+
+      if (title) {
+        song.title = title;
+      }
+
+      song.author = author;
+
+    });
+
+  } else if (creatorState.music.length) {
+
+    const latest =
+      creatorState.music[creatorState.music.length - 1];
+
+    if (title) {
+      latest.title = title;
+    }
+
+    latest.author = author;
+  }
+
+  saveState();
+
+  renderUploadedMusic();
+
+  renderDeleteMusic();
+
+  renderAllMusic();
+}
+
+
+/* ==================== 09. MUSIC SELECTION ==================== */
+
+function selectMusic(id) {
+
+  if (creatorState.selectedMusic.has(id)) {
+
+    creatorState.selectedMusic.delete(id);
+
+  } else {
+
+    creatorState.selectedMusic.add(id);
+
+  }
+
+  renderUploadedMusic();
+}
+
+
+/* ==================== 10. AI LYRICS ==================== */
+
+async function generateLyrics() {
+
+  const selected = getSelectedSongs();
+
+  const songs =
+    selected.length
+      ? selected
+      : creatorState.music.length
+        ? [creatorState.music[creatorState.music.length - 1]]
+        : [];
+
+  if (!songs.length) {
+
+    alert("Upload music first.");
+
+    return;
+  }
+
+
+  const button = $("#generateLyrics");
+
+  const oldHTML = button.innerHTML;
+
+  button.disabled = true;
+
+  button.innerHTML = `
+    <span>♪</span>
+    <strong>Generating...</strong>
+    <small>Preparing lyrics</small>
+  `;
+
+
+  try {
+
+    for (const song of songs) {
+
+      const lyrics =
+        await requestLyricsFromBackend(song);
+
+      if (lyrics) {
+
+        song.lyrics = lyrics;
+
+        creatorState.generatedLyrics[song.id] = lyrics;
+
+      }
+
+    }
+
+    saveState();
+
+    alert("Lyrics generation finished.");
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Lyrics could not be generated yet. Connect the backend AI endpoint first."
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+    button.innerHTML = oldHTML;
+
+  }
+}
+
+
+/* ==================== 11. AI COVER ==================== */
+
+async function generateCover() {
+
+  const selected = getSelectedSongs();
+
+  const songs =
+    selected.length
+      ? selected
+      : creatorState.music.length
+        ? [creatorState.music[creatorState.music.length - 1]]
+        : [];
+
+  if (!songs.length) {
+
+    alert("Upload music first.");
+
+    return;
+  }
+
+
+  const button = $("#generateCover");
+
+  const oldHTML = button.innerHTML;
+
+  button.disabled = true;
+
+  button.innerHTML = `
+    <span>▧</span>
+    <strong>Generating...</strong>
+    <small>Creating cover</small>
+  `;
+
+
+  try {
+
+    for (const song of songs) {
+
+      const cover =
+        await requestCoverFromBackend(song);
+
+      if (cover) {
+
+        song.cover = cover;
+
+        creatorState.generatedCovers[song.id] = cover;
+
+      }
+
+    }
+
+    saveState();
+
+    alert("Cover generation finished.");
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Cover generation is not connected yet. Connect the backend AI endpoint first."
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+    button.innerHTML = oldHTML;
+
+  }
+}
+
+
+/* ==================== 12. AI BACKEND HOOKS ==================== */
+
+async function requestLyricsFromBackend(song) {
+
+  if (
+    window.VicSoundCreatorBackend &&
+    typeof window.VicSoundCreatorBackend.generateLyrics === "function"
+  ) {
+
+    return await window.VicSoundCreatorBackend.generateLyrics({
+      id: song.id,
+      title: song.title,
+      author: song.author,
+      fileName: song.fileName
+    });
+
+  }
+
+  throw new Error("Lyrics backend not connected.");
+}
+
+
+async function requestCoverFromBackend(song) {
+
+  if (
+    window.VicSoundCreatorBackend &&
+    typeof window.VicSoundCreatorBackend.generateCover === "function"
+  ) {
+
+    return await window.VicSoundCreatorBackend.generateCover({
+      id: song.id,
+      title: song.title,
+      author: song.author,
+      fileName: song.fileName
+    });
+
+  }
+
+  throw new Error("Cover backend not connected.");
+}
+
+
+/* ==================== 13. CUSTOM COVER ==================== */
+
+function handleCustomCover(event) {
+
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+
+    alert("Please choose an image.");
+
+    return;
+  }
+
+
+  const selected = getSelectedSongs();
+
+  const songs =
+    selected.length
+      ? selected
+      : creatorState.music.length
+        ? [creatorState.music[creatorState.music.length - 1]]
+        : [];
+
+
+  if (!songs.length) {
+
+    alert("Upload music first.");
+
+    return;
+  }
+
+
+  const url = URL.createObjectURL(file);
+
+  songs.forEach(song => {
+
+    if (song.customCoverUrl) {
+
+      try {
+        URL.revokeObjectURL(song.customCoverUrl);
+      } catch (_) {}
+
+    }
+
+    song.customCoverUrl = url;
+
+    song.cover = url;
+
+    creatorState.customCovers[song.id] = url;
+
+  });
+
+  saveState();
+
+  event.target.value = "";
+
+  alert("Custom cover applied.");
+
+}
+
+
+/* ==================== 14. PUBLISH ==================== */
+
+async function publishMusic() {
+
+  const selected = getSelectedSongs();
+
+  const songs =
+    selected.length
+      ? selected
+      : creatorState.music;
+
+
+  if (!songs.length) {
+
+    alert("Upload at least one music file first.");
+
+    return;
+  }
+
+
+  const releaseType =
+    $("#releaseType").value;
+
+  const author =
+    $("#musicAuthor").value.trim() || "Victor";
+
+
+  songs.forEach(song => {
+
+    song.author = author;
+
+    song.releaseType = releaseType;
+
+    song.releaseNumber =
+      $("#releaseNumber").value === "auto"
+        ? getReleaseNumber(releaseType)
+        : $("#releaseNumber").value;
+
+    if (!song.title) {
+      song.title = "Untitled Music";
+    }
+
+  });
+
+
+  try {
+
+    if (
+      window.VicSoundCreatorBackend &&
+      typeof window.VicSoundCreatorBackend.publishMusic === "function"
+    ) {
+
+      await window.VicSoundCreatorBackend.publishMusic(
+        songs.map(song => ({
+          ...song,
+          file: undefined,
+          objectUrl: undefined
+        }))
+      );
+
+    }
+
+
+    saveState();
+
+    renderUploadedMusic();
+
+    renderDeleteMusic();
+
+    renderAllMusic();
+
+    renderDashboard();
+
+    alert(
+      `${songs.length} music ${songs.length === 1 ? "item" : "items"} prepared for publishing.`
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Publishing backend is not connected yet."
+    );
+
+  }
+}
+
+
+/* ==================== 15. DELETE FILTER ==================== */
+
+function getFilteredDeleteMusic() {
+
+  let list = [...creatorState.music];
+
+  const query =
+    creatorState.searchDelete
+      .trim()
+      .toLowerCase();
+
+
+  if (creatorState.deleteFilter !== "all") {
+
+    list = list.filter(
+      song =>
+        song.releaseType === creatorState.deleteFilter
+    );
+
+  }
+
+
+  if (query) {
+
+    list = list.filter(song =>
+
+      song.title.toLowerCase().includes(query) ||
+
+      song.author.toLowerCase().includes(query) ||
+
+      song.releaseType.toLowerCase().includes(query)
+
+    );
+
+  }
+
+  return list;
+}
+
+
+/* ==================== 16. DELETE MUSIC LIST ==================== */
+
+function renderDeleteMusic() {
+
+  const box = $("#deleteMusicList");
+
+  const list = getFilteredDeleteMusic();
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        No music available.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML = list.map(song => {
+
+    const checked =
+      creatorState.selectedMusic.has(song.id)
+        ? "checked"
+        : "";
+
+
+    return `
+      <article class="delete-song">
+
+        <input
+          type="checkbox"
+          data-delete-select="${song.id}"
+          ${checked}
+        >
+
+        <div class="delete-song-info">
+
+          <strong>
+            ${escapeHTML(song.title)}
+          </strong>
+
+          <small>
+            ${escapeHTML(song.author || "Victor")}
+            · ${escapeHTML(song.releaseType || "single")}
+          </small>
+
+        </div>
+
+        <div class="delete-song-stats">
+
+          <strong>
+            ${Number(song.streams || 0).toLocaleString()}
+          </strong>
+
+          <small>
+            streams
+          </small>
+
+        </div>
+
+      </article>
+    `;
+
+  }).join("");
+}
+
+
+/* ==================== 17. SELECT ALL ==================== */
+
+function selectAllDelete() {
+
+  const list = getFilteredDeleteMusic();
+
+  const allSelected =
+    list.length &&
+    list.every(song =>
+      creatorState.selectedMusic.has(song.id)
+    );
+
+
+  if (allSelected) {
+
+    list.forEach(song =>
+      creatorState.selectedMusic.delete(song.id)
+    );
+
+  } else {
+
+    list.forEach(song =>
+      creatorState.selectedMusic.add(song.id)
+    );
+
+  }
+
+  renderDeleteMusic();
+  renderUploadedMusic();
+}
+
+
+/* ==================== 18. DELETE SELECTED ==================== */
+
+async function deleteSelectedMusic() {
+
+  const selected =
+    getSelectedSongs();
+
+
+  if (!selected.length) {
+
+    alert("Select music first.");
+
+    return;
+  }
+
+
+  const confirmed =
+    confirm(
+      `Delete ${selected.length} selected music ${selected.length === 1 ? "item" : "items"}?`
+    );
+
+
+  if (!confirmed) return;
+
+
+  selected.forEach(song => {
+
+    creatorState.deletedMusic.push({
+      ...song,
+      deletedAt: new Date().toISOString()
+    });
+
+  });
+
+
+  creatorState.music =
+    creatorState.music.filter(
+      song => !creatorState.selectedMusic.has(song.id)
+    );
+
+
+  creatorState.selectedMusic.clear();
+
+
+  saveState();
+
+  try {
+
+    if (
+      window.VicSoundCreatorBackend &&
+      typeof window.VicSoundCreatorBackend.deleteMusic === "function"
+    ) {
+
+      await window.VicSoundCreatorBackend.deleteMusic(
+        selected.map(song => song.id)
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+
+  renderDeleteMusic();
+
+  renderRestoreList();
+
+  renderUploadedMusic();
+
+  renderAllMusic();
+
+  renderDashboard();
+
+  updateStatistics();
+}
+
+
+/* ==================== 19. RESTORE ==================== */
+
+function renderRestoreList() {
+
+  const box = $("#restoreList");
+
+
+  if (!creatorState.deletedMusic.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        Nothing recently deleted.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    creatorState.deletedMusic
+      .slice()
+      .reverse()
+      .map(song => {
+
+        return `
+          <article class="restore-item">
+
+            <div class="restore-info">
+
+              <strong>
+                ${escapeHTML(song.title)}
+              </strong>
+
+              <small>
+                ${escapeHTML(song.author || "Victor")}
+              </small>
+
+            </div>
+
+            <button
+              type="button"
+              data-restore="${song.id}"
+            >
+              Restore
+            </button>
+
+          </article>
+        `;
+
+      })
+      .join("");
+}
+
+
+function restoreMusic(id) {
+
+  const index =
+    creatorState.deletedMusic.findIndex(
+      song => song.id === id
+    );
+
+
+  if (index === -1) return;
+
+
+  const song =
+    creatorState.deletedMusic[index];
+
+
+  creatorState.deletedMusic.splice(index, 1);
+
+  creatorState.music.push(song);
+
+
+  saveState();
+
+  renderRestoreList();
+
+  renderDeleteMusic();
+
+  renderUploadedMusic();
+
+  renderAllMusic();
+
+  renderDashboard();
+
+  updateStatistics();
+}
+
+
+/* ==================== 20. ALL MUSIC ==================== */
+
+function renderAllMusic() {
+
+  const box = $("#allMusicList");
+
+  let list = [...creatorState.music];
+
+  const query =
+    creatorState.searchAll
+      .trim()
+      .toLowerCase();
+
+
+  if (query) {
+
+    list = list.filter(song =>
+
+      song.title.toLowerCase().includes(query) ||
+
+      song.author.toLowerCase().includes(query)
+
+    );
+
+  }
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        No music uploaded yet.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    list.map((song, index) => {
+
+      return `
+        <article class="delete-song">
+
+          <div class="delete-song-info">
+
+            <strong>
+              ${escapeHTML(song.title)}
+            </strong>
+
+            <small>
+              ${escapeHTML(song.author || "Victor")}
+              · ${escapeHTML(song.releaseType || "single")}
+              · #${index + 1}
+            </small>
+
+          </div>
+
+          <div class="delete-song-stats">
+
+            <strong>
+              ${Number(song.streams || 0).toLocaleString()}
+            </strong>
+
+            <small>
+              streams
+            </small>
+
+          </div>
+
+        </article>
+      `;
+
+    })
+    .join("");
+}
+
+
+/* ==================== 21. DASHBOARD ==================== */
+
+function renderDashboard() {
+
+  const musicCount =
+    creatorState.music.length;
+
+
+  const totalStreams =
+    creatorState.music.reduce(
+      (total, song) =>
+        total + Number(song.streams || 0),
+      0
+    );
+
+
+  const totalDownloads =
+    creatorState.music.reduce(
+      (total, song) =>
+        total + Number(song.downloads || 0),
+      0
+    );
+
+
+  $("#dashboardMusic").textContent =
+    musicCount.toLocaleString();
+
+  $("#dashboardStreams").textContent =
+    totalStreams.toLocaleString();
+
+  $("#dashboardDownloads").textContent =
+    totalDownloads.toLocaleString();
+
+
+  /*
+    User count will later come from the backend.
+    We do 
