@@ -2435,3 +2435,1159 @@ function updateStatistics() {
   );
 
 }
+
+
+
+/* ==================== 25. DJ CONTROL ==================== */
+
+function ensureDJControls() {
+
+  /*
+    If the latest HTML already contains
+    a DJ section, we use it.
+
+    If it does not, we create one at the
+    very bottom of the Upload screen.
+  */
+
+
+  const uploadScreen =
+    $("#uploadScreen");
+
+
+  if (!uploadScreen) {
+    return;
+  }
+
+
+  if (
+    $("#djCreatorControl")
+  ) {
+
+    return;
+
+  }
+
+
+  const section =
+    document.createElement(
+      "section"
+    );
+
+
+  section.className =
+    "creator-card";
+
+
+  section.id =
+    "djCreatorControl";
+
+
+  section.innerHTML = `
+
+    <div class="card-heading">
+
+      <div>
+
+        <h3>DJ Control</h3>
+
+        <p>
+          Control how the DJ behaves when choosing music
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <label class="field-label">
+      DJ Instructions
+    </label>
+
+    <textarea
+      id="djInstructions"
+      rows="5"
+      placeholder="Example: Play calm songs when I ask for calm music."
+      style="
+        width:100%;
+        padding:13px;
+        border:1px solid rgba(120,140,190,.3);
+        border-radius:12px;
+        background:#080f25;
+        color:#fff;
+        resize:vertical;
+      "
+    ></textarea>
+
+
+    <label class="field-label">
+      DJ Mood
+    </label>
+
+    <select id="djMood">
+
+      <option value="auto">
+        Auto
+      </option>
+
+      <option value="calm">
+        Calm
+      </option>
+
+      <option value="sad">
+        Sad
+      </option>
+
+      <option value="happy">
+        Happy
+      </option>
+
+      <option value="party">
+        Party
+      </option>
+
+      <option value="moody">
+        Moody
+      </option>
+
+    </select>
+
+
+    <label class="field-label">
+      DJ Style
+    </label>
+
+    <select id="djStyle">
+
+      <option value="auto">
+        Auto
+      </option>
+
+      <option value="favorites">
+        Favorites
+      </option>
+
+      <option value="recent">
+        Recently played
+      </option>
+
+      <option value="mixed">
+        Mixed
+      </option>
+
+    </select>
+
+
+    <label class="field-label">
+      Energy
+    </label>
+
+    <select id="djEnergy">
+
+      <option value="auto">
+        Auto
+      </option>
+
+      <option value="low">
+        Low
+      </option>
+
+      <option value="medium">
+        Medium
+      </option>
+
+      <option value="high">
+        High
+      </option>
+
+    </select>
+
+
+    <label
+      style="
+        display:flex;
+        align-items:center;
+        gap:9px;
+        margin-top:13px;
+        font-size:11px;
+        color:#c7cfe0;
+      "
+    >
+
+      <input
+        id="djFavorites"
+        type="checkbox"
+      >
+
+      Use my favorites
+
+    </label>
+
+
+    <label
+      style="
+        display:flex;
+        align-items:center;
+        gap:9px;
+        margin-top:10px;
+        font-size:11px;
+        color:#c7cfe0;
+      "
+    >
+
+      <input
+        id="djHistory"
+        type="checkbox"
+      >
+
+      Use my listening history
+
+    </label>
+
+
+    <label
+      style="
+        display:flex;
+        align-items:center;
+        gap:9px;
+        margin-top:10px;
+        font-size:11px;
+        color:#c7cfe0;
+      "
+    >
+
+      <input
+        id="djAvoidRepeats"
+        type="checkbox"
+      >
+
+      Avoid repeating the same song
+
+    </label>
+
+
+    <div
+      style="
+        margin-top:14px;
+        padding:11px;
+        border-radius:12px;
+        background:rgba(115,60,255,.08);
+      "
+    >
+
+      <strong
+        style="
+          display:block;
+          font-size:12px;
+        "
+      >
+        DJ status
+      </strong>
+
+      <p
+        style="
+          margin-top:4px;
+          color:#8994ad;
+          font-size:10px;
+          line-height:1.4;
+        "
+      >
+        The DJ controls are ready. The actual DJ intelligence
+        will be connected to the backend later.
+      </p>
+
+    </div>
+
+  `;
+
+
+  /*
+    Last option on the Upload screen.
+  */
+
+  uploadScreen.appendChild(
+    section
+  );
+
+}
+
+
+/* ==================== 26. DJ SETTINGS ==================== */
+
+function readDJControls() {
+
+  const instructions =
+    $("#djInstructions");
+
+
+  const mood =
+    $("#djMood");
+
+
+  const style =
+    $("#djStyle");
+
+
+  const energy =
+    $("#djEnergy");
+
+
+  const favorites =
+    $("#djFavorites");
+
+
+  const history =
+    $("#djHistory");
+
+
+  const avoidRepeats =
+    $("#djAvoidRepeats");
+
+
+  if (instructions) {
+
+    creatorState.dj.instructions =
+      instructions.value;
+
+  }
+
+
+  if (mood) {
+
+    creatorState.dj.mood =
+      mood.value;
+
+  }
+
+
+  if (style) {
+
+    creatorState.dj.style =
+      style.value;
+
+  }
+
+
+  if (energy) {
+
+    creatorState.dj.energy =
+      energy.value;
+
+  }
+
+
+  if (favorites) {
+
+    creatorState.dj.useFavorites =
+      favorites.checked;
+
+  }
+
+
+  if (history) {
+
+    creatorState.dj.useHistory =
+      history.checked;
+
+  }
+
+
+  if (avoidRepeats) {
+
+    creatorState.dj.avoidRepeats =
+      avoidRepeats.checked;
+
+  }
+
+
+  saveState();
+
+}
+
+
+function renderDJControls() {
+
+  ensureDJControls();
+
+
+  const instructions =
+    $("#djInstructions");
+
+
+  const mood =
+    $("#djMood");
+
+
+  const style =
+    $("#djStyle");
+
+
+  const energy =
+    $("#djEnergy");
+
+
+  const favorites =
+    $("#djFavorites");
+
+
+  const history =
+    $("#djHistory");
+
+
+  const avoidRepeats =
+    $("#djAvoidRepeats");
+
+
+  if (instructions) {
+
+    instructions.value =
+      creatorState.dj.instructions ||
+      "";
+
+  }
+
+
+  if (mood) {
+
+    mood.value =
+      creatorState.dj.mood ||
+      "auto";
+
+  }
+
+
+  if (style) {
+
+    style.value =
+      creatorState.dj.style ||
+      "auto";
+
+  }
+
+
+  if (energy) {
+
+    energy.value =
+      creatorState.dj.energy ||
+      "auto";
+
+  }
+
+
+  if (favorites) {
+
+    favorites.checked =
+      creatorState.dj.useFavorites;
+
+  }
+
+
+  if (history) {
+
+    history.checked =
+      creatorState.dj.useHistory;
+
+  }
+
+
+  if (avoidRepeats) {
+
+    avoidRepeats.checked =
+      creatorState.dj.avoidRepeats;
+
+  }
+
+}
+   
+/* ==================== 27. MONETIZATION ==================== */
+
+function activateMonetization() {
+
+  creatorState.monetization.enabled =
+    true;
+
+  creatorState.monetization.mode =
+    "ready";
+
+
+  const box =
+    document.querySelector(
+      ".monetization-placeholder"
+    );
+
+
+  if (box) {
+
+    box.innerHTML = `
+
+      <strong>
+        Monetization Active
+      </strong>
+
+      <p>
+        Monetization controls are enabled and ready
+        for the real backend connection.
+      </p>
+
+    `;
+
+  }
+
+
+  saveState();
+
+}
+
+
+/* ==================== 28. BACKEND ==================== */
+
+window.VicSoundCreatorBackend = {
+
+  async generateLyrics(song) {
+
+    console.log(
+      "Lyrics request:",
+      song
+    );
+
+
+    throw new Error(
+      "Lyrics backend not connected."
+    );
+
+  },
+
+
+  async generateCover(song) {
+
+    console.log(
+      "Cover request:",
+      song
+    );
+
+
+    throw new Error(
+      "Cover backend not connected."
+    );
+
+  },
+
+
+  async publishMusic(songs) {
+
+    console.log(
+      "Publish request:",
+      songs
+    );
+
+
+    /*
+      This is where the real backend
+      will eventually upload the files,
+      lyrics, covers and metadata.
+    */
+
+
+    return {
+      success: true
+    };
+
+  },
+
+
+  async deleteMusic(ids) {
+
+    console.log(
+      "Delete request:",
+      ids
+    );
+
+
+    return {
+      success: true
+    };
+
+  },
+
+
+  async getDJRecommendation(context) {
+
+    console.log(
+      "DJ request:",
+      context
+    );
+
+
+    /*
+      Later this becomes the real DJ AI.
+
+      Example context:
+
+      {
+        mood: "calm",
+        style: "favorites",
+        energy: "low",
+        history: [...],
+        favorites: [...],
+        music: [...]
+      }
+    */
+
+
+    throw new Error(
+      "DJ backend not connected."
+    );
+
+  }
+
+};
+
+
+/* ==================== 29. EVENTS ==================== */
+
+
+/* Navigation */
+
+$$(".creator-nav-item")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        goCreatorScreen(
+          button.dataset.screen
+        );
+
+      }
+    );
+
+  });
+
+
+/* Music upload */
+
+const musicFiles =
+  $("#musicFiles");
+
+
+if (musicFiles) {
+
+  musicFiles.addEventListener(
+    "change",
+    handleMusicUpload
+  );
+
+}
+
+
+/* Uploaded music selection */
+
+const uploadedMusicList =
+  $("#uploadedMusicList");
+
+
+if (uploadedMusicList) {
+
+  uploadedMusicList.addEventListener(
+    "click",
+    event => {
+
+      const removeButton =
+        event.target.closest(
+          "[data-remove-upload]"
+        );
+
+
+      if (removeButton) {
+
+        removeUploadedSong(
+          Number(
+            removeButton.dataset
+              .removeUpload
+          )
+        );
+
+        return;
+
+      }
+
+
+      const song =
+        event.target.closest(
+          "[data-song-id]"
+        );
+
+
+      if (!song) {
+        return;
+      }
+
+
+      toggleUploadedSongSelection(
+        Number(
+          song.dataset.songId
+        )
+      );
+
+    }
+  );
+
+}
+
+
+/* Release type */
+
+const releaseType =
+  $("#releaseType");
+
+
+if (releaseType) {
+
+  releaseType.addEventListener(
+    "change",
+    updateReleaseControls
+  );
+
+}
+
+
+/* Release number */
+
+const releaseNumber =
+  $("#releaseNumber");
+
+
+if (releaseNumber) {
+
+  releaseNumber.addEventListener(
+    "change",
+    () => {
+
+      creatorState.releaseNumber =
+        releaseNumber.value;
+
+      saveState();
+
+    }
+  );
+
+}
+
+
+/* Music title */
+
+const musicTitle =
+  $("#musicTitle");
+
+
+if (musicTitle) {
+
+  musicTitle.addEventListener(
+    "input",
+    () => {
+
+      const selected =
+        getSelectedSongs();
+
+
+      if (selected.length === 1) {
+
+        selected[0].title =
+          musicTitle.value;
+
+        saveState();
+
+        renderUploadedMusic();
+
+      }
+
+    }
+  );
+
+}
+
+
+/* Music author */
+
+const musicAuthor =
+  $("#musicAuthor");
+
+
+if (musicAuthor) {
+
+  musicAuthor.addEventListener(
+    "input",
+    () => {
+
+      const author =
+        musicAuthor.value.trim();
+
+
+      getSelectedSongs()
+        .forEach(song => {
+
+          song.author =
+            author || "Victor";
+
+        });
+
+
+      saveState();
+
+      renderUploadedMusic();
+
+    }
+  );
+
+}
+
+
+/* Lyrics */
+
+const generateLyricsButton =
+  $("#generateLyrics");
+
+
+if (generateLyricsButton) {
+
+  generateLyricsButton.addEventListener(
+    "click",
+    generateLyrics
+  );
+
+}
+
+
+/* Cover */
+
+const generateCoverButton =
+  $("#generateCover");
+
+
+if (generateCoverButton) {
+
+  generateCoverButton.addEventListener(
+    "click",
+    generateCover
+  );
+
+}
+
+
+/* Manual cover */
+
+const customCover =
+  $("#customCover");
+
+
+if (customCover) {
+
+  customCover.addEventListener(
+    "change",
+    handleCustomCover
+  );
+
+}
+
+
+/* Publish */
+
+const publishButton =
+  $("#publishMusic");
+
+
+if (publishButton) {
+
+  publishButton.addEventListener(
+    "click",
+    publishMusic
+  );
+
+}
+
+
+/* Delete search */
+
+const deleteSearch =
+  $("#deleteSearch");
+
+
+if (deleteSearch) {
+
+  deleteSearch.addEventListener(
+    "input",
+    event => {
+
+      creatorState.searchDelete =
+        event.target.value;
+
+      renderDeleteMusic();
+
+    }
+  );
+
+}
+
+
+/* Delete search button */
+
+const deleteSearchButton =
+  $("#deleteSearchButton");
+
+
+if (deleteSearchButton) {
+
+  deleteSearchButton.addEventListener(
+    "click",
+    () => {
+
+      creatorState.searchDelete =
+        deleteSearch?.value || "";
+
+      renderDeleteMusic();
+
+    }
+  );
+
+}
+
+
+/* Delete filters */
+
+$$(".delete-filter")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        creatorState.deleteFilter =
+          button.dataset.filter;
+
+
+        $$(".delete-filter")
+          .forEach(item => {
+
+            item.classList.toggle(
+              "active",
+              item === button
+            );
+
+          });
+
+
+        renderDeleteMusic();
+
+      }
+    );
+
+  });
+
+
+/* Delete selection */
+
+const deleteMusicList =
+  $("#deleteMusicList");
+
+
+if (deleteMusicList) {
+
+  deleteMusicList.addEventListener(
+    "change",
+    event => {
+
+      const checkbox =
+        event.target.closest(
+          "[data-delete-select]"
+        );
+
+
+      if (!checkbox) {
+        return;
+      }
+
+
+      const id =
+        Number(
+          checkbox.dataset
+            .deleteSelect
+        );
+
+
+      if (checkbox.checked) {
+
+        creatorState.selectedMusic.add(
+          id
+        );
+
+      } else {
+
+        creatorState.selectedMusic.delete(
+          id
+        );
+
+      }
+
+
+      renderDeleteMusic();
+
+    }
+  );
+
+}
+
+
+/* Select all */
+
+const selectAllButton =
+  $("#selectAllDelete");
+
+
+if (selectAllButton) {
+
+  selectAllButton.addEventListener(
+    "click",
+    selectAllDelete
+  );
+
+}
+
+
+/* Delete */
+
+const deleteButton =
+  $("#deleteSelected");
+
+
+if (deleteButton) {
+
+  deleteButton.addEventListener(
+    "click",
+    deleteSelectedMusic
+  );
+
+}
+
+
+/* Restore */
+
+const restoreList =
+  $("#restoreList");
+
+
+if (restoreList) {
+
+  restoreList.addEventListener(
+    "click",
+    event => {
+
+      const button =
+        event.target.closest(
+          "[data-restore]"
+        );
+
+
+      if (!button) {
+        return;
+      }
+
+
+      restoreMusic(
+        Number(
+          button.dataset.restore
+        )
+      );
+
+    }
+  );
+
+}
+
+
+/* All music search */
+
+const allMusicSearch =
+  $("#allMusicSearch");
+
+
+if (allMusicSearch) {
+
+  allMusicSearch.addEventListener(
+    "input",
+    event => {
+
+      creatorState.searchAll =
+        event.target.value;
+
+      renderAllMusic();
+
+    }
+  );
+
+}
+
+
+/* All music search button */
+
+const allMusicSearchButton =
+  $("#allMusicSearchButton");
+
+
+if (allMusicSearchButton) {
+
+  allMusicSearchButton.addEventListener(
+    "click",
+    () => {
+
+      creatorState.searchAll =
+        allMusicSearch?.value ||
+        "";
+
+      renderAllMusic();
+
+    }
+  );
+
+}
+
+
+/* ==================== 30. START ==================== */
+
+function initCreator() {
+
+  loadState();
+
+  updateReleaseNumberOptions();
+
+  ensureDJControls();
+
+  renderUploadedMusic();
+
+  renderDeleteMusic();
+
+  renderRestoreList();
+
+  renderDashboard();
+
+  renderAllMusic();
+
+  renderDJControls();
+
+  activateMonetization();
+
+  updateStatistics();
+
+  goCreatorScreen(
+    "upload"
+  );
+
+}
+
+
+initCreator();
+
+
+/* =========================================================
+   END OF CREATOR/APP.JS
+   ========================================================= */
