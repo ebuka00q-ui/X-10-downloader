@@ -1438,4 +1438,258 @@ function buildDJRequest(request = "") {
       song => ({
 
         id:
-     
+          song.id,
+
+        title:
+          song.title,
+
+        author:
+          song.author,
+
+        releaseType:
+          song.releaseType,
+
+        lyrics:
+          song.lyrics || "",
+
+        cover:
+          song.cover || "",
+
+        streams:
+          Number(song.streams || 0),
+
+        downloads:
+          Number(song.downloads || 0)
+
+      })
+    );
+
+
+  return {
+
+    dj: {
+
+      name:
+        dj.name,
+
+      instructions:
+        dj.instructions,
+
+      active:
+        dj.active
+
+    },
+
+    request,
+
+    favoriteMode:
+      dj.favoriteMode,
+
+    favorites:
+      favorites.map(song => song.id),
+
+    availableMusic,
+
+    avoidRepeatingCovers:
+      dj.avoidRepeatingCovers
+
+  };
+
+}
+
+
+/* =========================================================
+   18. DJ BACKEND
+   ========================================================= */
+
+async function askDJ(request = "") {
+
+  if (!creatorState.dj.active) {
+
+    throw new Error(
+      "DJ is currently disabled."
+    );
+
+  }
+
+
+  const payload =
+    buildDJRequest(request);
+
+
+  if (
+    window.VicSoundCreatorBackend &&
+    typeof
+      window.VicSoundCreatorBackend
+        .askDJ ===
+      "function"
+  ) {
+
+    return await
+      window.VicSoundCreatorBackend
+        .askDJ(payload);
+
+  }
+
+
+  throw new Error(
+    "DJ backend not connected."
+  );
+
+}
+
+
+/* =========================================================
+   19. COVER DUPLICATE PROTECTION
+   ========================================================= */
+
+function getUsedGeneratedCovers() {
+
+  return Object.values(
+    creatorState.generatedCovers
+  );
+
+}
+
+
+function coverAlreadyUsed(cover) {
+
+  if (!cover) return false;
+
+
+  return getUsedGeneratedCovers()
+    .includes(cover);
+
+}
+
+
+/* =========================================================
+   20. PUBLISH
+   ========================================================= */
+
+async function publishMusic() {
+
+  const selected =
+    getSelectedSongs();
+
+
+  const songs =
+    selected.length
+      ? selected
+      : creatorState.music;
+
+
+  if (!songs.length) {
+
+    alert(
+      "Upload at least one music file first."
+    );
+
+    return;
+
+  }
+
+
+  const releaseType =
+    $("#releaseType").value;
+
+
+  const author =
+    $("#musicAuthor").value.trim()
+    || "Victor";
+
+
+  songs.forEach(song => {
+
+    song.author =
+      author;
+
+
+    song.releaseType =
+      releaseType;
+
+
+    song.releaseNumber =
+      $("#releaseNumber").value === "auto"
+
+        ? getReleaseNumber(
+            releaseType
+          )
+
+        : $("#releaseNumber").value;
+
+
+    if (!song.title) {
+
+      song.title =
+        "Untitled Music";
+
+    }
+
+  });
+
+
+  try {
+
+    if (
+      window.VicSoundCreatorBackend &&
+      typeof
+        window.VicSoundCreatorBackend
+          .publishMusic ===
+        "function"
+    ) {
+
+      await
+        window.VicSoundCreatorBackend
+          .publishMusic(
+
+            songs.map(song => ({
+
+              ...song,
+
+              file:
+                undefined,
+
+              objectUrl:
+                undefined
+
+            }))
+
+          );
+
+    }
+
+
+    saveState();
+
+
+    renderUploadedMusic();
+
+    renderDeleteMusic();
+
+    renderAllMusic();
+
+    renderDashboard();
+
+
+    alert(
+      `${songs.length} music ${
+        songs.length === 1
+          ? "item"
+          : "items"
+      } prepared for publishing.`
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      "Publishing backend is not connected yet."
+    );
+
+  }
+
+       }
