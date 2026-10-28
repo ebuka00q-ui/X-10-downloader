@@ -1476,8 +1476,7 @@ async function publishMusic() {
 
 
   try {
-
-    /*
+/*
       Backend receives the actual publish request.
     */
 
@@ -1495,4 +1494,944 @@ async function publishMusic() {
 
             songs.map(song => ({
 
-              ...
+              ...song,
+
+              file:
+                song.file,
+
+              objectUrl:
+                undefined
+
+            }))
+
+          );
+
+    }
+
+
+    /*
+      Move songs from DRAFT
+      into PUBLISHED.
+    */
+
+    songs.forEach(song => {
+
+      song.published =
+        true;
+
+      song.publishedAt =
+        new Date().toISOString();
+
+
+      /*
+        Keep the audio File in memory
+        during this session.
+      */
+
+      const existing =
+        creatorState.publishedMusic
+          .find(
+            item =>
+              item.id === song.id
+          );
+
+
+      if (!existing) {
+
+        creatorState.publishedMusic.push(
+          song
+        );
+
+      }
+
+    });
+
+
+    /*
+      Remove published songs from draft list.
+    */
+
+    const publishedIds =
+      new Set(
+        songs.map(song => song.id)
+      );
+
+
+    creatorState.music =
+      creatorState.music.filter(
+        song =>
+          !publishedIds.has(
+            song.id
+          )
+      );
+
+
+    creatorState.selectedMusic.clear();
+
+
+    saveState();
+
+    renderUploadedMusic();
+
+    renderDeleteMusic();
+
+    renderRestoreList();
+
+    renderAllMusic();
+
+    renderDashboard();
+
+    updateStatistics();
+
+
+    alert(
+      `${songs.length} music ${
+        songs.length === 1
+          ? "item"
+          : "items"
+      } published successfully.`
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      "Publishing failed. The music remains in your draft list."
+    );
+
+
+  } finally {
+
+    if (button) {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        "🚀 Publish Music";
+
+    }
+
+  }
+
+}
+
+
+/* ==================== 16. DELETE FILTER ==================== */
+
+function getFilteredDeleteMusic() {
+
+  let list =
+    [...creatorState.publishedMusic];
+
+
+  const query =
+    creatorState.searchDelete
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    creatorState.deleteFilter !==
+    "all"
+  ) {
+
+    list =
+      list.filter(
+        song =>
+          song.releaseType ===
+          creatorState.deleteFilter
+      );
+
+  }
+
+
+  if (query) {
+
+    list =
+      list.filter(song =>
+
+        String(song.title)
+          .toLowerCase()
+          .includes(query) ||
+
+        String(song.author)
+          .toLowerCase()
+          .includes(query) ||
+
+        String(song.releaseType)
+          .toLowerCase()
+          .includes(query)
+
+      );
+
+  }
+
+
+  return list;
+
+}
+
+
+/* ==================== 17. DELETE MUSIC LIST ==================== */
+
+function renderDeleteMusic() {
+
+  const box =
+    $("#deleteMusicList");
+
+
+  if (!box) {
+    return;
+  }
+
+
+  const list =
+    getFilteredDeleteMusic();
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+
+      <p class="empty-state">
+        No published music available.
+      </p>
+
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+
+    list.map(song => {
+
+      const checked =
+        creatorState.selectedMusic.has(
+          song.id
+        )
+          ? "checked"
+          : "";
+
+
+      return `
+
+        <article class="delete-song">
+
+          <input
+            type="checkbox"
+            data-delete-select="${song.id}"
+            ${checked}
+          >
+
+
+          <div class="delete-song-info">
+
+            <strong>
+              ${escapeHTML(song.title)}
+            </strong>
+
+            <small>
+              ${escapeHTML(
+                song.author || "Victor"
+              )}
+              ·
+              ${escapeHTML(
+                song.releaseType ||
+                "single"
+              )}
+            </small>
+
+          </div>
+
+
+          <div class="delete-song-stats">
+
+            <strong>
+              ${Number(
+                song.streams || 0
+              ).toLocaleString()}
+            </strong>
+
+            <small>
+              streams
+            </small>
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* ==================== 18. SELECT ALL ==================== */
+
+function selectAllDelete() {
+
+  const list =
+    getFilteredDeleteMusic();
+
+
+  if (!list.length) {
+    return;
+  }
+
+
+  const allSelected =
+    list.every(
+      song =>
+        creatorState.selectedMusic.has(
+          song.id
+        )
+    );
+
+
+  if (allSelected) {
+
+    list.forEach(song =>
+      creatorState.selectedMusic.delete(
+        song.id
+      )
+    );
+
+  } else {
+
+    list.forEach(song =>
+      creatorState.selectedMusic.add(
+        song.id
+      )
+    );
+
+  }
+
+
+  renderDeleteMusic();
+
+}
+
+
+/* ==================== 19. DELETE SELECTED ==================== */
+
+async function deleteSelectedMusic() {
+
+  /*
+    Delete ONLY published music.
+  */
+
+  const selected =
+    creatorState.publishedMusic.filter(
+      song =>
+        creatorState.selectedMusic.has(
+          song.id
+        )
+    );
+
+
+  if (!selected.length) {
+
+    alert(
+      "Select published music first."
+    );
+
+    return;
+
+  }
+
+
+  const confirmed =
+    confirm(
+      `Delete ${selected.length} selected music ${
+        selected.length === 1
+          ? "item"
+          : "items"
+      }?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  selected.forEach(song => {
+
+    creatorState.deletedMusic.push({
+
+      ...song,
+
+      deletedAt:
+        new Date().toISOString()
+
+    });
+
+  });
+
+
+  creatorState.publishedMusic =
+    creatorState.publishedMusic.filter(
+      song =>
+        !creatorState.selectedMusic.has(
+          song.id
+        )
+    );
+
+
+  creatorState.selectedMusic.clear();
+
+
+  try {
+
+    if (
+      window.VicSoundCreatorBackend &&
+      typeof
+        window.VicSoundCreatorBackend
+          .deleteMusic ===
+        "function"
+    ) {
+
+      await
+        window.VicSoundCreatorBackend
+          .deleteMusic(
+            selected.map(
+              song => song.id
+            )
+          );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+
+  saveState();
+
+  renderDeleteMusic();
+
+  renderRestoreList();
+
+  renderAllMusic();
+
+  renderDashboard();
+
+  updateStatistics();
+
+}
+
+/* ==================== 20. RESTORE ==================== */
+
+function renderRestoreList() {
+
+  const box =
+    $("#restoreList");
+
+
+  if (!box) {
+    return;
+  }
+
+
+  if (
+    !creatorState.deletedMusic.length
+  ) {
+
+    box.innerHTML = `
+
+      <p class="empty-state">
+        Nothing recently deleted.
+      </p>
+
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+
+    creatorState.deletedMusic
+      .slice()
+      .reverse()
+      .map(song => {
+
+        return `
+
+          <article class="restore-item">
+
+            <div class="restore-info">
+
+              <strong>
+                ${escapeHTML(
+                  song.title
+                )}
+              </strong>
+
+              <small>
+                ${escapeHTML(
+                  song.author ||
+                  "Victor"
+                )}
+              </small>
+
+            </div>
+
+
+            <button
+              type="button"
+              data-restore="${song.id}"
+            >
+              Restore
+            </button>
+
+          </article>
+
+        `;
+
+      }).join("");
+
+}
+
+
+function restoreMusic(id) {
+
+  const index =
+    creatorState.deletedMusic
+      .findIndex(
+        song =>
+          song.id === id
+      );
+
+
+  if (index === -1) {
+    return;
+  }
+
+
+  const song =
+    creatorState.deletedMusic[
+      index
+    ];
+
+
+  creatorState.deletedMusic.splice(
+    index,
+    1
+  );
+
+
+  creatorState.publishedMusic.push(
+    song
+  );
+
+
+  saveState();
+
+  renderRestoreList();
+
+  renderDeleteMusic();
+
+  renderAllMusic();
+
+  renderDashboard();
+
+  updateStatistics();
+
+}
+
+
+/* ==================== 21. ALL PUBLISHED MUSIC ==================== */
+
+function renderAllMusic() {
+
+  const box =
+    $("#allMusicList");
+
+
+  if (!box) {
+    return;
+  }
+
+
+  let list =
+    [...creatorState.publishedMusic];
+
+
+  const query =
+    creatorState.searchAll
+      .trim()
+      .toLowerCase();
+
+
+  if (query) {
+
+    list =
+      list.filter(song =>
+
+        String(song.title)
+          .toLowerCase()
+          .includes(query) ||
+
+        String(song.author)
+          .toLowerCase()
+          .includes(query)
+
+      );
+
+  }
+
+
+  if (!list.length) {
+
+    box.innerHTML = `
+
+      <p class="empty-state">
+        No published music yet.
+      </p>
+
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+
+    list.map((song, index) => {
+
+      const cover =
+        song.cover ||
+        song.customCoverUrl;
+
+
+      return `
+
+        <article class="delete-song">
+
+          ${
+            cover
+              ? `
+                <img
+                  src="${escapeHTML(cover)}"
+                  alt=""
+                  style="
+                    width:42px;
+                    height:42px;
+                    object-fit:cover;
+                    border-radius:10px;
+                  "
+                >
+              `
+              : ""
+          }
+
+
+          <div class="delete-song-info">
+
+            <strong>
+              ${escapeHTML(
+                song.title
+              )}
+            </strong>
+
+            <small>
+              ${escapeHTML(
+                song.author ||
+                "Victor"
+              )}
+              ·
+              ${escapeHTML(
+                song.releaseType ||
+                "single"
+              )}
+              · #${index + 1}
+            </small>
+
+          </div>
+
+
+          <div class="delete-song-stats">
+
+            <strong>
+              ${Number(
+                song.streams || 0
+              ).toLocaleString()}
+            </strong>
+
+            <small>
+              streams
+            </small>
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* ==================== 22. DASHBOARD ==================== */
+
+function renderDashboard() {
+
+  const musicCount =
+    creatorState.publishedMusic.length;
+
+
+  const totalStreams =
+    creatorState.publishedMusic.reduce(
+      (total, song) =>
+        total +
+        Number(
+          song.streams || 0
+        ),
+      0
+    );
+
+
+  const totalDownloads =
+    creatorState.publishedMusic.reduce(
+      (total, song) =>
+        total +
+        Number(
+          song.downloads || 0
+        ),
+      0
+    );
+
+
+  const dashboardMusic =
+    $("#dashboardMusic");
+
+
+  const dashboardStreams =
+    $("#dashboardStreams");
+
+
+  const dashboardDownloads =
+    $("#dashboardDownloads");
+
+
+  const dashboardUsers =
+    $("#dashboardUsers");
+
+
+  if (dashboardMusic) {
+
+    dashboardMusic.textContent =
+      musicCount.toLocaleString();
+
+  }
+
+
+  if (dashboardStreams) {
+
+    dashboardStreams.textContent =
+      totalStreams.toLocaleString();
+
+  }
+
+
+  if (dashboardDownloads) {
+
+    dashboardDownloads.textContent =
+      totalDownloads.toLocaleString();
+
+  }
+
+
+  if (dashboardUsers) {
+
+    dashboardUsers.textContent =
+      "0";
+
+  }
+
+
+  renderStreamList(
+    $("#dashboardMostStreamed"),
+    creatorState.publishedMusic,
+    true
+  );
+
+
+  renderStreamList(
+    $("#dashboardLeastStreamed"),
+    creatorState.publishedMusic,
+    false
+  );
+
+}
+
+      
+
+function renderStreamList(
+  box,
+  songs,
+  descending
+) {
+
+  if (!box) {
+    return;
+  }
+
+
+  if (!songs.length) {
+
+    box.innerHTML = `
+
+      <p class="empty-state">
+        No streaming data yet.
+      </p>
+
+    `;
+
+    return;
+
+  }
+
+
+  const sorted =
+    [...songs]
+      .sort((a, b) => {
+
+        const aValue =
+          Number(
+            a.streams || 0
+          );
+
+
+        const bValue =
+          Number(
+            b.streams || 0
+          );
+
+
+        return descending
+          ? bValue - aValue
+          : aValue - bValue;
+
+      })
+      .slice(0, 3);
+
+
+  box.innerHTML =
+
+    sorted.map(
+      (song, index) => {
+
+        return `
+
+          <div class="stream-row">
+
+            <span class="stream-number">
+              ${index + 1}
+            </span>
+
+            <span class="stream-name">
+              ${escapeHTML(
+                song.title
+              )}
+            </span>
+
+            <span class="stream-value">
+              ${Number(
+                song.streams || 0
+              ).toLocaleString()}
+            </span>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* ==================== 24. QUICK STATISTICS ==================== */
+
+function updateStatistics() {
+
+  const musicCount =
+    creatorState.publishedMusic.length;
+
+
+  const totalStreams =
+    creatorState.publishedMusic.reduce(
+      (total, song) =>
+        total +
+        Number(
+          song.streams || 0
+        ),
+      0
+    );
+
+
+  const musicCountBox =
+    $("#musicCount");
+
+
+  const streamCountBox =
+    $("#streamCount");
+
+
+  const userCountBox =
+    $("#userCount");
+
+
+  if (musicCountBox) {
+
+    musicCountBox.textContent =
+      musicCount.toLocaleString();
+
+  }
+
+
+  if (streamCountBox) {
+
+    streamCountBox.textContent =
+      totalStreams.toLocaleString();
+
+  }
+
+
+  if (userCountBox) {
+
+    userCountBox.textContent =
+      "0";
+
+  }
+
+
+  renderStreamList(
+    $("#mostStreamed"),
+    creatorState.publishedMusic,
+    true
+  );
+
+
+  renderStreamList(
+    $("#leastStreamed"),
+    creatorState.publishedMusic,
+    false
+  );
+
+}
