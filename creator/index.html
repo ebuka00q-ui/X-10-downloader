@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <meta name="theme-color" content="#020807">
+  <meta name="description" content="Vic-sound Creator music management">
+
+  <title>Vic-sound Creator</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="creator/style.css">
+</head>
+
+<body>
+
+<main class="creator-app">
+
+  <!-- ==================== HEADER ==================== -->
+
+  <header class="creator-header">
+
+    <div class="creator-brand">
+
+      <div class="creator-icon">
+        <span>VSC</span>
+      </div>
+
+      <div>
+        <h1>Vic-sound Creator</h1>
+        <p>Create · Manage · Grow</p>
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- ==================== UPLOAD / CREATE ==================== -->
+
+  <section class="creator-screen active" id="uploadScreen">
+
+    <div class="screen-title">
+      <div>
+        <h2>Upload Music</h2>
+        <p>Add music and prepare releases</p>
+      </div>
+    </div>
+
+
+    <!-- MUSIC UPLOAD -->
+
+    <section class="creator-card">
+
+      <div class="card-heading">
+        <div>
+          <h3>Music Files</h3>
+          <p>Upload one or many songs</p>
+        </div>
+      </div>
+
+      <label class="upload-box" for="musicFiles">
+
+        <div class="upload-icon">⇧</div>
+
+        <strong>Tap to upload music</strong>
+
+        <span>MP3, WAV, M4A and more</span>
+
+      </label>
+
+      <input
+        id="musicFiles"
+        type="file"
+        accept="audio/*"
+        multiple
+        hidden
+      >
+
+      <div id="uploadedMusicList" class="uploaded-music-list"></div>
+
+    </section>
+
+
+    <!-- RELEASE CONTROL -->
+
+    <section class="creator-card">
+
+      <div class="card-heading">
+        <div>
+          <h3>Release Control</h3>
+          <p>Choose how the selected music will be released</p>
+        </div>
+      </div>
+
+
+      <label class="field-label" for="releaseType">
+        Release Type
+      </label>
+
+      <select id="releaseType">
+
+        <option value="single">Single</option>
+
+        <option value="ep">EP</option>
+
+        <option value="album">Album</option>
+
+      </select>
+
+
+      <label class="field-label" for="releaseNumber">
+        Release Number
+      </label>
+
+      <select id="releaseNumber">
+
+        <option value="auto">Auto</option>
+
+      </select>
+
+
+      <div class="release-info-box">
+
+        <strong>Automatic numbering</strong>
+
+        <p>
+          EPs and albums receive their next number automatically.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- MUSIC INFORMATION -->
+
+    <section class="creator-card">
+
+      <div class="card-heading">
+        <div>
+          <h3>Music Information</h3>
+          <p>Edit the information before publishing</p>
+        </div>
+      </div>
+
+
+      <label class="field-label" for="musicTitle">
+        Music Title
+      </label>
+
+      <input
+        id="musicTitle"
+        type="text"
+        placeholder="Enter music title"
+      >
+
+
+      <label class="field-label" for="musicAuthor">
+        Author
+      </label>
+
+      <input
+        id="musicAuthor"
+        type="text"
+        value="Victor"
+        placeholder="Author name"
+      >
+
+    </section>
+
+
+    <!-- AI CREATION -->
+
+    <section class="creator-card">
+
+      <div class="card-heading">
+
+        <div>
+          <h3>AI Creation</h3>
+          <p>Generate content automatically</p>
+        </div>
+
+      </div>
+
+
+      <div class="ai-actions">
+
+        <button
+          class="ai-button lyrics-button"
+          id="generateLyrics"
+          type="button"
+        >
+          <span>♪</span>
+          <strong>Generate Lyrics</strong>
+          <small>AI listens to the music</small>
+        </button>
+
+
+        <button
+          class="ai-button cover-button"
+          id="generateCover"
+          type="button"
+        >
+          <span>▧</span>
+          <strong>Generate Cover</strong>
+          <small>Create automatically</small>
+        </button>
+
+      </div>
+
+
+      <!-- MANUAL COVER OVERRIDE -->
+
+      <div class="override-area">
+
+        <div>
+
+          <strong>Manual Cover Override</strong>
+
+          <p>
+            Use your own cover instead of the generated one.
+          </p>
+
+        </div>
+
+        <label class="override-button" for="customCover">
+          Choose Picture
+        </label>
+
+        <input
+          id="customCover"
+          type="file"
+          accept="image/*"
+          hidden
+        >
+
+      </div>
+
+    </section>
+
+
+    <!-- PUBLISH -->
+
+    <section class="creator-card publish-card">
+
+      <div class="publish-info">
+
+        <strong>Ready to release?</strong>
+
+        <p>
+          Check the music, lyrics, cover and release type before publishing.
+        </p>
+
+      </div>
+
+      <button
+        id="publishMusic"
+        class="publish-button"
+        type="button"
+      >
+        🚀 Publish Music
+      </button>
+
+    </section>
+
+
+    <!-- QUICK STATISTICS -->
+
+    <section class="quick-statistics">
+
+      <div class="quick-heading">
+        <h2>Quick View</h2>
+        <span>Statistics</span>
+      </div>
+
+
+      <div class="stat-grid">
+
+        <div class="stat-card">
+          <small>Music</small>
+          <strong id="musicCount">0</strong>
+          <span>Uploaded</span>
+        </div>
+
+
+        <div class="stat-card">
+          <small>Users</small>
+          <strong id="userCount">0</strong>
+          <span>Active</span>
+        </div>
+
+
+        <div class="stat-card">
+          <small>Streams</small>
+          <strong id="streamCount">0</strong>
+          <span>Total</span>
+        </div>
+
+      </div>
+
+
+      <div class="stream-box">
+
+        <div class="stream-heading">
+
+          <h3>Most Streamed</h3>
+
+          <span>Top 3</span>
+
+        </div>
+
+        <div id="mostStreamed">
+          <p>No streaming data yet.</p>
+        </div>
+
+      </div>
+
+
+      <div class="stream-box">
+
+        <div class="stream-heading">
+
+          <h3>Least Streamed</h3>
+
+          <span>Top 3</span>
+
+        </div>
+
+        <div id="leastStreamed">
+          <p>No streaming data yet.</p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </section>
+
+
+  <!-- ==================== DELETE / RESTORE ==================== -->
+
+  <section
+    class="creator-screen"
+    id="deleteScreen"
+  >
+
+    <div class="screen-title">
+
+      <div>
+        <h2>Delete & Restore</h2>
+        <p>Manage released music safely</p>
+      </div>
+
+    </div>
+
+
+    <section class="creator-card">
+
+      <div class="search-box">
+
+        <input
+          id="deleteSearch"
+          type="search"
+          placeholder="Search music, EP or album"
+        >
+
+        <button
+          id="deleteSearchButton"
+          type="button"
+        >
+          Search
+        </button>
+
+      </div>
+
+
+      <div class="delete-filters">
+
+        <button
+          class="delete-filter active"
+          data-filter="all"
+        >
+          All
+        </button>
+
+        <button
+          class="delete-filter"
+          data-filter="ep"
+        >
+          EP
+        </button>
+
+        <button
+          class="delete-filter"
+          data-filter="album"
+        >
+          Album
+        </button>
+
+        <button
+          class="delete-filter"
+          data-filter="single"
+        >
+          Single
+        </button>
+
+      </div>
+
+
+      <div id="deleteMusicList" class="delete-music-list">
+
+        <p class="empty-state">
+          No music available.
+        </p>
+
+      </div>
+
+
+      <div class="delete-actions">
+
+        <button
+          id="selectAllDelete"
+          type="button"
+        >
+          Select All
+        </button>
+
+        <button
+          id="deleteSelected"
+          class="danger-button"
+          type="button"
+        >
+          Delete
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- RESTORE -->
+
+    <section class="creator-card restore-card">
+
+      <div class="card-heading">
+
+        <div>
+
+          <h3>Recently Deleted</h3>
+
+          <p>
+            Restore deleted music without uploading it again.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div id="restoreList">
+
+        <p class="empty-state">
+          Nothing recently deleted.
+        </p>
+
+      </div>
+
+    </section>
+
+  </section>
+
+
+  <!-- ==================== DASHBOARD ==================== -->
+
+  <section
+    class="creator-screen"
+    id="dashboardScreen"
+  >
+
+    <div class="screen-title">
+
+      <div>
+
+        <h2>Dashboard</h2>
+
+        <p>Users, streams, downloads and growth</p>
+
+      </div>
+
+    </div>
+
+
+    <section class="dashboard-stats">
+
+      <div class="dashboard-stat">
+        <small>Total Users</small>
+        <strong id="dashboardUsers">0</strong>
+      </div>
+
+      <div class="dashboard-stat">
+        <small>Total Music</small>
+        <strong id="dashboardMusic">0</strong>
+      </div>
+
+      <div class="dashboard-stat">
+        <small>Total Streams</small>
+        <strong id="dashboardStreams">0</strong>
+      </div>
+
+      <div class="dashboard-stat">
+        <small>Total Downloads</small>
+        <strong id="dashboardDownloads">0</strong>
+      </div>
+
+    </section>
+
+
+    <!-- MOST STREAMED -->
+
+    <section class="creator-card">
+
+      <div class="stream-heading">
+
+        <h3>Most Streamed</h3>
+
+        <span>Top 3</span>
+
+      </div>
+
+      <div id="dashboardMostStreamed"></div>
+
+    </section>
+
+
+    <!-- LEAST STREAMED -->
+
+    <section class="creator-card">
+
+      <div class="stream-heading">
+
+        <h3>Least Streamed</h3>
+
+        <span>Top 3</span>
+
+      </div>
+
+      <div id="dashboardLeastStreamed"></div>
+
+    </section>
+
+
+    <!-- ALL MUSIC -->
+
+    <section class="creator-card">
+
+      <div class="card-heading">
+
+        <div>
+
+          <h3>All Music</h3>
+
+          <p>
+            Latest releases appear at the bottom.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="search-box">
+
+        <input
+          id="allMusicSearch"
+          type="search"
+          placeholder="Search music"
+        >
+
+        <button
+          id="allMusicSearchButton"
+          type="button"
+        >
+          Search
+        </button>
+
+      </div>
+
+
+      <div id="allMusicList">
+
+        <p class="empty-state">
+          No music uploaded yet.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- MONETIZATION -->
+
+    <section class="creator-card">
+
+      <div class="card-heading">
+
+        <div>
+
+          <h3>Monetization</h3>
+
+          <p>
+            Payment settings will be connected later.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="monetization-placeholder">
+
+        <strong>Coming later</strong>
+
+        <p>
+          Earnings, payout settings and monetization controls
+          will be connected after the catalog is working.
+        </p>
+
+      </div>
+
+    </section>
+
+  </section>
+
+
+  <!-- ==================== BOTTOM NAVIGATION ==================== -->
+
+  <nav class="creator-nav">
+
+    <button
+      class="creator-nav-item active"
+      data-screen="upload"
+      type="button"
+    >
+      <span>⇧</span>
+      <small>Upload</small>
+    </button>
+
+
+    <button
+      class="creator-nav-item"
+      data-screen="delete"
+      type="button"
+    >
+      <span>♜</span>
+      <small>Delete</small>
+    </button>
+
+
+    <button
+      class="creator-nav-item"
+      data-screen="dashboard"
+      type="button"
+    >
+      <span>▥</span>
+      <small>Dashboard</small>
+    </button>
+
+  </nav>
+
+</main>
+
+
+<script src="creator/app.js"></script>
+
+</body>
+          </html>
