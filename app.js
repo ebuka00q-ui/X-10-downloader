@@ -31,6 +31,16 @@ function time(v){v=Math.max(0,Math.floor(Number(v)||0));return `${Math.floor(v/6
 function img(el,src,alt){if(el){el.src=src;el.alt=alt||""}}
 function favorite(id){return state.favorites.has(id)}
 function updateDots(){$("#latestDot").classList.toggle("show",state.newRelease);$("#navDot").classList.toggle("show",state.newRelease);$("#headerDot").classList.toggle("show",state.newRelease&&state.screen!=="latest")}
+
+/* ==================== DYNAMIC MUSIC COUNT ==================== */
+function updateOfflineCount(){
+  const count=$("#offlineCount");
+  if(!count)return;
+
+  const total=MUSIC.length;
+  count.textContent=`${total} ${total===1?"song":"songs"}`;
+}
+
 function closePopups(){$("#notificationPopover").classList.add("hidden");$("#timerSheet").classList.remove("open")}
 
 /* ==================== 04. RENDER HOME ==================== */
@@ -165,9 +175,5 @@ window.VicSoundBackend={
 };
 
 /* ==================== 18. START ==================== */
-function init(){try{let n=localStorage.getItem('vicSoundNotifications');if(n!==null){state.notifications=n==='true';$("#notificationSwitch").checked=state.notifications}}catch(e){}setupVoice();go('home');load(0,false);state.playing=false;updatePlayer();updateDots()}
-init();
-/* =========================================================
-   END OF APP.JS
-   ========================================================= */
- 
+function init(){try{let n=localStorage.getItem('vicSoundNotifications');if(n!==null){state.notifications=n==='true';$("#notificationSwitch").checked=state.notifications}}catch(e){}setupVoice();go('home');load(0,false);state.playing=false;updatePlayer();updateDots();updateOfflineCount()}
+init()
