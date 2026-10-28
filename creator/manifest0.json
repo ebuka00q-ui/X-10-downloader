@@ -1,1 +1,23 @@
-
+{
+  "name": "Vic-sound Creator",
+  "short_name": "Vic-sound Creator",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#020807",
+  "theme_color": "#020807",
+  "description": "Vic-sound Creator music management",
+  "icons": [
+    {
+      "src": "./creator-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./creator-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
