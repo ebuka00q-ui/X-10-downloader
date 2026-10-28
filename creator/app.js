@@ -1204,4 +1204,546 @@ function renderDashboard() {
 
   /*
     User count will later come from the backend.
-    We do 
+    We do not invent users.
+  */
+
+  $("#dashboardUsers").textContent =
+    "0";
+
+
+  renderStreamList(
+    $("#dashboardMostStreamed"),
+    creatorState.music,
+    true
+  );
+
+
+  renderStreamList(
+    $("#dashboardLeastStreamed"),
+    creatorState.music,
+    false
+  );
+}
+
+
+/* ==================== 22. STREAM LISTS ==================== */
+
+function renderStreamList(box, songs, descending) {
+
+  if (!box) return;
+
+
+  if (!songs.length) {
+
+    box.innerHTML = `
+      <p class="empty-state">
+        No streaming data yet.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  const sorted =
+    [...songs]
+      .sort((a, b) => {
+
+        const aValue =
+          Number(a.streams || 0);
+
+        const bValue =
+          Number(b.streams || 0);
+
+        return descending
+          ? bValue - aValue
+          : aValue - bValue;
+
+      })
+      .slice(0, 3);
+
+
+  box.innerHTML =
+    sorted.map((song, index) => {
+
+      return `
+        <div class="stream-row">
+
+          <span class="stream-number">
+            ${index + 1}
+          </span>
+
+          <span class="stream-name">
+            ${escapeHTML(song.title)}
+          </span>
+
+          <span class="stream-value">
+            ${Number(song.streams || 0).toLocaleString()}
+          </span>
+
+        </div>
+      `;
+
+    })
+    .join("");
+}
+
+
+/* ==================== 23. QUICK STATISTICS ==================== */
+
+function updateStatistics() {
+
+  const musicCount =
+    creatorState.music.length;
+
+
+  const totalStreams =
+    creatorState.music.reduce(
+      (total, song) =>
+        total + Number(song.streams || 0),
+      0
+    );
+
+
+  $("#musicCount").textContent =
+    musicCount.toLocaleString();
+
+
+  $("#streamCount").textContent =
+    totalStreams.toLocaleString();
+
+
+  $("#userCount").textContent =
+    "0";
+
+
+  renderStreamList(
+    $("#mostStreamed"),
+    creatorState.music,
+    true
+  );
+
+
+  renderStreamList(
+    $("#leastStreamed"),
+    creatorState.music,
+    false
+  );
+}
+
+
+/* ==================== 24. ESCAPE HTML ==================== */
+
+function escapeHTML(value) {
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* ==================== 25. EVENT LISTENERS ==================== */
+
+
+/* Navigation */
+
+$$(".creator-nav-item").forEach(button => {
+
+  button.addEventListener("click", () => {
+
+    goCreatorScreen(
+      button.dataset.screen
+    );
+
+  });
+
+});
+
+
+/* Music upload */
+
+$("#musicFiles").addEventListener(
+  "change",
+  handleMusicUpload
+);
+
+
+/* Remove uploaded music */
+
+$("#uploadedMusicList").addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "[data-remove-upload]"
+      );
+
+    if (!button) return;
+
+    removeUploadedSong(
+      Number(button.dataset.removeUpload)
+    );
+
+  }
+);
+
+
+/* Release type */
+
+$("#releaseType").addEventListener(
+  "change",
+  updateReleaseControls
+);
+
+
+/* Release number */
+
+$("#releaseNumber").addEventListener(
+  "change",
+  () => {
+
+    creatorState.releaseNumber =
+      $("#releaseNumber").value;
+
+  }
+);
+
+
+/* Music title */
+
+$("#musicTitle").addEventListener(
+  "input",
+  () => {
+
+    const selected =
+      getSelectedSongs();
+
+    if (selected.length === 1) {
+
+      selected[0].title =
+        $("#musicTitle").value;
+
+    }
+
+  }
+);
+
+
+/* Music author */
+
+$("#musicAuthor").addEventListener(
+  "input",
+  () => {
+
+    const author =
+      $("#musicAuthor").value.trim();
+
+    getSelectedSongs().forEach(song => {
+
+      song.author =
+        author || "Victor";
+
+    });
+
+  }
+);
+
+
+/* Lyrics */
+
+$("#generateLyrics").addEventListener(
+  "click",
+  generateLyrics
+);
+
+
+/* Cover */
+
+$("#generateCover").addEventListener(
+  "click",
+  generateCover
+);
+
+
+/* Manual cover */
+
+$("#customCover").addEventListener(
+  "change",
+  handleCustomCover
+);
+
+
+/* Publish */
+
+$("#publishMusic").addEventListener(
+  "click",
+  publishMusic
+);
+
+
+/* Delete search */
+
+$("#deleteSearch").addEventListener(
+  "input",
+  event => {
+
+    creatorState.searchDelete =
+      event.target.value;
+
+    renderDeleteMusic();
+
+  }
+);
+
+
+$("#deleteSearchButton").addEventListener(
+  "click",
+  () => {
+
+    creatorState.searchDelete =
+      $("#deleteSearch").value;
+
+    renderDeleteMusic();
+
+  }
+);
+
+
+/* Delete filters */
+
+$$(".delete-filter").forEach(button => {
+
+  button.addEventListener("click", () => {
+
+    creatorState.deleteFilter =
+      button.dataset.filter;
+
+    $$(".delete-filter").forEach(item => {
+
+      item.classList.toggle(
+        "active",
+        item === button
+      );
+
+    });
+
+    renderDeleteMusic();
+
+  });
+
+});
+
+
+/* Delete selection */
+
+$("#deleteMusicList").addEventListener(
+  "change",
+  event => {
+
+    const checkbox =
+      event.target.closest(
+        "[data-delete-select]"
+      );
+
+    if (!checkbox) return;
+
+    const id =
+      Number(checkbox.dataset.deleteSelect);
+
+
+    if (checkbox.checked) {
+
+      creatorState.selectedMusic.add(id);
+
+    } else {
+
+      creatorState.selectedMusic.delete(id);
+
+    }
+
+    renderUploadedMusic();
+
+  }
+);
+
+
+/* Select all */
+
+$("#selectAllDelete").addEventListener(
+  "click",
+  selectAllDelete
+);
+
+
+/* Delete */
+
+$("#deleteSelected").addEventListener(
+  "click",
+  deleteSelectedMusic
+);
+
+
+/* Restore */
+
+$("#restoreList").addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "[data-restore]"
+      );
+
+    if (!button) return;
+
+    restoreMusic(
+      Number(button.dataset.restore)
+    );
+
+  }
+);
+
+
+/* All music search */
+
+$("#allMusicSearch").addEventListener(
+  "input",
+  event => {
+
+    creatorState.searchAll =
+      event.target.value;
+
+    renderAllMusic();
+
+  }
+);
+
+
+$("#allMusicSearchButton").addEventListener(
+  "click",
+  () => {
+
+    creatorState.searchAll =
+      $("#allMusicSearch").value;
+
+    renderAllMusic();
+
+  }
+);
+
+
+/* ==================== 26. CREATOR BACKEND ==================== */
+
+/*
+   These are connection points.
+
+   The Creator app can work locally first.
+
+   Later we connect these functions to
+   Supabase / Vercel backend services.
+
+   IMPORTANT:
+   API keys must NOT be placed in this
+   public JavaScript file.
+*/
+
+window.VicSoundCreatorBackend = {
+
+  async generateLyrics(song) {
+
+    console.log(
+      "Lyrics request:",
+      song
+    );
+
+    throw new Error(
+      "Lyrics backend not connected."
+    );
+  },
+
+
+  async generateCover(song) {
+
+    console.log(
+      "Cover request:",
+      song
+    );
+
+    throw new Error(
+      "Cover backend not connected."
+    );
+  },
+
+
+  async publishMusic(songs) {
+
+    console.log(
+      "Publish request:",
+      songs
+    );
+
+    /*
+      Backend connection will be added here.
+    */
+
+    return {
+      success: true
+    };
+  },
+
+
+  async deleteMusic(ids) {
+
+    console.log(
+      "Delete request:",
+      ids
+    );
+
+    /*
+      Backend delete connection
+      will be added here.
+    */
+
+    return {
+      success: true
+    };
+  }
+
+};
+
+
+/* ==================== 27. START ==================== */
+
+function initCreator() {
+
+  loadState();
+
+  updateReleaseNumberOptions();
+
+  renderUploadedMusic();
+
+  renderDeleteMusic();
+
+  renderRestoreList();
+
+  renderDashboard();
+
+  renderAllMusic();
+
+  updateStatistics();
+
+  goCreatorScreen("upload");
+
+}
+
+
+initCreator();
+
+
+/* =========================================================
+   END OF CREATOR/APP.JS
+   ========================================================= */
