@@ -1,1 +1,540 @@
+/* =========================
+   VIC-SOUND CREATOR
+   MAIN DESIGN
+========================= */
 
+:root {
+  --background: #101014;
+  --surface: #19191f;
+  --surface-light: #22222b;
+  --primary: #a855f7;
+  --primary-light: #c084fc;
+  --text: #ffffff;
+  --muted: #a1a1aa;
+  --border: #30303a;
+  --danger: #ef4444;
+  --success: #22c55e;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+
+/* =========================
+   APP CONTAINER
+========================= */
+
+.app {
+  width: 100%;
+  max-width: 900px;
+  min-height: 100vh;
+  margin: auto;
+  padding-bottom: 90px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.top-header {
+  height: 75px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.brand-icon {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--primary);
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.brand h1 {
+  font-size: 18px;
+}
+
+.brand p {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+
+.profile-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: white;
+  font-size: 21px;
+}
+
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+  padding: 20px 16px;
+}
+
+.page-section {
+  animation: appear 0.25s ease;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  color: var(--primary-light);
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.section-heading h2 {
+  font-size: 27px;
+  margin-bottom: 7px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* =========================
+   PANELS
+========================= */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.panel h3 {
+  font-size: 17px;
+  margin-bottom: 15px;
+}
+
+.panel h4 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+
+/* =========================
+   STATISTICS
+========================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 17px;
+}
+
+.stat-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-card strong {
+  font-size: 25px;
+}
+
+
+/* =========================
+   FORM ELEMENTS
+========================= */
+
+label {
+  display: block;
+  font-size: 13px;
+  margin-top: 17px;
+  margin-bottom: 8px;
+  color: #e4e4e7;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-light);
+  color: white;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #777783;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+select {
+  appearance: auto;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="radio"] {
+  width: auto;
+  accent-color: var(--primary);
+}
+
+
+/* =========================
+   UPLOAD BOXES
+========================= */
+
+.upload-box {
+  min-height: 135px;
+  border: 1px dashed #686078;
+  border-radius: 13px;
+  background: var(--surface-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: center;
+  padding: 15px;
+  margin-top: 10px;
+}
+
+.upload-box:hover {
+  border-color: var(--primary-light);
+  background: #292332;
+}
+
+.upload-icon {
+  font-size: 30px;
+  color: var(--primary-light);
+}
+
+.upload-box strong {
+  font-size: 14px;
+}
+
+.upload-box small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.file-preview {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+
+.cover-preview {
+  width: 130px;
+  height: 130px;
+  margin-top: 15px;
+  border-radius: 12px;
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.primary-button,
+.secondary-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-top: 13px;
+  border: none;
+}
+
+.primary-button {
+  background: var(--primary);
+  color: white;
+}
+
+.primary-button:hover {
+  background: #9333ea;
+}
+
+.secondary-button {
+  background: var(--surface-light);
+  color: white;
+  border: 1px solid var(--border);
+}
+
+.secondary-button:hover {
+  border-color: var(--primary);
+}
+
+
+/* =========================
+   LISTENER ACCESS OPTIONS
+========================= */
+
+.choice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.choice-card input {
+  margin-top: 3px;
+}
+
+.choice-card span {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.choice-card strong {
+  font-size: 13px;
+}
+
+.choice-card small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
+/* =========================
+   STATUS AND EMPTY MESSAGES
+========================= */
+
+.status-message {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.empty-message {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 15px 0;
+  text-align: center;
+}
+
+
+/* =========================
+   MUSIC DETAILS
+========================= */
+
+#dashboardAudioPlayer {
+  width: 100%;
+  margin-top: 15px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-row input {
+  min-width: 0;
+}
+
+.input-row button {
+  width: auto;
+  min-width: 75px;
+  margin-top: 0;
+}
+
+
+/* =========================
+   BOTTOM NAVIGATION
+========================= */
+
+.bottom-navigation {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 900px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #18181e;
+  border-top: 1px solid var(--border);
+  z-index: 20;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-button {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-button span {
+  font-size: 22px;
+}
+
+.nav-button small {
+  font-size: 11px;
+}
+
+.nav-button.active {
+  color: var(--primary-light);
+}
+
+.nav-button.active span {
+  transform: scale(1.1);
+}
+
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+@media (min-width: 650px) {
+
+  .main-content {
+    padding: 30px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .section-heading h2 {
+    font-size: 32px;
+  }
+
+}
+
+@media (max-width: 380px) {
+
+  .main-content {
+    padding: 15px 12px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  .section-heading h2 {
+    font-size: 24px;
+  }
+
+}
