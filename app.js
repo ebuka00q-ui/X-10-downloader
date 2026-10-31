@@ -1806,4 +1806,96 @@
     });
   }
 
-       
+      /* =======================================================
+     20. SLEEP TIMER
+     ======================================================= */
+
+  function openTimer() {
+    el.timerSheet?.classList.add("open");
+
+    el.timerSheet?.setAttribute("aria-hidden", "false");
+  }
+
+  function closeTimer() {
+    el.timerSheet?.classList.remove("open");
+
+    el.timerSheet?.setAttribute("aria-hidden", "true");
+  }
+
+  $("queueTimer")?.addEventListener("click", openTimer);
+
+  function clearTimer() {
+    clearTimeout(state.timerTimeout);
+
+    state.timerTimeout = null;
+
+    state.timerEndAt = null;
+  }
+
+  function setTimer(minutes) {
+    clearTimer();
+
+    state.timerMode = "minutes";
+
+    state.timerEndAt = Date.now() + minutes * 60 * 1000;
+
+    document.querySelectorAll("[data-min]").forEach(button => {
+      button.classList.toggle(
+        "selected",
+        Number(button.dataset.min) === minutes
+      );
+    });
+
+    $("endTrack")?.classList.remove("selected");
+
+    $("timerOff")?.classList.remove("selected");
+  }
+
+  document.querySelectorAll("[data-min]").forEach(button => {
+    button.addEventListener("click", () => {
+      setTimer(Number(button.dataset.min));
+    });
+  });
+
+  $("endTrack")?.addEventListener("click", () => {
+    clearTimer();
+
+    state.timerMode = "end";
+
+    document.querySelectorAll("[data-min]").forEach(button => {
+      button.classList.remove("selected");
+    });
+
+    $("endTrack")?.classList.add("selected");
+
+    $("timerOff")?.classList.remove("selected");
+  });
+
+  $("timerOff")?.addEventListener("click", () => {
+    clearTimer();
+
+    state.timerMode = "off";
+
+    document.querySelectorAll("[data-min]").forEach(button => {
+      button.classList.remove("selected");
+    });
+
+    $("endTrack")?.classList.remove("selected");
+
+    $("timerOff")?.classList.add("selected");
+  });
+
+  function checkTimer() {
+    if (!state.timerEndAt) return;
+
+    if (Date.now() >= state.timerEndAt) {
+      clearTimer();
+
+      audio.pause();
+
+      state.timerMode = "off";
+
+      closeTimer();
+    }
+  }
+
