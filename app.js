@@ -1899,3 +1899,269 @@
     }
   }
 
+/* =======================================================
+     21. DJ — NO AI REQUIRED
+     ======================================================= */
+
+  const DJ_RULES = {
+    calm: [
+      "calm", "quiet", "peaceful", "soft", "relax",
+      "relaxing", "sleep", "sleeping", "rest"
+    ],
+
+    sad: [
+      "sad", "heartbroken", "cry", "crying",
+      "emotional", "pain"
+    ],
+
+    love: [
+      "love", "romantic", "romance", "relationship",
+      "girlfriend", "boyfriend"
+    ],
+
+    rap: [
+      "rap", "rapper", "bars", "hip hop", "hip-hop"
+    ],
+
+    party: [
+      "party", "dance", "dancing", "energy",
+      "hype", "turn up"
+    ],
+
+    afrobeats: [
+      "afrobeats", "afrobeat", "afro"
+    ],
+
+    moody: [
+      "moody", "dark", "late night", "night"
+    ],
+
+    pop: [
+      "pop", "catchy", "melodic"
+    ]
+  };
+
+  function detectDJIntent(message) {
+    const text = normalizeWords(message);
+
+    const found = [];
+
+    for (const [mood, words] of Object.entries(DJ_RULES)) {
+      if (words.some(word => text.includes(word))) {
+        found.push(mood);
+      }
+    }
+
+    return found;
+  }
+
+  function scoreSongForDJ(song, intents) {
+    let score = 0;
+
+    const values = [
+      ...song.genre,
+      ...song.mood,
+      ...song.tags
+    ].map(normalizeWords);
+
+    for (const intent of intents) {
+      if (values.some(value => value.includes(intent))) {
+        score += 10;
+      }
+    }
+
+    if (isFavorite(song.id)) {
+      score += 2;
+    }
+
+    const history = state.djHistory
+      .slice(-12)
+      .filter(item => item.songId === song.id).length;
+
+    score -= history * 3;
+
+    if (state.djLastSuggestions.includes(song.id)) {
+      score -= 8;
+    }
+
+    if (song.energy >= 1 && song.energy <= 10) {
+      if (intents.includes("calm") && song.energy <= 4) {
+        score += 4;
+      }
+
+      if (intents.includes("party") && song.energy >= 7) {
+        score += 4;
+      }
+    }
+
+    return score;
+  }
+
+  function getDJSuggestions(message) {
+    const intents = detectDJIntent(message);
+
+    let songs = state.songs.slice();
+
+    if (!songs.length) return [];
+
+    if (intents.length) {
+      songs.sort((a, b) =>
+        scoreSongForDJ(b, intents) -
+        scoreSongForDJ(a, intents)
+      );
+
+      const bestScore = scoreSongForDJ(songs[0], intents);
+
+      if (bestScore <= 0) {
+        return [];
+      }
+
+      songs = songs.filter(song =>
+        scoreSongForDJ(song, intents) > 0
+      );
+
+    } else {
+      songs.sort((a, b) =>
+        scoreSongForDJ(b, []) -
+        scoreSongForDJ(a, [])
+      );
+    }
+
+    return songs.slice(0, 5);
+  }
+
+  function speakDJ(text) {
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const message = new SpeechSynthesisUtterance(text);
+
+    message.lang = CONFIG.DJ_VOICE_LANGUAGE;
+
+    message.rate = 0.95;
+
+    window.speechSynthesis.speak(message);
+  }
+
+  function replyDJ(message) {
+    const suggestions = getDJSuggestions(message);
+
+    if (!suggestions.length) {
+      const reply =
+        "I couldn't find a close match in the available music yet. " +
+        "Try asking for rap, love, calm, sad or Afrobeats.";
+
+      if (el.djReply) el.djReply.textContent = reply;
+
+      speakDJ(reply);
+
+      return;
+    }
+
+    const intent = detectDJIntent(message);
+
+    let reply = intent.length
+      ? `I found music that matches ${intent.join(", ")}.`
+      : "Here are some songs you might enjoy.";
+
+    reply += " Choose one and I'll play it.";
+
+    if (el.djReply) {
+      el.djReply.textContent = reply;
+    }
+
+    state.djLastSuggestions = suggestions.map(song => song.id);
+
+    suggestions.forEach(song => {
+      state.djHistory.push({
+        songId: song.id,
+        time: Date.now()
+      });
+    });
+
+    saveLocalState();
+
+    const suggestionHTML = suggestions.map((song, index) => `
+      <button
+        class="dj-suggestion"
+        data-dj-play="${escapeHTML(song.id)}">
+
+        ${index + 1}. ${escapeHTML(song.title)}
+        — ${escapeHTML(song.artist)}
+
+      </button>
+    `).join("");
+
+    if (el.djReply) {
+      el.djReply.innerHTML = `
+        <p>${escapeHTML(reply)}</p>
+        <div class="dj-suggestions">
+          ${suggestionHTML}
+        </div>
+      `;
+    }
+
+    speakDJ(reply);
+  }
+
+  $("favoriteDjPlay")?.addEventListener("click", () => {
+    openDJ();
+  });
+
+  el.favoriteDjCover?.addEventListener("click", openDJ);
+
+  function openDJ() {
+    el.djOverlay?.classList.add("open");
+
+    el.djOverlay?.setAttribute("aria-hidden", "false");
+
+    updateDJArtwork();
+  }
+
+  function closeDJ() {
+    el.djOverlay?.classList.remove("open");
+
+    el.djOverlay?.setAttribute("aria-hidden", "true");
+
+    stopDJListening();
+  }
+
+  $("djBack")?.addEventListener("click", closeDJ);
+
+  function updateDJArtwork() {
+    const artwork = state.songs.find(song => song.djCoverUrl)
+      ?.djCoverUrl;
+
+    if (!artwork) return;
+
+    [el.djCoverLarge, el.favoriteDjCover].forEach(node => {
+      if (!node) return;
+
+      node.style.backgroundImage = `url("${artwork}")`;
+
+      node.style.backgroundSize = "cover";
+
+      node.style.backgroundPosition = "center";
+
+      node.classList.remove("placeholder-dj");
+    });
+  }
+
+  function sendDJMessage() {
+    const message = el.djInput?.value.trim();
+
+    if (!message) return;
+
+    el.djInput.value = "";
+
+    replyDJ(message);
+  }
+
+  $("djSend")?.addEventListener("click", sendDJMessage);
+
+  el.djInput?.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      sendDJMessage();
+    }
+  });
