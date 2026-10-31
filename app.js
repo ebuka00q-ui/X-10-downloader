@@ -892,4 +892,270 @@
       <article class="collection-card">
 
         <button class="favorite-card-open"
-          data-open-collectio
+          data-open-collection="${escapeHTML(collection.id)}">
+
+          <img
+            src="${escapeHTML(collectionCover(collection))}"
+            alt=""
+            loading="lazy">
+
+          <div class="collection-card-info">
+            <b>${escapeHTML(collection.name)}</b>
+            <small>(${collection.songs.length}) songs</small>
+          </div>
+        </button>
+
+        <button class="collection-card-more"
+          data-collection-menu="${escapeHTML(collection.id)}">
+          ⋮
+        </button>
+      </article>
+    `).join("");
+
+    const favoriteHTML = favoriteSongs.map(song => `
+      <article class="favorite-card">
+
+        <button class="favorite-card-open"
+          data-play-song="${escapeHTML(song.id)}">
+
+          <img src="${escapeHTML(song.coverUrl)}" alt="">
+
+          <div class="favorite-card-info">
+            <b>${escapeHTML(song.title)}</b>
+            <small>${escapeHTML(song.artist)}</small>
+          </div>
+        </button>
+
+        <button class="favorite-card-more"
+          data-song-menu="${escapeHTML(song.id)}">
+          ⋮
+        </button>
+      </article>
+    `).join("");
+
+    el.favoriteGrid.innerHTML = `
+      <div class="collection-grid">
+        ${collectionHTML}
+      </div>
+
+      <div class="section-heading">
+        <h2>Liked Songs</h2>
+        <button id="createCollectionButton">＋</button>
+      </div>
+
+      <div class="favorite-grid">
+        ${favoriteHTML}
+      </div>
+
+      ${!favoriteHTML && !collectionHTML ? `
+        <div class="empty-state">
+          <b>Your music space is empty</b>
+          <span>Like songs or create your own collection.</span>
+        </div>
+      ` : ""}
+    `;
+
+    const count = $("favoriteCount");
+
+    if (count) {
+      count.textContent = `${favoriteSongs.length} songs`;
+    }
+
+    $("createCollectionButton")?.addEventListener(
+      "click",
+      createCollection
+    );
+  }
+
+  function openCollection(id) {
+    const collection = state.collections.find(item => item.id === id);
+
+    if (!collection) return;
+
+    const songs = collection.songs
+      .map(getSongById)
+      .filter(Boolean);
+
+    const choices = songs.map(song =>
+      `${song.title} — ${song.artist}`
+    );
+
+    const selected = prompt(
+      `Collection: ${collection.name}\n\n` +
+      choices.map((item, index) => `${index + 1}. ${item}`).join("\n") +
+      "\n\nType a song number to play:"
+    );
+
+    if (!selected) return;
+
+    const index = Number(selected) - 1;
+
+    if (songs[index]) {
+      playSong(songs[index], songs);
+    }
+  }
+
+  function showCollectionMenu(id) {
+    const collection = state.collections.find(item => item.id === id);
+
+    if (!collection) return;
+
+    const choice = prompt(
+      `${collection.name}\n\n` +
+      "1. Add songs\n" +
+      "2. Rename\n" +
+      "3. Remove collection"
+    );
+
+    if (choice === "1") {
+      addSongsToCollection(id);
+    }
+
+    if (choice === "2") {
+      renameCollection(id);
+    }
+
+    if (choice === "3") {
+      deleteCollection(id);
+    }
+  }
+
+  function addSongsToCollection(id) {
+    const collection = state.collections.find(item => item.id === id);
+
+    if (!collection) return;
+
+    const available = state.songs.filter(song =>
+      !collection.songs.includes(song.id)
+    );
+
+    if (!available.length) {
+      alert("There are no more songs to add.");
+      return;
+    }
+
+    const list = available.map((song, index) =>
+      `${index + 1}. ${song.title} — ${song.artist}`
+    ).join("\n");
+
+    const answer = prompt(
+      "Enter song numbers separated by commas:\n\n" + list
+    );
+
+    if (!answer) return;
+
+    answer.split(",").forEach(value => {
+      const index = Number(value.trim()) - 1;
+
+      if (available[index]) {
+        collection.songs.push(available[index].id);
+      }
+    });
+
+    collection.songs = unique(collection.songs);
+
+    saveLocalState();
+
+    renderFavorites();
+  }
+
+ /* =======================================================
+     12. LATEST RELEASES
+     ======================================================= */
+
+  function renderLatest() {
+    if (!el.latestList) return;
+
+    const releases = state.latest.length
+      ? state.latest
+      : state.songs.filter(song =>
+          song.destination === "latest" || song.releaseId
+        );
+
+    if (!releases.length) {
+      el.latestList.innerHTML = `
+        <div class="empty-state">
+          <b>No latest releases yet</b>
+          <span>New releases will appear here.</span>
+        </div>
+      `;
+
+      return;
+    }
+
+    el.latestList.innerHTML = releases.map(song => `
+      <article class="release-card">
+
+        <img class="release-cover"
+          src="${escapeHTML(song.coverUrl)}"
+          alt="">
+
+        <div class="release-info">
+          <h3>${escapeHTML(song.title)}</h3>
+          <p>${escapeHTML(song.artist)}</p>
+          <p>${escapeHTML(song.releaseType)}</p>
+        </div>
+
+        <button class="release-action"
+          data-latest-download="${escapeHTML(song.id)}">
+          Download
+        </button>
+
+      </article>
+    `).join("");
+  }
+
+
+  /* =======================================================
+     13. MAIN RENDER
+     ======================================================= */
+
+  function renderEverything() {
+    renderHome();
+    renderFavorites();
+    renderLatest();
+    updatePlayerDisplay();
+    renderQueue();
+  }
+
+
+  /* =======================================================
+     14. SCREEN NAVIGATION
+     ======================================================= */
+
+  function showScreen(name) {
+    const screens = {
+      home: el.homeScreen,
+      favorites: el.favoritesScreen,
+      latest: el.latestScreen
+    };
+
+    if (!screens[name]) return;
+
+    Object.values(screens).forEach(screen => {
+      screen?.classList.remove("active");
+    });
+
+    screens[name].classList.add("active");
+
+    state.currentScreen = name;
+
+    document.querySelectorAll(".nav-item").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.screen === name
+      );
+    });
+
+    if (el.searchPanel) {
+      el.searchPanel.classList.remove("open");
+    }
+  }
+
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.addEventListener("click", () => {
+      showScreen(button.dataset.screen);
+    });
+  });
+
+ 
