@@ -1546,3 +1546,264 @@
   });
 
                                     
+/* =======================================================
+     17. NEXT AND PREVIOUS
+     ======================================================= */
+
+  function nextSong() {
+    if (!state.queue.length) return;
+
+    if (state.repeat === "one") {
+      audio.currentTime = 0;
+      audio.play();
+      return;
+    }
+
+    let nextIndex;
+
+    if (state.shuffle && state.queue.length > 1) {
+      const choices = state.queue
+        .map((_, index) => index)
+        .filter(index => index !== state.currentQueueIndex);
+
+      nextIndex = choices[
+        Math.floor(Math.random() * choices.length)
+      ];
+
+    } else {
+      nextIndex = state.currentQueueIndex + 1;
+    }
+
+    if (nextIndex >= state.queue.length) {
+      if (state.repeat === "all") {
+        nextIndex = 0;
+      } else {
+        audio.pause();
+        return;
+      }
+    }
+
+    state.currentQueueIndex = nextIndex;
+
+    playSong(
+      state.queue[nextIndex],
+      state.queue
+    );
+  }
+
+  function previousSong() {
+    if (!state.queue.length) return;
+
+    if (audio.currentTime > 3) {
+      audio.currentTime = 0;
+      return;
+    }
+
+    let index = state.currentQueueIndex - 1;
+
+    if (index < 0) {
+      if (state.repeat === "all") {
+        index = state.queue.length - 1;
+      } else {
+        index = 0;
+      }
+    }
+
+    state.currentQueueIndex = index;
+
+    playSong(state.queue[index], state.queue);
+  }
+
+  $("next")?.addEventListener("click", nextSong);
+
+  $("prev")?.addEventListener("click", previousSong);
+
+  audio.addEventListener("ended", () => {
+    if (state.playbackSession) {
+      state.playbackSession.completed = true;
+
+      recordLocalEvent("play_completed", {
+        songId: state.playbackSession.songId
+      });
+    }
+
+    if (state.repeat === "one") {
+      audio.currentTime = 0;
+      audio.play();
+      return;
+    }
+
+    nextSong();
+  });
+
+
+  /* =======================================================
+     18. SHUFFLE AND REPEAT
+     ======================================================= */
+
+  function updatePlaybackModes() {
+    $("shuffle")?.classList.toggle("active", state.shuffle);
+
+    $("repeat")?.classList.toggle(
+      "active",
+      state.repeat !== "off"
+    );
+
+    $("playerRepeatTop")?.classList.toggle(
+      "active",
+      state.repeat !== "off"
+    );
+
+    const queueButtons = document.querySelectorAll(
+      ".queue-controls button"
+    );
+
+    queueButtons[0]?.classList.toggle("selected", state.shuffle);
+
+    queueButtons[4]?.classList.toggle(
+      "selected",
+      state.repeat !== "off"
+    );
+
+    saveLocalState();
+  }
+
+  function toggleShuffle() {
+    state.shuffle = !state.shuffle;
+    updatePlaybackModes();
+  }
+
+  function toggleRepeat() {
+    const modes = ["off", "all", "one"];
+
+    const index = modes.indexOf(state.repeat);
+
+    state.repeat = modes[(index + 1) % modes.length];
+
+    updatePlaybackModes();
+  }
+
+  $("shuffle")?.addEventListener("click", toggleShuffle);
+
+  $("repeat")?.addEventListener("click", toggleRepeat);
+
+  $("playerRepeatTop")?.addEventListener("click", toggleRepeat);
+
+  document.querySelector(".queue-controls button:first-child")
+    ?.addEventListener("click", toggleShuffle);
+
+  document.querySelector(".queue-controls button:last-child")
+    ?.addEventListener("click", toggleRepeat);
+
+
+  /* =======================================================
+     19. LYRICS
+     ======================================================= */
+
+  function openLyrics() {
+    if (!state.currentSong) return;
+
+    el.lyricsSheet?.classList.add("open");
+
+    el.lyricsSheet?.setAttribute("aria-hidden", "false");
+
+    if (el.lyricsSongTitle) {
+      el.lyricsSongTitle.textContent =
+        state.currentSong.title;
+    }
+
+    renderLyrics();
+  }
+
+  function closeLyrics() {
+    el.lyricsSheet?.classList.remove("open");
+
+    el.lyricsSheet?.setAttribute("aria-hidden", "true");
+  }
+
+  $("lyricsButton")?.addEventListener("click", openLyrics);
+
+  function parseTimedLyrics(value) {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return value.map(item => ({
+        time: Number(item.time ?? item.seconds ?? 0),
+        text: safeText(item.text ?? item.lyric ?? "")
+      }));
+    }
+
+    return [];
+  }
+
+  function renderLyrics() {
+    if (!el.lyricsContent || !state.currentSong) return;
+
+    const song = state.currentSong;
+
+    const timed = parseTimedLyrics(song.timedLyrics);
+
+    if (timed.length) {
+      el.lyricsContent.innerHTML = timed.map((line, index) => `
+        <p class="upcoming-line"
+          data-lyric-index="${index}">
+          ${escapeHTML(line.text)}
+        </p>
+      `).join("");
+
+      updateLyrics();
+
+      return;
+    }
+
+    if (song.lyrics.trim()) {
+      el.lyricsContent.textContent = song.lyrics;
+    } else {
+      el.lyricsContent.textContent = "No lyrics to this song.";
+    }
+  }
+
+  function updateLyrics() {
+    if (!el.lyricsContent || !state.currentSong) return;
+
+    const timed = parseTimedLyrics(state.currentSong.timedLyrics);
+
+    if (!timed.length) return;
+
+    let currentIndex = -1;
+
+    timed.forEach((line, index) => {
+      if (audio.currentTime >= line.time) {
+        currentIndex = index;
+      }
+    });
+
+    const lines = el.lyricsContent.querySelectorAll(
+      "[data-lyric-index]"
+    );
+
+    lines.forEach((line, index) => {
+      line.classList.remove(
+        "current-line",
+        "past-line",
+        "upcoming-line"
+      );
+
+      if (index === currentIndex) {
+        line.classList.add("current-line");
+      } else if (index < currentIndex) {
+        line.classList.add("past-line");
+      } else {
+        line.classList.add("upcoming-line");
+      }
+    });
+
+    const active = el.lyricsContent.querySelector(".current-line");
+
+    active?.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+
+       
