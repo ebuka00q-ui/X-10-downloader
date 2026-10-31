@@ -2307,3 +2307,424 @@
 
     renderHome();
   });
+
+ /* =======================================================
+     25. NOTIFICATIONS PREFERENCE
+     ======================================================= */
+
+  function openNotificationSettings() {
+    el.notificationPopover?.classList.toggle("hidden");
+  }
+
+  $("headerBell")?.addEventListener(
+    "click",
+    openNotificationSettings
+  );
+
+  $("latestBell")?.addEventListener(
+    "click",
+    openNotificationSettings
+  );
+
+  el.notificationSwitch?.addEventListener("change", async () => {
+    if (!el.notificationSwitch.checked) {
+      localStorage.setItem("vic-sound-notifications", "off");
+      return;
+    }
+
+    if (!("Notification" in window)) {
+      alert("This browser does not support notifications.");
+
+      el.notificationSwitch.checked = false;
+
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      el.notificationSwitch.checked = false;
+
+      localStorage.setItem("vic-sound-notifications", "off");
+
+      alert("Notification permission was not granted.");
+
+      return;
+    }
+
+    localStorage.setItem("vic-sound-notifications", "on");
+
+    alert(
+      "Notification permission is enabled. Release push delivery still needs backend setup."
+    );
+  });
+
+
+  /* =======================================================
+     26. PLAYBACK ACTIVITY
+     ======================================================= */
+
+  function recordLocalEvent(type, details = {}) {
+    const event = {
+      type,
+      details,
+      time: Date.now()
+    };
+
+    state.sessionEvents.push(event);
+
+    if (state.sessionEvents.length > 200) {
+      state.sessionEvents.shift();
+    }
+
+    // These are local observations only.
+    // A trusted server must validate and store stream counts.
+  }
+
+  function trackListeningTime() {
+    const session = state.playbackSession;
+
+    if (!session || audio.paused || audio.seeking) return;
+
+    const now = audio.currentTime;
+
+    const difference = now - session.lastTime;
+
+    if (difference > 0 && difference <= 3) {
+      session.listenedSeconds += difference;
+    }
+
+    session.lastTime = now;
+
+    if (
+      !session.qualified &&
+      session.listenedSeconds >= CONFIG.VALID_STREAM_SECONDS
+    ) {
+      session.qualified = true;
+
+      recordLocalEvent("valid_stream_candidate", {
+        songId: session.songId,
+        listenedSeconds: session.listenedSeconds,
+        offline: session.offline
+      });
+    }
+  }
+
+  audio.addEventListener("seeking", () => {
+    if (state.playbackSession) {
+      state.playbackSession.lastTime = audio.currentTime;
+    }
+  });
+
+  audio.addEventListener("pause", () => {
+    const session = state.playbackSession;
+
+    if (!session) return;
+
+    recordLocalEvent("play_paused", {
+      songId: session.songId,
+      listenedSeconds: session.listenedSeconds
+    });
+  });
+
+ /* =======================================================
+     27. SONG AND QUEUE CLICK ACTIONS
+     ======================================================= */
+
+  document.addEventListener("click", event => {
+    const playButton = event.target.closest("[data-play-song]");
+
+    if (playButton) {
+      const song = getSongById(playButton.dataset.playSong);
+
+      if (song) {
+        playSong(song);
+      }
+
+      return;
+    }
+
+    const favoriteButton = event.target.closest("[data-favorite]");
+
+    if (favoriteButton) {
+      toggleFavorite(favoriteButton.dataset.favorite);
+      return;
+    }
+
+    const menuButton = event.target.closest("[data-song-menu]");
+
+    if (menuButton) {
+      showSongMenu(menuButton.dataset.songMenu);
+      return;
+    }
+
+    const queuePlay = event.target.closest("[data-play-queue]");
+
+    if (queuePlay) {
+      const index = Number(queuePlay.dataset.playQueue);
+
+      const song = state.queue[index];
+
+      if (song) {
+        state.currentQueueIndex = index;
+
+        playSong(song, state.queue);
+      }
+
+      return;
+    }
+
+    const queueRemove = event.target.closest("[data-remove-queue]");
+
+    if (queueRemove) {
+      removeQueueItem(Number(queueRemove.dataset.removeQueue));
+      return;
+    }
+
+    const openCollectionButton = event.target.closest(
+      "[data-open-collection]"
+    );
+
+    if (openCollectionButton) {
+      openCollection(openCollectionButton.dataset.openCollection);
+      return;
+    }
+
+    const collectionMenu = event.target.closest(
+      "[data-collection-menu]"
+    );
+
+    if (collectionMenu) {
+      showCollectionMenu(collectionMenu.dataset.collectionMenu);
+      return;
+    }
+
+    const djPlay = event.target.closest("[data-dj-play]");
+
+    if (djPlay) {
+      const song = getSongById(djPlay.dataset.djPlay);
+
+      if (song) {
+        playSong(song);
+      }
+
+      return;
+    }
+
+    const latestDownload = event.target.closest(
+      "[data-latest-download]"
+    );
+
+    if (latestDownload) {
+      handleLatestDownload(latestDownload.dataset.latestDownload);
+    }
+  });
+
+  function showSongMenu(id) {
+    const song = getSongById(id);
+
+    if (!song) return;
+
+    const choice = prompt(
+      `${song.title}\n\n` +
+      "1. Play\n" +
+      "2. Add to favorites\n" +
+      "3. Add to collection\n" +
+      "4. Add to queue"
+    );
+
+    if (choice === "1") {
+      playSong(song);
+    }
+
+    if (choice === "2") {
+      toggleFavorite(song.id);
+    }
+
+    if (choice === "3") {
+      chooseCollectionForSong(song.id);
+    }
+
+    if (choice === "4") {
+      state.queue.push(song);
+
+      if (state.currentQueueIndex === -1) {
+        state.currentQueueIndex = 0;
+      }
+
+      renderQueue();
+    }
+  }
+
+  function chooseCollectionForSong(songId) {
+    if (!state.collections.length) {
+      createCollection();
+    }
+
+    if (!state.collections.length) return;
+
+    const options = state.collections.map((collection, index) =>
+      `${index + 1}. ${collection.name}`
+    ).join("\n");
+
+    const answer = prompt(
+      "Choose a collection:\n\n" + options
+    );
+
+    if (!answer) return;
+
+    const index = Number(answer) - 1;
+
+    const collection = state.collections[index];
+
+    if (!collection) return;
+
+    if (!collection.songs.includes(songId)) {
+      collection.songs.push(songId);
+    }
+
+    saveLocalState();
+
+    renderFavorites();
+  }
+
+
+  /* =======================================================
+     28. LATEST DOWNLOAD PLACEHOLDER
+     ======================================================= */
+
+  async function handleLatestDownload(id) {
+    const song = getSongById(id);
+
+    if (!song) return;
+
+    const alreadyDownloaded = await isSongDownloaded(song);
+
+    if (alreadyDownloaded) {
+      alert("This song is already saved for offline listening.");
+      return;
+    }
+
+    alert(
+      "Latest downloads require a verified rewarded-ad provider. " +
+      "That secure unlock will be connected through the backend."
+    );
+  }
+
+
+  /* =======================================================
+     29. ANDROID BACK BUTTON / ESCAPE
+     ======================================================= */
+
+  function closeTopLayer() {
+    if (!el.exitModal?.classList.contains("hidden")) {
+      el.exitModal.classList.add("hidden");
+      return true;
+    }
+
+    if (!el.notificationPopover?.classList.contains("hidden")) {
+      el.notificationPopover.classList.add("hidden");
+      return true;
+    }
+
+    if (el.timerSheet?.classList.contains("open")) {
+      closeTimer();
+      return true;
+    }
+
+    if (el.lyricsSheet?.classList.contains("open")) {
+      closeLyrics();
+      return true;
+    }
+
+    if (el.djOverlay?.classList.contains("open")) {
+      closeDJ();
+      return true;
+    }
+
+    if (el.queueOverlay?.classList.contains("open")) {
+      closeQueue();
+      return true;
+    }
+
+    if (el.playerOverlay?.classList.contains("open")) {
+      closePlayer();
+      return true;
+    }
+
+    if (el.searchPanel?.classList.contains("open")) {
+      $("searchClose")?.click();
+      return true;
+    }
+
+    if (state.currentScreen !== "home") {
+      showScreen("home");
+      return true;
+    }
+
+    return false;
+  }
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeTopLayer();
+    }
+  });
+
+  history.pushState({ vicSound: true }, "");
+
+  window.addEventListener("popstate", () => {
+    const closed = closeTopLayer();
+
+    if (!closed) {
+      el.exitModal?.classList.remove("hidden");
+    }
+
+    history.pushState({ vicSound: true }, "");
+  });
+
+  $("cancelExit")?.addEventListener("click", () => {
+    el.exitModal?.classList.add("hidden");
+  });
+
+  $("confirmExit")?.addEventListener("click", () => {
+    el.exitModal?.classList.add("hidden");
+
+    audio.pause();
+
+    window.close();
+  });
+
+
+  /* =======================================================
+     30. INITIALIZATION
+     ======================================================= */
+
+  async function initialize() {
+    loadLocalState();
+
+    updatePlaybackModes();
+
+    const connected = await connectSupabase();
+
+    if (connected) {
+      await loadCatalogue();
+    } else {
+      renderEverything();
+      updateOfflineStatus();
+    }
+
+    if (navigator.storage?.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
+
+    updatePlayerDisplay();
+
+    console.info("Vic-sound Listener initialized.");
+  }
+
+  initialize();
+
+})();
+
+//End of app.js
