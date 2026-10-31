@@ -968,7 +968,6 @@ function closePlayer() {
   state.player = false;
 }
 
-
 /* ==================== 15. QUEUE ==================== */
 
 function openQueue() {
@@ -996,4 +995,397 @@ function renderQueue() {
     .map(id => state.songs.find(song => song.id === id))
     .filter(Boolean);
 
-  $("#queueCount").textContent 
+  $("#queueCount").textContent = `${list.length} songs`;
+
+  box.innerHTML = list.map((song, index) => `
+    <article
+      class="queue-row ${song.id === state.currentId ? "current" : ""}"
+      data-queue-row="${index}"
+    >
+      <span class="queue-num">${index + 1}</span>
+
+      <img src="${escapeHTML(song.cover)}" alt="">
+
+      <button class="queue-song" data-queue-play="${escapeHTML(song.id)}">
+        <b>${escapeHTML(song.title)}</b>
+        <small>${escapeHTML(song.artist)}</small>
+      </button>
+
+      <button
+        class="favorite-toggle ${isSongFavorite(song.id) ? "active" : ""}"
+        data-fav="${escapeHTML(song.id)}"
+      >
+        ${isSongFavorite(song.id) ? "♥" : "♡"}
+      </button>
+
+      <button
+        class="row-more"
+        data-queue-remove="${index}"
+        aria-label="Remove from queue"
+      >
+        ×
+      </button>
+    </article>
+  `).join("");
+}
+
+function removeQueueSong(index) {
+  const id = state.queue[index];
+
+  if (id === undefined) return;
+
+  state.queue.splice(index, 1);
+
+  if (index < state.queueIndex) {
+    state.queueIndex--;
+  }
+
+  // If the currently playing song is removed, it continues.
+  // It simply won't be selected again after it finishes.
+  renderQueue();
+}
+
+$("#queueList").addEventListener("click", event => {
+  const favorite = event.target.closest("[data-fav]");
+
+  if (favorite) {
+    toggleFavorite(favorite.dataset.fav);
+    return;
+  }
+
+  const play = event.target.closest("[data-queue-play]");
+
+  if (play) {
+    playSongById(play.dataset.queuePlay);
+    return;
+  }
+
+  const remove = event.target.closest("[data-queue-remove]");
+
+  if (remove) {
+    removeQueueSong(Number(remove.dataset.queueRemove));
+  }
+});
+
+
+/* ==================== 16. SHUFFLE / REPEAT ==================== */
+
+function toggleShuffle() {
+  state.shuffle = !state.shuffle;
+
+  $("#shuffle").classList.toggle("active", state.shuffle);
+}
+
+function cycleRepeat() {
+  state.repeatMode = (state.repeatMode + 1) % 3;
+
+  const label = [
+    "Repeat off",
+    "Repeat all",
+    "Repeat one"
+  ][state.repeatMode];
+
+  ["#repeat", "#playerRepeatTop"].forEach(selector => {
+    const button = $(selector);
+
+    if (!button) return;
+
+    button.classList.toggle(
+      "active",
+      state.repeatMode !== 0
+    );
+
+    button.setAttribute("aria-label", label);
+  });
+
+  notify(label);
+}
+
+
+/* ==================== 17. FAVORITES AND COLLECTIONS ==================== */
+
+function loadFavorites() {
+  try {
+    state.favorites = new Set(
+      JSON.parse(localStorage.getItem(FAVORITE_STORAGE) || "[]")
+        .map(String)
+    );
+
+    state.collections = JSON.parse(
+      localStorage.getItem(COLLECTION_STORAGE) || "[]"
+    );
+
+  } catch {
+    state.favorites = new Set();
+    state.collections = [];
+  }
+}
+
+function saveFavorites() {
+  localStorage.setItem(
+    FAVORITE_STORAGE,
+    JSON.stringify([...state.favorites])
+  );
+
+  localStorage.setItem(
+    COLLECTION_STORAGE,
+    JSON.stringify(state.collections)
+  );
+}
+
+function isSongFavorite(id) {
+  return state.favorites.has(String(id)) ||
+    state.collections.some(collection =>
+      collection.songs.some(songId => String(songId) === String(id))
+    );
+}
+
+function toggleFavorite(id) {
+  const key = String(id);
+
+  if (isSongFavorite(key)) {
+    state.favorites.delete(key);
+
+    state.collections.forEach(collection => {
+      collection.songs = collection.songs.filter(
+        songId => String(songId) !== key
+      );
+    });
+
+    saveFavorites();
+    renderHome();
+    renderFavorites();
+    updatePlayer();
+
+    return;
+  }
+
+  showCollectionPicker(key);
+}
+
+function showCollectionPicker(songId) {
+  const existing = state.collections;
+
+  const name = prompt(
+    existing.length
+      ? "Enter a collection name, or enter a new name:"
+      : "Create your first collection:"
+  );
+
+  if (!name || !name.trim()) return;
+
+  let collection = existing.find(
+    item => item.name.toLowerCase() === name.trim().toLowerCase()
+  );
+
+  if (!collection) {
+    collection = {
+      id: makeId(),
+      name: name.trim(),
+      songs: []
+    };
+
+    state.collections.push(collection);
+  }
+
+  if (!collection.songs.includes(songId)) {
+    collection.songs.push(songId);
+  }
+
+  saveFavorites();
+
+  renderFavorites();
+  renderHome();
+  updatePlayer();
+}
+
+function renderFavorites() {
+  const box = $("#favoriteGrid");
+
+  if (!box) return;
+
+  if (!state.collections.length) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <b>No collections yet</b>
+        <span>Tap a song's heart to create your first collection.</span>
+      </div>
+    `;
+
+    $("#favoriteCount").textContent = "0 collections";
+
+    return;
+  }
+
+  $("#favoriteCount").textContent =
+    `${state.collections.length} collections`;
+
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = state.songs.find(
+      song => String(song.id) === String(collection.songs[0])
+    );
+
+    return `
+      <article class="collection-card">
+        <button
+          class="collection-open"
+          data-collection-open="${escapeHTML(collection.id)}"
+        >
+          <img
+            src="${escapeHTML(firstSong?.cover || "")}"
+            alt=""
+          >
+
+          <b>${escapeHTML(collection.name)}</b>
+
+          <small>(${collection.songs.length})</small>
+        </button>
+
+        <button
+          class="collection-menu"
+          data-collection-menu="${escapeHTML(collection.id)}"
+        >
+          ⋮
+        </button>
+      </article>
+    `;
+  }).join("");
+}
+
+function openCollection(id) {
+  const collection = state.collections.find(
+    item => String(item.id) === String(id)
+  );
+
+  if (!collection) return;
+
+  state.currentCollection = collection.id;
+
+  const songs = collection.songs
+    .map(songId =>
+      state.songs.find(song => String(song.id) === String(songId))
+    )
+    .filter(Boolean);
+
+  showCollectionSongs(collection, songs);
+}
+
+function showCollectionSongs(collection, songs) {
+  let sheet = $("#collectionSheet");
+
+  if (!sheet) {
+    sheet = document.createElement("section");
+    sheet.id = "collectionSheet";
+    sheet.className = "bottom-sheet";
+
+    document.querySelector(".app-shell").appendChild(sheet);
+  }
+
+  sheet.classList.add("open");
+
+  sheet.innerHTML = `
+    <div class="handle"></div>
+
+    <div class="sheet-title">
+      <h2>${escapeHTML(collection.name)}</h2>
+      <button id="collectionClose">×</button>
+    </div>
+
+    <div class="collection-song-select">
+      ${songs.map(song => `
+        <article class="music-row">
+          <img class="cover" src="${escapeHTML(song.cover)}" alt="">
+
+          <button
+            class="music-main"
+            data-collection-play="${escapeHTML(song.id)}"
+          >
+            <b>${escapeHTML(song.title)}</b>
+            <small>${escapeHTML(song.artist)}</small>
+          </button>
+
+          <input
+            type="checkbox"
+            data-collection-remove="${escapeHTML(song.id)}"
+          >
+        </article>
+      `).join("")}
+    </div>
+
+    <button id="collectionRemoveSelected">
+      Remove selected songs
+    </button>
+  `;
+
+  $("#collectionClose").onclick = () => sheet.classList.remove("open");
+
+  $("#collectionRemoveSelected").onclick = () => {
+    const selected = $$("[data-collection-remove]:checked")
+      .map(input => input.dataset.collectionRemove);
+
+    collection.songs = collection.songs.filter(
+      id => !selected.includes(String(id))
+    );
+
+    saveFavorites();
+    renderFavorites();
+    openCollection(collection.id);
+  };
+
+  sheet.addEventListener("click", event => {
+    const play = event.target.closest("[data-collection-play]");
+
+    if (play) {
+      playSongById(play.dataset.collectionPlay);
+    }
+  });
+}
+
+function collectionMenu(id) {
+  const collection = state.collections.find(
+    item => String(item.id) === String(id)
+  );
+
+  if (!collection) return;
+
+  const choice = prompt(
+    "Choose: 1 Rename, 2 Add songs, 3 Remove collection"
+  );
+
+  if (choice === "1") {
+    const name = prompt("New collection name:");
+
+    if (name?.trim()) {
+      collection.name = name.trim();
+    }
+
+  } else if (choice === "2") {
+    const name = prompt(
+      "Enter the song IDs to add, separated by commas:"
+    );
+
+    if (name) {
+      name.split(",").forEach(value => {
+        const id = value.trim();
+
+        if (
+          state.songs.some(song => String(song.id) === id) &&
+          !collection.songs.includes(id)
+        ) {
+          collection.songs.push(id);
+        }
+      });
+    }
+
+  } else if (choice === "3") {
+    if (confirm("Remove this collection?")) {
+      state.collections = state.collections.filter(
+        item => String(item.id) !== String(id)
+      );
+    }
+  }
+
+  saveFavorites();
+  renderFavorites();
+                                        }
+
