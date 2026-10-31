@@ -1,1 +1,895 @@
+/* =========================================================
+   VIC-SOUND LISTENER
+   Main application JavaScript
 
+   Core features:
+   - Music catalogue
+   - Audio player and background controls
+   - Queue, shuffle and repeat
+   - Offline audio downloads
+   - Search and categories
+   - Favorites and custom collections
+   - Rule-based DJ (no AI required)
+   - Lyrics display and timed lyrics
+   - Sleep timer
+   - Local notification preference
+   - Playback activity tracking
+   - Optional Supabase connection
+
+   IMPORTANT:
+   Real rewarded ads, push notifications and trusted
+   stream verification require backend integration.
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  /* =======================================================
+     1. CONFIGURATION
+     ======================================================= */
+
+  const CONFIG = {
+    SUPABASE_URL: "https://gkfivuvtpfetzatzhnaq.supabase.co",
+
+    // Add the Supabase publishable/anon key here when ready.
+    SUPABASE_KEY: "",
+
+    SONGS_TABLE: "songs",
+
+    OFFLINE_CACHE: "vic-sound-music-v1",
+
+    STORAGE_KEY: "vic-sound-listener-v1",
+
+    DOWNLOAD_CONCURRENCY: 2,
+
+    VALID_STREAM_SECONDS: 60,
+
+    DJ_VOICE_LANGUAGE: "en-NG"
+  };
+
+
+  /* =======================================================
+     2. ELEMENTS
+     ======================================================= */
+
+  const $ = (id) => document.getElementById(id);
+
+  const audio = $("audio");
+
+  if (!audio) {
+    console.error("Vic-sound: audio element was not found.");
+    return;
+  }
+
+  const el = {
+    homeScreen: $("homeScreen"),
+    favoritesScreen: $("favoritesScreen"),
+    latestScreen: $("latestScreen"),
+
+    homeMusicList: $("homeMusicList"),
+    favoriteGrid: $("favoriteGrid"),
+    latestList: $("latestList"),
+
+    offlineCard: $("offlineCard"),
+    offlineStatus: $("offlineStatus"),
+    offlineCount: $("offlineCount"),
+    offlineMessage: $("offlineMessage"),
+
+    miniPlayer: $("miniPlayer"),
+    miniCover: $("miniCover"),
+    miniTitle: $("miniTitle"),
+    miniArtist: $("miniArtist"),
+    miniPlay: $("miniPlay"),
+
+    playerOverlay: $("playerOverlay"),
+    playerCover: $("playerCover"),
+    playerTitle: $("playerTitle"),
+    playerArtist: $("playerArtist"),
+    playPause: $("playPause"),
+
+    progress: $("progress"),
+    currentTime: $("currentTime"),
+    duration: $("duration"),
+
+    queueOverlay: $("queueOverlay"),
+    queueList: $("queueList"),
+    queueCount: $("queueCount"),
+    queueCover: $("queueCover"),
+    queueTitle: $("queueTitle"),
+    queueArtist: $("queueArtist"),
+
+    lyricsSheet: $("lyricsSheet"),
+    lyricsContent: $("lyricsContent"),
+    lyricsSongTitle: $("lyricsSongTitle"),
+
+    timerSheet: $("timerSheet"),
+
+    djOverlay: $("djOverlay"),
+    djReply: $("djReply"),
+    djInput: $("djInput"),
+    djMic: $("djMic"),
+    djCoverLarge: $("djCoverLarge"),
+    favoriteDjCover: $("favoriteDjCover"),
+
+    searchPanel: $("searchPanel"),
+    searchInput: $("searchInput"),
+
+    notificationPopover: $("notificationPopover"),
+    notificationSwitch: $("notificationSwitch"),
+
+    exitModal: $("exitModal")
+  };
+
+
+  /* =======================================================
+     3. APPLICATION STATE
+     ======================================================= */
+
+  const state = {
+    songs: [],
+    latest: [],
+
+    currentSong: null,
+
+    queue: [],
+    currentQueueIndex: -1,
+
+    shuffle: false,
+    repeat: "off",
+
+    currentScreen: "home",
+
+    favorites: [],
+    collections: [],
+
+    search: "",
+    category: "All",
+
+    downloadRunning: false,
+    downloadQueue: [],
+
+    timerMode: "end",
+    timerTimeout: null,
+    timerEndAt: null,
+
+    recognition: null,
+    speechAvailable: false,
+
+    playbackSession: null,
+
+    sessionEvents: [],
+
+    lastNavigation: "home",
+
+    djHistory: [],
+
+    djLastSuggestions: [],
+
+    isSeeking: false
+  };
+
+
+  /* =======================================================
+     4. BASIC HELPERS
+     ======================================================= */
+
+  function safeText(value) {
+    return String(value ?? "");
+  }
+
+  function escapeHTML(value) {
+    return safeText(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return "0:00";
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remaining = Math.floor(seconds % 60);
+
+    return `${minutes}:${String(remaining).padStart(2, "0")}`;
+  }
+
+  function unique(values) {
+    return [...new Set(values)];
+  }
+
+  function normalizeWords(value) {
+    return safeText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function getPlaceholderCover() {
+    return "";
+  }
+
+  function getSongById(id) {
+    return state.songs.find(song => String(song.id) === String(id));
+  }
+
+  function saveLocalState() {
+    const data = {
+      favorites: state.favorites,
+      collections: state.collections,
+
+      shuffle: state.shuffle,
+      repeat: state.repeat,
+
+      djHistory: state.djHistory.slice(-40),
+
+      lastSuggestions: state.djLastSuggestions
+    };
+
+    try {
+      localStorage.setItem(
+        CONFIG.STORAGE_KEY,
+        JSON.stringify(data)
+      );
+    } catch (error) {
+      console.warn("Could not save local preferences:", error);
+    }
+  }
+
+  function loadLocalState() {
+    try {
+      const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+
+      if (!raw) return;
+
+      const data = JSON.parse(raw);
+
+      state.favorites = Array.isArray(data.favorites)
+        ? data.favorites
+        : [];
+
+      state.collections = Array.isArray(data.collections)
+        ? data.collections
+        : [];
+
+      state.shuffle = Boolean(data.shuffle);
+
+      state.repeat = ["off", "all", "one"].includes(data.repeat)
+        ? data.repeat
+        : "off";
+
+      state.djHistory = Array.isArray(data.djHistory)
+        ? data.djHistory
+        : [];
+
+      state.djLastSuggestions = Array.isArray(data.lastSuggestions)
+        ? data.lastSuggestions
+        : [];
+
+    } catch (error) {
+      console.warn("Saved preferences could not be loaded:", error);
+    }
+  }
+
+
+  /* =======================================================
+     5. OPTIONAL SUPABASE CONNECTION
+     ======================================================= */
+
+  let supabase = null;
+
+  async function connectSupabase() {
+    if (!CONFIG.SUPABASE_KEY) {
+      console.info(
+        "Vic-sound is running without Supabase configuration."
+      );
+      return false;
+    }
+
+    try {
+      if (!window.supabase) {
+        await loadScript(
+          "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+        );
+      }
+
+      if (!window.supabase?.createClient) {
+        throw new Error("Supabase library did not load.");
+      }
+
+      supabase = window.supabase.createClient(
+        CONFIG.SUPABASE_URL,
+        CONFIG.SUPABASE_KEY
+      );
+
+      return true;
+
+    } catch (error) {
+      console.error("Supabase connection failed:", error);
+      return false;
+    }
+  }
+
+  function loadScript(url) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+
+      script.src = url;
+      script.async = true;
+
+      script.onload = resolve;
+
+      script.onerror = () => {
+        reject(new Error("Could not load external script."));
+      };
+
+      document.head.appendChild(script);
+    });
+  }
+
+
+  /* =======================================================
+     6. SONG DATA NORMALIZATION
+     ======================================================= */
+
+  function normalizeSong(raw) {
+    const song = {
+      id: String(raw.id ?? crypto.randomUUID()),
+
+      title: safeText(raw.title || "Untitled song"),
+
+      artist: safeText(raw.artist || "Unknown artist"),
+
+      album: safeText(raw.album || ""),
+
+      audioUrl: safeText(
+        raw.audio_url || raw.audioUrl || ""
+      ),
+
+      coverUrl: safeText(
+        raw.cover_url || raw.coverUrl || ""
+      ),
+
+      djCoverUrl: safeText(
+        raw.dj_cover_url || raw.djCoverUrl || ""
+      ),
+
+      duration: Number(raw.duration || 0),
+
+      genre: Array.isArray(raw.genre)
+        ? raw.genre
+        : safeText(raw.genre).split(","),
+
+      mood: Array.isArray(raw.mood)
+        ? raw.mood
+        : safeText(raw.mood).split(","),
+
+      tags: Array.isArray(raw.tags)
+        ? raw.tags
+        : safeText(raw.tags).split(","),
+
+      lyrics: safeText(raw.lyrics || ""),
+
+      timedLyrics: raw.lyrics_timed || raw.timed_lyrics || null,
+
+      releaseDate: raw.release_date || null,
+
+      releaseId: raw.release_id || null,
+
+      releaseType: safeText(raw.release_type || "single"),
+
+      published: raw.published !== false,
+
+      destination: safeText(
+        raw.destination || raw.publish_to || "home"
+      ).toLowerCase(),
+
+      energy: Number(raw.energy ?? 5),
+
+      createdAt: raw.created_at || null
+    };
+
+    song.genre = song.genre
+      .map(value => safeText(value).trim())
+      .filter(Boolean);
+
+    song.mood = song.mood
+      .map(value => safeText(value).trim())
+      .filter(Boolean);
+
+    song.tags = song.tags
+      .map(value => safeText(value).trim())
+      .filter(Boolean);
+
+    return song;
+  }
+
+
+  /* =======================================================
+     7. LOAD MUSIC CATALOGUE
+     ======================================================= */
+
+  async function loadCatalogue() {
+    if (!supabase) {
+      renderEverything();
+      updateOfflineStatus();
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from(CONFIG.SONGS_TABLE)
+        .select("*");
+
+      if (error) throw error;
+
+      const songs = (data || [])
+        .map(normalizeSong)
+        .filter(song => song.audioUrl && song.published);
+
+      state.songs = songs;
+
+      state.latest = songs.filter(song =>
+        song.destination.includes("latest") ||
+        song.releaseId
+      );
+
+      renderEverything();
+
+      startOfflineDownloads();
+
+      updateOfflineStatus();
+
+    } catch (error) {
+      console.error("Catalogue loading failed:", error);
+
+      renderEverything();
+
+      updateOfflineStatus();
+    }
+  }
+
+
+  /* =======================================================
+     8. OFFLINE AUDIO STORAGE
+     ======================================================= */
+
+  async function openMusicCache() {
+    if (!("caches" in window)) {
+      return null;
+    }
+
+    try {
+      return await caches.open(CONFIG.OFFLINE_CACHE);
+    } catch (error) {
+      console.error("Music cache unavailable:", error);
+      return null;
+    }
+  }
+
+  function cacheKey(song) {
+    return new URL(
+      `./__vic_sound_audio__/${encodeURIComponent(song.id)}`,
+      location.href
+    ).href;
+  }
+
+  async function isSongDownloaded(song) {
+    const cache = await openMusicCache();
+
+    if (!cache) return false;
+
+    try {
+      return Boolean(await cache.match(cacheKey(song)));
+    } catch {
+      return false;
+    }
+  }
+
+  async function getOfflineAudio(song) {
+    const cache = await openMusicCache();
+
+    if (!cache) return null;
+
+    try {
+      return await cache.match(cacheKey(song));
+    } catch {
+      return null;
+    }
+  }
+
+  async function downloadSong(song) {
+    if (!song.audioUrl) return false;
+
+    const cache = await openMusicCache();
+
+    if (!cache) return false;
+
+    const existing = await cache.match(cacheKey(song));
+
+    if (existing) return true;
+
+    try {
+      const response = await fetch(song.audioUrl, {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit"
+      });
+
+      if (!response.ok || response.type === "opaque") {
+        throw new Error("Audio could not be saved.");
+      }
+
+      const blob = await response.blob();
+
+      if (!blob.size) {
+        throw new Error("The downloaded audio file is empty.");
+      }
+
+      const savedResponse = new Response(blob, {
+        status: 200,
+        headers: {
+          "Content-Type": blob.type || "audio/mpeg",
+          "Content-Length": String(blob.size)
+        }
+      });
+
+      await cache.put(cacheKey(song), savedResponse);
+
+      return true;
+
+    } catch (error) {
+      console.warn(
+        `Offline download failed for ${song.title}:`,
+        error
+      );
+
+      return false;
+    }
+  }
+
+  async function countDownloadedSongs() {
+    let count = 0;
+
+    for (const song of state.songs) {
+      if (await isSongDownloaded(song)) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  async function updateOfflineStatus() {
+    const total = state.songs.length;
+
+    const count = await countDownloadedSongs();
+
+    const progress = total
+      ? Math.round((count / total) * 100)
+      : 0;
+
+    if (el.offlineCount) {
+      el.offlineCount.textContent = `${count} songs saved`;
+    }
+
+    if (el.offlineCard) {
+      el.offlineCard.style.setProperty(
+        "--offline-progress",
+        `${progress}%`
+      );
+
+      el.offlineCard.classList.toggle(
+        "is-complete",
+        total > 0 && count === total
+      );
+
+      el.offlineCard.classList.toggle(
+        "is-preparing",
+        count < total
+      );
+    }
+
+    if (el.offlineStatus) {
+      el.offlineStatus.textContent =
+        navigator.onLine ? "Offline ready" : "Offline";
+    }
+
+    if (el.offlineMessage) {
+      if (!total || count === total) {
+        el.offlineMessage.textContent = "";
+      } else if (!navigator.onLine) {
+        el.offlineMessage.textContent =
+          "Connect to the internet to prepare new music.";
+      } else {
+        el.offlineMessage.textContent =
+          "Stay online to prepare your music for offline listening.";
+      }
+    }
+  }
+
+  async function startOfflineDownloads() {
+    if (state.downloadRunning || !navigator.onLine) return;
+
+    state.downloadRunning = true;
+
+    try {
+      const missing = [];
+
+      for (const song of state.songs) {
+        if (!(await isSongDownloaded(song))) {
+          missing.push(song);
+        }
+      }
+
+      state.downloadQueue = missing;
+
+      let nextIndex = 0;
+
+      async function worker() {
+        while (nextIndex < missing.length) {
+          const song = missing[nextIndex++];
+
+          await downloadSong(song);
+
+          await updateOfflineStatus();
+        }
+      }
+
+      const workers = [];
+
+      const numberOfWorkers = Math.min(
+        CONFIG.DOWNLOAD_CONCURRENCY,
+        missing.length
+      );
+
+      for (let i = 0; i < numberOfWorkers; i++) {
+        workers.push(worker());
+      }
+
+      await Promise.all(workers);
+
+    } finally {
+      state.downloadRunning = false;
+
+      await updateOfflineStatus();
+    }
+  }
+
+  window.addEventListener("online", () => {
+    updateOfflineStatus();
+    startOfflineDownloads();
+  });
+
+  window.addEventListener("offline", updateOfflineStatus);
+
+
+  /* =======================================================
+     9. SONG SOURCE FOR PLAYBACK
+     ======================================================= */
+
+  let currentObjectUrl = null;
+
+  async function getPlayableUrl(song) {
+    const cached = await getOfflineAudio(song);
+
+    if (cached) {
+      const blob = await cached.blob();
+
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+      }
+
+      currentObjectUrl = URL.createObjectURL(blob);
+
+      return {
+        url: currentObjectUrl,
+        offline: true
+      };
+    }
+
+    return {
+      url: song.audioUrl,
+      offline: false
+    };
+  }
+
+
+  /* =======================================================
+     10. RENDER SONG LIST
+     ======================================================= */
+
+  function songMatchesCategory(song, category) {
+    if (category === "All") return true;
+
+    const values = [
+      ...song.genre,
+      ...song.mood,
+      ...song.tags
+    ].map(normalizeWords);
+
+    if (category === "New") {
+      const known = [
+        "rap", "pop", "hip-hop", "trap",
+        "afrobeats", "calm", "sad",
+        "moody", "love"
+      ];
+
+      return !values.some(value =>
+        known.some(item => value.includes(item))
+      );
+    }
+
+    return values.some(value =>
+      value.includes(normalizeWords(category))
+    );
+  }
+
+  function songMatchesSearch(song, search) {
+    if (!search) return true;
+
+    const text = normalizeWords([
+      song.title,
+      song.artist,
+      song.album,
+      ...song.genre,
+      ...song.mood,
+      ...song.tags
+    ].join(" "));
+
+    return text.includes(normalizeWords(search));
+  }
+
+  function isFavorite(id) {
+    return state.favorites.includes(String(id));
+  }
+
+  function renderSongRow(song) {
+    const playing = state.currentSong?.id === song.id;
+
+    return `
+      <article class="music-row ${playing ? "playing" : ""}"
+        data-song-id="${escapeHTML(song.id)}">
+
+        <img class="cover"
+          src="${escapeHTML(song.coverUrl)}"
+          alt=""
+          loading="lazy">
+
+        <button class="music-main" data-play-song="${escapeHTML(song.id)}">
+          <b>${escapeHTML(song.title)}</b>
+          <small>${escapeHTML(song.artist)}</small>
+        </button>
+
+        <span class="playing-bars">▮▮▮</span>
+
+        <button
+          class="favorite-toggle ${isFavorite(song.id) ? "active" : ""}"
+          data-favorite="${escapeHTML(song.id)}"
+          aria-label="Add to favorites">
+          ${isFavorite(song.id) ? "♥" : "♡"}
+        </button>
+
+        <button class="row-more"
+          data-song-menu="${escapeHTML(song.id)}"
+          aria-label="Song options">⋮</button>
+      </article>
+    `;
+  }
+
+  function renderHome() {
+    if (!el.homeMusicList) return;
+
+    const songs = state.songs.filter(song =>
+      song.destination !== "latest" &&
+      songMatchesCategory(song, state.category) &&
+      songMatchesSearch(song, state.search)
+    );
+
+    if (!songs.length) {
+      el.homeMusicList.innerHTML = `
+        <div class="empty-state">
+          <b>No music found</b>
+          <span>New songs will appear here when available.</span>
+        </div>
+      `;
+
+      return;
+    }
+
+    el.homeMusicList.innerHTML = songs
+      .map(renderSongRow)
+      .join("");
+  }
+
+
+  /* =======================================================
+     11. FAVORITES AND COLLECTIONS
+     ======================================================= */
+
+  function toggleFavorite(id) {
+    id = String(id);
+
+    if (isFavorite(id)) {
+      state.favorites = state.favorites.filter(item => item !== id);
+    } else {
+      state.favorites.push(id);
+    }
+
+    saveLocalState();
+
+    renderFavorites();
+    renderHome();
+  }
+
+  function createCollection() {
+    const name = prompt("Enter your collection name:");
+
+    if (!name || !name.trim()) return;
+
+    state.collections.push({
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      songs: []
+    });
+
+    saveLocalState();
+
+    renderFavorites();
+  }
+
+  function renameCollection(id) {
+    const collection = state.collections.find(item => item.id === id);
+
+    if (!collection) return;
+
+    const name = prompt(
+      "Enter the new collection name:",
+      collection.name
+    );
+
+    if (!name || !name.trim()) return;
+
+    collection.name = name.trim();
+
+    saveLocalState();
+
+    renderFavorites();
+  }
+
+  function deleteCollection(id) {
+    const collection = state.collections.find(item => item.id === id);
+
+    if (!collection) return;
+
+    if (!confirm(`Remove "${collection.name}"?`)) return;
+
+    state.collections = state.collections.filter(item => item.id !== id);
+
+    saveLocalState();
+
+    renderFavorites();
+  }
+
+  function collectionCover(collection) {
+    const song = getSongById(collection.songs[0]);
+
+    return song?.coverUrl || "";
+  }
+
+  function renderFavorites() {
+    if (!el.favoriteGrid) return;
+
+    const favoriteSongs = state.favorites
+      .map(getSongById)
+      .filter(Boolean);
+
+    const collectionHTML = state.collections.map(collection => `
+      <article class="collection-card">
+
+        <button class="favorite-card-open"
+          data-open-collectio
