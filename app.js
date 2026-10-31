@@ -2165,3 +2165,145 @@
       sendDJMessage();
     }
   });
+
+ /* =======================================================
+     22. DJ VOICE INPUT
+     ======================================================= */
+
+  function startDJListening() {
+    const Recognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!Recognition) {
+      alert(
+        "Voice input is not supported by this browser. You can type instead."
+      );
+
+      return;
+    }
+
+    stopDJListening();
+
+    const recognition = new Recognition();
+
+    state.recognition = recognition;
+
+    recognition.lang = CONFIG.DJ_VOICE_LANGUAGE;
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      el.djMic?.classList.add("listening");
+
+      el.djOverlay?.classList.add("listening");
+    };
+
+    recognition.onresult = event => {
+      const text = event.results[0][0].transcript;
+
+      if (el.djInput) {
+        el.djInput.value = text;
+      }
+
+      sendDJMessage();
+    };
+
+    recognition.onerror = error => {
+      console.warn("DJ voice input error:", error);
+    };
+
+    recognition.onend = () => {
+      el.djMic?.classList.remove("listening");
+
+      el.djOverlay?.classList.remove("listening");
+
+      state.recognition = null;
+    };
+
+    recognition.start();
+
+    setTimeout(() => {
+      if (state.recognition) {
+        stopDJListening();
+      }
+    }, 30000);
+  }
+
+  function stopDJListening() {
+    if (state.recognition) {
+      try {
+        state.recognition.stop();
+      } catch {}
+    }
+
+    state.recognition = null;
+
+    el.djMic?.classList.remove("listening");
+
+    el.djOverlay?.classList.remove("listening");
+  }
+
+  el.djMic?.addEventListener("click", () => {
+    if (state.recognition) {
+      stopDJListening();
+    } else {
+      startDJListening();
+    }
+  });
+
+
+  /* =======================================================
+     23. SEARCH
+     ======================================================= */
+
+  $("searchToggle")?.addEventListener("click", () => {
+    el.searchPanel?.classList.add("open");
+
+    el.searchPanel?.setAttribute("aria-hidden", "false");
+
+    el.searchInput?.focus();
+  });
+
+  $("searchClose")?.addEventListener("click", () => {
+    el.searchPanel?.classList.remove("open");
+
+    el.searchPanel?.setAttribute("aria-hidden", "true");
+
+    state.search = "";
+
+    if (el.searchInput) {
+      el.searchInput.value = "";
+    }
+
+    renderHome();
+  });
+
+  el.searchInput?.addEventListener("input", () => {
+    state.search = el.searchInput.value;
+
+    renderHome();
+  });
+
+
+  /* =======================================================
+     24. CATEGORY FILTER
+     ======================================================= */
+
+  $("categoryRow")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-category]");
+
+    if (!button) return;
+
+    state.category = button.dataset.category;
+
+    document.querySelectorAll(".category").forEach(item => {
+      item.classList.toggle("active", item === button);
+    });
+
+    renderHome();
+  });
