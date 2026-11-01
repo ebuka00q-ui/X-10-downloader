@@ -553,3 +553,329 @@ function getAnonymousId() {
 /* =========================================================
    END OF PART 1
    ========================================================= */
+
+/* =========================================================
+   10. SAVE AND RESTORE LISTENER SETTINGS
+   ========================================================= */
+
+function saveListenerState() {
+
+  const savedState = {
+    favorites: [...state.favorites],
+    collections: state.collections,
+    shuffle: state.shuffle,
+    repeatMode: state.repeatMode
+  };
+
+  try {
+
+    localStorage.setItem(
+      VIC_CONFIG.LOCAL_STATE_KEY,
+      JSON.stringify(savedState)
+    );
+
+  } catch (error) {
+
+    console.warn("Could not save Listener settings:", error);
+
+  }
+
+}
+
+
+function restoreListenerState() {
+
+  try {
+
+    const saved = localStorage.getItem(
+      VIC_CONFIG.LOCAL_STATE_KEY
+    );
+
+    if (!saved) return;
+
+    const data = JSON.parse(saved);
+
+    state.favorites = new Set(
+      Array.isArray(data.favorites)
+        ? data.favorites.map(String)
+        : []
+    );
+
+    state.collections = Array.isArray(data.collections)
+      ? data.collections
+      : [];
+
+    state.shuffle = Boolean(data.shuffle);
+
+    state.repeatMode = [0, 1, 2].includes(
+      Number(data.repeatMode)
+    )
+      ? Number(data.repeatMode)
+      : 0;
+
+  } catch (error) {
+
+    console.warn("Could not restore Listener settings:", error);
+
+  }
+
+}
+
+
+/* =========================================================
+   11. CHECK BROWSER OFFLINE SUPPORT
+   ========================================================= */
+
+function supportsOfflineStorage() {
+
+  return (
+    "caches" in window &&
+    "serviceWorker" in navigator
+  );
+
+}
+
+
+function isOnline() {
+
+  return navigator.onLine === true;
+
+}
+
+
+/* =========================================================
+   12. OPEN MUSIC CACHE
+   ========================================================= */
+
+async function openMusicCache() {
+
+  if (!("caches" in window)) {
+
+    throw new Error("This browser does not support music caching.");
+
+  }
+
+  return caches.open(VIC_CONFIG.MUSIC_CACHE_NAME);
+
+}
+
+
+async function openCoverCache() {
+
+  if (!("caches" in window)) {
+
+    throw new Error("This browser does not support cover caching.");
+
+  }
+
+  return caches.open(VIC_CONFIG.COVER_CACHE_NAME);
+
+}
+
+
+async function openTestCache() {
+
+  if (!("caches" in window)) {
+
+    throw new Error("This browser does not support test-track caching.");
+
+  }
+
+  return caches.open(VIC_CONFIG.TEST_CACHE_NAME);
+
+}
+
+
+/* =========================================================
+   13. CHECK WHETHER A SONG IS DOWNLOADED
+   ========================================================= */
+
+async function isSongDownloaded(song) {
+
+  if (!song || !song.audio) return false;
+
+  try {
+
+    const cache = song.isTestTrack
+      ? await openTestCache()
+      : await openMusicCache();
+
+    const savedFile = await cache.match(song.audio);
+
+    return Boolean(savedFile);
+
+  } catch (error) {
+
+    console.warn("Could not check downloaded song:", error);
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================================================
+   14. GET DOWNLOADED MUSIC COUNT
+   ========================================================= */
+
+async function getDownloadedMusicCount() {
+
+  try {
+
+    const cache = await openMusicCache();
+
+    const requests = await cache.keys();
+
+    return requests.length;
+
+  } catch (error) {
+
+    console.warn("Could not count downloaded music:", error);
+
+    return 0;
+
+  }
+
+}
+
+
+/* =========================================================
+   15. SAVE A SONG FOR OFFLINE PLAYBACK
+   ========================================================= */
+
+async function cacheSong(song) {
+
+  if (!song || !song.audio) {
+
+    throw new Error("This song has no audio file.");
+
+  }
+
+  if (!isOnline()) {
+
+    throw new Error("Connect to the internet before downloading.");
+
+  }
+
+  const cache = song.isTestTrack
+    ? await openTestCache()
+    : await openMusicCache();
+
+  const existingFile = await cache.match(song.audio);
+
+  if (existingFile) {
+
+    return true;
+
+  }
+
+  const response = await fetch(song.audio, {
+    method: "GET",
+    mode: "cors",
+    credentials: "omit"
+  });
+
+  if (!response.ok) {
+
+    throw new Error(
+      `Music download failed. Server response: ${response.status}`
+    );
+
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+
+  if (
+    contentType &&
+    !contentType.toLowerCase().startsWith("audio/") &&
+    !contentType.toLowerCase().includes("octet-stream")
+  ) {
+
+    throw new Error("The address did not return an audio file.");
+
+  }
+
+  await cache.put(song.audio, response.clone());
+
+  return true;
+
+}
+
+
+/* =========================================================
+   16. REMOVE A DOWNLOADED SONG
+   ========================================================= */
+
+async function removeDownloadedSong(song) {
+
+  if (!song || !song.audio) return false;
+
+  try {
+
+    const cache = song.isTestTrack
+      ? await openTestCache()
+      : await openMusicCache();
+
+    const removed = await cache.delete(song.audio);
+
+    return removed;
+
+  } catch (error) {
+
+    console.warn("Could not remove downloaded song:", error);
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================================================
+   17. CACHE A SONG COVER
+   ========================================================= */
+
+async function cacheSongCover(song) {
+
+  if (!song || !song.cover || !isOnline()) return false;
+
+  try {
+
+    const cache = await openCoverCache();
+
+    const existing = await cache.match(song.cover);
+
+    if (existing) return true;
+
+    const response = await fetch(song.cover, {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit"
+    });
+
+    if (!response.ok) return false;
+
+    const type = response.headers.get("content-type") || "";
+
+    if (type && !type.startsWith("image/")) return false;
+
+    await cache.put(song.cover, response.clone());
+
+    return true;
+
+  } catch (error) {
+
+    console.warn("Could not cache song cover:", error);
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================================================
+   END OF PART 2
+   ========================================================= */
+
