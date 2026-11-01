@@ -352,3 +352,190 @@ async function loadSongs() {
   if (navigator.onLine && state.backendConnected) prepareOfflineMusic();
   return state.songs;
 }
+function saveCatalogueSnapshot() {
+  try { localStorage.setItem("vic-sound-catalogue-snapshot", JSON.stringify(state.songs.filter(song => !song.isTestTrack))); }
+  catch (error) { console.warn("Catalogue snapshot could not be saved:", error); }
+}
+function loadCatalogueSnapshot() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("vic-sound-catalogue-snapshot") || "[]");
+    state.songs = Array.isArray(saved) ? saved.map(normaliseSong).filter(song => !song.isTestTrack) : [];
+  } catch { state.songs = []; }
+}
+
+/* =========================================================
+   9. RELEASES
+   ========================================================= */
+async function loadReleases() {
+  if (!state.backendConnected || !supabaseClient) { state.releases = []; renderLatest(); return []; }
+  try {
+    const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE_RELEASES_TABLE)
+      .select("*").eq("published", true).order("created_at", { ascending: false });
+    if (error) throw error;
+    state.releases = data || [];
+    state.newRelease = state.releases.length > 0;
+    renderLatest(); updateDots();
+    return state.releases;
+  } catch (error) { console.warn("Release list is unavailable:", error); return []; }
+}
+function renderLatest() {
+  const box = $("#latestList"); if (!box) return;
+  if (!state.releases.length) {
+    box.innerHTML = `<div class="empty-state"><b>No new releases yet</b><span>New music will appear here.</span></div>`;
+    return;
+  }
+  box.innerHTML = state.releases.map(release => `
+    <article class="release-card">
+      <img class="release-cover" src="${escapeHTML(release.cover_url || release.cover || "")}" alt="">
+      <div class="release-info"><h3>${escapeHTML(release.title || "Untitled release")}</h3>
+      <p>${escapeHTML(release.type || "Release")}</p><p>${escapeHTML(release.release_date || "")}</p>
+      <button class="release-action" data-release-download="${escapeHTML(release.id)}">⇩ Download</button></div><span>›</span>
+    </article>`).join("");
+}
+
+/* =========================================================
+   10. OFFLINE AUDIO CACHE — TEST TRACK IS KEPT SEPARATE
+   ========================================================= */
+async function musicCache() { return "caches" in window ? caches.open(VIC_CONFIG.MUSIC_CACHE_NAME) : null; }
+async function testCache() { return "caches" in window ? caches.open(VIC_CONFIG.TEST_CACHE_NAME) : null; }
+function cacheKeyFor(song) { return new URL(song.audio, location.href).href; }
+async function cachedAudio(song) {
+  if (!song?.audio || !("caches" in window)) return null;
+  const cache = song.isTestTrack ? await testCache() : await musicCache();
+  return cache ? cache.match(cacheKeyFor(song)) : null;
+}
+async function refreshDownloadedSongs() {
+  state.downloaded.clear();
+  const cache = await musicCache();
+  if (!cache) { updateOfflineCount(); return state.downloaded; }
+  const keys = new Set((await cache.keys()).map(request => request.url));
+  state.songs.filter(song => !song.isTestTrack).forEach(song => {
+    if (song.audio && keys.has(cacheKeyFor(song))) state.downloaded.add(songKey(song.id));
+  });
+  updateOfflineCount();
+  return state.downloaded;
+}
+function updateOfflineCount() {
+  const count = $("#offlineCount"), status = $("#offlineStatus"), message = $("#offlineMessage"), card = $("#offlineCard");
+  const realSongs = state.songs.filter(song => song.audio && !song.isTestTrack);
+  const total = realSongs.length, saved = state.downloaded.size;
+  if (count) count.textContent = `${saved} of ${total} songs`;
+  if (card) {
+    const percent = total ? Math.round(saved / total * 100) : 0;
+    card.style.setProperty("--offline-progress", `${percent}%`);
+    card.classList.toggle("is-complete", total > 0 && saved === total);
+    card.classList.toggle("is-preparing", saved > 0 && saved < total);
+  }
+  if (status) status.textContent = !total ? "Waiting for music" : saved === total ? "Offline ready" : "Preparing offline music";
+  if (message) message.textContent = !total ? "Published music will appear here." : saved === total ? "Your saved music is ready for offline listening." : navigator.onLine ? "New music is being saved for offline listening." : "Reconnect to continue saving music.";
+}
+async function saveAudioFile(song) {
+  if (!song?.audio || song.isTestTrack || !navigator.onLine) return false;
+  const cache = await musicCache(); if (!cache) return false;
+  const url = cacheKeyFor(song);
+  if (await cache.match(url)) { state.downloaded.add(songKey(song.id)); return true; }
+  try {
+    const response = await fetch(url, { mode: "cors", cache: "no-store" });
+    if (!response.ok) throw new Error(`Audio request failed (${response.status}).`);
+    const type = response.headers.get("content-type") || "";
+    if (type.includes("text/html") || type.includes("application/json")) throw new Error("The supplied URL did not return audio.");
+    await cache.put(url, response.clone());
+    state.downloaded.add(songKey(song.id)); updateOfflineCount(); return true;
+  } catch (error) { console.info("Offline save skipped:", song.title, error.message); return false; }
+}
+async function prepareOfflineMusic() {
+  if (!navigator.onLine || state.downloading || !state.backendConnected) return;
+  state.downloading = true;
+  try {
+    await refreshDownloadedSongs();
+    const pending = state.songs.filter(song => song.audio && !song.isTestTrack && !state.downloaded.has(songKey(song.id))).slice(0, VIC_CONFIG.MAX_AUTO_DOWNLOADS_PER_RUN);
+    let index = 0;
+    const worker = async () => { while (index < pending.length && navigator.onLine) await saveAudioFile(pending[index++]); };
+    await Promise.all(Array.from({ length: Math.min(VIC_CONFIG.DOWNLOAD_WORKERS, pending.length) }, worker));
+  } finally { state.downloading = false; updateOfflineCount(); }
+}
+window.addEventListener("online", () => { loadSongs(); loadReleases(); });
+window.addEventListener("offline", updateOfflineCount);
+
+/* =========================================================
+   11. PLAYER + QUEUE
+   ========================================================= */
+function getPlayableURL(song) { return song?.audio || ""; }
+function setCurrentSong(song, list = null) {
+  if (!song) return;
+  state.currentId = songKey(song.id);
+  if (Array.isArray(list) && list.length) {
+    state.queue = list.map(item => songKey(typeof item === "object" ? item.id : item));
+  } else if (!state.queue.includes(songKey(song.id))) {
+    state.queue = [songKey(song.id)];
+  }
+  state.queueIndex = state.queue.indexOf(songKey(song.id));
+  updatePlayer(); renderQueue(); updateLyrics();
+}
+async function playSong(song, list = null, shouldPlay = true) {
+  if (!song) return;
+  setCurrentSong(song, list);
+  const url = getPlayableURL(song);
+  if (!url) { notify("This song does not have an audio file yet."); return; }
+  try {
+    const cached = await cachedAudio(song);
+    if (state.objectAudioUrl) { URL.revokeObjectURL(state.objectAudioUrl); state.objectAudioUrl = null; }
+    if (cached) {
+      state.objectAudioUrl = URL.createObjectURL(await cached.blob());
+      audio.src = state.objectAudioUrl;
+    } else {
+      if (!navigator.onLine) { notify("This song is not saved for offline listening yet."); return; }
+      audio.src = url;
+    }
+    audio.load();
+    if (shouldPlay) await audio.play();
+    updatePlayer();
+  } catch (error) { state.playing = false; console.warn("Playback error:", error); notify("Could not play this song. Check the audio file or connection."); updatePlayer(); }
+}
+function playSongById(id) {
+  const song = state.songs.find(item => songKey(item.id) === songKey(id));
+  if (song) playSong(song, state.queue.length ? state.queue : [song.id]);
+}
+function togglePlayback() {
+  if (!audio) return;
+  if (audio.paused) {
+    if (!currentSong()) {
+      const first = state.songs.find(song => !song.isTestTrack) || state.songs[0];
+      if (first) playSong(first);
+    } else audio.play().catch(() => notify("This song could not start."));
+  } else audio.pause();
+}
+function updatePlayer() {
+  const song = currentSong(); if (!song) return;
+  const setText = (selector, value) => { const el = $(selector); if (el) el.textContent = value; };
+  setText("#playerTitle", song.title); setText("#playerArtist", song.artist);
+  setText("#miniTitle", song.title); setText("#miniArtist", song.artist);
+  setText("#queueTitle", song.title); setText("#queueArtist", song.artist);
+  ["#playerCover", "#miniCover", "#queueCover"].forEach(selector => { const el = $(selector); if (el) el.src = song.cover || ""; });
+  setText("#playPause", state.playing ? "Ⅱ" : "▶"); setText("#miniPlay", state.playing ? "Ⅱ" : "▶");
+  const fav = $("#playerFav"); if (fav) { fav.textContent = isFavorite(song.id) ? "♥" : "♡"; fav.classList.toggle("active", isFavorite(song.id)); }
+  setText("#currentTime", formatTime(audio.currentTime)); setText("#duration", formatTime(audio.duration || song.duration));
+  const progress = $("#progress"); if (progress) progress.value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  const mini = $("#miniPlayer");
+  if (mini) {
+    mini.classList.add("visible"); mini.setAttribute("aria-hidden", "false");
+    if (state.firstMiniPlayerEntrance) { mini.classList.add("first-entrance"); state.firstMiniPlayerEntrance = false; setTimeout(() => mini.classList.remove("first-entrance"), 1600); }
+  }
+  const overlay = $("#playerOverlay"); if (overlay) overlay.classList.toggle("playing", state.playing);
+  updateMediaSession();
+}
+if (audio) {
+  audio.addEventListener("play", () => { state.playing = true; updatePlayer(); renderHome(); });
+  audio.addEventListener("pause", () => { state.playing = false; updatePlayer(); renderHome(); });
+  audio.addEventListener("timeupdate", () => { updatePlayer(); syncLyrics(); });
+  audio.addEventListener("loadedmetadata", updatePlayer);
+  audio.addEventListener("error", () => { state.playing = false; updatePlayer(); });
+  audio.addEventListener("ended", () => {
+    if (state.repeatMode === 2) { audio.currentTime = 0; audio.play().catch(() => {}); return; }
+    if (!currentSong()?.isTestTrack) recordCompletedOnlineSong();
+    nextSong();
+  });
+}
+function nextSong() {
+  const queue = state.queue.map(id => state.songs.find(song => songKey(song.id) === songKey(id))).filter(Boolean);
+   
