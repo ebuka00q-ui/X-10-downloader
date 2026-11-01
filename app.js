@@ -1146,3 +1146,281 @@ function loadSavedCatalogue() {
 /* =========================================================
    END OF PART 3
    ========================================================= */
+/* =========================================================
+   24. GET SONGS FOR THE HOME SCREEN
+   ========================================================= */
+
+function getHomeSongs() {
+
+  let songs = [...state.songs];
+
+  if (state.category !== "All") {
+
+    songs = songs.filter(song => {
+
+      const category = state.category.toLowerCase();
+
+      const genres = song.cat.map(item => item.toLowerCase());
+
+      const moods = song.mood.map(item => item.toLowerCase());
+
+      const tags = song.tags.map(item => item.toLowerCase());
+
+      if (category === "new") {
+
+        return Boolean(song.release_date);
+
+      }
+
+      return (
+        genres.includes(category) ||
+        moods.includes(category) ||
+        tags.includes(category)
+      );
+
+    });
+
+  }
+
+  if (state.query.trim()) {
+
+    const query = state.query.trim().toLowerCase();
+
+    songs = songs.filter(song => {
+
+      const searchableText = [
+        song.title,
+        song.artist,
+        song.album,
+        ...song.cat,
+        ...song.mood,
+        ...song.tags
+      ].join(" ").toLowerCase();
+
+      return searchableText.includes(query);
+
+    });
+
+  }
+
+  return songs;
+
+}
+
+
+/* =========================================================
+   25. CREATE A SONG ROW
+   ========================================================= */
+
+function createSongRow(song) {
+
+  const row = document.createElement("div");
+
+  row.className = "music-row";
+
+  if (
+    state.currentId &&
+    songKey(song.id) === songKey(state.currentId)
+  ) {
+
+    row.classList.add("playing");
+
+  }
+
+  const cover = document.createElement("img");
+
+  cover.className = "cover";
+
+  cover.alt = "";
+
+  cover.loading = "lazy";
+
+  cover.src = song.cover || "";
+
+  cover.onerror = () => {
+
+    cover.removeAttribute("src");
+
+  };
+
+
+  const main = document.createElement("button");
+
+  main.className = "music-main";
+
+  main.type = "button";
+
+  main.innerHTML = `
+    <b>${escapeHTML(song.title)}</b>
+    <small>${escapeHTML(song.artist)}</small>
+  `;
+
+  main.addEventListener("click", () => {
+
+    if (typeof playSong === "function") {
+
+      playSong(song.id);
+
+    }
+
+  });
+
+
+  const playingBars = document.createElement("span");
+
+  playingBars.className = "playing-bars";
+
+  playingBars.textContent = "▮▮▮";
+
+
+  const favorite = document.createElement("button");
+
+  favorite.className = "favorite-toggle";
+
+  favorite.type = "button";
+
+  favorite.setAttribute("aria-label", "Add to favorites");
+
+  favorite.textContent = "♡";
+
+  if (state.favorites.has(songKey(song.id))) {
+
+    favorite.classList.add("active");
+
+    favorite.textContent = "♥";
+
+  }
+
+  favorite.addEventListener("click", () => {
+
+    if (typeof toggleFavorite === "function") {
+
+      toggleFavorite(song.id);
+
+    }
+
+  });
+
+
+  const more = document.createElement("button");
+
+  more.className = "row-more";
+
+  more.type = "button";
+
+  more.setAttribute("aria-label", "More song options");
+
+  more.textContent = "⋮";
+
+  more.addEventListener("click", () => {
+
+    if (typeof openSongOptions === "function") {
+
+      openSongOptions(song.id);
+
+    } else {
+
+      notify("More song options will be available soon.");
+
+    }
+
+  });
+
+
+  row.append(
+    cover,
+    main,
+    playingBars,
+    favorite,
+    more
+  );
+
+  return row;
+
+}
+
+
+/* =========================================================
+   26. RENDER THE HOME MUSIC LIST
+   ========================================================= */
+
+function renderHomeMusic() {
+
+  const container = $("#homeMusicList");
+
+  if (!container) return;
+
+  const songs = getHomeSongs();
+
+  container.replaceChildren();
+
+  if (!songs.length) {
+
+    const message = document.createElement("p");
+
+    message.className = "empty-message";
+
+    message.textContent = state.query
+      ? "No songs match your search."
+      : "No music available yet.";
+
+    container.appendChild(message);
+
+    return;
+
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  songs.forEach(song => {
+
+    fragment.appendChild(createSongRow(song));
+
+  });
+
+  container.appendChild(fragment);
+
+}
+
+
+/* =========================================================
+   27. CATEGORY BUTTONS
+   ========================================================= */
+
+function setupCategoryButtons() {
+
+  $$(".category").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      state.category = button.dataset.category || "All";
+
+      $$(".category").forEach(item => {
+
+        item.classList.toggle("active", item === button);
+
+      });
+
+      renderHomeMusic();
+
+    });
+
+  });
+
+}
+
+
+/* =========================================================
+   28. REFRESH THE HOME MUSIC LIST
+   ========================================================= */
+
+function refreshHomeMusic() {
+
+  renderHomeMusic();
+
+}
+
+
+/* =========================================================
+   END OF PART 4
+   ========================================================= */
