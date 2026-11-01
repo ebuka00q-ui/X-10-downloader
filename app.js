@@ -879,3 +879,270 @@ async function cacheSongCover(song) {
    END OF PART 2
    ========================================================= */
 
+/* =========================================================
+   18. CHECK SUPABASE CONNECTION SETTINGS
+   ========================================================= */
+
+function hasSupabaseSettings() {
+
+  return Boolean(
+    VIC_CONFIG.SUPABASE_URL &&
+    VIC_CONFIG.SUPABASE_PUBLIC_KEY &&
+    VIC_CONFIG.SUPABASE_PUBLIC_KEY !==
+      "PASTE_YOUR_SUPABASE_PUBLIC_KEY_HERE"
+  );
+
+}
+
+
+/* =========================================================
+   19. CONNECT TO SUPABASE
+   ========================================================= */
+
+function connectSupabase() {
+
+  if (!hasSupabaseSettings()) {
+
+    state.backendConnected = false;
+
+    state.backendError = "Supabase connection settings are missing.";
+
+    console.warn(state.backendError);
+
+    return false;
+
+  }
+
+  if (!window.supabase?.createClient) {
+
+    state.backendConnected = false;
+
+    state.backendError = "Supabase library is not loaded.";
+
+    console.error(state.backendError);
+
+    return false;
+
+  }
+
+  try {
+
+    state.supabase = window.supabase.createClient(
+      VIC_CONFIG.SUPABASE_URL,
+      VIC_CONFIG.SUPABASE_PUBLIC_KEY
+    );
+
+    state.backendConnected = true;
+
+    state.backendError = null;
+
+    return true;
+
+  } catch (error) {
+
+    state.backendConnected = false;
+
+    state.backendError = error.message || "Supabase connection failed.";
+
+    console.error("Supabase connection failed:", error);
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================================================
+   20. LOAD SONGS FROM SUPABASE
+   ========================================================= */
+
+async function loadSongsFromSupabase() {
+
+  if (!state.supabase) {
+
+    throw new Error("Supabase is not connected.");
+
+  }
+
+  const { data, error } = await state.supabase
+    .from(VIC_CONFIG.SUPABASE_SONGS_TABLE)
+    .select(
+      "id, title, artist, cover_url, audio_url, genre, mood, lyrics, release_date"
+    )
+    .order("release_date", {
+      ascending: false,
+      nullsFirst: false
+    });
+
+  if (error) {
+
+    throw new Error(error.message);
+
+  }
+
+  if (!Array.isArray(data)) {
+
+    throw new Error("Supabase returned an unexpected song list.");
+
+  }
+
+  return data
+    .map(row => normaliseSong(row))
+    .filter(song => song.id && song.audio);
+
+}
+
+
+/* =========================================================
+   21. LOAD THE SONG CATALOGUE
+   ========================================================= */
+
+async function loadCatalogue() {
+
+  if (!isOnline()) {
+
+    notify("You are offline. Showing saved music.");
+
+    return loadSavedCatalogue();
+
+  }
+
+  if (!state.supabase) {
+
+    const connected = connectSupabase();
+
+    if (!connected) {
+
+      notify("Music service is not connected.");
+
+      return loadSavedCatalogue();
+
+    }
+
+  }
+
+  try {
+
+    const songs = await loadSongsFromSupabase();
+
+    state.songs = songs;
+
+    state.backendConnected = true;
+
+    state.backendError = null;
+
+    saveCatalogueSnapshot();
+
+    if (VIC_TEST_MODE) {
+
+      state.songs = [
+        VIC_TEST_SONG,
+        ...state.songs.filter(song => !song.isTestTrack)
+      ];
+
+    }
+
+    return state.songs;
+
+  } catch (error) {
+
+    state.backendConnected = false;
+
+    state.backendError = error.message || "Could not load the catalogue.";
+
+    console.error("Catalogue loading failed:", error);
+
+    notify("Could not load music. Trying saved catalogue.");
+
+    return loadSavedCatalogue();
+
+  }
+
+}
+
+
+/* =========================================================
+   22. SAVE A LOCAL CATALOGUE SNAPSHOT
+   ========================================================= */
+
+function saveCatalogueSnapshot() {
+
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+
+  try {
+
+    localStorage.setItem(
+      VIC_CONFIG.CATALOGUE_SNAPSHOT_KEY,
+      JSON.stringify(realSongs)
+    );
+
+  } catch (error) {
+
+    console.warn("Could not save catalogue snapshot:", error);
+
+  }
+
+}
+
+
+/* =========================================================
+   23. LOAD THE SAVED CATALOGUE
+   ========================================================= */
+
+function loadSavedCatalogue() {
+
+  try {
+
+    const saved = localStorage.getItem(
+      VIC_CONFIG.CATALOGUE_SNAPSHOT_KEY
+    );
+
+    if (!saved) {
+
+      state.songs = VIC_TEST_MODE
+        ? [VIC_TEST_SONG]
+        : [];
+
+      return state.songs;
+
+    }
+
+    const songs = JSON.parse(saved);
+
+    if (!Array.isArray(songs)) {
+
+      throw new Error("Saved catalogue is not a valid list.");
+
+    }
+
+    state.songs = songs
+      .map(song => normaliseSong(song))
+      .filter(song => song.id && song.audio && !song.isTestTrack);
+
+    if (VIC_TEST_MODE) {
+
+      state.songs.unshift(VIC_TEST_SONG);
+
+    }
+
+    return state.songs;
+
+  } catch (error) {
+
+    console.warn("Could not load saved catalogue:", error);
+
+    state.songs = VIC_TEST_MODE
+      ? [VIC_TEST_SONG]
+      : [];
+
+    return state.songs;
+
+  }
+
+}
+
+
+/* =========================================================
+   END OF PART 3
+   ========================================================= */
