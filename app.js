@@ -2729,28 +2729,3 @@
 
 //End of app.js
 
-// TEMPORARY PLAYER TEST
-// Only appears when the URL ends with ?test=1
-const PLAYER_TEST_MODE =
-  new URLSearchParams(window.location.search).get("test") === "1";
-
-const PLAYER_TEST_SONG = {
-  id: "vic-sound-temporary-player-test",
-  title: "Vic-sound Test Track",
-  artist: "Temporary Demo",
-  album: "Player Test",
-  audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-  coverUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=700&q=80",
-  duration: 0,
-  genre: ["Test"],
-  mood: ["Test"],
-  tags: ["Temporary"],
-  lyrics: "Temporary player test track.",
-  timedLyrics: null,
-  releaseDate: null,
-  releaseId: null,
-  releaseType: "single",
-  published: true,
-  destination: "home",
-  isTestTrack: true
-};
