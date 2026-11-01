@@ -1424,3 +1424,108 @@ function refreshHomeMusic() {
 /* =========================================================
    END OF PART 4
    ========================================================= */
+/* =========================================================
+   29. SWITCH BETWEEN APP SCREENS
+   ========================================================= */
+
+function switchScreen(screenName) {
+
+  const allowedScreens = [
+    "home",
+    "favorites",
+    "latest"
+  ];
+
+  if (!allowedScreens.includes(screenName)) {
+
+    return;
+
+  }
+
+  state.screen = screenName;
+
+  $$(".screen").forEach(screen => {
+
+    screen.classList.remove("active");
+
+  });
+
+  const targetScreen = $(`#${screenName}Screen`);
+
+  if (targetScreen) {
+
+    targetScreen.classList.add("active");
+
+  }
+
+  $$(".nav-item").forEach(button => {
+
+    const isActive =
+      button.dataset.screen === screenName;
+
+    button.classList.toggle("active", isActive);
+
+  });
+
+  if (screenName === "home") {
+
+    renderHomeMusic();
+
+  }
+
+  if (screenName === "favorites") {
+
+    if (typeof renderFavorites === "function") {
+
+      renderFavorites();
+
+    }
+
+  }
+
+  if (screenName === "latest") {
+
+    if (typeof renderLatest === "function") {
+
+      renderLatest();
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   30. CONNECT THE BOTTOM NAVIGATION BUTTONS
+   ========================================================= */
+
+function setupBottomNavigation() {
+
+  $$(".nav-item[data-screen]").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      switchScreen(button.dataset.screen);
+
+    });
+
+  });
+
+}
+
+
+/* =========================================================
+   31. SET THE STARTING SCREEN
+   ========================================================= */
+
+function setupStartingScreen() {
+
+  switchScreen("home");
+
+}
+
+
+/* =========================================================
+   END OF PART 5
+   ========================================================= */
