@@ -2462,4 +2462,98 @@ function bindEvents() {
 
 /* =========================================================
    26. BACK BUTTON SUPPORT
-   =============
+   ========================================================= */
+
+function setupBackNavigation() {
+  history.replaceState({ vicSound: true }, "", location.href);
+  history.pushState({ vicSound: true }, "", location.href);
+  window.addEventListener("popstate", () => {
+    history.pushState({ vicSound: true }, "", location.href);
+    back();
+  });
+}
+
+/* =========================================================
+   27. INITIALISE
+   ========================================================= */
+
+async function init() {
+  injectVicEnhancementStyles();
+  getAnonymousId();
+  loadLocalData();
+  applyTestMusic();
+  setupVoice();
+  bindEvents();
+
+  renderHome();
+  renderFavorites();
+  renderLatest();
+  updateDots();
+  updateModeButtons();
+  await getDownloadedSongs();
+  updateOfflineCount();
+
+  applyDJProfile();
+  await loadDJProfile();
+
+  // Load local music immediately; remote services can update it later.
+  if (state.songs.length) {
+    makeQueue(state.songs, { type: "catalogue", label: "Your Music" });
+    setCurrentSong(state.songs[0]);
+  }
+
+  await connectBackend();
+  await loadSongs();
+  await loadReleases();
+  await loadMonetizationSettings();
+
+  if (state.songs.length && !state.currentId) {
+    makeQueue(state.songs, { type: "catalogue", label: "Your Music" });
+    setCurrentSong(state.songs[0]);
+  }
+
+  if (navigator.onLine) prepareOfflineMusic();
+  if ("storage" in navigator && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+
+  window.addEventListener("online", () => {
+    loadSongs();
+    loadReleases();
+    loadDJProfile();
+    loadMonetizationSettings();
+    prepareOfflineMusic();
+  });
+  window.addEventListener("offline", updateOfflineCount);
+
+  setupBackNavigation();
+  console.log("Vic-sound Listener ready.");
+}
+
+window.VicSoundListener = {
+  connectBackend,
+  loadSongs,
+  loadReleases,
+  loadDJProfile,
+  loadMonetizationSettings,
+  applyMonetizationSettings,
+  applyDJProfile,
+  playSongById,
+  playDJNow,
+  toggleFavorite,
+  openCollection,
+  getState: () => state,
+  testMode: VIC_TEST_MODE,
+  clearTestCache: async () => {
+    if ("caches" in window) await caches.delete(VIC_TEST_CONFIG.cacheName);
+    state.downloaded = new Set([...state.downloaded].filter(id => !String(id).startsWith("vic-tst-")));
+    updateOfflineCount();
+  }
+};
+
+init();
+
+/* =========================================================
+   END OF VIC-SOUND LISTENER APP.JS
+   ========================================================= */
+     
