@@ -1766,6 +1766,7 @@ function closeLyrics() {
   state.lyricsOpen = false;
 }
 
+
 /* =========================================================
    18. PLAYBACK HISTORY AND LOCAL DJ BRAIN
    This works offline and does not require Gemini.
@@ -1917,4 +1918,100 @@ async function command(text) {
     }
 
     if (byId("djReply")) byId("djReply").textContent =
-      result.m
+      result.message || "I've found something for you.";
+
+    if (Array.isArray(result.songs) && result.songs.length) {
+      const songs = result.songs.map(item =>
+        typeof item === "object" ? getSong(item.id) || normaliseSong(item) : getSong(item)
+      ).filter(Boolean);
+      if (songs.length) {
+        playFromList(songs, 0, { type: "dj", label: "Vic-sound DJ" });
+        state.djLastSuggestedId = songs[0].id;
+      }
+    }
+  } finally {
+    state.djBusy = false;
+    if (byId("djSend")) byId("djSend").disabled = false;
+  }
+}
+
+async function autoDJRecommendation() {
+  const picks = localDJPick("", 8);
+  if (!picks.length) return;
+
+  const repeated = Object.entries(state.playedSongs)
+    .sort((a, b) => b[1] - a[1])[0];
+  const repeatedSong = repeated ? getSong(repeated[0]) : null;
+
+  let message = "I'm switching things up with a fresh selection for you.";
+  if (repeatedSong && (state.playedSongs[songKey(repeatedSong.id)] || 0) >=
+      VIC_CONFIG.DJ.repeatNoticeThreshold) {
+    message = `You've played "${repeatedSong.title}" a lot. Let me bring in something different you may enjoy.`;
+  } else {
+    message = `I've picked something new for you. Let's try "${picks[0].title}".`;
+  }
+
+  // Small natural DJ announcements are generated locally.
+  // Gemini is not required for this feature.
+  state.lastAutoDJMessageAt = Date.now();
+  if (state.djOpen && byId("djReply")) byId("djReply").textContent = message;
+
+  // Never take over a category, search or collection queue. Those queues
+  // must stay in the exact source list selected by the listener.
+  const protectedSource = ["collection", "category", "search"].includes(state.queueSource?.type);
+  if (!protectedSource && picks[0].id !== state.djLastSuggestedId) {
+    // Keep the completed song at index zero so the ended handler advances
+    // to the first fresh DJ pick instead of accidentally skipping it.
+    const current = getCurrentSong();
+    const nextSongs = [
+      ...(current ? [current] : []),
+      ...picks.filter(song => songKey(song.id) !== songKey(state.currentId))
+    ];
+    if (nextSongs.length > 1) {
+      makeQueue(nextSongs, { type: "dj", label: "Vic-sound DJ" });
+      state.queueIndex = 0;
+      state.djLastSuggestedId = nextSongs[1].id;
+    }
+  }
+}
+
+/* =========================================================
+   19. DJ SCREEN AND AUTOMATIC PLAY
+   The DJ card remains at the top of Favorites.
+   Card body opens DJ; Play starts music immediately.
+   ========================================================= */
+
+function openDJ() {
+  byId("djOverlay")?.classList.add("open");
+  byId("djOverlay")?.setAttribute("aria-hidden", "false");
+  state.djOpen = true;
+}
+
+function closeDJ() {
+  stopVoice();
+  byId("djOverlay")?.classList.remove("open");
+  byId("djOverlay")?.setAttribute("aria-hidden", "true");
+  state.djOpen = false;
+}
+
+function playDJNow() {
+  openDJ();
+  const picks = localDJPick("", 12);
+  if (!picks.length) {
+    if (byId("djReply")) byId("djReply").textContent =
+      "Your music will appear here when the catalogue is available.";
+    return;
+  }
+  if (byId("djReply")) byId("djReply").textContent =
+    `Okay, I'm putting together a selection for you. Starting with "${picks[0].title}".`;
+  playFromList(picks, 0, { type: "dj", label: "Vic-sound DJ" });
+}
+
+/* =========================================================
+   20. VOICE INPUT
+   ========================================================= */
+
+let recognition = null;
+let voiceTimer = null;
+
+func
