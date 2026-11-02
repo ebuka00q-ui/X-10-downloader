@@ -1801,6 +1801,7 @@ function closeLyrics() {
   state.lyricsOpen = false;
 }
 
+
 /* =========================================================
    18. PLAYBACK HISTORY AND LOCAL DJ BRAIN
    This works offline and does not require Gemini.
@@ -1811,4 +1812,470 @@ function recordCompletedPlay() {
   if (!song) return;
 
   const key = songKey(song.id);
-             
+  state.playedSongs[key] = (state.playedSongs[key] || 0) + 1;
+  state.djHistory.push({
+    id: key,
+    title: song.title,
+    artist: song.artist,
+    genres: song.cat,
+    moods: song.mood,
+    at: Date.now(),
+    completed: true
+  });
+  state.djHistory = state.djHistory.slice(-VIC_CONFIG.DJ.historyLimit);
+  state.djCompletedSinceSuggestion += 1;
+  saveLocalData();
+
+  if (state.djCompletedSinceSuggestion >= VIC_CONFIG.DJ.autoSuggestionEvery) {
+    state.djCompletedSinceSuggestion = 0;
+    autoDJRecommendation();
+  }
+}
+
+function recordSkip(song = getCurrentSong()) {
+  if (!song) return;
+  const key = songKey(song.id);
+  state.skippedSongs[key] = (state.skippedSongs[key] || 0) + 1;
+  saveLocalData();
+}
+
+function scoreSongForDJ(song, request = "") {
+  const query = request.toLowerCase();
+  const tokens = query.split(/\s+/).filter(word => word.length > 2);
+  const tags = [
+    song.title, song.artist, song.album,
+    ...(song.cat || []), ...(song.mood || [])
+  ].join(" ").toLowerCase();
+
+  let score = 0;
+  tokens.forEach(token => {
+    if (tags.includes(token)) score += 3;
+  });
+
+  const key = songKey(song.id);
+  score += Math.min(5, (state.playedSongs[key] || 0) * 0.5);
+  score -= Math.min(8, (state.skippedSongs[key] || 0) * 1.5);
+
+  const recentlyPlayed = state.djHistory.slice(-8).some(item => item.id === key);
+  if (recentlyPlayed) score -= 4;
+
+  if (state.favorites.has(key) || isSongFavorite(key)) score += 2;
+  return score;
+}
+
+function localDJPick(request = "", limit = 8) {
+  return [...state.songs]
+    .filter(song => song.audio)
+    .map(song => ({ song, score: scoreSongForDJ(song, request) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => item.song);
+}
+
+function detectMoodWords(text) {
+  const value = text.toLowerCase();
+  const map = [
+    { words: ["sad", "down", "heartbroken", "cry", "lonely"], tags: ["sad", "calm", "moody"] },
+    { words: ["happy", "party", "dance", "energy", "energetic"], tags: ["party", "upbeat", "afrobeats"] },
+    { words: ["love", "romantic", "girlfriend", "boyfriend"], tags: ["love", "romantic"] },
+    { words: ["sleep", "relax", "calm", "quiet"], tags: ["calm", "soft"] },
+    { words: ["rap", "bars", "flow"], tags: ["rap", "hip-hop"] }
+  ];
+  return map.find(item => item.words.some(word => value.includes(word)))?.tags || [];
+}
+
+function localDJReply(text) {
+  const moodTags = detectMoodWords(text);
+  const request = `${text} ${moodTags.join(" ")}`;
+  const picks = localDJPick(request, 8);
+  if (!picks.length) {
+    return {
+      message: navigator.onLine
+        ? "I'm still getting to know your music taste. Try asking for a genre, mood or artist."
+        : "I'd love to find the right music for you. Reconnect when you can for a more personal DJ experience. I can still use your saved listening history while you're offline.",
+      songs: []
+    };
+  }
+
+  const first = picks[0];
+  const gentle = moodTags.includes("sad")
+    ? "I hear you. Let's find something that fits the moment."
+    : "Alright, I've got a few songs in mind for you.";
+  return {
+    message: `${gentle} I'm starting with "${first.title}" by ${first.artist}.`,
+    songs: picks
+  };
+}
+
+async function requestOnlineDJ(text) {
+  if (!navigator.onLine || !VIC_CONFIG.SERVICES.baseUrl) {
+    throw new Error("DJ online service is unavailable.");
+  }
+  return serviceRequest(VIC_CONFIG.SERVICES.djChat, {
+    method: "POST",
+    body: JSON.stringify({
+      message: text,
+      currentSong: getCurrentSong(),
+      listeningHistory: state.djHistory.slice(-20),
+      skippedSongs: state.skippedSongs,
+      favoriteIds: [...state.favorites],
+      collections: state.collections.map(item => ({
+        name: item.name,
+        songIds: item.songs
+      }))
+    })
+  });
+}
+
+async function command(text) {
+  const value = safe(text).trim();
+  if (!value || state.djBusy) return;
+  state.djBusy = true;
+  if (byId("djSend")) byId("djSend").disabled = true;
+
+  try {
+    let result = null;
+    if (navigator.onLine && VIC_CONFIG.SERVICES.baseUrl) {
+      try {
+        result = await requestOnlineDJ(value);
+        state.djOnline = true;
+      } catch (error) {
+        console.info("Online DJ not ready; using local DJ:", error);
+      }
+    }
+
+    if (!result) {
+      state.djOnline = false;
+      result = localDJReply(value);
+      if (!navigator.onLine) {
+        result.message += " Reconnect to enjoy the DJ's full personalised experience.";
+      }
+    }
+
+    if (byId("djReply")) byId("djReply").textContent =
+      result.message || "I've found something for you.";
+
+    if (Array.isArray(result.songs) && result.songs.length) {
+      const songs = result.songs.map(item =>
+        typeof item === "object" ? getSong(item.id) || normaliseSong(item) : getSong(item)
+      ).filter(Boolean);
+      if (songs.length) {
+        playFromList(songs, 0, { type: "dj", label: "Vic-sound DJ" });
+        state.djLastSuggestedId = songs[0].id;
+      }
+    }
+  } finally {
+    state.djBusy = false;
+    if (byId("djSend")) byId("djSend").disabled = false;
+  }
+}
+
+async function autoDJRecommendation() {
+  const picks = localDJPick("", 8);
+  if (!picks.length) return;
+
+  const repeated = Object.entries(state.playedSongs)
+    .sort((a, b) => b[1] - a[1])[0];
+  const repeatedSong = repeated ? getSong(repeated[0]) : null;
+
+  let message = "I'm switching things up with a fresh selection for you.";
+  if (repeatedSong && (state.playedSongs[songKey(repeatedSong.id)] || 0) >=
+      VIC_CONFIG.DJ.repeatNoticeThreshold) {
+    message = `You've played "${repeatedSong.title}" a lot. Let me bring in something different you may enjoy.`;
+  } else {
+    message = `I've picked something new for you. Let's try "${picks[0].title}".`;
+  }
+
+  // Small natural DJ announcements are generated locally.
+  // Gemini is not required for this feature.
+  state.lastAutoDJMessageAt = Date.now();
+  if (state.djOpen && byId("djReply")) byId("djReply").textContent = message;
+
+  // Never take over a category, search or collection queue. Those queues
+  // must stay in the exact source list selected by the listener.
+  const protectedSource = ["collection", "category", "search"].includes(state.queueSource?.type);
+  if (!protectedSource && picks[0].id !== state.djLastSuggestedId) {
+    // Keep the completed song at index zero so the ended handler advances
+    // to the first fresh DJ pick instead of accidentally skipping it.
+    const current = getCurrentSong();
+    const nextSongs = [
+      ...(current ? [current] : []),
+      ...picks.filter(song => songKey(song.id) !== songKey(state.currentId))
+    ];
+    if (nextSongs.length > 1) {
+      makeQueue(nextSongs, { type: "dj", label: "Vic-sound DJ" });
+      state.queueIndex = 0;
+      state.djLastSuggestedId = nextSongs[1].id;
+    }
+  }
+}
+
+/* =========================================================
+   19. DJ SCREEN AND AUTOMATIC PLAY
+   The DJ card remains at the top of Favorites.
+   Card body opens DJ; Play starts music immediately.
+   ========================================================= */
+
+function ensureDJPlaybackControls() {
+  const overlay = byId("djOverlay");
+  if (!overlay) return;
+  let controls = byId("vicDJPlaybackControls");
+  if (!controls) {
+    controls = document.createElement("div");
+    controls.id = "vicDJPlaybackControls";
+    controls.className = "vic-dj-playback";
+    controls.setAttribute("aria-label", "DJ music controls");
+    controls.innerHTML = `
+      <button type="button" id="vicDJPrevious" aria-label="Play previous DJ song" title="Previous song">⏮</button>
+      <button type="button" id="vicDJPlayPause" class="vic-dj-main-play" aria-label="Play music" title="Play or pause">▶</button>
+      <button type="button" id="vicDJNext" aria-label="Skip this DJ song and choose another" title="Next DJ song">⏭</button>
+    `;
+    const anchor = byId("djWave") || byId("djReply") || overlay.querySelector(".overlay-head");
+    if (anchor?.parentNode) anchor.parentNode.insertBefore(controls, anchor.nextSibling);
+    else overlay.appendChild(controls);
+    byId("vicDJPrevious").addEventListener("click", playPreviousDJSong);
+    byId("vicDJPlayPause").addEventListener("click", toggle);
+    byId("vicDJNext").addEventListener("click", playNextDJSong);
+  }
+  updateDJPlaybackControls();
+}
+
+function updateDJPlaybackControls() {
+  const playButton = byId("vicDJPlayPause");
+  const previousButton = byId("vicDJPrevious");
+  const nextButton = byId("vicDJNext");
+  if (playButton) {
+    playButton.textContent = state.playing ? "Ⅱ" : "▶";
+    playButton.setAttribute("aria-label", state.playing ? "Pause music" : "Play music");
+  }
+  if (previousButton) {
+    const hasPrevious = state.queueSource?.type === "dj" && state.queueIndex > 0;
+    previousButton.disabled = !hasPrevious;
+  }
+  if (nextButton) {
+    const hasAlternative = state.songs.some(song => song.audio &&
+      songKey(song.id) !== songKey(state.currentId));
+    nextButton.disabled = !hasAlternative;
+  }
+}
+
+function playNextDJSong() {
+  const current = getCurrentSong();
+  if (!current) {
+    playDJNow();
+    return;
+  }
+
+  // Treat Next as feedback: remember the skip so the local DJ learns
+  // not to keep offering the same track, then choose from real catalogue music.
+  recordSkip(current);
+  const alternatives = localDJPick("", Math.max(12, state.songs.length))
+    .filter(song => song.audio && songKey(song.id) !== songKey(current.id));
+
+  if (!alternatives.length) {
+    notify("There isn't another playable song in the DJ catalogue yet.");
+    updateDJPlaybackControls();
+    return;
+  }
+
+  // Keep the just-skipped track immediately behind the new selection,
+  // so Previous can return to it. The DJ ranking uses skip history to
+  // favour different tracks on future skips.
+  makeQueue([current, ...alternatives], { type: "dj", label: "Vic-sound DJ" });
+  state.queueIndex = 1;
+  state.djLastSuggestedId = alternatives[0].id;
+  if (byId("djReply")) {
+    byId("djReply").textContent = `Let's try something different: "${alternatives[0].title}".`;
+  }
+  loadSong(alternatives[0], true, { keepQueue: true });
+  updateDJPlaybackControls();
+}
+
+function playPreviousDJSong() {
+  if (state.queueSource?.type !== "dj" || state.queueIndex <= 0) {
+    notify("There is no previous DJ song yet.");
+    return;
+  }
+  state.queueIndex -= 1;
+  const entry = currentQueueEntry();
+  if (!entry) return;
+  entry.repeatsLeft = entry.repeatTotal;
+  loadSong(getSong(entry.id), true, { keepQueue: true });
+  updateDJPlaybackControls();
+}
+
+function openDJ() {
+  ensureDJPlaybackControls();
+  byId("djOverlay")?.classList.add("open");
+  byId("djOverlay")?.setAttribute("aria-hidden", "false");
+  state.djOpen = true;
+}
+
+function closeDJ() {
+  stopVoice();
+  byId("djOverlay")?.classList.remove("open");
+  byId("djOverlay")?.setAttribute("aria-hidden", "true");
+  state.djOpen = false;
+}
+
+function playDJNow() {
+  openDJ();
+  const picks = localDJPick("", 12);
+  if (!picks.length) {
+    if (byId("djReply")) byId("djReply").textContent =
+      "Your music will appear here when the catalogue is available.";
+    return;
+  }
+  if (byId("djReply")) byId("djReply").textContent =
+    `Okay, I'm putting together a selection for you. Starting with "${picks[0].title}".`;
+  playFromList(picks, 0, { type: "dj", label: "Vic-sound DJ" });
+}
+
+/* =========================================================
+   20. VOICE INPUT
+   ========================================================= */
+
+let recognition = null;
+let voiceTimer = null;
+
+function setupVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
+
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-NG";
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    byId("djMic")?.classList.add("listening");
+    byId("djOverlay")?.classList.add("listening");
+  };
+  recognition.onresult = event => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    if (byId("djInput")) byId("djInput").value = transcript;
+  };
+  recognition.onend = () => {
+    byId("djMic")?.classList.remove("listening");
+    byId("djOverlay")?.classList.remove("listening");
+  };
+}
+
+function startVoice() {
+  if (!recognition) {
+    notify("Voice input is not supported in this browser.");
+    return;
+  }
+  try { recognition.start(); } catch { return; }
+  clearTimeout(voiceTimer);
+  voiceTimer = setTimeout(stopVoice, 30000);
+}
+
+function stopVoice() {
+  clearTimeout(voiceTimer);
+  try { recognition?.stop(); } catch {}
+  byId("djMic")?.classList.remove("listening");
+  byId("djOverlay")?.classList.remove("listening");
+}
+
+/* =========================================================
+   21. TIMER
+   ========================================================= */
+
+function openTimer() {
+  byId("timerSheet")?.classList.add("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "false");
+}
+
+function closeTimer() {
+  byId("timerSheet")?.classList.remove("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "true");
+}
+
+function clearPlaybackTimer() {
+  clearTimeout(state.timerId);
+  state.timerId = null;
+}
+
+function setTimer(minutes) {
+  clearPlaybackTimer();
+  state.timerMode = "minutes";
+  state.timerId = setTimeout(() => {
+    pause();
+    state.timerMode = "off";
+    closeTimer();
+    notify("Your playback timer has finished.");
+  }, minutes * 60000);
+
+  $$(".timer-options button").forEach(button =>
+    button.classList.toggle("selected", Number(button.dataset.min) === minutes)
+  );
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+}
+
+function setEndTrackTimer() {
+  clearPlaybackTimer();
+  state.timerMode = "end";
+  $$(".timer-options button").forEach(button => button.classList.remove("selected"));
+  byId("endTrack")?.classList.add("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+}
+
+function offTimer() {
+  clearPlaybackTimer();
+  state.timerMode = "off";
+  $$(".timer-options button").forEach(button => button.classList.remove("selected"));
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.add("selected");
+  closeTimer();
+}
+
+/* =========================================================
+   22. NOTIFICATIONS AND LATEST DOTS
+   ========================================================= */
+
+async function setNotifications(enabled) {
+  if (!enabled) {
+    state.notifications = false;
+    localStorage.setItem(VIC_CONFIG.STORAGE.notifications, "false");
+    notify("Release notifications turned off.");
+    return;
+  }
+
+  if (!("Notification" in window)) {
+    if (byId("notificationSwitch")) byId("notificationSwitch").checked = false;
+    notify("This browser does not support notifications.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  state.notifications = permission === "granted";
+  localStorage.setItem(VIC_CONFIG.STORAGE.notifications, String(state.notifications));
+  if (!state.notifications && byId("notificationSwitch")) {
+    byId("notificationSwitch").checked = false;
+  }
+  notify(state.notifications ? "Release notifications enabled." :
+    "Notification permission was not granted.");
+  // Real push delivery additionally requires a service worker,
+  // VAPID configuration and a trusted server-side sender.
+}
+
+function updateDots() {
+  ["latestDot", "navDot", "headerDot"].forEach(id => {
+    byId(id)?.classList.toggle("show", Boolean(state.newRelease));
+  });
+}
+
+/* =========================================================
+   23. RELEASE DOWNLOAD — SAFE PLACEHOLDER
+   Reward must be verified by the trusted ad/backend provider.
+   ========================================================= */
+
+async function downloadRelease(id) {
+                                             
