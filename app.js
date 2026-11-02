@@ -746,16 +746,7 @@ function recordCompletedOnlineSong() {
     state.regularAdPending = true; maybeShowRegularAd();
   }
 }
-function maybeShowRegularAd() {
-  if (!state.regularAdPending || !navigator.onLine || document.hidden || !VIC_CONFIG.BOTTOM_AD_UNIT_PATH) return;
-  const now = Date.now();
-  if (now - state.lastRegularAdAt < VIC_CONFIG.REGULAR_AD_COOLDOWN_MS) return;
-  const slot = $("#bottomAdPlacement"); if (!slot) return;
-  // GPT/ad library integration is added only after a real ad unit is configured.
-  // Do not display a fake ad or occupy screen space when no ad is returned.
-  if (!window.googletag?.cmd) return;
-  state.lastRegularAdAt = now; state.regularAdPending = false;
-}
+
 document.addEventListener("visibilitychange", () => { if (!document.hidden) maybeShowRegularAd(); });
 
 /* =========================================================
