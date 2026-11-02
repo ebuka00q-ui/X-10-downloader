@@ -887,3 +887,426 @@ function renderHome() {
     </article>
   `).join("");
 }
+
+
+/* =========================================================
+   11. OFFLINE MUSIC CACHE
+   Automatic offline preparation is separate from rewarded downloads.
+   ========================================================= */
+
+async function getMusicCache(song = null) {
+  if (!("caches" in window)) return null;
+  const cacheName = song?.isTestTrack
+    ? VIC_TEST_CONFIG.cacheName
+    : VIC_CONFIG.STORAGE.musicCache;
+  return caches.open(cacheName);
+}
+
+async function getDownloadedSongs() {
+  state.downloaded.clear();
+  if (!("caches" in window)) return state.downloaded;
+  for (const song of state.songs) {
+    if (!song.audio) continue;
+    try {
+      const cache = await getMusicCache(song);
+      const url = new URL(song.audio, location.href).href;
+      if (cache && await cache.match(url)) state.downloaded.add(songKey(song.id));
+    } catch {}
+  }
+  updateOfflineCount();
+  return state.downloaded;
+}
+
+function updateOfflineCount() {
+  const count = byId("offlineCount");
+  const status = byId("offlineStatus");
+  const message = byId("offlineMessage");
+  const card = byId("offlineCard");
+  if (!count) return;
+
+  const total = state.songs.filter(song => song.audio).length;
+  const saved = state.downloaded.size;
+  count.textContent = `${saved} of ${total} songs`;
+
+  if (!total) {
+    if (status) status.textContent = "Waiting for music";
+    if (message) message.textContent = "Music will appear here when it is published.";
+    return;
+  }
+
+  const percent = Math.round(saved / total * 100);
+  card?.style.setProperty("--offline-progress", `${percent}%`);
+  card?.classList.toggle("is-complete", saved === total);
+  card?.classList.toggle("is-preparing", saved > 0 && saved < total);
+
+  if (saved === total) {
+    if (status) status.textContent = "Offline ready";
+    if (message) message.textContent = "Your saved music is ready for offline listening.";
+  } else {
+    if (status) status.textContent = navigator.onLine ? "Offline music" : "Offline";
+    if (message) message.textContent = navigator.onLine
+      ? "Music can be saved for listening without internet."
+      : "Reconnect to save more music for offline listening.";
+  }
+}
+
+async function saveAudioFile(song) {
+  if (!song?.audio) return false;
+  const cache = await getMusicCache(song);
+  if (!cache) return false;
+
+  const url = new URL(song.audio, location.href).href;
+  if (await cache.match(url)) {
+    state.downloaded.add(songKey(song.id));
+    return true;
+  }
+
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    if (!response.ok) throw new Error("Audio request failed.");
+    const type = response.headers.get("content-type") || "";
+    if (type.includes("text/html") || type.includes("application/json")) {
+      throw new Error("The address did not return an audio file.");
+    }
+    await cache.put(url, response.clone());
+    state.downloaded.add(songKey(song.id));
+    return true;
+  } catch (error) {
+    console.warn("Could not cache", song.title, error);
+    return false;
+  }
+}
+
+async function prepareOfflineMusic() {
+  if (!navigator.onLine || state.downloadBusy) return;
+  state.downloadBusy = true;
+  try {
+    await getDownloadedSongs();
+    const pending = state.songs.filter(song =>
+      song.audio && !state.downloaded.has(songKey(song.id))
+    );
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < pending.length && navigator.onLine) {
+        const song = pending[cursor++];
+        await saveAudioFile(song);
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(VIC_CONFIG.DOWNLOAD_WORKERS, pending.length) }, worker)
+    );
+  } finally {
+    state.downloadBusy = false;
+    updateOfflineCount();
+  }
+}
+
+/* =========================================================
+   12. PLAYBACK SOURCE AND QUEUE
+   ========================================================= */
+
+function makeQueue(songs, source) {
+  state.queue = songs.map(song => ({
+    id: song.id,
+    repeatTotal: 1,
+    repeatsLeft: 1
+  }));
+  state.queueIndex = 0;
+  state.queueSource = source || { type: "catalogue", label: "Your Music" };
+  renderQueue();
+}
+
+function currentQueueEntry() {
+  return state.queue[state.queueIndex] || null;
+}
+
+function setCurrentSong(song) {
+  if (!song) return;
+  state.currentId = song.id;
+  updatePlayer();
+  renderHome();
+  updateLyrics();
+  updateMediaSession();
+}
+
+function songURL(song) {
+  return song?.audio || "";
+}
+
+async function loadSong(song, shouldPlay = true, { keepQueue = false } = {}) {
+  if (!song) return;
+  if (!keepQueue) {
+    const sourceSongs = state.queueSource?.type === "collection"
+      ? collectionSongs(state.queueSource.id)
+      : state.queueSource?.type === "category"
+        ? filteredSongs()
+        : state.queueSource?.type === "search"
+          ? filteredSongs()
+          : state.songs;
+    const index = sourceSongs.findIndex(item => songKey(item.id) === songKey(song.id));
+    if (index >= 0 && state.queue[index]) state.queueIndex = index;
+  }
+
+  setCurrentSong(song);
+  const url = songURL(song);
+  if (!url) {
+    notify("This song does not have an audio file yet.");
+    return;
+  }
+
+  try {
+    const cache = await getMusicCache(song);
+    const cached = cache ? await cache.match(new URL(url, location.href).href) : null;
+    if (cached) {
+      const blob = await cached.blob();
+      if (audio._objectURL) URL.revokeObjectURL(audio._objectURL);
+      audio._objectURL = URL.createObjectURL(blob);
+      audio.src = audio._objectURL;
+    } else {
+      audio.src = url;
+    }
+    audio.load();
+    if (shouldPlay) await audio.play();
+  } catch (error) {
+    console.error("Playback error:", error);
+    state.playing = false;
+    notify("This song could not play. Check your connection or audio file.");
+  }
+  updatePlayer();
+}
+
+function playFromList(songs, index, source) {
+  if (!songs.length) {
+    notify("There are no songs in this list yet.");
+    return;
+  }
+  const safeIndex = Math.max(0, Math.min(index, songs.length - 1));
+  makeQueue(songs, source);
+  state.queueIndex = safeIndex;
+  loadSong(songs[safeIndex], true, { keepQueue: true });
+}
+
+function playSongById(id) {
+  const list = filteredSongs();
+  const index = list.findIndex(song => songKey(song.id) === songKey(id));
+  if (index >= 0) {
+    playFromList(list, index, {
+      type: state.query ? "search" : state.category === "All" ? "catalogue" : "category",
+      label: state.query ? "Search results" : state.category
+    });
+    return;
+  }
+  const song = state.songs.find(item => songKey(item.id) === songKey(id));
+  if (song) playFromList([song], 0, { type: "single", label: song.title });
+}
+
+function playNextQueueEntry() {
+  if (!state.queue.length) {
+    pause();
+    return;
+  }
+
+  const entry = currentQueueEntry();
+  if (entry && entry.repeatsLeft > 1) {
+    entry.repeatsLeft -= 1;
+    loadSong(getSong(entry.id), true, { keepQueue: true });
+    renderQueue();
+    return;
+  }
+
+  if (entry) {
+    entry.repeatsLeft = entry.repeatTotal;
+  }
+
+  if (state.shuffle && state.queue.length > 1) {
+    let nextIndex = state.queueIndex;
+    while (nextIndex === state.queueIndex) {
+      nextIndex = Math.floor(Math.random() * state.queue.length);
+    }
+    state.queueIndex = nextIndex;
+    loadSong(getSong(state.queue[nextIndex].id), true, { keepQueue: true });
+    return;
+  }
+
+  if (state.queueIndex < state.queue.length - 1) {
+    state.queueIndex += 1;
+    loadSong(getSong(state.queue[state.queueIndex].id), true, { keepQueue: true });
+    return;
+  }
+
+  if (state.repeatMode === 1) {
+    state.queueIndex = 0;
+    loadSong(getSong(state.queue[0].id), true, { keepQueue: true });
+  } else {
+    pause();
+  }
+}
+
+function getSong(id) {
+  return state.songs.find(song => songKey(song.id) === songKey(id)) || null;
+}
+
+function next() {
+  playNextQueueEntry();
+}
+
+function prev() {
+  if (audio.currentTime > 4) {
+    audio.currentTime = 0;
+    return;
+  }
+  if (state.queueIndex > 0) {
+    state.queueIndex -= 1;
+    const entry = currentQueueEntry();
+    if (entry) {
+      entry.repeatsLeft = entry.repeatTotal;
+      loadSong(getSong(entry.id), true, { keepQueue: true });
+    }
+  } else if (state.repeatMode === 1 && state.queue.length) {
+    state.queueIndex = state.queue.length - 1;
+    loadSong(getSong(currentQueueEntry().id), true, { keepQueue: true });
+  } else {
+    audio.currentTime = 0;
+  }
+}
+
+function start() {
+  if (!getCurrentSong()) {
+    const songs = filteredSongs();
+    if (songs.length) playFromList(songs, 0, { type: "catalogue", label: "Your Music" });
+    return;
+  }
+  audio.play().catch(() => notify("This song could not start."));
+}
+
+function pause() {
+  audio.pause();
+}
+
+function toggle() {
+  audio.paused ? start() : pause();
+}
+
+/* =========================================================
+   13. PLAYER UI, MINI PLAYER AND MEDIA SESSION
+   ========================================================= */
+
+function updatePlayer() {
+  const song = getCurrentSong();
+  if (!song) return;
+
+  ["playerTitle", "miniTitle", "queueTitle"].forEach(id => {
+    if (byId(id)) byId(id).textContent = song.title;
+  });
+  ["playerArtist", "miniArtist", "queueArtist"].forEach(id => {
+    if (byId(id)) byId(id).textContent = song.artist;
+  });
+  ["playerCover", "miniCover", "queueCover"].forEach(id => {
+    if (byId(id)) byId(id).src = song.cover || "";
+  });
+
+  if (byId("playPause")) byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("miniPlay")) byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+
+  const favorite = isSongFavorite(song.id);
+  const favButton = byId("playerFav");
+  if (favButton) {
+    favButton.textContent = favorite ? "♥" : "♡";
+    favButton.classList.toggle("active", favorite);
+  }
+
+  if (byId("currentTime")) byId("currentTime").textContent = formatTime(audio.currentTime);
+  if (byId("duration")) byId("duration").textContent =
+    formatTime(audio.duration || song.duration);
+  if (byId("progress")) byId("progress").value =
+    audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+
+  const mini = byId("miniPlayer");
+  mini?.classList.toggle("visible", Boolean(state.currentId));
+  mini?.setAttribute("aria-hidden", state.currentId ? "false" : "true");
+  byId("playerOverlay")?.classList.toggle("playing", state.playing);
+
+  updateModeButtons();
+}
+
+function updateMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  const song = getCurrentSong();
+  if (!song) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist,
+      album: song.album || "Vic-sound",
+      artwork: song.cover ? [{ src: song.cover }] : []
+    });
+    navigator.mediaSession.setActionHandler("play", start);
+    navigator.mediaSession.setActionHandler("pause", pause);
+    navigator.mediaSession.setActionHandler("previoustrack", prev);
+    navigator.mediaSession.setActionHandler("nexttrack", next);
+  } catch (error) {
+    console.info("Media Session is unavailable:", error);
+  }
+}
+
+function openPlayer() {
+  byId("playerOverlay")?.classList.add("open");
+  byId("playerOverlay")?.setAttribute("aria-hidden", "false");
+  state.player = true;
+  updatePlayer();
+}
+
+function closePlayer() {
+  byId("playerOverlay")?.classList.remove("open");
+  byId("playerOverlay")?.setAttribute("aria-hidden", "true");
+  state.player = false;
+}
+
+audio.addEventListener("play", () => {
+  state.playing = true;
+  updatePlayer();
+  renderHome();
+  updateMediaSession();
+});
+
+audio.addEventListener("pause", () => {
+  state.playing = false;
+  updatePlayer();
+  renderHome();
+});
+
+audio.addEventListener("timeupdate", () => {
+  updatePlayer();
+  syncLyrics();
+});
+
+audio.addEventListener("loadedmetadata", updatePlayer);
+audio.addEventListener("error", () => {
+  state.playing = false;
+  updatePlayer();
+  console.warn("Audio playback error:", audio.error);
+});
+
+audio.addEventListener("ended", () => {
+  recordCompletedPlay();
+  if (state.repeatMode === 2) {
+    audio.currentTime = 0;
+    start();
+    return;
+  }
+  playNextQueueEntry();
+});
+
+/* =========================================================
+   14. QUEUE, PER-SONG REPEAT ×1–×5 AND QUEUE REORDER
+   Tap the small repeat control on a queue row to increase it.
+   ========================================================= */
+
+function renderQueue() {
+  const box = byId("queueList");
+  if (!box) return;
+
+  const count = byId("queueCount");
+  if (count) count.textContent = `${state.queue.length} songs`;
+
+  box.innerHTML = state.queue.map((entry, index
