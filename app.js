@@ -2272,10 +2272,324 @@ function updateDots() {
   });
 }
 
+
 /* =========================================================
    23. RELEASE DOWNLOAD — SAFE PLACEHOLDER
    Reward must be verified by the trusted ad/backend provider.
    ========================================================= */
 
 async function downloadRelease(id) {
-                                             
+  const release = state.releases.find(item => songKey(item.id) === songKey(id));
+  if (!release) return;
+
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    notify("Downloads are not configured yet.");
+    return;
+  }
+
+  openModal({
+    title: "Unlock this download",
+    body: `<p>Watch a rewarded advertisement to unlock ${escapeHTML(release.title || "this release")} for offline listening.</p>`,
+    buttons: [
+      { label: "Not now" },
+      {
+        label: "Continue",
+        action: async () => {
+          closeModal();
+          await requestVerifiedReward(release);
+        }
+      }
+    ]
+  });
+}
+
+/* =========================================================
+   24. NAVIGATION, SEARCH AND BACK
+   ========================================================= */
+
+function go(screen) {
+  state.screen = screen;
+  byId("homeScreen")?.classList.toggle("active", screen === "home");
+  byId("favoritesScreen")?.classList.toggle("active", screen === "favorites");
+  byId("latestScreen")?.classList.toggle("active", screen === "latest");
+
+  $$(".nav-item").forEach(button =>
+    button.classList.toggle("active", button.dataset.screen === screen)
+  );
+
+  const searchToggle = byId("searchToggle");
+  if (searchToggle) searchToggle.style.visibility = screen === "home" ? "visible" : "hidden";
+
+  if (screen === "latest") {
+    state.newRelease = false;
+    updateDots();
+  }
+  renderHome();
+  renderFavorites();
+  renderLatest();
+}
+
+function openSearch() {
+  if (state.screen !== "home") return;
+  byId("searchPanel")?.classList.add("open");
+  byId("searchPanel")?.setAttribute("aria-hidden", "false");
+  setTimeout(() => byId("searchInput")?.focus(), 50);
+}
+
+function closeSearch() {
+  state.query = "";
+  if (byId("searchInput")) byId("searchInput").value = "";
+  byId("searchPanel")?.classList.remove("open");
+  byId("searchPanel")?.setAttribute("aria-hidden", "true");
+  renderHome();
+}
+
+function closePopups() {
+  byId("notificationPopover")?.classList.add("hidden");
+}
+
+function exitPrompt() {
+  openModal({
+    title: "Exit Vic-sound?",
+    body: "<p>Are you sure you want to leave the app?</p>",
+    buttons: [
+      { label: "Stay here" },
+      {
+        label: "Leave",
+        danger: true,
+        action: () => notify("You can now leave Vic-sound using your device controls.")
+      }
+    ]
+  });
+}
+
+function back() {
+  if (state.modalOpen) { closeModal(); return; }
+  if (byId("notificationPopover") &&
+      !byId("notificationPopover").classList.contains("hidden")) {
+    closePopups(); return;
+  }
+  if (state.lyricsOpen) { closeLyrics(); return; }
+  if (byId("timerSheet")?.classList.contains("open")) { closeTimer(); return; }
+  if (byId("searchPanel")?.classList.contains("open")) { closeSearch(); return; }
+  if (state.djOpen) { closeDJ(); return; }
+  if (state.queueOpen) { closeQueue(); return; }
+  if (state.player) { closePlayer(); return; }
+  if (state.screen !== "home") { go("home"); return; }
+  notify("Press back once more to exit Vic-sound.");
+}
+
+/* =========================================================
+   25. EVENT LISTENERS
+   ========================================================= */
+
+function bindEvents() {
+  $$(".nav-item").forEach(button =>
+    button.addEventListener("click", () => go(button.dataset.screen))
+  );
+
+  byId("searchToggle")?.addEventListener("click", openSearch);
+  byId("searchClose")?.addEventListener("click", closeSearch);
+  byId("searchInput")?.addEventListener("input", event => {
+    state.query = event.target.value;
+    renderHome();
+  });
+
+  byId("categoryRow")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+    state.category = button.dataset.category;
+    $$(".category").forEach(item => item.classList.toggle("active", item === button));
+    renderHome();
+  });
+
+  byId("homeMusicList")?.addEventListener("click", event => {
+    const favorite = event.target.closest("[data-fav]");
+    if (favorite) { toggleFavorite(favorite.dataset.fav); return; }
+    const play = event.target.closest("[data-play]");
+    if (play) playSongById(play.dataset.play);
+  });
+
+  byId("favoriteGrid")?.addEventListener("click", event => {
+    const open = event.target.closest("[data-collection-open]");
+    if (open) { openCollection(open.dataset.collectionOpen); return; }
+    const menu = event.target.closest("[data-collection-menu]");
+    if (menu) collectionMenu(menu.dataset.collectionMenu);
+  });
+
+  // Clicking the DJ card artwork/text opens the full DJ screen.
+  byId("favoriteDjCover")?.addEventListener("click", openDJ);
+  $(".favorite-dj-card")?.addEventListener("click", event => {
+    if (event.target.closest("#favoriteDjPlay")) return;
+    openDJ();
+  });
+  // The dedicated Play button starts the DJ's music immediately.
+  byId("favoriteDjPlay")?.addEventListener("click", event => {
+    event.stopPropagation();
+    playDJNow();
+  });
+
+  byId("miniOpen")?.addEventListener("click", openPlayer);
+  byId("miniPlay")?.addEventListener("click", toggle);
+  byId("miniPrev")?.addEventListener("click", prev);
+  byId("miniNext")?.addEventListener("click", next);
+  byId("miniPlay")?.setAttribute("aria-label", "Play or pause music");
+  byId("miniPrev")?.setAttribute("aria-label", "Previous song");
+  byId("miniNext")?.setAttribute("aria-label", "Next song");
+
+  byId("playerBack")?.addEventListener("click", back);
+  byId("playPause")?.addEventListener("click", toggle);
+  byId("prev")?.addEventListener("click", prev);
+  byId("next")?.addEventListener("click", next);
+  byId("openQueueFromPlayer")?.addEventListener("click", openQueue);
+  byId("playerFav")?.addEventListener("click", () => {
+    const song = getCurrentSong();
+    if (song) toggleFavorite(song.id);
+  });
+
+  byId("shuffle")?.addEventListener("click", toggleShuffle);
+  byId("repeat")?.addEventListener("click", cycleRepeat);
+  byId("playerRepeatTop")?.addEventListener("click", cycleRepeat);
+
+  byId("progress")?.addEventListener("input", event => {
+    if (audio.duration) audio.currentTime = Number(event.target.value) / 100 * audio.duration;
+  });
+
+  byId("queueBack")?.addEventListener("click", back);
+  byId("queueClose")?.addEventListener("click", closeQueue);
+  byId("queueFav")?.addEventListener("click", () => {
+    const song = getCurrentSong();
+    if (song) toggleFavorite(song.id);
+  });
+  byId("queueTimer")?.addEventListener("click", openTimer);
+
+  // Queue row actions, including repeat count ×1–×5.
+  byId("queueList")?.addEventListener("click", event => {
+    const fav = event.target.closest("[data-fav]");
+    if (fav) { toggleFavorite(fav.dataset.fav); return; }
+    const play = event.target.closest("[data-queue-play]");
+    if (play) {
+      const index = state.queue.findIndex(item => songKey(item.id) === songKey(play.dataset.queuePlay));
+      if (index >= 0) {
+        state.queueIndex = index;
+        const entry = currentQueueEntry();
+        if (entry) entry.repeatsLeft = entry.repeatTotal;
+        loadSong(getSong(play.dataset.queuePlay), true, { keepQueue: true });
+      }
+      return;
+    }
+    const repeat = event.target.closest("[data-queue-repeat]");
+    if (repeat) {
+      // The requested gesture is a double-tap/double-click. A single tap
+      // leaves the count unchanged; a second tap within 350 ms raises it.
+      const now = Date.now();
+      const lastTap = Number(repeat.dataset.lastTap || 0);
+      repeat.dataset.lastTap = String(now);
+      if (now - lastTap <= 350) {
+        const index = Number(repeat.dataset.queueRepeat);
+        const entry = state.queue[index];
+        if (entry && entry.repeatTotal < 5) {
+          setQueueRepeat(index, entry.repeatTotal + 1);
+        }
+      }
+      return;
+    }
+    const remove = event.target.closest("[data-queue-remove]");
+    if (remove) removeQueueSong(Number(remove.dataset.queueRemove));
+  });
+
+  // HTML queue controls are given IDs at runtime without redesigning them.
+  const queueShuffleButton = $('[aria-label="Shuffle queue"]');
+  if (queueShuffleButton) {
+    queueShuffleButton.id = "queueShuffle";
+    queueShuffleButton.addEventListener("click", toggleShuffle);
+  }
+  const queueRepeatButton = $('[aria-label="Repeat queue"]');
+  if (queueRepeatButton) {
+    queueRepeatButton.id = "queueRepeat";
+    queueRepeatButton.addEventListener("click", cycleRepeat);
+  }
+
+  $$(".timer-options button").forEach(button =>
+    button.addEventListener("click", () => setTimer(Number(button.dataset.min)))
+  );
+  byId("endTrack")?.addEventListener("click", setEndTrackTimer);
+  byId("timerOff")?.addEventListener("click", offTimer);
+  byId("lyricsButton")?.addEventListener("click", openLyrics);
+  byId("lyricsSheet")?.addEventListener("click", event => {
+    if (event.target === byId("lyricsSheet")) closeLyrics();
+  });
+
+  byId("djBack")?.addEventListener("click", back);
+  byId("djSend")?.addEventListener("click", () => {
+    const input = byId("djInput");
+    const value = input?.value || "";
+    if (input) input.value = "";
+    command(value);
+  });
+  byId("djInput")?.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      byId("djSend")?.click();
+    }
+  });
+  byId("djMic")?.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    startVoice();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(type =>
+    byId("djMic")?.addEventListener(type, stopVoice)
+  );
+
+  byId("latestList")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-release-download]");
+    if (button) downloadRelease(button.dataset.releaseDownload);
+  });
+
+  byId("latestBell")?.addEventListener("click", () =>
+    byId("notificationPopover")?.classList.toggle("hidden")
+  );
+  byId("headerBell")?.addEventListener("click", () =>
+    byId("notificationPopover")?.classList.toggle("hidden")
+  );
+  byId("notificationSwitch")?.addEventListener("change", event =>
+    setNotifications(event.target.checked)
+  );
+
+  byId("cancelExit")?.addEventListener("click", closeModal);
+  byId("confirmExit")?.addEventListener("click", () => {
+    byId("exitModal")?.classList.add("hidden");
+    notify("You can now leave Vic-sound using your device controls.");
+  });
+
+  // Drag-and-drop queue ordering. The currently playing song identity is preserved.
+  let draggedQueueIndex = null;
+  byId("queueList")?.addEventListener("dragstart", event => {
+    const row = event.target.closest("[data-queue-index]");
+    if (!row) return;
+    draggedQueueIndex = Number(row.dataset.queueIndex);
+    event.dataTransfer.effectAllowed = "move";
+  });
+  byId("queueList")?.addEventListener("dragover", event => {
+    if (event.target.closest("[data-queue-index]")) event.preventDefault();
+  });
+  byId("queueList")?.addEventListener("drop", event => {
+    event.preventDefault();
+    const row = event.target.closest("[data-queue-index]");
+    if (!row || draggedQueueIndex === null) return;
+    const targetIndex = Number(row.dataset.queueIndex);
+    const [moved] = state.queue.splice(draggedQueueIndex, 1);
+    state.queue.splice(targetIndex, 0, moved);
+    const currentIndex = state.queue.findIndex(item => songKey(item.id) === songKey(state.currentId));
+    state.queueIndex = Math.max(0, currentIndex);
+    draggedQueueIndex = null;
+    renderQueue();
+  });
+}
+
+/* =========================================================
+   26. BACK BUTTON SUPPORT
+   ========================================================= */
+
+function setupBackNavigation() {
+  let lastHomeBackAt = 0;
