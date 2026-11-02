@@ -2007,6 +2007,7 @@ function playDJNow() {
   playFromList(picks, 0, { type: "dj", label: "Vic-sound DJ" });
 }
 
+
 /* =========================================================
    20. VOICE INPUT
    ========================================================= */
@@ -2014,4 +2015,144 @@ function playDJNow() {
 let recognition = null;
 let voiceTimer = null;
 
-func
+function setupVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
+
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-NG";
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    byId("djMic")?.classList.add("listening");
+    byId("djOverlay")?.classList.add("listening");
+  };
+  recognition.onresult = event => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    if (byId("djInput")) byId("djInput").value = transcript;
+  };
+  recognition.onend = () => {
+    byId("djMic")?.classList.remove("listening");
+    byId("djOverlay")?.classList.remove("listening");
+  };
+}
+
+function startVoice() {
+  if (!recognition) {
+    notify("Voice input is not supported in this browser.");
+    return;
+  }
+  try { recognition.start(); } catch { return; }
+  clearTimeout(voiceTimer);
+  voiceTimer = setTimeout(stopVoice, 30000);
+}
+
+function stopVoice() {
+  clearTimeout(voiceTimer);
+  try { recognition?.stop(); } catch {}
+  byId("djMic")?.classList.remove("listening");
+  byId("djOverlay")?.classList.remove("listening");
+}
+
+/* =========================================================
+   21. TIMER
+   ========================================================= */
+
+function openTimer() {
+  byId("timerSheet")?.classList.add("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "false");
+}
+
+function closeTimer() {
+  byId("timerSheet")?.classList.remove("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "true");
+}
+
+function clearPlaybackTimer() {
+  clearTimeout(state.timerId);
+  state.timerId = null;
+}
+
+function setTimer(minutes) {
+  clearPlaybackTimer();
+  state.timerMode = "minutes";
+  state.timerId = setTimeout(() => {
+    pause();
+    state.timerMode = "off";
+    closeTimer();
+    notify("Your playback timer has finished.");
+  }, minutes * 60000);
+
+  $$(".timer-options button").forEach(button =>
+    button.classList.toggle("selected", Number(button.dataset.min) === minutes)
+  );
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+}
+
+function setEndTrackTimer() {
+  clearPlaybackTimer();
+  state.timerMode = "end";
+  $$(".timer-options button").forEach(button => button.classList.remove("selected"));
+  byId("endTrack")?.classList.add("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+}
+
+function offTimer() {
+  clearPlaybackTimer();
+  state.timerMode = "off";
+  $$(".timer-options button").forEach(button => button.classList.remove("selected"));
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.add("selected");
+  closeTimer();
+}
+
+/* =========================================================
+   22. NOTIFICATIONS AND LATEST DOTS
+   ========================================================= */
+
+async function setNotifications(enabled) {
+  if (!enabled) {
+    state.notifications = false;
+    localStorage.setItem(VIC_CONFIG.STORAGE.notifications, "false");
+    notify("Release notifications turned off.");
+    return;
+  }
+
+  if (!("Notification" in window)) {
+    if (byId("notificationSwitch")) byId("notificationSwitch").checked = false;
+    notify("This browser does not support notifications.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  state.notifications = permission === "granted";
+  localStorage.setItem(VIC_CONFIG.STORAGE.notifications, String(state.notifications));
+  if (!state.notifications && byId("notificationSwitch")) {
+    byId("notificationSwitch").checked = false;
+  }
+  notify(state.notifications ? "Release notifications enabled." :
+    "Notification permission was not granted.");
+  // Real push delivery additionally requires a service worker,
+  // VAPID configuration and a trusted server-side sender.
+}
+
+function updateDots() {
+  ["latestDot", "navDot", "headerDot"].forEach(id => {
+    byId(id)?.classList.toggle("show", Boolean(state.newRelease));
+  });
+}
+
+/* =========================================================
+   23. RELEASE DOWNLOAD — SAFE PLACEHOLDER
+   Reward must be verified by the trusted ad/backend provider.
+   ========================================================= */
+
+async function downloadRelease(id) {
+  const release = state.releases.find(item => songKey(item.id) === songKey
