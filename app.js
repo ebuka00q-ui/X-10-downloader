@@ -2254,3 +2254,212 @@ function back() {
   if (state.screen !== "home") { go("home"); return; }
   exitPrompt();
 }
+
+/* =========================================================
+   25. EVENT LISTENERS
+   ========================================================= */
+
+function bindEvents() {
+  $$(".nav-item").forEach(button =>
+    button.addEventListener("click", () => go(button.dataset.screen))
+  );
+
+  byId("searchToggle")?.addEventListener("click", openSearch);
+  byId("searchClose")?.addEventListener("click", closeSearch);
+  byId("searchInput")?.addEventListener("input", event => {
+    state.query = event.target.value;
+    renderHome();
+  });
+
+  byId("categoryRow")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+    state.category = button.dataset.category;
+    $$(".category").forEach(item => item.classList.toggle("active", item === button));
+    renderHome();
+  });
+
+  byId("homeMusicList")?.addEventListener("click", event => {
+    const favorite = event.target.closest("[data-fav]");
+    if (favorite) { toggleFavorite(favorite.dataset.fav); return; }
+    const play = event.target.closest("[data-play]");
+    if (play) playSongById(play.dataset.play);
+  });
+
+  byId("favoriteGrid")?.addEventListener("click", event => {
+    const open = event.target.closest("[data-collection-open]");
+    if (open) { openCollection(open.dataset.collectionOpen); return; }
+    const menu = event.target.closest("[data-collection-menu]");
+    if (menu) collectionMenu(menu.dataset.collectionMenu);
+  });
+
+  // Clicking the DJ card artwork/text opens the full DJ screen.
+  byId("favoriteDjCover")?.addEventListener("click", openDJ);
+  $(".favorite-dj-card")?.addEventListener("click", event => {
+    if (event.target.closest("#favoriteDjPlay")) return;
+    openDJ();
+  });
+  // The dedicated Play button starts the DJ's music immediately.
+  byId("favoriteDjPlay")?.addEventListener("click", event => {
+    event.stopPropagation();
+    playDJNow();
+  });
+
+  byId("miniOpen")?.addEventListener("click", openPlayer);
+  byId("miniPlay")?.addEventListener("click", toggle);
+  byId("miniPrev")?.addEventListener("click", prev);
+  byId("miniNext")?.addEventListener("click", next);
+
+  byId("playerBack")?.addEventListener("click", back);
+  byId("playPause")?.addEventListener("click", toggle);
+  byId("prev")?.addEventListener("click", prev);
+  byId("next")?.addEventListener("click", next);
+  byId("openQueueFromPlayer")?.addEventListener("click", openQueue);
+  byId("playerFav")?.addEventListener("click", () => {
+    const song = getCurrentSong();
+    if (song) toggleFavorite(song.id);
+  });
+
+  byId("shuffle")?.addEventListener("click", toggleShuffle);
+  byId("repeat")?.addEventListener("click", cycleRepeat);
+  byId("playerRepeatTop")?.addEventListener("click", cycleRepeat);
+
+  byId("progress")?.addEventListener("input", event => {
+    if (audio.duration) audio.currentTime = Number(event.target.value) / 100 * audio.duration;
+  });
+
+  byId("queueBack")?.addEventListener("click", back);
+  byId("queueClose")?.addEventListener("click", closeQueue);
+  byId("queueFav")?.addEventListener("click", () => {
+    const song = getCurrentSong();
+    if (song) toggleFavorite(song.id);
+  });
+  byId("queueTimer")?.addEventListener("click", openTimer);
+
+  // Queue row actions, including repeat count ×1–×5.
+  byId("queueList")?.addEventListener("click", event => {
+    const fav = event.target.closest("[data-fav]");
+    if (fav) { toggleFavorite(fav.dataset.fav); return; }
+    const play = event.target.closest("[data-queue-play]");
+    if (play) {
+      const index = state.queue.findIndex(item => songKey(item.id) === songKey(play.dataset.queuePlay));
+      if (index >= 0) {
+        state.queueIndex = index;
+        const entry = currentQueueEntry();
+        if (entry) entry.repeatsLeft = entry.repeatTotal;
+        loadSong(getSong(play.dataset.queuePlay), true, { keepQueue: true });
+      }
+      return;
+    }
+    const repeat = event.target.closest("[data-queue-repeat]");
+    if (repeat) {
+      // The requested gesture is a double-tap/double-click. A single tap
+      // leaves the count unchanged; a second tap within 350 ms raises it.
+      const now = Date.now();
+      const lastTap = Number(repeat.dataset.lastTap || 0);
+      repeat.dataset.lastTap = String(now);
+      if (now - lastTap <= 350) {
+        const index = Number(repeat.dataset.queueRepeat);
+        const entry = state.queue[index];
+        if (entry && entry.repeatTotal < 5) {
+          setQueueRepeat(index, entry.repeatTotal + 1);
+        }
+      }
+      return;
+    }
+    const remove = event.target.closest("[data-queue-remove]");
+    if (remove) removeQueueSong(Number(remove.dataset.queueRemove));
+  });
+
+  // HTML queue controls are given IDs at runtime without redesigning them.
+  const queueShuffleButton = $('[aria-label="Shuffle queue"]');
+  if (queueShuffleButton) {
+    queueShuffleButton.id = "queueShuffle";
+    queueShuffleButton.addEventListener("click", toggleShuffle);
+  }
+  const queueRepeatButton = $('[aria-label="Repeat queue"]');
+  if (queueRepeatButton) {
+    queueRepeatButton.id = "queueRepeat";
+    queueRepeatButton.addEventListener("click", cycleRepeat);
+  }
+
+  $$(".timer-options button").forEach(button =>
+    button.addEventListener("click", () => setTimer(Number(button.dataset.min)))
+  );
+  byId("endTrack")?.addEventListener("click", setEndTrackTimer);
+  byId("timerOff")?.addEventListener("click", offTimer);
+  byId("lyricsButton")?.addEventListener("click", openLyrics);
+  byId("lyricsSheet")?.addEventListener("click", event => {
+    if (event.target === byId("lyricsSheet")) closeLyrics();
+  });
+
+  byId("djBack")?.addEventListener("click", back);
+  byId("djSend")?.addEventListener("click", () => {
+    const input = byId("djInput");
+    const value = input?.value || "";
+    if (input) input.value = "";
+    command(value);
+  });
+  byId("djInput")?.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      byId("djSend")?.click();
+    }
+  });
+  byId("djMic")?.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    startVoice();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(type =>
+    byId("djMic")?.addEventListener(type, stopVoice)
+  );
+
+  byId("latestList")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-release-download]");
+    if (button) downloadRelease(button.dataset.releaseDownload);
+  });
+
+  byId("latestBell")?.addEventListener("click", () =>
+    byId("notificationPopover")?.classList.toggle("hidden")
+  );
+  byId("headerBell")?.addEventListener("click", () =>
+    byId("notificationPopover")?.classList.toggle("hidden")
+  );
+  byId("notificationSwitch")?.addEventListener("change", event =>
+    setNotifications(event.target.checked)
+  );
+
+  byId("cancelExit")?.addEventListener("click", closeModal);
+  byId("confirmExit")?.addEventListener("click", () => {
+    byId("exitModal")?.classList.add("hidden");
+    notify("You can now leave Vic-sound using your device controls.");
+  });
+
+  // Drag-and-drop queue ordering. The currently playing song identity is preserved.
+  let draggedQueueIndex = null;
+  byId("queueList")?.addEventListener("dragstart", event => {
+    const row = event.target.closest("[data-queue-index]");
+    if (!row) return;
+    draggedQueueIndex = Number(row.dataset.queueIndex);
+    event.dataTransfer.effectAllowed = "move";
+  });
+  byId("queueList")?.addEventListener("dragover", event => {
+    if (event.target.closest("[data-queue-index]")) event.preventDefault();
+  });
+  byId("queueList")?.addEventListener("drop", event => {
+    event.preventDefault();
+    const row = event.target.closest("[data-queue-index]");
+    if (!row || draggedQueueIndex === null) return;
+    const targetIndex = Number(row.dataset.queueIndex);
+    const [moved] = state.queue.splice(draggedQueueIndex, 1);
+    state.queue.splice(targetIndex, 0, moved);
+    const currentIndex = state.queue.findIndex(item => songKey(item.id) === songKey(state.currentId));
+    state.queueIndex = Math.max(0, currentIndex);
+    draggedQueueIndex = null;
+    renderQueue();
+  });
+}
+
+/* =========================================================
+   26. BACK BUTTON SUPPORT
+   =============
