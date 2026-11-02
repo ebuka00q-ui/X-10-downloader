@@ -2587,9 +2587,129 @@ function bindEvents() {
   });
 }
 
+
 /* =========================================================
    26. BACK BUTTON SUPPORT
    ========================================================= */
 
 function setupBackNavigation() {
   let lastHomeBackAt = 0;
+  const backTrap = { vicSound: true };
+
+  history.replaceState(backTrap, "", location.href);
+  history.pushState(backTrap, "", location.href);
+
+  window.addEventListener("popstate", () => {
+    // If a panel is open, consume Back and close only the topmost panel.
+    const panelOpen = state.modalOpen || state.lyricsOpen || state.queueOpen ||
+      state.djOpen || state.player ||
+      byId("timerSheet")?.classList.contains("open") ||
+      byId("searchPanel")?.classList.contains("open") ||
+      (byId("notificationPopover") &&
+       !byId("notificationPopover").classList.contains("hidden"));
+
+    if (panelOpen || state.screen !== "home") {
+      history.pushState(backTrap, "", location.href);
+      back();
+      lastHomeBackAt = 0;
+      return;
+    }
+
+    // On Home, first Back shows a small toast. A second Back within
+    // 2.2 seconds is allowed to leave the app/browser normally.
+    const now = Date.now();
+    if (now - lastHomeBackAt <= 2200) {
+      lastHomeBackAt = 0;
+      return; // Do not push another history entry: allow the exit.
+    }
+
+    lastHomeBackAt = now;
+    history.pushState(backTrap, "", location.href);
+    notify("Press back once more to exit Vic-sound.");
+  });
+}
+
+/* =========================================================
+   27. INITIALISE
+   ========================================================= */
+
+async function init() {
+  injectVicEnhancementStyles();
+  getAnonymousId();
+  loadLocalData();
+  applyTestMusic();
+  setupVoice();
+  bindEvents();
+
+  renderHome();
+  renderFavorites();
+  renderLatest();
+  updateDots();
+  updateModeButtons();
+  await getDownloadedSongs();
+  updateOfflineCount();
+
+  applyDJProfile();
+  await loadDJProfile();
+
+  // Load local music immediately; remote services can update it later.
+  if (state.songs.length) {
+    makeQueue(state.songs, { type: "catalogue", label: "Your Music" });
+    setCurrentSong(state.songs[0]);
+  }
+
+  await connectBackend();
+  await loadSongs();
+  await loadReleases();
+  await loadMonetizationSettings();
+
+  if (state.songs.length && !state.currentId) {
+    makeQueue(state.songs, { type: "catalogue", label: "Your Music" });
+    setCurrentSong(state.songs[0]);
+  }
+
+  if (navigator.onLine) prepareOfflineMusic();
+  if ("storage" in navigator && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+
+  window.addEventListener("online", () => {
+    loadSongs();
+    loadReleases();
+    loadDJProfile();
+    loadMonetizationSettings();
+    prepareOfflineMusic();
+  });
+  window.addEventListener("offline", updateOfflineCount);
+
+  setupBackNavigation();
+  console.log("Vic-sound Listener ready.");
+}
+
+window.VicSoundListener = {
+  connectBackend,
+  loadSongs,
+  loadReleases,
+  loadDJProfile,
+  loadMonetizationSettings,
+  applyMonetizationSettings,
+  applyDJProfile,
+  playSongById,
+  playDJNow,
+  toggleFavorite,
+  openCollection,
+  getState: () => state,
+  testMode: VIC_TEST_MODE,
+  clearTestCache: async () => {
+    if ("caches" in window) await caches.delete(VIC_TEST_CONFIG.cacheName);
+    state.downloaded = new Set([...state.downloaded].filter(id => !String(id).startsWith("vic-tst-")));
+    updateOfflineCount();
+  }
+};
+
+init();
+
+/* =========================================================
+   END OF VIC-SOUND LISTENER APP.JS
+   ========================================================= */
+
