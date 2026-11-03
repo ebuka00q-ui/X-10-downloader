@@ -4938,3 +4938,72 @@ window.addEventListener("pagehide", () => {
 
 
 // ===== END OF PART 10 — NEXT PART CONTINUES BELOW =====
+
+// ======================================================
+// PART 11 — TRACK SKIP ANALYTICS
+// ======================================================
+
+// Keep the original Next and Previous functions.
+const vicOriginalNext = next;
+const vicOriginalPrev = prev;
+
+
+// 1. Track manual Next button usage.
+next = function () {
+  if (
+    audio &&
+    !audio.paused &&
+    !audio.ended &&
+    VIC_ANALYTICS.playInstanceId &&
+    !VIC_ANALYTICS.completed
+  ) {
+    skipPlaybackAnalytics("manual_next");
+  }
+
+  return vicOriginalNext.apply(this, arguments);
+};
+
+
+// 2. Track manual Previous button usage.
+prev = function () {
+  if (
+    audio &&
+    !audio.paused &&
+    !audio.ended &&
+    VIC_ANALYTICS.playInstanceId &&
+    !VIC_ANALYTICS.completed
+  ) {
+    skipPlaybackAnalytics("manual_previous");
+  }
+
+  return vicOriginalPrev.apply(this, arguments);
+};
+
+
+// 3. Keep the analytics queue saved after a skip.
+window.addEventListener("pagehide", () => {
+  savePendingAnalytics();
+});
+
+
+// 4. Public analytics status for later testing.
+window.VicSoundAnalytics = {
+  getStatus() {
+    return {
+      currentSongId: VIC_ANALYTICS.currentSongId,
+      listenedSeconds: Math.round(
+        VIC_ANALYTICS.listenedSeconds
+      ),
+      qualified: VIC_ANALYTICS.qualified,
+      completed: VIC_ANALYTICS.completed,
+      pendingEvents: VIC_ANALYTICS.pendingEvents.length
+    };
+  },
+
+  sync() {
+    return syncPlaybackAnalytics();
+  }
+};
+
+
+// ===== END OF PART 11 — NEXT PART CONTINUES BELOW =====
