@@ -4310,3 +4310,119 @@ init();
 
 
 // ===== END OF PART 7 — LISTENER APP.JS BASELINE COMPLETE =====
+/* =========================================================
+   30. PERSISTENT LATEST RELEASE TRACKING
+   Only genuinely unseen releases should trigger the Latest dot.
+   ========================================================= */
+
+const VIC_LATEST_SEEN_KEY = "vic-sound-latest-seen-release-v1";
+
+
+function getReleaseIdentity(release) {
+  if (!release) return "";
+
+  // Prefer the permanent database ID.
+  if (release.id !== undefined && release.id !== null) {
+    return String(release.id);
+  }
+
+  // Fall back to a publication timestamp.
+  if (release.published_at) {
+    return String(release.published_at);
+  }
+
+  // Last fallback: title and artist.
+  return [
+    safe(release.title).trim().toLowerCase(),
+    safe(release.artist).trim().toLowerCase()
+  ].join("::");
+}
+
+
+function getNewestReleaseIdentity(releases = state.releases) {
+  if (!Array.isArray(releases) || !releases.length) {
+    return "";
+  }
+
+  const sorted = [...releases].sort((a, b) => {
+    const dateA = new Date(
+      a.published_at || a.created_at || 0
+    ).getTime();
+
+    const dateB = new Date(
+      b.published_at || b.created_at || 0
+    ).getTime();
+
+    return dateB - dateA;
+  });
+
+  return getReleaseIdentity(sorted[0]);
+}
+
+
+function getLastSeenReleaseIdentity() {
+  try {
+    return localStorage.getItem(VIC_LATEST_SEEN_KEY) || "";
+  } catch (error) {
+    console.warn("Could not read Latest notification history:", error);
+    return "";
+  }
+}
+
+
+function saveLastSeenReleaseIdentity(identity) {
+  try {
+    if (identity) {
+      localStorage.setItem(
+        VIC_LATEST_SEEN_KEY,
+        String(identity)
+      );
+    }
+  } catch (error) {
+    console.warn("Could not save Latest notification history:", error);
+  }
+}
+
+
+function checkForNewReleases() {
+  const newestIdentity = getNewestReleaseIdentity();
+
+  if (!newestIdentity) {
+    state.newRelease = false;
+    updateDots();
+    return false;
+  }
+
+  const lastSeenIdentity = getLastSeenReleaseIdentity();
+
+  // First installation: establish a baseline without showing
+  // a notification for releases that already existed.
+  if (!lastSeenIdentity) {
+    saveLastSeenReleaseIdentity(newestIdentity);
+    state.newRelease = false;
+    updateDots();
+    return false;
+  }
+
+  state.newRelease = newestIdentity !== lastSeenIdentity;
+
+  updateDots();
+
+  return state.newRelease;
+}
+
+
+function markLatestReleasesAsSeen() {
+  const newestIdentity = getNewestReleaseIdentity();
+
+  if (newestIdentity) {
+    saveLastSeenReleaseIdentity(newestIdentity);
+  }
+
+  state.newRelease = false;
+  updateDots();
+}
+
+
+// ===== END OF PART 8 — LATEST TRACKING HELPERS =====
+
