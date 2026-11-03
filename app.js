@@ -4426,3 +4426,402 @@ function markLatestReleasesAsSeen() {
 
 // ===== END OF PART 8 — LATEST TRACKING HELPERS =====
 
+/* =========================================================
+   31. VIC-SOUND STREAMING ANALYTICS
+   Records actual listening activity for later Creator reports.
+   ========================================================= */
+
+const VIC_ANALYTICS = {
+  storageKey: "vic-sound-pending-analytics-v1",
+
+  // A normal stream qualifies after 30 seconds.
+  standardThreshold: 30,
+
+  // Short tracks qualify after half their duration.
+  shortTrackThreshold: 0.5,
+
+  heartbeatMilliseconds: 15000,
+
+  sessionId: makeId(),
+
+  playInstanceId: null,
+
+  currentSongId: null,
+
+  currentSource: "catalogue",
+
+  listenedSeconds: 0,
+
+  lastAudioTime: null,
+
+  lastHeartbeat: 0,
+
+  qualified: false,
+
+  completed: false,
+
+  heartbeatId: null,
+
+  pendingEvents: []
+};
+
+
+/* ---------------------------------------------------------
+   31A. LOAD AND SAVE PENDING EVENTS
+   --------------------------------------------------------- */
+
+function loadPendingAnalytics() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(VIC_ANALYTICS.storageKey) || "[]"
+    );
+
+    VIC_ANALYTICS.pendingEvents = Array.isArray(saved)
+      ? saved
+      : [];
+  } catch (error) {
+    VIC_ANALYTICS.pendingEvents = [];
+  }
+
+  return VIC_ANALYTICS.pendingEvents;
+}
+
+
+function savePendingAnalytics() {
+  try {
+    localStorage.setItem(
+      VIC_ANALYTICS.storageKey,
+      JSON.stringify(VIC_ANALYTICS.pendingEvents)
+    );
+  } catch (error) {
+    console.warn("Could not save pending listening events:", error);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   31B. CREATE AN ANALYTICS EVENT
+   --------------------------------------------------------- */
+
+function createPlaybackEvent(type, extra = {}) {
+  const song = getSong(VIC_ANALYTICS.currentSongId);
+
+  if (!song) return null;
+
+  return {
+    eventId: makeId(),
+
+    eventType: type,
+
+    songId: song.id,
+
+    songTitle: safe(song.title),
+
+    listenerId: state.anonymousId || getAnonymousId(),
+
+    sessionId: VIC_ANALYTICS.sessionId,
+
+    playInstanceId: VIC_ANALYTICS.playInstanceId,
+
+    source: VIC_ANALYTICS.currentSource,
+
+    listenedSeconds: Math.floor(
+      VIC_ANALYTICS.listenedSeconds
+    ),
+
+    durationSeconds: Number(audio?.duration) || 0,
+
+    createdAt: new Date().toISOString(),
+
+    ...extra
+  };
+}
+
+
+/* ---------------------------------------------------------
+   31C. STORE EVENTS LOCALLY
+   --------------------------------------------------------- */
+
+function recordAnalyticsEvent(type, extra = {}) {
+  const event = createPlaybackEvent(type, extra);
+
+  if (!event) return false;
+
+  VIC_ANALYTICS.pendingEvents.push(event);
+
+  // Keep the offline queue within a reasonable size.
+  if (VIC_ANALYTICS.pendingEvents.length > 1000) {
+    VIC_ANALYTICS.pendingEvents =
+      VIC_ANALYTICS.pendingEvents.slice(-1000);
+  }
+
+  savePendingAnalytics();
+
+  // Try to send immediately when the backend is available.
+  if (navigator.onLine) {
+    syncPlaybackAnalytics();
+  }
+
+  return true;
+}
+
+
+/* ---------------------------------------------------------
+   31D. START TRACKING A NEW PLAY
+   Call when a song actually starts playing.
+   --------------------------------------------------------- */
+
+function startPlaybackAnalytics(song, source = "catalogue") {
+  if (!song) return;
+
+  stopPlaybackAnalyticsHeartbeat();
+
+  VIC_ANALYTICS.playInstanceId = makeId();
+
+  VIC_ANALYTICS.currentSongId = song.id;
+
+  VIC_ANALYTICS.currentSource = safe(source || "catalogue");
+
+  VIC_ANALYTICS.listenedSeconds = 0;
+
+  VIC_ANALYTICS.lastAudioTime =
+    Number(audio?.currentTime) || 0;
+
+  VIC_ANALYTICS.lastHeartbeat = Date.now();
+
+  VIC_ANALYTICS.qualified = false;
+
+  VIC_ANALYTICS.completed = false;
+
+  recordAnalyticsEvent("play_started");
+
+  startPlaybackAnalyticsHeartbeat();
+}
+
+
+/* ---------------------------------------------------------
+   31E. COUNT REAL LISTENING TIME
+   --------------------------------------------------------- */
+
+function updatePlaybackListeningTime() {
+  if (!audio || audio.paused || audio.ended) return;
+
+  if (!VIC_ANALYTICS.playInstanceId) return;
+
+  const currentTime = Number(audio.currentTime);
+
+  if (!Number.isFinite(currentTime)) return;
+
+  if (VIC_ANALYTICS.lastAudioTime === null) {
+    VIC_ANALYTICS.lastAudioTime = currentTime;
+    return;
+  }
+
+  const difference =
+    currentTime - VIC_ANALYTICS.lastAudioTime;
+
+  /*
+    Count only plausible forward playback movement.
+
+    This avoids counting:
+    - Paused time
+    - Large seeking jumps
+    - Moving the progress slider forward
+    - Background time when the audio is not advancing
+  */
+
+  if (difference > 0 && difference <= 3) {
+    VIC_ANALYTICS.listenedSeconds += difference;
+  }
+
+  VIC_ANALYTICS.lastAudioTime = currentTime;
+
+  checkQualifiedStream();
+}
+
+
+/* ---------------------------------------------------------
+   31F. QUALIFIED STREAM RULE
+   --------------------------------------------------------- */
+
+function checkQualifiedStream() {
+  if (VIC_ANALYTICS.qualified) return false;
+
+  const duration = Number(audio?.duration) || 0;
+
+  const threshold = duration > 0 && duration < 60
+    ? Math.max(
+        1,
+        duration * VIC_ANALYTICS.shortTrackThreshold
+      )
+    : VIC_ANALYTICS.standardThreshold;
+
+  if (VIC_ANALYTICS.listenedSeconds < threshold) {
+    return false;
+  }
+
+  VIC_ANALYTICS.qualified = true;
+
+  recordAnalyticsEvent("qualified_stream", {
+    qualificationThresholdSeconds: threshold
+  });
+
+  return true;
+}
+
+
+/* ---------------------------------------------------------
+   31G. PERIODIC LISTENING CHECK
+   --------------------------------------------------------- */
+
+function startPlaybackAnalyticsHeartbeat() {
+  stopPlaybackAnalyticsHeartbeat();
+
+  VIC_ANALYTICS.heartbeatId = setInterval(() => {
+    updatePlaybackListeningTime();
+  }, VIC_ANALYTICS.heartbeatMilliseconds);
+}
+
+
+function stopPlaybackAnalyticsHeartbeat() {
+  if (VIC_ANALYTICS.heartbeatId) {
+    clearInterval(VIC_ANALYTICS.heartbeatId);
+  }
+
+  VIC_ANALYTICS.heartbeatId = null;
+}
+
+
+/* ---------------------------------------------------------
+   31H. PAUSE TRACKING
+   --------------------------------------------------------- */
+
+function pausePlaybackAnalytics() {
+  updatePlaybackListeningTime();
+
+  VIC_ANALYTICS.lastAudioTime = null;
+
+  stopPlaybackAnalyticsHeartbeat();
+}
+
+
+/* ---------------------------------------------------------
+   31I. RESUME TRACKING
+   --------------------------------------------------------- */
+
+function resumePlaybackAnalytics() {
+  if (!VIC_ANALYTICS.playInstanceId) return;
+
+  VIC_ANALYTICS.lastAudioTime =
+    Number(audio?.currentTime) || 0;
+
+  VIC_ANALYTICS.lastHeartbeat = Date.now();
+
+  startPlaybackAnalyticsHeartbeat();
+}
+
+
+/* ---------------------------------------------------------
+   31J. COMPLETED SONG
+   --------------------------------------------------------- */
+
+function finishPlaybackAnalytics() {
+  if (!VIC_ANALYTICS.playInstanceId) return;
+
+  updatePlaybackListeningTime();
+
+  if (VIC_ANALYTICS.completed) return;
+
+  VIC_ANALYTICS.completed = true;
+
+  recordAnalyticsEvent("song_completed");
+
+  stopPlaybackAnalyticsHeartbeat();
+}
+
+
+/* ---------------------------------------------------------
+   31K. SKIPPED SONG
+   --------------------------------------------------------- */
+
+function skipPlaybackAnalytics(reason = "next") {
+  if (!VIC_ANALYTICS.playInstanceId) return;
+
+  updatePlaybackListeningTime();
+
+  recordAnalyticsEvent("song_skipped", {
+    skipReason: safe(reason)
+  });
+
+  stopPlaybackAnalyticsHeartbeat();
+}
+
+
+/* ---------------------------------------------------------
+   31L. SEND EVENTS TO THE BACKEND
+   --------------------------------------------------------- */
+
+async function syncPlaybackAnalytics() {
+  if (!navigator.onLine) return false;
+
+  if (!VIC_CONFIG.SERVICES.baseUrl) return false;
+
+  if (!VIC_ANALYTICS.pendingEvents.length) return true;
+
+  const batch = VIC_ANALYTICS.pendingEvents.slice(0, 50);
+
+  try {
+    await serviceRequest(
+      VIC_CONFIG.SERVICES.playback,
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+          sessionId: VIC_ANALYTICS.sessionId,
+          events: batch
+        })
+      }
+    );
+
+    const sentIds = new Set(
+      batch.map(event => event.eventId)
+    );
+
+    VIC_ANALYTICS.pendingEvents =
+      VIC_ANALYTICS.pendingEvents.filter(
+        event => !sentIds.has(event.eventId)
+      );
+
+    savePendingAnalytics();
+
+    // Continue sending remaining events in small batches.
+    if (VIC_ANALYTICS.pendingEvents.length) {
+      setTimeout(syncPlaybackAnalytics, 500);
+    }
+
+    return true;
+
+  } catch (error) {
+    console.warn(
+      "Playback analytics will remain saved for later:",
+      error
+    );
+
+    return false;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   31M. RECONNECT SYNC
+   --------------------------------------------------------- */
+
+window.addEventListener("online", () => {
+  syncPlaybackAnalytics();
+});
+
+loadPendingAnalytics();
+
+
+// ===== END OF PART 9 — STREAMING ANALYTICS FOUNDATION =====
+
