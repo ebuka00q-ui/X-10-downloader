@@ -647,3 +647,921 @@ function askText(title, label, initialValue, onDone) {
 /* =========================================================
    END OF PART 1
    ========================================================= */
+
+/* =========================================================
+   5. LOCAL STORAGE AND ANONYMOUS LISTENER
+   ========================================================= */
+
+function readJSON(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.warn("Local save failed:", error);
+    return false;
+  }
+}
+
+function getAnonymousId() {
+  let id = "";
+  try {
+    id = localStorage.getItem(VIC_CONFIG.STORAGE.anonymousId) || "";
+    if (!id) {
+      id = makeId();
+      localStorage.setItem(VIC_CONFIG.STORAGE.anonymousId, id);
+    }
+  } catch {
+    id = makeId();
+  }
+  state.anonymousId = id;
+  return id;
+}
+
+function loadLocalData() {
+  state.songs = readJSON(VIC_CONFIG.STORAGE.songs, []).map(normaliseSong);
+  state.releases = readJSON(VIC_CONFIG.STORAGE.releases, []);
+  state.collections = readJSON(VIC_CONFIG.STORAGE.collections, [])
+    .filter(item => item && Array.isArray(item.songs))
+    .map(item => ({
+      id: safe(item.id || makeId()),
+      name: safe(item.name || "My Collection"),
+      songs: [...new Set(item.songs.map(songKey))]
+    }))
+    .filter(item => item.songs.length > 0);
+
+  state.favorites = new Set(
+    readJSON(VIC_CONFIG.STORAGE.favorites, []).map(songKey)
+  );
+
+  const history = readJSON(VIC_CONFIG.STORAGE.history, {});
+  state.djHistory = Array.isArray(history.history) ? history.history : [];
+  state.skippedSongs = history.skipped || {};
+  state.playedSongs = history.played || {};
+
+  state.notifications =
+    localStorage.getItem(VIC_CONFIG.STORAGE.notifications) === "true";
+  if (byId("notificationSwitch")) {
+    byId("notificationSwitch").checked = state.notifications;
+  }
+}
+
+function saveLocalData() {
+  writeJSON(VIC_CONFIG.STORAGE.songs, state.songs.filter(song => !song.isTestTrack));
+  writeJSON(VIC_CONFIG.STORAGE.releases, state.releases);
+  writeJSON(VIC_CONFIG.STORAGE.collections, state.collections);
+  writeJSON(VIC_CONFIG.STORAGE.favorites, [...state.favorites]);
+  writeJSON(VIC_CONFIG.STORAGE.history, {
+    history: state.djHistory.slice(-VIC_CONFIG.DJ.historyLimit),
+    skipped: state.skippedSongs,
+    played: state.playedSongs
+  });
+}
+
+
+/* =========================================================
+   6. PROVIDER-NEUTRAL REQUEST LAYER
+   Swap providers behind these stable service routes.
+   ========================================================= */
+
+function serviceURL(path) {
+  const base = VIC_CONFIG.SERVICES.baseUrl.replace(/\/$/, "");
+  return `${base}${path}`;
+}
+
+async function serviceRequest(path, options = {}) {
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    throw new Error("Vic-sound service endpoint is not configured.");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    VIC_CONFIG.REQUEST_TIMEOUT
+  );
+
+  try {
+    const response = await fetch(serviceURL(path), {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Vic-Listener-ID": state.anonymousId || getAnonymousId(),
+        ...(options.headers || {})
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Service request failed (${response.status}).`);
+    }
+    return response.status === 204 ? null : response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+
+/* =========================================================
+   7. SUPABASE CONNECTION (CURRENT CATALOGUE ADAPTER)
+   Supabase may later be replaced behind the service routes.
+   ========================================================= */
+
+let supabaseClient = null;
+
+function loadSupabaseLibrary() {
+  return new Promise((resolve, reject) => {
+    if (window.supabase?.createClient) return resolve(window.supabase);
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    script.onload = () => window.supabase?.createClient
+      ? resolve(window.supabase)
+      : reject(new Error("Supabase library did not load."));
+    script.onerror = () => reject(new Error("Could not load Supabase library."));
+    document.head.appendChild(script);
+  });
+}
+
+async function connectBackend() {
+  const { url, publishableKey } = VIC_CONFIG.SUPABASE;
+  if (!publishableKey || publishableKey.includes("PASTE_")) {
+    state.backendConnected = false;
+    return false;
+  }
+
+  try {
+    const library = await loadSupabaseLibrary();
+    supabaseClient = library.createClient(url, publishableKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    });
+    const { error } = await supabaseClient
+      .from(VIC_CONFIG.SUPABASE.songsTable)
+      .select("id")
+      .limit(1);
+    if (error) throw error;
+    state.backendConnected = true;
+    state.backendError = null;
+    return true;
+  } catch (error) {
+    state.backendConnected = false;
+    state.backendError = error.message;
+    console.warn("Catalogue backend unavailable:", error);
+    return false;
+  }
+}
+
+function resolveMediaURL(value) {
+  const raw = safe(value).trim();
+  if (!raw) return "";
+  if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+  const base = VIC_CONFIG.MEDIA.publicDeliveryBaseUrl.replace(/\/$/, "");
+  return base ? `${base}/${raw.replace(/^\/+/, "")}` : raw;
+}
+
+function normaliseSong(row = {}) {
+  const genres = Array.isArray(row.genre) ? row.genre :
+    safe(row.genre || row.cat).split(",").map(x => x.trim()).filter(Boolean);
+  const moods = Array.isArray(row.mood) ? row.mood :
+    safe(row.mood).split(",").map(x => x.trim()).filter(Boolean);
+
+  return {
+    id: row.id ?? makeId(),
+    title: safe(row.title || "Untitled"),
+    artist: safe(row.artist || "Unknown artist"),
+    album: safe(row.album),
+    audio: resolveMediaURL(row.audio_url || row.audio || row.music_url),
+    cover: resolveMediaURL(row.cover_url || row.cover),
+    duration: Number(row.duration || 0),
+    cat: genres,
+    mood: moods,
+    lyrics: safe(row.lyrics),
+    lyrics_timed: row.lyrics_timed || null,
+    release_date: safe(row.release_date),
+    release_id: row.release_id || null,
+    published: row.published ?? true,
+    isTestTrack: Boolean(row.isTestTrack || row.is_test_track)
+  };
+}
+
+function applyTestMusic() {
+  if (!VIC_TEST_MODE) return state.songs;
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+  const ids = new Set(realSongs.map(songKey));
+  const tests = VIC_TEST_SONGS.map(normaliseSong).filter(song => !ids.has(songKey(song.id)));
+  state.songs = [...tests, ...realSongs];
+  return state.songs;
+}
+
+async function loadSongs() {
+  // Prefer the stable Listener API when configured.
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.catalogue);
+      state.songs = (result?.songs || result || []).map(normaliseSong);
+      applyTestMusic();
+      saveLocalData();
+      renderHome();
+      return state.songs;
+    } catch (error) {
+      console.warn("Listener catalogue API unavailable:", error);
+    }
+  }
+
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from(VIC_CONFIG.SUPABASE.songsTable)
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      state.songs = (data || []).map(normaliseSong);
+      applyTestMusic();
+      saveLocalData();
+      renderHome();
+      return state.songs;
+    } catch (error) {
+      console.warn("Could not load remote songs:", error);
+    }
+  }
+
+  renderHome();
+  return state.songs;
+}
+
+async function loadReleases() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.releases);
+      state.releases = result?.releases || result || [];
+      saveLocalData();
+      state.newRelease = state.releases.length > 0;
+      renderLatest();
+      updateDots();
+      return state.releases;
+    } catch (error) {
+      console.warn("Release service unavailable:", error);
+    }
+  }
+
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from(VIC_CONFIG.SUPABASE.releasesTable)
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      state.releases = data || [];
+      saveLocalData();
+    } catch (error) {
+      console.warn("Release loading failed:", error);
+    }
+  }
+  state.newRelease = state.releases.length > 0;
+  renderLatest();
+  updateDots();
+  return state.releases;
+       }
+
+/* =========================================================
+   9. HOME, CATEGORY AND SEARCH
+   A playback queue is built from the exact list the user chose.
+   ========================================================= */
+
+function filteredSongs() {
+  const query = state.query.trim().toLowerCase();
+
+  return state.songs.filter(song => {
+    const tags = [...song.cat, ...song.mood].map(x => safe(x).toLowerCase());
+
+    const categoryMatch = state.category === "All" ||
+      tags.includes(state.category.toLowerCase());
+
+    const searchMatch = !query ||
+      song.title.toLowerCase().includes(query) ||
+      song.artist.toLowerCase().includes(query) ||
+      song.album.toLowerCase().includes(query);
+
+    return categoryMatch && searchMatch;
+  });
+}
+
+function renderHome() {
+  const box = byId("homeMusicList");
+  if (!box) return;
+
+  const songs = filteredSongs();
+
+  if (!songs.length) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <b>No music found</b>
+        <span>Try another search or category.</span>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = songs.map(song => `
+    <article class="music-row ${
+      songKey(song.id) === songKey(state.currentId) ? "playing" : ""
+    }">
+
+      <button class="music-main"
+        data-play="${escapeHTML(song.id)}"
+        aria-label="Play ${escapeHTML(song.title)}">
+
+        <img class="cover" src="${escapeHTML(song.cover)}" alt="">
+      </button>
+
+      <button class="music-main" data-play="${escapeHTML(song.id)}">
+        <b>${escapeHTML(song.title)}</b>
+        <small>${escapeHTML(song.artist)}</small>
+      </button>
+
+      <span class="playing-bars">▮▮▮</span>
+
+      <button class="favorite-toggle ${
+        isSongFavorite(song.id) ? "active" : ""
+      }"
+        data-fav="${escapeHTML(song.id)}"
+        aria-label="${
+          isSongFavorite(song.id) ? "In favorites" : "Add to favorites"
+        }">
+
+        ${isSongFavorite(song.id) ? "♥" : "♡"}
+      </button>
+
+    </article>
+  `).join("");
+}
+
+
+/* =========================================================
+   10. RELEASES
+   ========================================================= */
+
+function renderLatest() {
+  const box = byId("latestList");
+  if (!box) return;
+
+  if (!state.releases.length) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <b>No new releases yet</b>
+        <span>New music will appear here.</span>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = state.releases.map(release => `
+    <article class="release-card">
+
+      <img class="release-cover"
+        src="${escapeHTML(release.cover_url || release.cover || "")}"
+        alt="">
+
+      <div class="release-info">
+
+        <h3>${escapeHTML(release.title || "Untitled release")}</h3>
+
+        <p>${escapeHTML(release.type || "Release")}</p>
+
+        <p>${escapeHTML(release.release_date || "")}</p>
+
+        <button class="release-action"
+          data-release-download="${escapeHTML(release.id)}">
+          ⇩ Download
+        </button>
+
+      </div>
+
+      <span>›</span>
+
+    </article>
+  `).join("");
+}
+
+
+/* =========================================================
+   11. OFFLINE MUSIC CACHE
+   Automatic offline preparation is separate from rewarded downloads.
+   ========================================================= */
+
+async function getMusicCache(song = null) {
+  if (!("caches" in window)) return null;
+
+  const cacheName = song?.isTestTrack
+    ? VIC_TEST_CONFIG.cacheName
+    : VIC_CONFIG.STORAGE.musicCache;
+
+  return caches.open(cacheName);
+}
+
+
+async function getDownloadedSongs() {
+  state.downloaded.clear();
+
+  if (!("caches" in window)) return state.downloaded;
+
+  for (const song of state.songs) {
+    if (!song.audio) continue;
+
+    try {
+      const cache = await getMusicCache(song);
+      const url = new URL(song.audio, location.href).href;
+
+      if (cache && await cache.match(url)) {
+        state.downloaded.add(songKey(song.id));
+      }
+    } catch {}
+  }
+
+  updateOfflineCount();
+
+  return state.downloaded;
+}
+
+
+function updateOfflineCount() {
+  const count = byId("offlineCount");
+  const status = byId("offlineStatus");
+  const message = byId("offlineMessage");
+  const card = byId("offlineCard");
+
+  if (!count) return;
+
+  const total = state.songs.filter(song => song.audio).length;
+  const saved = state.downloaded.size;
+
+  count.textContent = `${saved} of ${total} songs`;
+
+  if (!total) {
+    if (status) status.textContent = "Waiting for music";
+
+    if (message) {
+      message.textContent =
+        "Music will appear here when it is published.";
+    }
+
+    return;
+  }
+
+  const percent = Math.round(saved / total * 100);
+
+  card?.style.setProperty("--offline-progress", `${percent}%`);
+
+  card?.classList.toggle("is-complete", saved === total);
+
+  card?.classList.toggle(
+    "is-preparing",
+    saved > 0 && saved < total
+  );
+
+  if (saved === total) {
+    if (status) status.textContent = "Offline ready";
+
+    if (message) {
+      message.textContent =
+        "Your saved music is ready for offline listening.";
+    }
+
+  } else {
+    if (status) {
+      status.textContent = navigator.onLine
+        ? "Offline music"
+        : "Offline";
+    }
+
+    if (message) {
+      message.textContent = navigator.onLine
+        ? "Music can be saved for listening without internet."
+        : "Reconnect to save more music for offline listening.";
+    }
+  }
+}
+
+
+async function saveAudioFile(song) {
+  if (!song?.audio) return false;
+
+  const cache = await getMusicCache(song);
+  if (!cache) return false;
+
+  const url = new URL(song.audio, location.href).href;
+
+  if (await cache.match(url)) {
+    state.downloaded.add(songKey(song.id));
+    return true;
+  }
+
+  try {
+    const response = await fetch(url, { mode: "cors" });
+
+    if (!response.ok) {
+      throw new Error("Audio request failed.");
+    }
+
+    const type = response.headers.get("content-type") || "";
+
+    if (
+      type.includes("text/html") ||
+      type.includes("application/json")
+    ) {
+      throw new Error("The address did not return an audio file.");
+    }
+
+    await cache.put(url, response.clone());
+
+    state.downloaded.add(songKey(song.id));
+
+    return true;
+
+  } catch (error) {
+    console.warn("Could not cache", song.title, error);
+    return false;
+  }
+}
+
+
+async function prepareOfflineMusic() {
+  if (!navigator.onLine || state.downloadBusy) return;
+
+  state.downloadBusy = true;
+
+  try {
+    await getDownloadedSongs();
+
+    const pending = state.songs.filter(song =>
+      song.audio &&
+      !state.downloaded.has(songKey(song.id))
+    );
+
+    let cursor = 0;
+
+    const worker = async () => {
+      while (cursor < pending.length && navigator.onLine) {
+        const song = pending[cursor++];
+        await saveAudioFile(song);
+      }
+    };
+
+    await Promise.all(
+      Array.from(
+        {
+          length: Math.min(
+            VIC_CONFIG.DOWNLOAD_WORKERS,
+            pending.length
+          )
+        },
+        worker
+      )
+    );
+
+  } finally {
+    state.downloadBusy = false;
+    updateOfflineCount();
+  }
+}
+
+
+/* =========================================================
+   12. PLAYBACK SOURCE AND QUEUE
+   ========================================================= */
+
+function makeQueue(songs, source) {
+  state.queue = songs.map(song => ({
+    id: song.id,
+    repeatTotal: 1,
+    repeatsLeft: 1
+  }));
+
+  state.queueIndex = 0;
+
+  state.queueSource = source || {
+    type: "catalogue",
+    label: "Your Music"
+  };
+
+  renderQueue();
+}
+
+
+function currentQueueEntry() {
+  return state.queue[state.queueIndex] || null;
+}
+
+
+function setCurrentSong(song) {
+  if (!song) return;
+
+  state.currentId = song.id;
+
+  updatePlayer();
+  renderHome();
+  updateLyrics();
+  updateMediaSession();
+}
+
+
+function songURL(song) {
+  return song?.audio || "";
+}
+
+
+async function loadSong(
+  song,
+  shouldPlay = true,
+  { keepQueue = false } = {}
+) {
+  if (!song) return;
+
+  if (!keepQueue) {
+    const sourceSongs =
+      state.queueSource?.type === "collection"
+        ? collectionSongs(state.queueSource.id)
+        : state.queueSource?.type === "category"
+          ? filteredSongs()
+          : state.queueSource?.type === "search"
+            ? filteredSongs()
+            : state.songs;
+
+    const index = sourceSongs.findIndex(
+      item => songKey(item.id) === songKey(song.id)
+    );
+
+    if (index >= 0 && state.queue[index]) {
+      state.queueIndex = index;
+    }
+  }
+
+  setCurrentSong(song);
+
+  const url = songURL(song);
+
+  if (!url) {
+    notify("This song does not have an audio file yet.");
+    return;
+  }
+
+  try {
+    const cache = await getMusicCache(song);
+
+    const cached = cache
+      ? await cache.match(new URL(url, location.href).href)
+      : null;
+
+    if (cached) {
+      const blob = await cached.blob();
+
+      if (audio._objectURL) {
+        URL.revokeObjectURL(audio._objectURL);
+      }
+
+      audio._objectURL = URL.createObjectURL(blob);
+      audio.src = audio._objectURL;
+
+    } else {
+      audio.src = url;
+    }
+
+    audio.load();
+
+    if (shouldPlay) {
+      await audio.play();
+    }
+
+  } catch (error) {
+    console.error("Playback error:", error);
+
+    state.playing = false;
+
+    notify(
+      "This song could not play. Check your connection or audio file."
+    );
+  }
+
+  updatePlayer();
+}
+
+
+function playFromList(songs, index, source) {
+  if (!songs.length) {
+    notify("There are no songs in this list yet.");
+    return;
+  }
+
+  const safeIndex = Math.max(
+    0,
+    Math.min(index, songs.length - 1)
+  );
+
+  makeQueue(songs, source);
+
+  state.queueIndex = safeIndex;
+
+  loadSong(songs[safeIndex], true, { keepQueue: true });
+}
+
+
+function playSongById(id) {
+  const list = filteredSongs();
+
+  const index = list.findIndex(
+    song => songKey(song.id) === songKey(id)
+  );
+
+  if (index >= 0) {
+    playFromList(list, index, {
+      type: state.query
+        ? "search"
+        : state.category === "All"
+          ? "catalogue"
+          : "category",
+
+      label: state.query
+        ? "Search results"
+        : state.category
+    });
+
+    return;
+  }
+
+  const song = state.songs.find(
+    item => songKey(item.id) === songKey(id)
+  );
+
+  if (song) {
+    playFromList(
+      [song],
+      0,
+      { type: "single", label: song.title }
+    );
+  }
+}
+
+
+function playNextQueueEntry() {
+  if (!state.queue.length) {
+    pause();
+    return;
+  }
+
+  const entry = currentQueueEntry();
+
+  if (entry && entry.repeatsLeft > 1) {
+    entry.repeatsLeft -= 1;
+
+    loadSong(
+      getSong(entry.id),
+      true,
+      { keepQueue: true }
+    );
+
+    renderQueue();
+
+    return;
+  }
+
+  if (entry) {
+    entry.repeatsLeft = entry.repeatTotal;
+  }
+
+  if (state.shuffle && state.queue.length > 1) {
+    let nextIndex = state.queueIndex;
+
+    while (nextIndex === state.queueIndex) {
+      nextIndex = Math.floor(
+        Math.random() * state.queue.length
+      );
+    }
+
+    state.queueIndex = nextIndex;
+
+    loadSong(
+      getSong(state.queue[nextIndex].id),
+      true,
+      { keepQueue: true }
+    );
+
+    return;
+  }
+
+  if (state.queueIndex < state.queue.length - 1) {
+    state.queueIndex += 1;
+
+    loadSong(
+      getSong(state.queue[state.queueIndex].id),
+      true,
+      { keepQueue: true }
+    );
+
+    return;
+  }
+
+  if (state.repeatMode === 1) {
+    state.queueIndex = 0;
+
+    loadSong(
+      getSong(state.queue[0].id),
+      true,
+      { keepQueue: true }
+    );
+
+  } else {
+    pause();
+  }
+}
+
+
+function getSong(id) {
+  return state.songs.find(
+    song => songKey(song.id) === songKey(id)
+  ) || null;
+}
+
+
+function next() {
+  playNextQueueEntry();
+}
+
+
+function prev() {
+  if (audio.currentTime > 4) {
+    audio.currentTime = 0;
+    return;
+  }
+
+  if (state.queueIndex > 0) {
+    state.queueIndex -= 1;
+
+    const entry = currentQueueEntry();
+
+    if (entry) {
+      entry.repeatsLeft = entry.repeatTotal;
+
+      loadSong(
+        getSong(entry.id),
+        true,
+        { keepQueue: true }
+      );
+    }
+
+  } else if (state.repeatMode === 1 && state.queue.length) {
+    state.queueIndex = state.queue.length - 1;
+
+    loadSong(
+      getSong(currentQueueEntry().id),
+      true,
+      { keepQueue: true }
+    );
+
+  } else {
+    audio.currentTime = 0;
+  }
+}
+
+
+function start() {
+  if (!getCurrentSong()) {
+    const songs = filteredSongs();
+
+    if (songs.length) {
+      playFromList(
+        songs,
+        0,
+        { type: "catalogue", label: "Your Music" }
+      );
+    }
+
+    return;
+  }
+
+  audio.play().catch(() =>
+    notify("This song could not start.")
+  );
+}
+
+
+function pause() {
+  audio.pause();
+}
+
+
+function toggle() {
+  audio.paused ? start() : pause();
+}
+
+
+// ===== END OF PART 3 — NEXT PART CONTINUES BELOW =====
