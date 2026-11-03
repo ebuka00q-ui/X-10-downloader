@@ -4825,3 +4825,116 @@ loadPendingAnalytics();
 
 // ===== END OF PART 9 — STREAMING ANALYTICS FOUNDATION =====
 
+// ======================================================
+// PART 10 — CONNECT ANALYTICS TO ACTUAL PLAYBACK
+// ======================================================
+
+// 1. Capture the final seconds before pause or song completion.
+// This prevents the last few seconds from being lost.
+function flushPlaybackListeningTime() {
+  if (!audio || !VIC_ANALYTICS.playInstanceId) return;
+
+  const currentTime = Number(audio.currentTime) || 0;
+  const previousTime = VIC_ANALYTICS.lastAudioTime;
+
+  if (previousTime !== null && previousTime !== undefined) {
+    const difference = currentTime - previousTime;
+
+    // Ignore large jumps caused by seeking.
+    if (difference > 0 && difference <= 3) {
+      VIC_ANALYTICS.listenedSeconds += difference;
+    }
+  }
+
+  VIC_ANALYTICS.lastAudioTime = currentTime;
+
+  checkQualifiedStream();
+}
+
+
+// 2. Handle an actual playback start.
+audio?.addEventListener("play", () => {
+  const currentSong = getCurrentSong();
+
+  if (!currentSong) return;
+
+  const songChanged =
+    VIC_ANALYTICS.currentSongId !== state.currentId;
+
+  const needsNewPlayback =
+    songChanged ||
+    !VIC_ANALYTICS.playInstanceId ||
+    VIC_ANALYTICS.completed;
+
+  // If another song replaced the previous one before completion,
+  // record the previous playback as a track change.
+  if (
+    songChanged &&
+    VIC_ANALYTICS.playInstanceId &&
+    VIC_ANALYTICS.currentSongId &&
+    !VIC_ANALYTICS.completed
+  ) {
+    skipPlaybackAnalytics("track_change");
+  }
+
+  if (needsNewPlayback) {
+    startPlaybackAnalytics(
+      currentSong,
+      state.queueSource?.type || "catalogue"
+    );
+  } else {
+    resumePlaybackAnalytics();
+  }
+});
+
+
+// 3. Handle pause.
+// Save the final listening seconds before stopping analytics.
+audio?.addEventListener("pause", () => {
+  flushPlaybackListeningTime();
+  pausePlaybackAnalytics();
+});
+
+
+// 4. Count listening time while audio is genuinely playing.
+audio?.addEventListener("timeupdate", () => {
+  if (audio.paused || audio.ended) return;
+
+  updatePlaybackListeningTime();
+});
+
+
+// 5. Record completed playback.
+audio?.addEventListener("ended", () => {
+  flushPlaybackListeningTime();
+  finishPlaybackAnalytics();
+});
+
+
+// 6. If the browser goes offline, keep analytics saved locally.
+// The Part 9 sync function will send pending events when online.
+window.addEventListener("offline", () => {
+  savePendingAnalytics();
+});
+
+
+// 7. Try sending pending analytics when the connection returns.
+window.addEventListener("online", () => {
+  syncPlaybackAnalytics();
+});
+
+
+// 8. Make sure pending analytics remain saved when the app
+// moves into the background or the page is closed.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    savePendingAnalytics();
+  }
+});
+
+window.addEventListener("pagehide", () => {
+  savePendingAnalytics();
+});
+
+
+// ===== END OF PART 10 — NEXT PART CONTINUES BELOW =====
