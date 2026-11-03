@@ -1565,3 +1565,950 @@ function toggle() {
 
 
 // ===== END OF PART 3 — NEXT PART CONTINUES BELOW =====
+/* =========================================================
+   13. PLAYER UI, MINI PLAYER AND MEDIA SESSION
+   ========================================================= */
+
+function updatePlayer() {
+  const song = getCurrentSong();
+  if (!song) return;
+
+  ["playerTitle", "miniTitle", "queueTitle"].forEach(id => {
+    if (byId(id)) byId(id).textContent = song.title;
+  });
+
+  ["playerArtist", "miniArtist", "queueArtist"].forEach(id => {
+    if (byId(id)) byId(id).textContent = song.artist;
+  });
+
+  ["playerCover", "miniCover", "queueCover"].forEach(id => {
+    if (byId(id)) byId(id).src = song.cover || "";
+  });
+
+  if (byId("playPause")) {
+    byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  }
+
+  if (byId("miniPlay")) {
+    byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+  }
+
+  const favorite = isSongFavorite(song.id);
+  const favButton = byId("playerFav");
+
+  if (favButton) {
+    favButton.textContent = favorite ? "♥" : "♡";
+    favButton.classList.toggle("active", favorite);
+  }
+
+  if (byId("currentTime")) {
+    byId("currentTime").textContent = formatTime(audio.currentTime);
+  }
+
+  if (byId("duration")) {
+    byId("duration").textContent =
+      formatTime(audio.duration || song.duration);
+  }
+
+  if (byId("progress")) {
+    byId("progress").value =
+      audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  }
+
+  const mini = byId("miniPlayer");
+
+  mini?.classList.toggle("visible", Boolean(state.currentId));
+
+  mini?.setAttribute(
+    "aria-hidden",
+    state.currentId ? "false" : "true"
+  );
+
+  byId("playerOverlay")?.classList.toggle(
+    "playing",
+    state.playing
+  );
+
+  updateModeButtons();
+  updateDJPlaybackControls();
+}
+
+
+function updateMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+
+  const song = getCurrentSong();
+  if (!song) return;
+
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist,
+      album: song.album || "Vic-sound",
+      artwork: song.cover
+        ? [{ src: song.cover }]
+        : []
+    });
+
+    navigator.mediaSession.setActionHandler("play", start);
+    navigator.mediaSession.setActionHandler("pause", pause);
+    navigator.mediaSession.setActionHandler("previoustrack", prev);
+    navigator.mediaSession.setActionHandler("nexttrack", next);
+
+  } catch (error) {
+    console.info(
+      "Media Session is unavailable:",
+      error
+    );
+  }
+}
+
+
+function openPlayer() {
+  byId("playerOverlay")?.classList.add("open");
+
+  byId("playerOverlay")?.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  state.player = true;
+
+  updatePlayer();
+}
+
+
+function closePlayer() {
+  byId("playerOverlay")?.classList.remove("open");
+
+  byId("playerOverlay")?.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  state.player = false;
+}
+
+
+/* =========================================================
+   13B. AUDIO EVENTS
+   ========================================================= */
+
+audio.addEventListener("play", () => {
+  state.playing = true;
+
+  updatePlayer();
+  renderHome();
+  updateMediaSession();
+});
+
+
+audio.addEventListener("pause", () => {
+  state.playing = false;
+
+  updatePlayer();
+  renderHome();
+});
+
+
+audio.addEventListener("timeupdate", () => {
+  updatePlayer();
+  syncLyrics();
+});
+
+
+audio.addEventListener("loadedmetadata", updatePlayer);
+
+
+audio.addEventListener("error", () => {
+  state.playing = false;
+
+  updatePlayer();
+
+  console.warn(
+    "Audio playback error:",
+    audio.error
+  );
+});
+
+
+audio.addEventListener("ended", () => {
+  recordCompletedPlay();
+
+  if (state.repeatMode === 2) {
+    audio.currentTime = 0;
+    start();
+    return;
+  }
+
+  playNextQueueEntry();
+});
+
+
+/* =========================================================
+   14. QUEUE, PER-SONG REPEAT ×1–×5 AND QUEUE REORDER
+   Tap the small repeat control on a queue row to increase it.
+   ========================================================= */
+
+function renderQueue() {
+  const box = byId("queueList");
+  if (!box) return;
+
+  const count = byId("queueCount");
+
+  if (count) {
+    count.textContent = `${state.queue.length} songs`;
+  }
+
+  box.innerHTML = state.queue.map((entry, index) => {
+    const song = getSong(entry.id);
+
+    if (!song) return "";
+
+    const current = index === state.queueIndex;
+
+    return `
+      <article class="queue-row ${current ? "current" : ""}"
+        data-queue-index="${index}"
+        draggable="true">
+
+        <span class="queue-num">${index + 1}</span>
+
+        <img src="${escapeHTML(song.cover)}" alt="">
+
+        <button class="queue-song"
+          data-queue-play="${escapeHTML(song.id)}">
+
+          <b>${escapeHTML(song.title)}</b>
+
+          <small>${escapeHTML(song.artist)}</small>
+
+        </button>
+
+        <button class="repeat-badge"
+          data-queue-repeat="${index}"
+          aria-label="Double-tap to increase repeat count, currently ${entry.repeatTotal} times">
+
+          ×${entry.repeatTotal}
+
+        </button>
+
+        <button class="row-more"
+          data-queue-remove="${index}"
+          aria-label="Remove from queue">
+
+          ×
+
+        </button>
+
+      </article>
+    `;
+  }).join("");
+
+  updateModeButtons();
+}
+
+
+function setQueueRepeat(index, count) {
+  const entry = state.queue[index];
+
+  if (!entry) return;
+
+  entry.repeatTotal = Math.max(
+    1,
+    Math.min(5, count)
+  );
+
+  entry.repeatsLeft = entry.repeatTotal;
+
+  renderQueue();
+
+  notify(
+    `This song will play ${entry.repeatTotal} time${
+      entry.repeatTotal === 1 ? "" : "s"
+    }.`
+  );
+}
+
+
+function removeQueueSong(index) {
+  if (!state.queue[index]) return;
+
+  const removedCurrent = index === state.queueIndex;
+
+  state.queue.splice(index, 1);
+
+  if (index < state.queueIndex) {
+    state.queueIndex -= 1;
+
+  } else if (removedCurrent && state.queue.length) {
+    state.queueIndex = Math.min(
+      index,
+      state.queue.length - 1
+    );
+
+    const entry = currentQueueEntry();
+
+    loadSong(
+      getSong(entry.id),
+      true,
+      { keepQueue: true }
+    );
+
+  } else if (!state.queue.length) {
+    state.queueIndex = 0;
+    pause();
+  }
+
+  renderQueue();
+}
+
+
+function openQueue() {
+  byId("queueOverlay")?.classList.add("open");
+
+  byId("queueOverlay")?.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  state.queueOpen = true;
+
+  renderQueue();
+}
+
+
+function closeQueue() {
+  byId("queueOverlay")?.classList.remove("open");
+
+  byId("queueOverlay")?.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  state.queueOpen = false;
+}
+
+
+/* =========================================================
+   15. SHUFFLE AND REPEAT CONTROLS
+   ========================================================= */
+
+function updateModeButtons() {
+  const shuffleButtons = [
+    byId("shuffle"),
+    byId("queueShuffle")
+  ].filter(Boolean);
+
+  const repeatButtons = [
+    byId("repeat"),
+    byId("playerRepeatTop"),
+    byId("queueRepeat")
+  ].filter(Boolean);
+
+  shuffleButtons.forEach(button => {
+    button.textContent = "🔀";
+
+    button.classList.toggle(
+      "active",
+      state.shuffle
+    );
+
+    button.setAttribute(
+      "aria-pressed",
+      String(state.shuffle)
+    );
+  });
+
+  const repeatSymbol =
+    state.repeatMode === 1 ? "🔁" :
+    state.repeatMode === 2 ? "🔂" :
+    "🔁";
+
+  repeatButtons.forEach(button => {
+    button.textContent = repeatSymbol;
+
+    button.classList.toggle(
+      "active",
+      state.repeatMode !== 0
+    );
+
+    button.dataset.mode = String(state.repeatMode);
+
+    button.setAttribute(
+      "aria-label",
+      [
+        "Repeat off",
+        "Repeat all",
+        "Repeat one"
+      ][state.repeatMode]
+    );
+
+    button.setAttribute(
+      "aria-pressed",
+      String(state.repeatMode !== 0)
+    );
+  });
+}
+
+
+function toggleShuffle() {
+  state.shuffle = !state.shuffle;
+
+  updateModeButtons();
+
+  notify(
+    state.shuffle
+      ? "Shuffle is on."
+      : "Shuffle is off."
+  );
+}
+
+
+function cycleRepeat() {
+  state.repeatMode = (state.repeatMode + 1) % 3;
+
+  updateModeButtons();
+
+  notify([
+    "Repeat is off.",
+    "Repeat all is on.",
+    "Repeat one is on."
+  ][state.repeatMode]);
+}
+
+
+/* =========================================================
+   16. FAVORITES AND COLLECTIONS
+   ========================================================= */
+
+function collectionContains(collection, id) {
+  return collection.songs.some(
+    songId => songKey(songId) === songKey(id)
+  );
+}
+
+
+function isSongFavorite(id) {
+  return state.collections.some(
+    collection => collectionContains(collection, id)
+  );
+}
+
+
+function saveCollections() {
+  writeJSON(
+    VIC_CONFIG.STORAGE.collections,
+    state.collections
+  );
+
+  renderFavorites();
+  renderHome();
+  updatePlayer();
+}
+
+
+function toggleFavorite(id) {
+  const key = songKey(id);
+
+  const memberships = state.collections.filter(
+    collection => collectionContains(collection, key)
+  );
+
+  if (memberships.length) {
+    openCollectionPicker(
+      key,
+      memberships.map(item => item.id)
+    );
+
+  } else if (!state.collections.length) {
+    createCollectionForSong(key);
+
+  } else {
+    openCollectionPicker(key, []);
+  }
+}
+
+
+function createCollectionForSong(songId) {
+  askText(
+    "Name your collection",
+    "Collection name",
+    "",
+    name => {
+      const collection = {
+        id: makeId(),
+        name,
+        songs: [songKey(songId)]
+      };
+
+      state.collections.push(collection);
+
+      saveCollections();
+
+      closeModal();
+
+      notify(`"${name}" has been created.`);
+    }
+  );
+}
+
+
+function openCollectionPicker(songId, selectedIds = []) {
+  const selected = new Set(
+    selectedIds.map(songKey)
+  );
+
+  const song = getSong(songId);
+
+  const body = `
+    <p class="vic-modal-note">
+      Choose the collections where this song should appear.
+    </p>
+
+    <div class="vic-check-list">
+
+      ${state.collections.map(collection => `
+        <label class="vic-check-row">
+
+          <input type="checkbox"
+            value="${escapeHTML(collection.id)}"
+            ${
+              selected.has(songKey(collection.id))
+                ? "checked"
+                : ""
+            }>
+
+          <span>${escapeHTML(collection.name)}</span>
+
+          <small>${collection.songs.length} songs</small>
+
+        </label>
+      `).join("")}
+
+    </div>
+
+    <button type="button"
+      class="vic-secondary-action"
+      id="vicCreateCollectionFromPicker">
+
+      + Create a new collection
+
+    </button>
+  `;
+
+  openModal({
+    title: song
+      ? `Save ${song.title}`
+      : "Choose collections",
+
+    body,
+
+    buttons: [
+      { label: "Cancel" },
+
+      {
+        label: "Done",
+
+        action: () => {
+          const checked = $$(".vic-check-list input:checked")
+            .map(input => input.value);
+
+          state.collections.forEach(collection => {
+            const has = collectionContains(
+              collection,
+              songId
+            );
+
+            const wants = checked.includes(
+              songKey(collection.id)
+            );
+
+            if (wants && !has) {
+              collection.songs.push(songKey(songId));
+            }
+
+            if (!wants && has) {
+              collection.songs = collection.songs.filter(
+                id => songKey(id) !== songKey(songId)
+              );
+            }
+          });
+
+          state.collections = state.collections.filter(
+            collection => collection.songs.length
+          );
+
+          saveCollections();
+
+          closeModal();
+        }
+      }
+    ],
+
+    onOpen: panel => {
+      $("#vicCreateCollectionFromPicker", panel)
+        ?.addEventListener("click", () => {
+
+          askText(
+            "Name your collection",
+            "Collection name",
+            "",
+            name => {
+              state.collections.push({
+                id: makeId(),
+                name,
+                songs: [songKey(songId)]
+              });
+
+              saveCollections();
+
+              closeModal();
+
+              openCollectionPicker(
+                songId,
+                [state.collections.at(-1).id]
+              );
+            }
+          );
+        });
+    }
+  });
+}
+
+
+function renderFavorites() {
+  const box = byId("favoriteGrid");
+
+  if (!box) return;
+
+  const count = byId("favoriteCount");
+
+  if (count) {
+    count.textContent =
+      `${state.collections.length} collection${
+        state.collections.length === 1 ? "" : "s"
+      }`;
+  }
+
+  if (!state.collections.length) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <b>No collections yet</b>
+        <span>Tap a song's heart to create your first collection.</span>
+      </div>`;
+
+    return;
+  }
+
+  box.classList.add("collection-grid");
+
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = getSong(collection.songs[0]);
+
+    return `
+      <article class="collection-card">
+
+        <button class="favorite-card-open collection-open"
+          data-collection-open="${escapeHTML(collection.id)}"
+          aria-label="Open ${escapeHTML(collection.name)}">
+
+          <img src="${escapeHTML(firstSong?.cover || "")}" alt="">
+
+          <div class="collection-card-info">
+
+            <b>${escapeHTML(collection.name)}</b>
+
+            <small>
+              ${collection.songs.length}
+              song${collection.songs.length === 1 ? "" : "s"}
+            </small>
+
+          </div>
+
+        </button>
+
+        <button class="collection-card-more"
+          data-collection-menu="${escapeHTML(collection.id)}"
+          aria-label="Collection options">
+
+          ⋮
+
+        </button>
+
+      </article>
+    `;
+  }).join("");
+}
+
+
+function collectionSongs(id) {
+  const collection = state.collections.find(
+    item => songKey(item.id) === songKey(id)
+  );
+
+  return collection
+    ? collection.songs.map(getSong).filter(Boolean)
+    : [];
+}
+
+
+function openCollection(id) {
+  const collection = state.collections.find(
+    item => songKey(item.id) === songKey(id)
+  );
+
+  if (!collection) return;
+
+  state.currentCollection = collection.id;
+
+  showCollectionSongs(collection);
+}
+
+
+function showCollectionSongs(collection) {
+  const songs = collectionSongs(collection.id);
+
+  const body = `
+    <div class="vic-collection-track-list">
+
+      ${songs.map(song => `
+        <label class="vic-track-choice">
+
+          <input type="checkbox"
+            value="${escapeHTML(song.id)}"
+            data-remove-song>
+
+          <img src="${escapeHTML(song.cover)}" alt="">
+
+          <span>
+            <b>${escapeHTML(song.title)}</b>
+            <small>${escapeHTML(song.artist)}</small>
+          </span>
+
+        </label>
+      `).join("")}
+
+    </div>
+
+    ${
+      songs.length
+        ? ""
+        : `<p class="vic-modal-note">This collection has no songs yet.</p>`
+    }
+  `;
+
+  openModal({
+    title: collection.name,
+
+    body,
+
+    buttons: [
+      { label: "Close" },
+
+      {
+        label: "Play collection",
+
+        action: () => {
+          if (!songs.length) {
+            notify("Add music to this collection first.");
+            return;
+          }
+
+          closeModal();
+
+          playFromList(
+            songs,
+            0,
+            {
+              type: "collection",
+              id: collection.id,
+              label: collection.name
+            }
+          );
+        }
+      },
+
+      {
+        label: "Remove selected",
+        danger: true,
+
+        action: () => {
+          const selected = $$("[data-remove-song]:checked")
+            .map(input => songKey(input.value));
+
+          if (!selected.length) {
+            notify("Select at least one song to remove.");
+            return;
+          }
+
+          collection.songs = collection.songs.filter(
+            id => !selected.includes(songKey(id))
+          );
+
+          state.collections = state.collections.filter(
+            item => item.songs.length
+          );
+
+          saveCollections();
+
+          closeModal();
+
+          notify("Selected songs removed from this collection.");
+        }
+      }
+    ]
+  });
+}
+
+
+function collectionMenu(id) {
+  const collection = state.collections.find(
+    item => songKey(item.id) === songKey(id)
+  );
+
+  if (!collection) return;
+
+  openModal({
+    title: collection.name,
+
+    body: `
+      <p class="vic-modal-note">
+        Manage this collection.
+      </p>
+    `,
+
+    buttons: [
+      { label: "Cancel" },
+
+      {
+        label: "Add songs",
+
+        action: () => {
+          closeModal();
+          openAddSongs(collection.id);
+        }
+      },
+
+      {
+        label: "Remove songs",
+
+        action: () => {
+          closeModal();
+          showCollectionSongs(collection);
+        }
+      },
+
+      {
+        label: "Rename",
+
+        action: () => {
+          closeModal();
+
+          askText(
+            "Rename collection",
+            "New collection name",
+            collection.name,
+            name => {
+              collection.name = name;
+
+              saveCollections();
+
+              closeModal();
+            }
+          );
+        }
+      },
+
+      {
+        label: "Remove collection",
+        danger: true,
+
+        action: () => {
+          state.collections = state.collections.filter(
+            item => songKey(item.id) !== songKey(id)
+          );
+
+          saveCollections();
+
+          closeModal();
+
+          notify("Collection removed. Your music is safe.");
+        }
+      }
+    ]
+  });
+}
+
+
+function openAddSongs(collectionId) {
+  const collection = state.collections.find(
+    item => songKey(item.id) === songKey(collectionId)
+  );
+
+  if (!collection) return;
+
+  const body = `
+    <p class="vic-modal-note">
+      Select one or more songs, then press Done.
+    </p>
+
+    <div class="vic-collection-track-list">
+
+      ${state.songs.map(song => `
+        <label class="vic-track-choice">
+
+          <input type="checkbox"
+            value="${escapeHTML(song.id)}"
+            ${
+              collectionContains(collection, song.id)
+                ? "checked"
+                : ""
+            }>
+
+          <img src="${escapeHTML(song.cover)}" alt="">
+
+          <span>
+            <b>${escapeHTML(song.title)}</b>
+            <small>${escapeHTML(song.artist)}</small>
+          </span>
+
+        </label>
+      `).join("")}
+
+    </div>
+  `;
+
+  openModal({
+    title: `Add to ${collection.name}`,
+
+    body,
+
+    buttons: [
+      { label: "Cancel" },
+
+      {
+        label: "Done",
+
+        action: () => {
+          const selected = $$(".vic-collection-track-list input:checked")
+            .map(input => songKey(input.value));
+
+          collection.songs = [...new Set(selected)];
+
+          state.collections = state.collections.filter(
+            item => item.songs.length
+          );
+
+          saveCollections();
+
+          closeModal();
+        }
+      }
+    ]
+  });
+}
+
+
+// ===== END OF PART 4 — NEXT PART CONTINUES BELOW =====
+
