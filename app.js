@@ -1449,7 +1449,572 @@ function cycleRepeat() {
   notify(["Repeat is off.", "Repeat all is on.", "Repeat one is on."][state.repeatMode]);
 }
 
+
 /* =========================================================
    16. FAVORITES AND COLLECTIONS
    ========================================================= */
-   
+
+function collectionContains(collection, id) {
+  return collection.songs.some(songId => songKey(songId) === songKey(id));
+}
+
+function isSongFavorite(id) {
+  return state.collections.some(collection => collectionContains(collection, id));
+}
+
+function saveCollections() {
+  writeJSON(VIC_CONFIG.STORAGE.collections, state.collections);
+  renderFavorites();
+  renderHome();
+  updatePlayer();
+}
+
+function toggleFavorite(id) {
+  const key = songKey(id);
+  const memberships = state.collections.filter(collection =>
+    collectionContains(collection, key)
+  );
+
+  if (memberships.length) {
+    openCollectionPicker(key, memberships.map(item => item.id));
+  } else if (!state.collections.length) {
+    createCollectionForSong(key);
+  } else {
+    openCollectionPicker(key, []);
+  }
+}
+
+function createCollectionForSong(songId) {
+  askText("Name your collection", "Collection name", "", name => {
+    const collection = {
+      id: makeId(),
+      name,
+      songs: [songKey(songId)]
+    };
+    state.collections.push(collection);
+    saveCollections();
+    closeModal();
+    notify(`"${name}" has been created.`);
+  });
+}
+
+function openCollectionPicker(songId, selectedIds = []) {
+  const selected = new Set(selectedIds.map(songKey));
+  const song = getSong(songId);
+
+  const body = `
+    <p class="vic-modal-note">Choose the collections where this song should appear.</p>
+    <div class="vic-check-list">
+      ${state.collections.map(collection => `
+        <label class="vic-check-row">
+          <input type="checkbox" value="${escapeHTML(collection.id)}"
+            ${selected.has(songKey(collection.id)) ? "checked" : ""}>
+          <span>${escapeHTML(collection.name)}</span>
+          <small>${collection.songs.length} songs</small>
+        </label>
+      `).join("")}
+    </div>
+    <button type="button" class="vic-secondary-action" id="vicCreateCollectionFromPicker">
+      + Create a new collection
+    </button>
+  `;
+
+  openModal({
+    title: song ? `Save ${song.title}` : "Choose collections",
+    body,
+    buttons: [
+      { label: "Cancel" },
+      {
+        label: "Done",
+        action: () => {
+          const checked = $$(".vic-check-list input:checked").map(input => input.value);
+          state.collections.forEach(collection => {
+            const has = collectionContains(collection, songId);
+            const wants = checked.includes(songKey(collection.id));
+            if (wants && !has) collection.songs.push(songKey(songId));
+            if (!wants && has) {
+              collection.songs = collection.songs.filter(id => songKey(id) !== songKey(songId));
+            }
+          });
+          state.collections = state.collections.filter(collection => collection.songs.length);
+          saveCollections();
+          closeModal();
+        }
+      }
+    ],
+    onOpen: panel => {
+      $("#vicCreateCollectionFromPicker", panel)?.addEventListener("click", () => {
+        askText("Name your collection", "Collection name", "", name => {
+          state.collections.push({ id: makeId(), name, songs: [songKey(songId)] });
+          saveCollections();
+          closeModal();
+          openCollectionPicker(songId, [state.collections.at(-1).id]);
+        });
+      });
+    }
+  });
+}
+
+function renderFavorites() {
+  const box = byId("favoriteGrid");
+  if (!box) return;
+
+  const count = byId("favoriteCount");
+  if (count) count.textContent =
+    `${state.collections.length} collection${state.collections.length === 1 ? "" : "s"}`;
+
+  if (!state.collections.length) {
+    box.innerHTML = `<div class="empty-state"><b>No collections yet</b><span>Tap a song's heart to create your first collection.</span></div>`;
+    return;
+  }
+
+  box.classList.add("collection-grid");
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = getSong(collection.songs[0]);
+    return `
+      <article class="collection-card">
+        <button class="favorite-card-open collection-open"
+          data-collection-open="${escapeHTML(collection.id)}"
+          aria-label="Open ${escapeHTML(collection.name)}">
+          <img src="${escapeHTML(firstSong?.cover || "")}" alt="">
+          <div class="collection-card-info">
+            <b>${escapeHTML(collection.name)}</b>
+            <small>${collection.songs.length} song${collection.songs.length === 1 ? "" : "s"}</small>
+          </div>
+        </button>
+        <button class="collection-card-more"
+          data-collection-menu="${escapeHTML(collection.id)}"
+          aria-label="Collection options">⋮</button>
+      </article>
+    `;
+  }).join("");
+}
+
+function collectionSongs(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id));
+  return collection ? collection.songs.map(getSong).filter(Boolean) : [];
+}
+
+function openCollection(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id));
+  if (!collection) return;
+  state.currentCollection = collection.id;
+  showCollectionSongs(collection);
+}
+
+function showCollectionSongs(collection) {
+  const songs = collectionSongs(collection.id);
+  const body = `
+    <div class="vic-collection-track-list">
+      ${songs.map(song => `
+        <label class="vic-track-choice">
+          <input type="checkbox" value="${escapeHTML(song.id)}" data-remove-song>
+          <img src="${escapeHTML(song.cover)}" alt="">
+          <span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></span>
+        </label>
+      `).join("")}
+    </div>
+    ${songs.length ? "" : `<p class="vic-modal-note">This collection has no songs yet.</p>`}
+  `;
+
+  openModal({
+    title: collection.name,
+    body,
+    buttons: [
+      { label: "Close" },
+      {
+        label: "Play collection",
+        action: () => {
+          if (!songs.length) {
+            notify("Add music to this collection first.");
+            return;
+          }
+          closeModal();
+          playFromList(songs, 0, {
+            type: "collection",
+            id: collection.id,
+            label: collection.name
+          });
+        }
+      },
+      {
+        label: "Remove selected",
+        danger: true,
+        action: () => {
+          const selected = $$("[data-remove-song]:checked").map(input => songKey(input.value));
+          if (!selected.length) {
+            notify("Select at least one song to remove.");
+            return;
+          }
+          collection.songs = collection.songs.filter(id => !selected.includes(songKey(id)));
+          state.collections = state.collections.filter(item => item.songs.length);
+          saveCollections();
+          closeModal();
+          notify("Selected songs removed from this collection.");
+        }
+      }
+    ]
+  });
+}
+
+function collectionMenu(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id));
+  if (!collection) return;
+
+  openModal({
+    title: collection.name,
+    body: `<p class="vic-modal-note">Manage this collection.</p>`,
+    buttons: [
+      { label: "Cancel" },
+      {
+        label: "Add songs",
+        action: () => {
+          closeModal();
+          openAddSongs(collection.id);
+        }
+      },
+      {
+        label: "Remove songs",
+        action: () => {
+          closeModal();
+          showCollectionSongs(collection);
+        }
+      },
+      {
+        label: "Rename",
+        action: () => {
+          closeModal();
+          askText("Rename collection", "New collection name", collection.name, name => {
+            collection.name = name;
+            saveCollections();
+            closeModal();
+          });
+        }
+      },
+      {
+        label: "Remove collection",
+        danger: true,
+        action: () => {
+          state.collections = state.collections.filter(item => songKey(item.id) !== songKey(id));
+          saveCollections();
+          closeModal();
+          notify("Collection removed. Your music is safe.");
+        }
+      }
+    ]
+  });
+}
+
+function openAddSongs(collectionId) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(collectionId));
+  if (!collection) return;
+
+  const body = `
+    <p class="vic-modal-note">Select one or more songs, then press Done.</p>
+    <div class="vic-collection-track-list">
+      ${state.songs.map(song => `
+        <label class="vic-track-choice">
+          <input type="checkbox" value="${escapeHTML(song.id)}"
+            ${collectionContains(collection, song.id) ? "checked" : ""}>
+          <img src="${escapeHTML(song.cover)}" alt="">
+          <span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></span>
+        </label>
+      `).join("")}
+    </div>
+  `;
+
+  openModal({
+    title: `Add to ${collection.name}`,
+    body,
+    buttons: [
+      { label: "Cancel" },
+      {
+        label: "Done",
+        action: () => {
+          const selected = $$(".vic-collection-track-list input:checked").map(input => songKey(input.value));
+          collection.songs = [...new Set(selected)];
+          state.collections = state.collections.filter(item => item.songs.length);
+          saveCollections();
+          closeModal();
+          notify("Collection updated.");
+        }
+      }
+    ]
+  });
+}
+
+/* =========================================================
+   17. LYRICS — READ ONLY
+   Listeners can read, scroll and follow timed lyrics.
+   No edit controls are created in the Listener.
+   ========================================================= */
+
+function updateLyrics() {
+  const song = getCurrentSong();
+  if (!song) return;
+
+  if (byId("lyricsSongTitle")) byId("lyricsSongTitle").textContent = song.title;
+  const box = byId("lyricsContent");
+  if (!box) return;
+
+  if (!song.lyrics.trim()) {
+    box.textContent = "Lyrics are not available for this song yet.";
+    return;
+  }
+
+  if (Array.isArray(song.lyrics_timed) && song.lyrics_timed.length) {
+    box.innerHTML = song.lyrics_timed.map((line, index) => `
+      <p class="lyric-line" data-lyric-time="${Number(line.time) || 0}"
+        data-lyric-index="${index}">${escapeHTML(line.text)}</p>
+    `).join("");
+  } else {
+    // Plain lyrics are displayed as text, never as editable HTML.
+    box.textContent = song.lyrics;
+  }
+  syncLyrics();
+}
+
+function syncLyrics() {
+  if (!state.lyricsOpen) return;
+  const lines = $$("[data-lyric-time]");
+  if (!lines.length) return;
+  let active = -1;
+  lines.forEach((line, index) => {
+    if (audio.currentTime >= Number(line.dataset.lyricTime)) active = index;
+  });
+  lines.forEach((line, index) => {
+    line.classList.toggle("current", index === active);
+    line.classList.toggle("past", index < active);
+    line.classList.toggle("upcoming", index > active);
+  });
+  lines[active]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function openLyrics() {
+  updateLyrics();
+  byId("lyricsSheet")?.classList.add("open");
+  byId("lyricsSheet")?.setAttribute("aria-hidden", "false");
+  state.lyricsOpen = true;
+}
+
+function closeLyrics() {
+  byId("lyricsSheet")?.classList.remove("open");
+  byId("lyricsSheet")?.setAttribute("aria-hidden", "true");
+  state.lyricsOpen = false;
+}
+
+
+/* =========================================================
+   18. PLAYBACK HISTORY AND LOCAL DJ BRAIN
+   This works offline and does not require Gemini.
+   ========================================================= */
+
+function recordCompletedPlay() {
+  const song = getCurrentSong();
+  if (!song) return;
+
+  const key = songKey(song.id);
+  state.playedSongs[key] = (state.playedSongs[key] || 0) + 1;
+  state.djHistory.push({
+    id: key,
+    title: song.title,
+    artist: song.artist,
+    genres: song.cat,
+    moods: song.mood,
+    at: Date.now(),
+    completed: true
+  });
+  state.djHistory = state.djHistory.slice(-VIC_CONFIG.DJ.historyLimit);
+  state.djCompletedSinceSuggestion += 1;
+  saveLocalData();
+
+  if (state.djCompletedSinceSuggestion >= VIC_CONFIG.DJ.autoSuggestionEvery) {
+    state.djCompletedSinceSuggestion = 0;
+    autoDJRecommendation();
+  }
+}
+
+function recordSkip(song = getCurrentSong()) {
+  if (!song) return;
+  const key = songKey(song.id);
+  state.skippedSongs[key] = (state.skippedSongs[key] || 0) + 1;
+  saveLocalData();
+}
+
+function scoreSongForDJ(song, request = "") {
+  const query = request.toLowerCase();
+  const tokens = query.split(/\s+/).filter(word => word.length > 2);
+  const tags = [
+    song.title, song.artist, song.album,
+    ...(song.cat || []), ...(song.mood || [])
+  ].join(" ").toLowerCase();
+
+  let score = 0;
+  tokens.forEach(token => {
+    if (tags.includes(token)) score += 3;
+  });
+
+  const key = songKey(song.id);
+  score += Math.min(5, (state.playedSongs[key] || 0) * 0.5);
+  score -= Math.min(8, (state.skippedSongs[key] || 0) * 1.5);
+
+  const recentlyPlayed = state.djHistory.slice(-8).some(item => item.id === key);
+  if (recentlyPlayed) score -= 4;
+
+  if (state.favorites.has(key) || isSongFavorite(key)) score += 2;
+  return score;
+}
+
+function localDJPick(request = "", limit = 8) {
+  return [...state.songs]
+    .filter(song => song.audio)
+    .map(song => ({ song, score: scoreSongForDJ(song, request) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => item.song);
+}
+
+function detectMoodWords(text) {
+  const value = text.toLowerCase();
+  const map = [
+    { words: ["sad", "down", "heartbroken", "cry", "lonely"], tags: ["sad", "calm", "moody"] },
+    { words: ["happy", "party", "dance", "energy", "energetic"], tags: ["party", "upbeat", "afrobeats"] },
+    { words: ["love", "romantic", "girlfriend", "boyfriend"], tags: ["love", "romantic"] },
+    { words: ["sleep", "relax", "calm", "quiet"], tags: ["calm", "soft"] },
+    { words: ["rap", "bars", "flow"], tags: ["rap", "hip-hop"] }
+  ];
+  return map.find(item => item.words.some(word => value.includes(word)))?.tags || [];
+}
+
+function localDJReply(text) {
+  const moodTags = detectMoodWords(text);
+  const request = `${text} ${moodTags.join(" ")}`;
+  const picks = localDJPick(request, 8);
+  if (!picks.length) {
+    return {
+      message: navigator.onLine
+        ? "I'm still getting to know your music taste. Try asking for a genre, mood or artist."
+        : "I'd love to find the right music for you. Reconnect when you can for a more personal DJ experience. I can still use your saved listening history while you're offline.",
+      songs: []
+    };
+  }
+
+  const first = picks[0];
+  const gentle = moodTags.includes("sad")
+    ? "I hear you. Let's find something that fits the moment."
+    : "Alright, I've got a few songs in mind for you.";
+  return {
+    message: `${gentle} I'm starting with "${first.title}" by ${first.artist}.`,
+    songs: picks
+  };
+}
+
+async function requestOnlineDJ(text) {
+  if (!navigator.onLine || !VIC_CONFIG.SERVICES.baseUrl) {
+    throw new Error("DJ online service is unavailable.");
+  }
+  return serviceRequest(VIC_CONFIG.SERVICES.djChat, {
+    method: "POST",
+    body: JSON.stringify({
+      message: text,
+      currentSong: getCurrentSong(),
+      listeningHistory: state.djHistory.slice(-20),
+      skippedSongs: state.skippedSongs,
+      favoriteIds: [...state.favorites],
+      collections: state.collections.map(item => ({
+        name: item.name,
+        songIds: item.songs
+      }))
+    })
+  });
+}
+
+async function command(text) {
+  const value = safe(text).trim();
+  if (!value || state.djBusy) return;
+  state.djBusy = true;
+  if (byId("djSend")) byId("djSend").disabled = true;
+
+  try {
+    let result = null;
+    if (navigator.onLine && VIC_CONFIG.SERVICES.baseUrl) {
+      try {
+        result = await requestOnlineDJ(value);
+        state.djOnline = true;
+      } catch (error) {
+        console.info("Online DJ not ready; using local DJ:", error);
+      }
+    }
+
+    if (!result) {
+      state.djOnline = false;
+      result = localDJReply(value);
+      if (!navigator.onLine) {
+        result.message += " Reconnect to enjoy the DJ's full personalised experience.";
+      }
+    }
+
+    if (byId("djReply")) byId("djReply").textContent =
+      result.message || "I've found something for you.";
+
+    if (Array.isArray(result.songs) && result.songs.length) {
+      const songs = result.songs.map(item =>
+        typeof item === "object" ? getSong(item.id) || normaliseSong(item) : getSong(item)
+      ).filter(Boolean);
+      if (songs.length) {
+        playFromList(songs, 0, { type: "dj", label: "Vic-sound DJ" });
+        state.djLastSuggestedId = songs[0].id;
+      }
+    }
+  } finally {
+    state.djBusy = false;
+    if (byId("djSend")) byId("djSend").disabled = false;
+  }
+}
+
+async function autoDJRecommendation() {
+  const picks = localDJPick("", 8);
+  if (!picks.length) return;
+
+  const repeated = Object.entries(state.playedSongs)
+    .sort((a, b) => b[1] - a[1])[0];
+  const repeatedSong = repeated ? getSong(repeated[0]) : null;
+
+  let message = "I'm switching things up with a fresh selection for you.";
+  if (repeatedSong && (state.playedSongs[songKey(repeatedSong.id)] || 0) >=
+      VIC_CONFIG.DJ.repeatNoticeThreshold) {
+    message = `You've played "${repeatedSong.title}" a lot. Let me bring in something different you may enjoy.`;
+  } else {
+    message = `I've picked something new for you. Let's try "${picks[0].title}".`;
+  }
+
+  // Small natural DJ announcements are generated locally.
+  // Gemini is not required for this feature.
+  state.lastAutoDJMessageAt = Date.now();
+  if (state.djOpen && byId("djReply")) byId("djReply").textContent = message;
+
+  // Never take over a category, search or collection queue. Those queues
+  // must stay in the exact source list selected by the listener.
+  const protectedSource = ["collection", "category", "search"].includes(state.queueSource?.type);
+  if (!protectedSource && picks[0].id !== state.djLastSuggestedId) {
+    // Keep the completed song at index zero so the ended handler advances
+    // to the first fresh DJ pick instead of accidentally skipping it.
+    const current = getCurrentSong();
+    const nextSongs = [
+      ...(current ? [current] : []),
+      ...picks.filter(song => songKey(song.id) !== songKey(state.currentId))
+    ];
+    if (nextSongs.length > 1) {
+      makeQueue(nextSongs, { type: "dj", label: "Vic-sound DJ" });
+      state.queueIndex = 0;
+      state.djLastSuggestedId = nextSongs[1].id;
+    }
+  }
+}
+
+/* =========================================================
+   19. DJ SCREEN AND AUTOMATIC PLAY
+   The DJ card remains at the top of Favorites.
+   Card body opens DJ; Play starts music immediately.
+   ========================================================= */
+
