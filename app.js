@@ -490,6 +490,7 @@ async function serviceRequest(path, options = {}) {
 }
 
 
+
 /* =========================================================
    7. SUPABASE CONNECTION (CURRENT CATALOGUE ADAPTER)
    Supabase may later be replaced behind the service routes.
@@ -546,4 +547,909 @@ function resolveMediaURL(value) {
   const raw = safe(value).trim();
   if (!raw) return "";
   if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
-  const base = VIC_CONFIG.MEDIA.publicDeliveryBaseUrl.replace(/\/
+  const base = VIC_CONFIG.MEDIA.publicDeliveryBaseUrl.replace(/\/$/, "");
+  return base ? `${base}/${raw.replace(/^\/+/, "")}` : raw;
+}
+
+function normaliseSong(row = {}) {
+  const genres = Array.isArray(row.genre) ? row.genre :
+    safe(row.genre || row.cat).split(",").map(x => x.trim()).filter(Boolean);
+  const moods = Array.isArray(row.mood) ? row.mood :
+    safe(row.mood).split(",").map(x => x.trim()).filter(Boolean);
+
+  return {
+    id: row.id ?? makeId(),
+    title: safe(row.title || "Untitled"),
+    artist: safe(row.artist || "Unknown artist"),
+    album: safe(row.album),
+    audio: resolveMediaURL(row.audio_url || row.audio || row.music_url),
+    cover: resolveMediaURL(row.cover_url || row.cover),
+    duration: Number(row.duration || 0),
+    cat: genres,
+    mood: moods,
+    lyrics: safe(row.lyrics),
+    lyrics_timed: row.lyrics_timed || null,
+    release_date: safe(row.release_date),
+    release_id: row.release_id || null,
+    published: row.published ?? true,
+    isTestTrack: Boolean(row.isTestTrack || row.is_test_track)
+  };
+}
+
+function applyTestMusic() {
+  if (!VIC_TEST_MODE) return state.songs;
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+  const ids = new Set(realSongs.map(songKey));
+  const tests = VIC_TEST_SONGS.map(normaliseSong).filter(song => !ids.has(songKey(song.id)));
+  state.songs = [...tests, ...realSongs];
+  return state.songs;
+}
+
+async function loadSongs() {
+  // Prefer the stable Listener API when configured.
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.catalogue);
+      state.songs = (result?.songs || result || []).map(normaliseSong);
+      applyTestMusic();
+      saveLocalData();
+      renderHome();
+      return state.songs;
+    } catch (error) {
+      console.warn("Listener catalogue API unavailable:", error);
+    }
+  }
+
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from(VIC_CONFIG.SUPABASE.songsTable)
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      state.songs = (data || []).map(normaliseSong);
+      applyTestMusic();
+      saveLocalData();
+      renderHome();
+      return state.songs;
+    } catch (error) {
+      console.warn("Could not load remote songs:", error);
+    }
+  }
+
+  renderHome();
+  return state.songs;
+}
+
+async function loadReleases() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.releases);
+      state.releases = result?.releases || result || [];
+      saveLocalData();
+      state.newRelease = state.releases.length > 0;
+      renderLatest();
+      updateDots();
+      return state.releases;
+    } catch (error) {
+      console.warn("Release service unavailable:", error);
+    }
+  }
+
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from(VIC_CONFIG.SUPABASE.releasesTable)
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      state.releases = data || [];
+      saveLocalData();
+    } catch (error) {
+      console.warn("Release loading failed:", error);
+    }
+  }
+  state.newRelease = state.releases.length > 0;
+  renderLatest();
+  updateDots();
+  return state.releases;
+}
+
+/* =========================================================
+   8. CREATOR-CONTROLLED MONETIZATION SETTINGS
+   Creator publishes settings to the backend. Listener applies layout
+   values here and delegates actual ads to an installed provider adapter.
+   A provider is never faked when its adapter is missing.
+   ========================================================= */
+function safeCssLength(value, fallback = "0px") {
+  const textValue = String(value ?? "").trim();
+  return /^(\d+(\.\d+)?(px|rem|em|vh|vw|%)|0)$/.test(textValue)
+    ? (textValue === "0" ? "0px" : textValue)
+    : fallback;
+}
+
+function applyMonetizationSettings(settings = {}) {
+  const incoming = settings.display || settings;
+  const allowedPlacements = ["bottom", "home-top", "favorites-top", "latest-top"];
+  const placement = allowedPlacements.includes(incoming.placement)
+    ? incoming.placement : "bottom";
+  state.monetization = {
+    enabled: settings.enabled === true,
+    provider: safe(settings.provider || "none").toLowerCase(),
+    format: safe(settings.format || "banner").toLowerCase(),
+    placement,
+    refreshSeconds: Math.max(0, Math.min(3600, Number(settings.refreshSeconds ?? 0))),
+    bannerHeight: safeCssLength(incoming.height ?? settings.bannerHeight, "0px"),
+    maxWidth: /^(100%|\d+(\.\d+)?(px|rem|vw))$/.test(String(incoming.maxWidth || "100%")) ? String(incoming.maxWidth || "100%") : "100%",
+    gap: safeCssLength(incoming.gap ?? settings.gap, "0px"),
+    borderRadius: safeCssLength(incoming.borderRadius ?? settings.borderRadius, "0px")
+  };
+  const slot = byId("bottomAdPlacement");
+  if (slot) {
+    const targets = {
+      "bottom": document.body,
+      "home-top": byId("homeScreen"),
+      "favorites-top": byId("favoritesScreen"),
+      "latest-top": byId("latestScreen")
+    };
+    const target = targets[placement] || document.body;
+    if (placement === "bottom") {
+      document.body.appendChild(slot);
+      slot.classList.remove("ad-inline");
+      slot.style.position = "fixed";
+      slot.style.left = "50%";
+      slot.style.bottom = "calc(var(--nav) + env(safe-area-inset-bottom))";
+      slot.style.transform = "translateX(-50%)";
+      slot.style.width = "min(100%,520px)";
+    } else if (target) {
+      const anchor = placement === "home-top" ? byId("offlineCard") :
+        placement === "favorites-top" ? $(".favorite-dj-card", target) : $(".latest-heading", target);
+      if (anchor) target.insertBefore(slot, anchor);
+      else target.prepend(slot);
+      slot.classList.add("ad-inline");
+      slot.style.position = "relative";
+      slot.style.left = "auto";
+      slot.style.bottom = "auto";
+      slot.style.transform = "none";
+      slot.style.width = "100%";
+    }
+    slot.dataset.provider = state.monetization.provider;
+    slot.dataset.format = state.monetization.format;
+    slot.dataset.configuredPlacement = placement;
+    slot.style.height = state.monetization.bannerHeight;
+    slot.style.minHeight = "0px";
+    slot.style.maxWidth = state.monetization.maxWidth;
+    slot.style.margin = `${state.monetization.gap} auto`;
+    slot.style.borderRadius = state.monetization.borderRadius;
+    slot.hidden = true;
+    document.body.classList.remove("has-ad");
+  }
+  state.monetizationReady = true;
+
+  // The actual provider adapter is optional until the Creator/backend stage.
+  // It must report a real creative; no placeholder ad is displayed.
+  const adapters = window.VicSoundAdProviders || {};
+  const adapter = adapters[state.monetization.provider];
+  if (state.monetization.enabled && state.monetization.format === "banner" && adapter?.mountBanner && slot) {
+    Promise.resolve(adapter.mountBanner({ container: slot, settings: state.monetization }))
+      .then(result => {
+        const filled = result === true || result?.filled === true;
+        slot.hidden = !filled;
+        if (filled && placement === "bottom") {
+          document.documentElement.style.setProperty("--ad-height", state.monetization.bannerHeight || "54px");
+          document.body.classList.add("has-ad");
+        }
+      })
+      .catch(error => {
+        slot.hidden = true;
+        console.warn("Ad provider banner could not load:", error);
+      });
+  }
+  return state.monetization;
+}
+
+async function loadMonetizationSettings() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    applyMonetizationSettings(VIC_CONFIG.MONETIZATION);
+    return state.monetization;
+  }
+  try {
+    const settings = await serviceRequest(VIC_CONFIG.SERVICES.monetization);
+    applyMonetizationSettings(settings || VIC_CONFIG.MONETIZATION);
+  } catch (error) {
+    console.info("Creator monetization settings are not available yet; ads remain off.");
+    applyMonetizationSettings(VIC_CONFIG.MONETIZATION);
+  }
+  return state.monetization;
+}
+
+async function requestVerifiedReward(release) {
+  const adapter = (window.VicSoundAdProviders || {})[state.monetization.provider];
+  if (!state.monetization.enabled || !adapter?.showRewarded) {
+    notify("Rewarded advertising is not connected yet.");
+    return false;
+  }
+  try {
+    const rewardEvent = await adapter.showRewarded({ release });
+    if (!rewardEvent?.eventId) throw new Error("The ad did not return a reward event.");
+    const permission = await serviceRequest(VIC_CONFIG.SERVICES.downloadPermission, {
+      method: "POST",
+      body: JSON.stringify({ releaseId: release.id, provider: state.monetization.provider, rewardEventId: rewardEvent.eventId })
+    });
+    if (!permission?.downloadUrl) throw new Error("The server has not verified the reward yet.");
+    const response = await fetch(permission.downloadUrl);
+    if (!response.ok) throw new Error("The authorised download could not be retrieved.");
+    const blob = await response.blob();
+    const objectURL = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectURL;
+    link.download = safe(permission.filename || `${release.title || "vic-sound-release"}.mp3`).replace(/[\\/:*?"<>|]/g, "-");
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectURL), 30000);
+    return true;
+  } catch (error) {
+    console.warn("Rewarded download was not completed:", error);
+    notify(error.message || "The rewarded download is not ready.");
+    return false;
+  }
+}
+
+/* =========================================================
+   8. DJ PROFILE — COVER IS OWNED BY CREATOR CATALOGUE
+   Creator publishes the DJ image; Listener only reads it.
+   ========================================================= */
+
+function applyDJProfile(profile = {}) {
+  state.djProfile = {
+    name: safe(profile.name || VIC_CONFIG.DJ.fallbackName),
+    subtitle: safe(profile.subtitle || VIC_CONFIG.DJ.fallbackSubtitle),
+    cover: safe(profile.cover_url || profile.cover || VIC_CONFIG.DJ.fallbackCover)
+  };
+
+  const small = byId("favoriteDjCover");
+  const large = byId("djCoverLarge");
+
+  [small, large].forEach(element => {
+    if (!element) return;
+    element.style.backgroundImage = state.djProfile.cover
+      ? `linear-gradient(0deg,rgba(0,0,0,.12),rgba(0,0,0,.12)),url("${state.djProfile.cover.replace(/["\\]/g, "")}")`
+      : "";
+    element.style.backgroundSize = "cover";
+    element.style.backgroundPosition = "center";
+    element.classList.toggle("has-dj-cover", Boolean(state.djProfile.cover));
+  });
+
+  const cardTitle = $(".favorite-dj-card h2");
+  const cardSubtitle = $(".favorite-dj-card p");
+  if (cardTitle) cardTitle.textContent = state.djProfile.name;
+  if (cardSubtitle) cardSubtitle.textContent = state.djProfile.subtitle;
+
+  const djTitle = $("#djOverlay .overlay-head b");
+  const djSubtitle = $("#djOverlay .overlay-head small");
+  if (djTitle) djTitle.textContent = state.djProfile.name;
+  if (djSubtitle) djSubtitle.textContent = state.djProfile.subtitle;
+}
+
+async function loadDJProfile() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    applyDJProfile();
+    return;
+  }
+  try {
+    const profile = await serviceRequest(VIC_CONFIG.SERVICES.djProfile);
+    applyDJProfile(profile || {});
+  } catch (error) {
+    console.info("Using the saved DJ artwork until Creator profile is available.");
+    applyDJProfile();
+  }
+}
+
+/* =========================================================
+   9. HOME, CATEGORY AND SEARCH
+   A playback queue is built from the exact list the user chose.
+   ========================================================= */
+
+function filteredSongs() {
+  const query = state.query.trim().toLowerCase();
+  return state.songs.filter(song => {
+    const tags = [...song.cat, ...song.mood].map(x => safe(x).toLowerCase());
+    const categoryMatch = state.category === "All" ||
+      tags.includes(state.category.toLowerCase());
+    const searchMatch = !query ||
+      song.title.toLowerCase().includes(query) ||
+      song.artist.toLowerCase().includes(query) ||
+      song.album.toLowerCase().includes(query);
+    return categoryMatch && searchMatch;
+  });
+}
+
+function renderHome() {
+  const box = byId("homeMusicList");
+  if (!box) return;
+  const songs = filteredSongs();
+
+  if (!songs.length) {
+    box.innerHTML = `<div class="empty-state"><b>No music found</b><span>Try another search or category.</span></div>`;
+    return;
+  }
+
+  box.innerHTML = songs.map(song => `
+    <article class="music-row ${songKey(song.id) === songKey(state.currentId) ? "playing" : ""}">
+      <button class="music-main" data-play="${escapeHTML(song.id)}" aria-label="Play ${escapeHTML(song.title)}">
+        <img class="cover" src="${escapeHTML(song.cover)}" alt="">
+      </button>
+      <button class="music-main" data-play="${escapeHTML(song.id)}">
+        <b>${escapeHTML(song.title)}</b>
+        <small>${escapeHTML(song.artist)}</small>
+      </button>
+      <span class="playing-bars">▮▮▮</span>
+      <button class="favorite-toggle ${isSongFavorite(song.id) ? "active" : ""}"
+        data-fav="${escapeHTML(song.id)}"
+        aria-label="${isSongFavorite(song.id) ? "In favorites" : "Add to favorites"}">
+        ${isSongFavorite(song.id) ? "♥" : "♡"}
+      </button>
+    </article>
+  `).join("");
+}
+
+
+/* =========================================================
+   10. RELEASES
+   ========================================================= */
+
+function renderLatest() {
+  const box = byId("latestList");
+  if (!box) return;
+
+  if (!state.releases.length) {
+    box.innerHTML = `<div class="empty-state"><b>No new releases yet</b><span>New music will appear here.</span></div>`;
+    return;
+  }
+
+  box.innerHTML = state.releases.map(release => `
+    <article class="release-card">
+      <img class="release-cover"
+        src="${escapeHTML(release.cover_url || release.cover || "")}" alt="">
+      <div class="release-info">
+        <h3>${escapeHTML(release.title || "Untitled release")}</h3>
+        <p>${escapeHTML(release.type || "Release")}</p>
+        <p>${escapeHTML(release.release_date || "")}</p>
+        <button class="release-action"
+          data-release-download="${escapeHTML(release.id)}">⇩ Download</button>
+      </div>
+      <span>›</span>
+    </article>
+  `).join("");
+}
+
+/* =========================================================
+   11. OFFLINE MUSIC CACHE
+   Automatic offline preparation is separate from rewarded downloads.
+   ========================================================= */
+
+async function getMusicCache(song = null) {
+  if (!("caches" in window)) return null;
+  const cacheName = song?.isTestTrack
+    ? VIC_TEST_CONFIG.cacheName
+    : VIC_CONFIG.STORAGE.musicCache;
+  return caches.open(cacheName);
+}
+
+async function getDownloadedSongs() {
+  state.downloaded.clear();
+  if (!("caches" in window)) return state.downloaded;
+  for (const song of state.songs) {
+    if (!song.audio) continue;
+    try {
+      const cache = await getMusicCache(song);
+      const url = new URL(song.audio, location.href).href;
+      if (cache && await cache.match(url)) state.downloaded.add(songKey(song.id));
+    } catch {}
+  }
+  updateOfflineCount();
+  return state.downloaded;
+}
+
+function updateOfflineCount() {
+  const count = byId("offlineCount");
+  const status = byId("offlineStatus");
+  const message = byId("offlineMessage");
+  const card = byId("offlineCard");
+  if (!count) return;
+
+  const total = state.songs.filter(song => song.audio).length;
+  const saved = state.downloaded.size;
+  count.textContent = `${saved} of ${total} songs`;
+
+  if (!total) {
+    if (status) status.textContent = "Waiting for music";
+    if (message) message.textContent = "Music will appear here when it is published.";
+    return;
+  }
+
+  const percent = Math.round(saved / total * 100);
+  card?.style.setProperty("--offline-progress", `${percent}%`);
+  card?.classList.toggle("is-complete", saved === total);
+  card?.classList.toggle("is-preparing", saved > 0 && saved < total);
+
+  if (saved === total) {
+    if (status) status.textContent = "Offline ready";
+    if (message) message.textContent = "Your saved music is ready for offline listening.";
+  } else {
+    if (status) status.textContent = navigator.onLine ? "Offline music" : "Offline";
+    if (message) message.textContent = navigator.onLine
+      ? "Music can be saved for listening without internet."
+      : "Reconnect to save more music for offline listening.";
+  }
+}
+
+async function saveAudioFile(song) {
+  if (!song?.audio) return false;
+  const cache = await getMusicCache(song);
+  if (!cache) return false;
+
+  const url = new URL(song.audio, location.href).href;
+  if (await cache.match(url)) {
+    state.downloaded.add(songKey(song.id));
+    return true;
+  }
+
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    if (!response.ok) throw new Error("Audio request failed.");
+    const type = response.headers.get("content-type") || "";
+    if (type.includes("text/html") || type.includes("application/json")) {
+      throw new Error("The address did not return an audio file.");
+    }
+    await cache.put(url, response.clone());
+    state.downloaded.add(songKey(song.id));
+    return true;
+  } catch (error) {
+    console.warn("Could not cache", song.title, error);
+    return false;
+  }
+}
+
+async function prepareOfflineMusic() {
+  if (!navigator.onLine || state.downloadBusy) return;
+  state.downloadBusy = true;
+  try {
+    await getDownloadedSongs();
+    const pending = state.songs.filter(song =>
+      song.audio && !state.downloaded.has(songKey(song.id))
+    );
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < pending.length && navigator.onLine) {
+        const song = pending[cursor++];
+        await saveAudioFile(song);
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(VIC_CONFIG.DOWNLOAD_WORKERS, pending.length) }, worker)
+    );
+  } finally {
+    state.downloadBusy = false;
+    updateOfflineCount();
+  }
+}
+
+/* =========================================================
+   12. PLAYBACK SOURCE AND QUEUE
+   ========================================================= */
+
+function makeQueue(songs, source) {
+  state.queue = songs.map(song => ({
+    id: song.id,
+    repeatTotal: 1,
+    repeatsLeft: 1
+  }));
+  state.queueIndex = 0;
+  state.queueSource = source || { type: "catalogue", label: "Your Music" };
+  renderQueue();
+}
+
+function currentQueueEntry() {
+  return state.queue[state.queueIndex] || null;
+}
+
+function setCurrentSong(song) {
+  if (!song) return;
+  state.currentId = song.id;
+  updatePlayer();
+  renderHome();
+  updateLyrics();
+  updateMediaSession();
+}
+
+function songURL(song) {
+  return song?.audio || "";
+}
+
+async function loadSong(song, shouldPlay = true, { keepQueue = false } = {}) {
+  if (!song) return;
+  if (!keepQueue) {
+    const sourceSongs = state.queueSource?.type === "collection"
+      ? collectionSongs(state.queueSource.id)
+      : state.queueSource?.type === "category"
+        ? filteredSongs()
+        : state.queueSource?.type === "search"
+          ? filteredSongs()
+          : state.songs;
+    const index = sourceSongs.findIndex(item => songKey(item.id) === songKey(song.id));
+    if (index >= 0 && state.queue[index]) state.queueIndex = index;
+  }
+
+  setCurrentSong(song);
+  const url = songURL(song);
+  if (!url) {
+    notify("This song does not have an audio file yet.");
+    return;
+  }
+
+  try {
+    const cache = await getMusicCache(song);
+    const cached = cache ? await cache.match(new URL(url, location.href).href) : null;
+    if (cached) {
+      const blob = await cached.blob();
+      if (audio._objectURL) URL.revokeObjectURL(audio._objectURL);
+      audio._objectURL = URL.createObjectURL(blob);
+      audio.src = audio._objectURL;
+    } else {
+      audio.src = url;
+    }
+    audio.load();
+    if (shouldPlay) await audio.play();
+  } catch (error) {
+    console.error("Playback error:", error);
+    state.playing = false;
+    notify("This song could not play. Check your connection or audio file.");
+  }
+  updatePlayer();
+}
+
+function playFromList(songs, index, source) {
+  if (!songs.length) {
+    notify("There are no songs in this list yet.");
+    return;
+  }
+  const safeIndex = Math.max(0, Math.min(index, songs.length - 1));
+  makeQueue(songs, source);
+  state.queueIndex = safeIndex;
+  loadSong(songs[safeIndex], true, { keepQueue: true });
+}
+
+function playSongById(id) {
+  const list = filteredSongs();
+  const index = list.findIndex(song => songKey(song.id) === songKey(id));
+  if (index >= 0) {
+    playFromList(list, index, {
+      type: state.query ? "search" : state.category === "All" ? "catalogue" : "category",
+      label: state.query ? "Search results" : state.category
+    });
+    return;
+  }
+  const song = state.songs.find(item => songKey(item.id) === songKey(id));
+  if (song) playFromList([song], 0, { type: "single", label: song.title });
+}
+
+function playNextQueueEntry() {
+  if (!state.queue.length) {
+    pause();
+    return;
+  }
+
+  const entry = currentQueueEntry();
+  if (entry && entry.repeatsLeft > 1) {
+    entry.repeatsLeft -= 1;
+    loadSong(getSong(entry.id), true, { keepQueue: true });
+    renderQueue();
+    return;
+  }
+
+  if (entry) {
+    entry.repeatsLeft = entry.repeatTotal;
+  }
+
+  if (state.shuffle && state.queue.length > 1) {
+    let nextIndex = state.queueIndex;
+    while (nextIndex === state.queueIndex) {
+      nextIndex = Math.floor(Math.random() * state.queue.length);
+    }
+    state.queueIndex = nextIndex;
+    loadSong(getSong(state.queue[nextIndex].id), true, { keepQueue: true });
+    return;
+  }
+
+  if (state.queueIndex < state.queue.length - 1) {
+    state.queueIndex += 1;
+    loadSong(getSong(state.queue[state.queueIndex].id), true, { keepQueue: true });
+    return;
+  }
+
+  if (state.repeatMode === 1) {
+    state.queueIndex = 0;
+    loadSong(getSong(state.queue[0].id), true, { keepQueue: true });
+  } else {
+    pause();
+  }
+}
+
+function getSong(id) {
+  return state.songs.find(song => songKey(song.id) === songKey(id)) || null;
+}
+
+function next() {
+  playNextQueueEntry();
+}
+
+function prev() {
+  if (audio.currentTime > 4) {
+    audio.currentTime = 0;
+    return;
+  }
+  if (state.queueIndex > 0) {
+    state.queueIndex -= 1;
+    const entry = currentQueueEntry();
+    if (entry) {
+      entry.repeatsLeft = entry.repeatTotal;
+      loadSong(getSong(entry.id), true, { keepQueue: true });
+    }
+  } else if (state.repeatMode === 1 && state.queue.length) {
+    state.queueIndex = state.queue.length - 1;
+    loadSong(getSong(currentQueueEntry().id), true, { keepQueue: true });
+  } else {
+    audio.currentTime = 0;
+  }
+}
+
+function start() {
+  if (!getCurrentSong()) {
+    const songs = filteredSongs();
+    if (songs.length) playFromList(songs, 0, { type: "catalogue", label: "Your Music" });
+    return;
+  }
+  audio.play().catch(() => notify("This song could not start."));
+}
+
+function pause() {
+  audio.pause();
+}
+
+function toggle() {
+  audio.paused ? start() : pause();
+}
+
+/* =========================================================
+   13. PLAYER UI, MINI PLAYER AND MEDIA SESSION
+   ========================================================= */
+
+function updatePlayer() {
+  const song = getCurrentSong();
+  if (!song) return;
+
+  ["playerTitle", "miniTitle", "queueTitle"].forEach(id => {
+    if (byId(id)) byId(id).textContent = song.title;
+  });
+  ["playerArtist", "miniArtist", "queueArtist"].forEach(id => {
+    if (byId(id)) byId(id).textContent = song.artist;
+  });
+  ["playerCover", "miniCover", "queueCover"].forEach(id => {
+    if (byId(id)) byId(id).src = song.cover || "";
+  });
+
+  if (byId("playPause")) byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("miniPlay")) byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+
+  const favorite = isSongFavorite(song.id);
+  const favButton = byId("playerFav");
+  if (favButton) {
+    favButton.textContent = favorite ? "♥" : "♡";
+    favButton.classList.toggle("active", favorite);
+  }
+
+  if (byId("currentTime")) byId("currentTime").textContent = formatTime(audio.currentTime);
+  if (byId("duration")) byId("duration").textContent =
+    formatTime(audio.duration || song.duration);
+  if (byId("progress")) byId("progress").value =
+    audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+
+  const mini = byId("miniPlayer");
+  mini?.classList.toggle("visible", Boolean(state.currentId));
+  mini?.setAttribute("aria-hidden", state.currentId ? "false" : "true");
+  byId("playerOverlay")?.classList.toggle("playing", state.playing);
+
+  updateModeButtons();
+  updateDJPlaybackControls();
+}
+
+function updateMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  const song = getCurrentSong();
+  if (!song) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist,
+      album: song.album || "Vic-sound",
+      artwork: song.cover ? [{ src: song.cover }] : []
+    });
+    navigator.mediaSession.setActionHandler("play", start);
+    navigator.mediaSession.setActionHandler("pause", pause);
+    navigator.mediaSession.setActionHandler("previoustrack", prev);
+    navigator.mediaSession.setActionHandler("nexttrack", next);
+  } catch (error) {
+    console.info("Media Session is unavailable:", error);
+  }
+}
+
+function openPlayer() {
+  byId("playerOverlay")?.classList.add("open");
+  byId("playerOverlay")?.setAttribute("aria-hidden", "false");
+  state.player = true;
+  updatePlayer();
+}
+
+function closePlayer() {
+  byId("playerOverlay")?.classList.remove("open");
+  byId("playerOverlay")?.setAttribute("aria-hidden", "true");
+  state.player = false;
+}
+
+audio.addEventListener("play", () => {
+  state.playing = true;
+  updatePlayer();
+  renderHome();
+  updateMediaSession();
+});
+
+audio.addEventListener("pause", () => {
+  state.playing = false;
+  updatePlayer();
+  renderHome();
+});
+
+audio.addEventListener("timeupdate", () => {
+  updatePlayer();
+  syncLyrics();
+});
+
+audio.addEventListener("loadedmetadata", updatePlayer);
+audio.addEventListener("error", () => {
+  state.playing = false;
+  updatePlayer();
+  console.warn("Audio playback error:", audio.error);
+});
+
+audio.addEventListener("ended", () => {
+  recordCompletedPlay();
+  if (state.repeatMode === 2) {
+    audio.currentTime = 0;
+    start();
+    return;
+  }
+  playNextQueueEntry();
+});
+
+
+/* =========================================================
+   14. QUEUE, PER-SONG REPEAT ×1–×5 AND QUEUE REORDER
+   Tap the small repeat control on a queue row to increase it.
+   ========================================================= */
+
+function renderQueue() {
+  const box = byId("queueList");
+  if (!box) return;
+
+  const count = byId("queueCount");
+  if (count) count.textContent = `${state.queue.length} songs`;
+
+  box.innerHTML = state.queue.map((entry, index) => {
+    const song = getSong(entry.id);
+    if (!song) return "";
+    const current = index === state.queueIndex;
+    return `
+      <article class="queue-row ${current ? "current" : ""}"
+        data-queue-index="${index}" draggable="true">
+        <span class="queue-num">${index + 1}</span>
+        <img src="${escapeHTML(song.cover)}" alt="">
+        <button class="queue-song" data-queue-play="${escapeHTML(song.id)}">
+          <b>${escapeHTML(song.title)}</b>
+          <small>${escapeHTML(song.artist)}</small>
+        </button>
+        <button class="repeat-badge" data-queue-repeat="${index}"
+          aria-label="Double-tap to increase repeat count, currently ${entry.repeatTotal} times">×${entry.repeatTotal}</button>
+        <button class="row-more" data-queue-remove="${index}" aria-label="Remove from queue">×</button>
+      </article>
+    `;
+  }).join("");
+
+  updateModeButtons();
+}
+
+function setQueueRepeat(index, count) {
+  const entry = state.queue[index];
+  if (!entry) return;
+  entry.repeatTotal = Math.max(1, Math.min(5, count));
+  entry.repeatsLeft = entry.repeatTotal;
+  renderQueue();
+  notify(`This song will play ${entry.repeatTotal} time${entry.repeatTotal === 1 ? "" : "s"}.`);
+}
+
+function removeQueueSong(index) {
+  if (!state.queue[index]) return;
+  const removedCurrent = index === state.queueIndex;
+  state.queue.splice(index, 1);
+
+  if (index < state.queueIndex) state.queueIndex -= 1;
+  else if (removedCurrent && state.queue.length) {
+    state.queueIndex = Math.min(index, state.queue.length - 1);
+    const entry = currentQueueEntry();
+    loadSong(getSong(entry.id), true, { keepQueue: true });
+  } else if (!state.queue.length) {
+    state.queueIndex = 0;
+    pause();
+  }
+  renderQueue();
+}
+
+function openQueue() {
+  byId("queueOverlay")?.classList.add("open");
+  byId("queueOverlay")?.setAttribute("aria-hidden", "false");
+  state.queueOpen = true;
+  renderQueue();
+}
+
+function closeQueue() {
+  byId("queueOverlay")?.classList.remove("open");
+  byId("queueOverlay")?.setAttribute("aria-hidden", "true");
+  state.queueOpen = false;
+}
+
+/* =========================================================
+   15. SHUFFLE AND REPEAT CONTROLS
+   ========================================================= */
+
+function updateModeButtons() {
+  const shuffleButtons = [byId("shuffle"), byId("queueShuffle")].filter(Boolean);
+  const repeatButtons = [
+    byId("repeat"), byId("playerRepeatTop"), byId("queueRepeat")
+  ].filter(Boolean);
+
+  shuffleButtons.forEach(button => {
+    button.textContent = "🔀";
+    button.classList.toggle("active", state.shuffle);
+    button.setAttribute("aria-pressed", String(state.shuffle));
+  });
+
+  const repeatSymbol = state.repeatMode === 1 ? "🔁" :
+    state.repeatMode === 2 ? "🔂" : "🔁";
+
+  repeatButtons.forEach(button => {
+    button.textContent = repeatSymbol;
+    button.classList.toggle("active", state.repeatMode !== 0);
+    button.dataset.mode = String(state.repeatMode);
+    button.setAttribute("aria-label",
+      ["Repeat off", "Repeat all", "Repeat one"][state.repeatMode]);
+    button.setAttribute("aria-pressed", String(state.repeatMode !== 0));
+  });
+}
+
+function toggleShuffle() {
+  state.shuffle = !state.shuffle;
+  updateModeButtons();
+  notify(state.shuffle ? "Shuffle is on." : "Shuffle is off.");
+}
+
+function cycleRepeat() {
+  state.repeatMode = (state.repeatMode + 1) % 3;
+  updateModeButtons();
+  notify(["Repeat is off.", "Repeat all is on.", "Repeat one is on."][state.repeatMode]);
+}
+
+/* =========================================================
+   16. FAVORITES AND COLLECTIONS
+   ========================================================= */
+   
