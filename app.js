@@ -2250,6 +2250,206 @@ function stopVoice() {
   byId("djOverlay")?.classList.remove("listening");
 }
 
+
 /* =========================================================
    21. TIMER
-   ==========================================
+   ========================================================= */
+
+function openTimer() {
+  byId("timerSheet")?.classList.add("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "false");
+}
+
+function closeTimer() {
+  byId("timerSheet")?.classList.remove("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "true");
+}
+
+function clearPlaybackTimer() {
+  clearTimeout(state.timerId);
+  state.timerId = null;
+}
+
+function setTimer(minutes) {
+  clearPlaybackTimer();
+  state.timerMode = "minutes";
+  state.timerId = setTimeout(() => {
+    pause();
+    state.timerMode = "off";
+    closeTimer();
+    notify("Your playback timer has finished.");
+  }, minutes * 60000);
+
+  $$(".timer-options button").forEach(button =>
+    button.classList.toggle("selected", Number(button.dataset.min) === minutes)
+  );
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+}
+
+function setEndTrackTimer() {
+  clearPlaybackTimer();
+  state.timerMode = "end";
+  $$(".timer-options button").forEach(button => button.classList.remove("selected"));
+  byId("endTrack")?.classList.add("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+}
+
+function offTimer() {
+  clearPlaybackTimer();
+  state.timerMode = "off";
+  $$(".timer-options button").forEach(button => button.classList.remove("selected"));
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.add("selected");
+  closeTimer();
+}
+
+/* =========================================================
+   22. NOTIFICATIONS AND LATEST DOTS
+   ========================================================= */
+
+async function setNotifications(enabled) {
+  if (!enabled) {
+    state.notifications = false;
+    localStorage.setItem(VIC_CONFIG.STORAGE.notifications, "false");
+    notify("Release notifications turned off.");
+    return;
+  }
+
+  if (!("Notification" in window)) {
+    if (byId("notificationSwitch")) byId("notificationSwitch").checked = false;
+    notify("This browser does not support notifications.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  state.notifications = permission === "granted";
+  localStorage.setItem(VIC_CONFIG.STORAGE.notifications, String(state.notifications));
+  if (!state.notifications && byId("notificationSwitch")) {
+    byId("notificationSwitch").checked = false;
+  }
+  notify(state.notifications ? "Release notifications enabled." :
+    "Notification permission was not granted.");
+  // Real push delivery additionally requires a service worker,
+  // VAPID configuration and a trusted server-side sender.
+}
+
+function updateDots() {
+  ["latestDot", "navDot", "headerDot"].forEach(id => {
+    byId(id)?.classList.toggle("show", Boolean(state.newRelease));
+  });
+}
+
+
+
+/* =========================================================
+   23. RELEASE DOWNLOAD — SAFE PLACEHOLDER
+   Reward must be verified by the trusted ad/backend provider.
+   ========================================================= */
+
+async function downloadRelease(id) {
+  const release = state.releases.find(item => songKey(item.id) === songKey(id));
+  if (!release) return;
+
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    notify("Downloads are not configured yet.");
+    return;
+  }
+
+  openModal({
+    title: "Unlock this download",
+    body: `<p>Watch a rewarded advertisement to unlock ${escapeHTML(release.title || "this release")} for offline listening.</p>`,
+    buttons: [
+      { label: "Not now" },
+      {
+        label: "Continue",
+        action: async () => {
+          closeModal();
+          await requestVerifiedReward(release);
+        }
+      }
+    ]
+  });
+}
+
+/* =========================================================
+   24. NAVIGATION, SEARCH AND BACK
+   ========================================================= */
+
+function go(screen) {
+  state.screen = screen;
+  byId("homeScreen")?.classList.toggle("active", screen === "home");
+  byId("favoritesScreen")?.classList.toggle("active", screen === "favorites");
+  byId("latestScreen")?.classList.toggle("active", screen === "latest");
+
+  $$(".nav-item").forEach(button =>
+    button.classList.toggle("active", button.dataset.screen === screen)
+  );
+
+  const searchToggle = byId("searchToggle");
+  if (searchToggle) searchToggle.style.visibility = screen === "home" ? "visible" : "hidden";
+
+  if (screen === "latest") {
+    state.newRelease = false;
+    updateDots();
+  }
+  renderHome();
+  renderFavorites();
+  renderLatest();
+}
+
+function openSearch() {
+  if (state.screen !== "home") return;
+  byId("searchPanel")?.classList.add("open");
+  byId("searchPanel")?.setAttribute("aria-hidden", "false");
+  setTimeout(() => byId("searchInput")?.focus(), 50);
+}
+
+function closeSearch() {
+  state.query = "";
+  if (byId("searchInput")) byId("searchInput").value = "";
+  byId("searchPanel")?.classList.remove("open");
+  byId("searchPanel")?.setAttribute("aria-hidden", "true");
+  renderHome();
+}
+
+function closePopups() {
+  byId("notificationPopover")?.classList.add("hidden");
+}
+
+function exitPrompt() {
+  openModal({
+    title: "Exit Vic-sound?",
+    body: "<p>Are you sure you want to leave the app?</p>",
+    buttons: [
+      { label: "Stay here" },
+      {
+        label: "Leave",
+        danger: true,
+        action: () => notify("You can now leave Vic-sound using your device controls.")
+      }
+    ]
+  });
+}
+
+function back() {
+  if (state.modalOpen) { closeModal(); return; }
+  if (byId("notificationPopover") &&
+      !byId("notificationPopover").classList.contains("hidden")) {
+    closePopups(); return;
+  }
+  if (state.lyricsOpen) { closeLyrics(); return; }
+  if (byId("timerSheet")?.classList.contains("open")) { closeTimer(); return; }
+  if (byId("searchPanel")?.classList.contains("open")) { closeSearch(); return; }
+  if (state.djOpen) { closeDJ(); return; }
+  if (state.queueOpen) { closeQueue(); return; }
+  if (state.player) { closePlayer(); return; }
+  if (state.screen !== "home") { go("home"); return; }
+  notify("Press back once more to exit Vic-sound.");
+}
+
+/* =========================================================
+   25. EVENT LISTENERS
+   =====================================
