@@ -490,7 +490,6 @@ async function serviceRequest(path, options = {}) {
 }
 
 
-
 /* =========================================================
    7. SUPABASE CONNECTION (CURRENT CATALOGUE ADAPTER)
    Supabase may later be replaced behind the service routes.
@@ -547,4 +546,354 @@ function resolveMediaURL(value) {
   const raw = safe(value).trim();
   if (!raw) return "";
   if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
-  const base = VIC_CONFIG.MEDIA.publicDeliveryBaseUrl.replace(/\
+  const base = VIC_CONFIG.MEDIA.publicDeliveryBaseUrl.replace(/\/$/, "");
+  return base ? `${base}/${raw.replace(/^\/+/, "")}` : raw;
+}
+
+function normaliseSong(row = {}) {
+  const genres = Array.isArray(row.genre) ? row.genre :
+    safe(row.genre || row.cat).split(",").map(x => x.trim()).filter(Boolean);
+  const moods = Array.isArray(row.mood) ? row.mood :
+    safe(row.mood).split(",").map(x => x.trim()).filter(Boolean);
+
+  return {
+    id: row.id ?? makeId(),
+    title: safe(row.title || "Untitled"),
+    artist: safe(row.artist || "Unknown artist"),
+    album: safe(row.album),
+    audio: resolveMediaURL(row.audio_url || row.audio || row.music_url),
+    cover: resolveMediaURL(row.cover_url || row.cover),
+    duration: Number(row.duration || 0),
+    cat: genres,
+    mood: moods,
+    lyrics: safe(row.lyrics),
+    lyrics_timed: row.lyrics_timed || null,
+    release_date: safe(row.release_date),
+    release_id: row.release_id || null,
+    published: row.published ?? true,
+    isTestTrack: Boolean(row.isTestTrack || row.is_test_track)
+  };
+}
+
+function applyTestMusic() {
+  if (!VIC_TEST_MODE) return state.songs;
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+  const ids = new Set(realSongs.map(songKey));
+  const tests = VIC_TEST_SONGS.map(normaliseSong).filter(song => !ids.has(songKey(song.id)));
+  state.songs = [...tests, ...realSongs];
+  return state.songs;
+}
+
+async function loadSongs() {
+  // Prefer the stable Listener API when configured.
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.catalogue);
+      state.songs = (result?.songs || result || []).map(normaliseSong);
+      applyTestMusic();
+      saveLocalData();
+      renderHome();
+      return state.songs;
+    } catch (error) {
+      console.warn("Listener catalogue API unavailable:", error);
+    }
+  }
+
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from(VIC_CONFIG.SUPABASE.songsTable)
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      state.songs = (data || []).map(normaliseSong);
+      applyTestMusic();
+      saveLocalData();
+      renderHome();
+      return state.songs;
+    } catch (error) {
+      console.warn("Could not load remote songs:", error);
+    }
+  }
+
+  renderHome();
+  return state.songs;
+}
+
+async function loadReleases() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.releases);
+      state.releases = result?.releases || result || [];
+      saveLocalData();
+      state.newRelease = state.releases.length > 0;
+      renderLatest();
+      updateDots();
+      return state.releases;
+    } catch (error) {
+      console.warn("Release service unavailable:", error);
+    }
+  }
+
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from(VIC_CONFIG.SUPABASE.releasesTable)
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      state.releases = data || [];
+      saveLocalData();
+    } catch (error) {
+      console.warn("Release loading failed:", error);
+    }
+  }
+  state.newRelease = state.releases.length > 0;
+  renderLatest();
+  updateDots();
+  return state.releases;
+}
+
+/* =========================================================
+   8. CREATOR-CONTROLLED MONETIZATION SETTINGS
+   Creator publishes settings to the backend. Listener applies layout
+   values here and delegates actual ads to an installed provider adapter.
+   A provider is never faked when its adapter is missing.
+   ========================================================= */
+function safeCssLength(value, fallback = "0px") {
+  const textValue = String(value ?? "").trim();
+  return /^(\d+(\.\d+)?(px|rem|em|vh|vw|%)|0)$/.test(textValue)
+    ? (textValue === "0" ? "0px" : textValue)
+    : fallback;
+}
+
+function applyMonetizationSettings(settings = {}) {
+  const incoming = settings.display || settings;
+  const allowedPlacements = ["bottom", "home-top", "favorites-top", "latest-top"];
+  const placement = allowedPlacements.includes(incoming.placement)
+    ? incoming.placement : "bottom";
+  state.monetization = {
+    enabled: settings.enabled === true,
+    provider: safe(settings.provider || "none").toLowerCase(),
+    format: safe(settings.format || "banner").toLowerCase(),
+    placement,
+    refreshSeconds: Math.max(0, Math.min(3600, Number(settings.refreshSeconds ?? 0))),
+    bannerHeight: safeCssLength(incoming.height ?? settings.bannerHeight, "0px"),
+    maxWidth: /^(100%|\d+(\.\d+)?(px|rem|vw))$/.test(String(incoming.maxWidth || "100%")) ? String(incoming.maxWidth || "100%") : "100%",
+    gap: safeCssLength(incoming.gap ?? settings.gap, "0px"),
+    borderRadius: safeCssLength(incoming.borderRadius ?? settings.borderRadius, "0px")
+  };
+  const slot = byId("bottomAdPlacement");
+  if (slot) {
+    const targets = {
+      "bottom": document.body,
+      "home-top": byId("homeScreen"),
+      "favorites-top": byId("favoritesScreen"),
+      "latest-top": byId("latestScreen")
+    };
+    const target = targets[placement] || document.body;
+    if (placement === "bottom") {
+      document.body.appendChild(slot);
+      slot.classList.remove("ad-inline");
+      slot.style.position = "fixed";
+      slot.style.left = "50%";
+      slot.style.bottom = "calc(var(--nav) + env(safe-area-inset-bottom))";
+      slot.style.transform = "translateX(-50%)";
+      slot.style.width = "min(100%,520px)";
+    } else if (target) {
+      const anchor = placement === "home-top" ? byId("offlineCard") :
+        placement === "favorites-top" ? $(".favorite-dj-card", target) : $(".latest-heading", target);
+      if (anchor) target.insertBefore(slot, anchor);
+      else target.prepend(slot);
+      slot.classList.add("ad-inline");
+      slot.style.position = "relative";
+      slot.style.left = "auto";
+      slot.style.bottom = "auto";
+      slot.style.transform = "none";
+      slot.style.width = "100%";
+    }
+    slot.dataset.provider = state.monetization.provider;
+    slot.dataset.format = state.monetization.format;
+    slot.dataset.configuredPlacement = placement;
+    slot.style.height = state.monetization.bannerHeight;
+    slot.style.minHeight = "0px";
+    slot.style.maxWidth = state.monetization.maxWidth;
+    slot.style.margin = `${state.monetization.gap} auto`;
+    slot.style.borderRadius = state.monetization.borderRadius;
+    slot.hidden = true;
+    document.body.classList.remove("has-ad");
+  }
+  state.monetizationReady = true;
+
+  // The actual provider adapter is optional until the Creator/backend stage.
+  // It must report a real creative; no placeholder ad is displayed.
+  const adapters = window.VicSoundAdProviders || {};
+  const adapter = adapters[state.monetization.provider];
+  if (state.monetization.enabled && state.monetization.format === "banner" && adapter?.mountBanner && slot) {
+    Promise.resolve(adapter.mountBanner({ container: slot, settings: state.monetization }))
+      .then(result => {
+        const filled = result === true || result?.filled === true;
+        slot.hidden = !filled;
+        if (filled && placement === "bottom") {
+          document.documentElement.style.setProperty("--ad-height", state.monetization.bannerHeight || "54px");
+          document.body.classList.add("has-ad");
+        }
+      })
+      .catch(error => {
+        slot.hidden = true;
+        console.warn("Ad provider banner could not load:", error);
+      });
+  }
+  return state.monetization;
+}
+
+async function loadMonetizationSettings() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    applyMonetizationSettings(VIC_CONFIG.MONETIZATION);
+    return state.monetization;
+  }
+  try {
+    const settings = await serviceRequest(VIC_CONFIG.SERVICES.monetization);
+    applyMonetizationSettings(settings || VIC_CONFIG.MONETIZATION);
+  } catch (error) {
+    console.info("Creator monetization settings are not available yet; ads remain off.");
+    applyMonetizationSettings(VIC_CONFIG.MONETIZATION);
+  }
+  return state.monetization;
+}
+
+async function requestVerifiedReward(release) {
+  const adapter = (window.VicSoundAdProviders || {})[state.monetization.provider];
+  if (!state.monetization.enabled || !adapter?.showRewarded) {
+    notify("Rewarded advertising is not connected yet.");
+    return false;
+  }
+  try {
+    const rewardEvent = await adapter.showRewarded({ release });
+    if (!rewardEvent?.eventId) throw new Error("The ad did not return a reward event.");
+    const permission = await serviceRequest(VIC_CONFIG.SERVICES.downloadPermission, {
+      method: "POST",
+      body: JSON.stringify({ releaseId: release.id, provider: state.monetization.provider, rewardEventId: rewardEvent.eventId })
+    });
+    if (!permission?.downloadUrl) throw new Error("The server has not verified the reward yet.");
+    const response = await fetch(permission.downloadUrl);
+    if (!response.ok) throw new Error("The authorised download could not be retrieved.");
+    const blob = await response.blob();
+    const objectURL = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectURL;
+    link.download = safe(permission.filename || `${release.title || "vic-sound-release"}.mp3`).replace(/[\\/:*?"<>|]/g, "-");
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectURL), 30000);
+    return true;
+  } catch (error) {
+    console.warn("Rewarded download was not completed:", error);
+    notify(error.message || "The rewarded download is not ready.");
+    return false;
+  }
+}
+
+/* =========================================================
+   8. DJ PROFILE — COVER IS OWNED BY CREATOR CATALOGUE
+   Creator publishes the DJ image; Listener only reads it.
+   ========================================================= */
+
+function applyDJProfile(profile = {}) {
+  state.djProfile = {
+    name: safe(profile.name || VIC_CONFIG.DJ.fallbackName),
+    subtitle: safe(profile.subtitle || VIC_CONFIG.DJ.fallbackSubtitle),
+    cover: safe(profile.cover_url || profile.cover || VIC_CONFIG.DJ.fallbackCover)
+  };
+
+  const small = byId("favoriteDjCover");
+  const large = byId("djCoverLarge");
+
+  [small, large].forEach(element => {
+    if (!element) return;
+    element.style.backgroundImage = state.djProfile.cover
+      ? `linear-gradient(0deg,rgba(0,0,0,.12),rgba(0,0,0,.12)),url("${state.djProfile.cover.replace(/["\\]/g, "")}")`
+      : "";
+    element.style.backgroundSize = "cover";
+    element.style.backgroundPosition = "center";
+    element.classList.toggle("has-dj-cover", Boolean(state.djProfile.cover));
+  });
+
+  const cardTitle = $(".favorite-dj-card h2");
+  const cardSubtitle = $(".favorite-dj-card p");
+  if (cardTitle) cardTitle.textContent = state.djProfile.name;
+  if (cardSubtitle) cardSubtitle.textContent = state.djProfile.subtitle;
+
+  const djTitle = $("#djOverlay .overlay-head b");
+  const djSubtitle = $("#djOverlay .overlay-head small");
+  if (djTitle) djTitle.textContent = state.djProfile.name;
+  if (djSubtitle) djSubtitle.textContent = state.djProfile.subtitle;
+}
+
+async function loadDJProfile() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) {
+    applyDJProfile();
+    return;
+  }
+  try {
+    const profile = await serviceRequest(VIC_CONFIG.SERVICES.djProfile);
+    applyDJProfile(profile || {});
+  } catch (error) {
+    console.info("Using the saved DJ artwork until Creator profile is available.");
+    applyDJProfile();
+  }
+}
+
+/* =========================================================
+   9. HOME, CATEGORY AND SEARCH
+   A playback queue is built from the exact list the user chose.
+   ========================================================= */
+
+function filteredSongs() {
+  const query = state.query.trim().toLowerCase();
+  return state.songs.filter(song => {
+    const tags = [...song.cat, ...song.mood].map(x => safe(x).toLowerCase());
+    const categoryMatch = state.category === "All" ||
+      tags.includes(state.category.toLowerCase());
+    const searchMatch = !query ||
+      song.title.toLowerCase().includes(query) ||
+      song.artist.toLowerCase().includes(query) ||
+      song.album.toLowerCase().includes(query);
+    return categoryMatch && searchMatch;
+  });
+}
+
+function renderHome() {
+  const box = byId("homeMusicList");
+  if (!box) return;
+  const songs = filteredSongs();
+
+  if (!songs.length) {
+    box.innerHTML = `<div class="empty-state"><b>No music found</b><span>Try another search or category.</span></div>`;
+    return;
+  }
+
+  box.innerHTML = songs.map(song => `
+    <article class="music-row ${songKey(song.id) === songKey(state.currentId) ? "playing" : ""}">
+      <button class="music-main" data-play="${escapeHTML(song.id)}" aria-label="Play ${escapeHTML(song.title)}">
+        <img class="cover" src="${escapeHTML(song.cover)}" alt="">
+      </button>
+      <button class="music-main" data-play="${escapeHTML(song.id)}">
+        <b>${escapeHTML(song.title)}</b>
+        <small>${escapeHTML(song.artist)}</small>
+      </button>
+      <span class="playing-bars">▮▮▮</span>
+      <button class="favorite-toggle ${isSongFavorite(song.id) ? "active" : ""}"
+        data-fav="${escapeHTML(song.id)}"
+        aria-label="${isSongFavorite(song.id) ? "In favorites" : "Add to favorites"}">
+        ${isSongFavorite(song.id) ? "♥" : "♡"}
+      </button>
+    </article>
+  `).join("");
+}
+
+
+/* =========================================================
+   10. RELEASES
+   ========================================================= */
