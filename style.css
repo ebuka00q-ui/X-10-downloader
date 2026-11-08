@@ -1185,6 +1185,7 @@ button:active {
   font-size: 11px;
 }
 
+
 /* TIMER */
 
 .timer-options {
@@ -1215,4 +1216,621 @@ button:active {
   box-shadow: 0 0 12px rgba(0,245,160,.12);
 }
 
-  
+.timer-choice {
+  width: 100%;
+  padding: 0 17px;
+  margin-top: 9px;
+  text-align: left;
+}
+
+.timer-choice b {
+  float: right;
+}
+
+.timer-choice.selected {
+  border: 1px solid var(--green);
+  color: var(--green);
+}
+
+/* DJ */
+
+.dj-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.dj-cover-large {
+  width: min(92vw,460px);
+  aspect-ratio: 1.45/1;
+  margin: 22px auto 16px;
+  border-radius: 22px;
+  flex-shrink: 0;
+}
+
+.dj-reply {
+  min-height: 85px;
+  padding: 15px 18px;
+  border: 1px solid rgba(0,245,160,.3);
+  border-radius: 19px;
+  background: rgba(6,27,22,.86);
+}
+
+.dj-reply p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.dj-input {
+  display: grid;
+  grid-template-columns: 48px minmax(0,1fr) 45px;
+  gap: 7px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 7px;
+  border: 1px solid var(--green);
+  border-radius: 19px;
+  background: #061512;
+}
+
+.dj-input input {
+  min-width: 0;
+  height: 42px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.dj-input input::placeholder {
+  color: #78918a;
+}
+
+.dj-input button {
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: rgba(0,245,160,.08);
+}
+
+.dj-input #djMic {
+  border: 1px solid var(--green);
+}
+
+.dj-input #djMic.listening {
+  background: var(--green);
+  color: #00140e;
+}
+
+.voice-limit {
+  margin-top: 8px;
+  text-align: center;
+  color: #688079;
+  font-size: 10px;
+}
+
+.dj-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 12px var(--green);
+}
+
+/* LYRICS */
+
+#lyricsSheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 140;
+  width: min(100%,520px);
+  max-height: 78dvh;
+  overflow: hidden;
+  transform: translate(-50%,110%);
+  padding: 12px 18px max(22px,env(safe-area-inset-bottom));
+  border: 1px solid rgba(0,245,160,.3);
+  border-bottom: 0;
+  border-radius: 26px 26px 0 0;
+  background: #061512;
+  box-shadow: 0 -20px 50px rgba(0,0,0,.55);
+  transition: transform .35s ease;
+}
+
+#lyricsSheet.open {
+  transform: translate(-50%,0);
+}
+
+#lyricsSheet h2 {
+  margin: 4px 0 5px;
+  font-size: 18px;
+}
+
+#lyricsSongTitle {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#lyricsContent {
+  max-height: 58dvh;
+  overflow-y: auto;
+  padding: 14px 4px;
+  text-align: center;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overscroll-behavior: contain;
+}
+
+#lyricsContent .current-line,
+#lyricsContent .active-line {
+  color: var(--green);
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(0,245,160,.25);
+}
+
+#lyricsContent .past-line,
+#lyricsContent .upcoming-line {
+  color: #71867f;
+}
+
+/* NOTIFICATIONS */
+
+.notification-popover {
+  position: fixed;
+  top: 92px;
+  right: max(12px,calc((100vw - 520px)/2 + 12px));
+  z-index: 150;
+  width: min(280px,calc(100vw - 24px));
+  padding: 16px;
+  border: 1px solid rgba(0,245,160,.4);
+  border-radius: 18px;
+  background: rgba(5,25,20,.98);
+  box-shadow: 0 20px 45px rgba(0,0,0,.5);
+}
+
+.notification-popover h3 {
+  margin: 0 0 5px;
+  font-size: 14px;
+}
+
+.notification-popover p {
+  width: 75%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.switch {
+  position: absolute;
+  right: 15px;
+  top: 28px;
+}
+
+.switch input {
+  display: none;
+}
+
+.switch span {
+  display: block;
+  position: relative;
+  width: 42px;
+  height: 23px;
+  border-radius: 999px;
+  background: #1b3831;
+}
+
+.switch span:after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #9fb4ad;
+  transition: .2s;
+}
+
+.switch input:checked + span {
+  background: var(--green);
+}
+
+.switch input:checked + span:after {
+  transform: translateX(19px);
+  background: #002319;
+}
+
+/* MODALS */
+
+.hidden {
+  display: none !important;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(8px);
+}
+
+.confirm {
+  width: min(100%,360px);
+  padding: 22px;
+  border: 1px solid var(--green);
+  border-radius: 22px;
+  background: #061512;
+  box-shadow: 0 15px 55px rgba(0,0,0,.5);
+  animation: modalEnter .25s ease both;
+}
+
+.confirm h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.confirm p {
+  margin: 8px 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.confirm > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.confirm button {
+  min-height: 45px;
+  border-radius: 13px;
+  background: #0a2520;
+}
+
+.confirm button:last-child {
+  background: var(--green);
+  color: #00140e;
+  font-weight: 900;
+}
+
+.confirm .danger {
+  background: #d94343;
+  color: #fff;
+}
+
+/* REWARDED DOWNLOAD PANELS */
+
+#rewardDownloadModal,
+#rewardAdStatus {
+  z-index: 220;
+}
+
+#rewardDownloadModal .confirm,
+#rewardAdStatus .confirm {
+  border-color: var(--green);
+  background:
+    radial-gradient(circle at top right,rgba(0,245,160,.12),transparent 45%),
+    #061512;
+}
+
+#rewardDownloadModal h2,
+#rewardAdStatus h2 {
+  color: var(--green);
+}
+
+#rewardDownloadModal button,
+#rewardAdStatus button {
+  transition: opacity .2s ease,background .2s ease;
+}
+
+#rewardDownloadModal button:disabled,
+#rewardAdStatus button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+#rewardDownloadMessage,
+#rewardAdMessage {
+  line-height: 1.6;
+}
+
+#cancelRewardDownload,
+#closeRewardAdStatus {
+  border: 1px solid rgba(0,245,160,.35);
+  background: #0a2520;
+  color: var(--text);
+}
+
+#confirmRewardDownload {
+  background: var(--green);
+  color: #00140e;
+  font-weight: 900;
+}
+
+/* BOTTOM AD PLACEMENT */
+
+.bottom-ad-placement {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav) + env(safe-area-inset-bottom));
+  z-index: 65;
+  width: min(100%,520px);
+  height: 0;
+  overflow: hidden;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2,9,7,.98);
+  border-top: 0 solid rgba(0,245,160,.2);
+  transition: height .25s ease;
+}
+
+/* JavaScript adds this class only when an ad is actually available. */
+body.has-ad .bottom-ad-placement {
+  height: var(--ad-height);
+  border-top-width: 1px;
+}
+
+body.has-ad .bottom-nav {
+  bottom: calc(var(--ad-height) + env(safe-area-inset-bottom));
+}
+
+body.has-ad .mini-player {
+  bottom: calc(var(--nav) + var(--ad-height) + 7px);
+   }
+
+/* BOTTOM NAVIGATION */
+
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 70;
+  width: min(100%,520px);
+  height: calc(var(--nav) + env(safe-area-inset-bottom));
+  padding: 6px 14px max(7px,env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  border-top: 1px solid rgba(0,245,160,.38);
+  background: rgba(2,9,7,.96);
+  backdrop-filter: blur(18px);
+  transition: bottom .25s ease;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  color: #c1d0cc;
+  font-size: 10px;
+}
+
+.nav-item > span {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.nav-item.active {
+  color: var(--green);
+}
+
+.nav-dot {
+  display: none;
+  top: 7px;
+  right: calc(50% - 19px);
+}
+
+.nav-dot.show {
+  display: block;
+}
+
+/* EMPTY STATES */
+
+.empty-state {
+  grid-column: 1/-1;
+  padding: 30px 10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-state b,
+.empty-state span {
+  display: block;
+}
+
+.empty-state b {
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+/* SMALL PHONES */
+
+@media (max-width:370px) {
+
+  .app-header {
+    grid-template-columns: 44px 1fr auto;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .app-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .brand h1 {
+    font-size: 22px;
+  }
+
+  .screen {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .music-row {
+    grid-template-columns: 48px minmax(0,1fr) auto;
+  }
+
+  .music-row .row-more {
+    display: none;
+  }
+
+  .cover {
+    width: 48px;
+    height: 48px;
+  }
+
+  .favorite-grid,
+  .collection-grid {
+    gap: 8px;
+  }
+
+  .favorite-dj-card {
+    grid-template-columns: 78px 1fr;
+  }
+
+  .dj-cover-small {
+    width: 78px;
+    height: 70px;
+  }
+
+  .release-card {
+    grid-template-columns: 68px minmax(0,1fr) auto;
+    gap: 8px;
+  }
+
+  .release-cover {
+    width: 68px;
+    height: 68px;
+  }
+
+  .release-action {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+}
+
+/* LARGER SCREENS */
+
+@media (min-width:600px) {
+
+  .screen {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .full-cover {
+    width: min(70vw,380px);
+    margin-top: 24px;
+  }
+
+  .dj-cover-large {
+    width: min(75vw,420px);
+  }
+
+  .favorite-grid,
+  .collection-grid {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+  }
+}
+
+/* ANIMATIONS */
+
+@keyframes wave {
+  from {
+    transform: scaleY(.35);
+    opacity: .35;
+  }
+
+  to {
+    transform: scaleY(1.35);
+    opacity: 1;
+  }
+}
+
+@keyframes bars {
+  from {
+    transform: scaleY(.55);
+  }
+
+  to {
+    transform: scaleY(1.15);
+  }
+}
+
+@keyframes offlinePulse {
+  0%,100% {
+    box-shadow: 0 0 0 rgba(0,245,160,0);
+  }
+
+  50% {
+    box-shadow: 0 0 15px rgba(0,245,160,.4);
+  }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+     }
+
+
+/* Vic-sound playback modes: restrained monochrome icons with one green active state. */
+#shuffle,
+#repeat,
+#playerRepeatTop,
+#queueShuffle,
+#queueRepeat {
+  color: var(--muted, #8da59d);
+  transition: color .18s ease, opacity .18s ease;
+}
+
+#shuffle.active,
+#repeat.active,
+#playerRepeatTop.active,
+#queueShuffle.active,
+#queueRepeat.active {
+  color: var(--green, #00f5a0);
+}
+
+.player-overlay {
+  touch-action: pan-y;
+}
+
+.player-overlay .full-cover {
+  touch-action: pan-y;
+   }
+   
