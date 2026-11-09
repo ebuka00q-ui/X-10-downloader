@@ -868,6 +868,151 @@ function removeQueueSong(index) {
 function openQueue() { byId("queueOverlay")?.classList.add("open"); byId("queueOverlay")?.setAttribute("aria-hidden", "false"); state.queueOpen = true; renderQueue(); }
 function closeQueue() { byId("queueOverlay")?.classList.remove("open"); byId("queueOverlay")?.setAttribute("aria-hidden", "true"); state.queueOpen = false; }
 
+
 /* =========================================================
    15. SHUFFLE AND REPEAT
+   ========================================================= */
+function updateModeButtons() {
+  const shuffleButtons = [byId("shuffle"), byId("queueShuffle")].filter(Boolean);
+  const repeatButtons = [byId("repeat"), byId("playerRepeatTop"), byId("queueRepeat")].filter(Boolean);
+  shuffleButtons.forEach(button => { button.textContent = "⤨"; button.classList.toggle("active", state.shuffle); button.setAttribute("aria-pressed", String(state.shuffle)); });
+  const repeatSymbol = state.repeatMode === 2 ? "↻¹" : "↻";
+  repeatButtons.forEach(button => { button.textContent = repeatSymbol; button.classList.toggle("active", state.repeatMode !== 0); button.dataset.mode = String(state.repeatMode); button.setAttribute("aria-label", ["Repeat off", "Repeat all", "Repeat one"][state.repeatMode]); button.setAttribute("aria-pressed", String(state.repeatMode !== 0)); });
+}
+function toggleShuffle() { state.shuffle = !state.shuffle; updateModeButtons(); notify(state.shuffle ? "Shuffle is on." : "Shuffle is off."); }
+function cycleRepeat() { state.repeatMode = (state.repeatMode + 1) % 3; updateModeButtons(); notify(["Repeat is off.", "Repeat all is on.", "Repeat one is on."][state.repeatMode]); }
+
+/* =========================================================
+   16. FAVORITES AND COLLECTIONS
+   ========================================================= */
+function collectionContains(collection, id) { return collection.songs.some(songId => songKey(songId) === songKey(id)); }
+function isSongFavorite(id) { return state.collections.some(collection => collectionContains(collection, id)); }
+function saveCollections() { writeJSON(VIC_CONFIG.STORAGE.collections, state.collections); renderFavorites(); renderHome(); updatePlayer(); }
+
+function toggleFavorite(id) {
+  const key = songKey(id); const memberships = state.collections.filter(collection => collectionContains(collection, key));
+  if (memberships.length) { openCollectionPicker(key, memberships.map(item => item.id)); }
+  else if (!state.collections.length) { createCollectionForSong(key); }
+  else { openCollectionPicker(key, []); }
+}
+
+function createCollectionForSong(songId) {
+  askText("Name your collection", "Collection name", "", name => {
+    const collection = { id: makeId(), name, songs: [songKey(songId)] };
+    state.collections.push(collection); saveCollections(); closeModal(); notify(`"${name}" has been created.`);
+  });
+}
+
+function openCollectionPicker(songId, selectedIds = []) {
+  const selected = new Set(selectedIds.map(songKey)); const song = getSong(songId);
+  const body = `<p class="vic-modal-note">Choose the collections where this song should appear.</p>
+    <div class="vic-check-list">
+      ${state.collections.map(collection => `<label class="vic-check-row"><input type="checkbox" value="${escapeHTML(collection.id)}" ${selected.has(songKey(collection.id)) ? "checked" : ""}><span>${escapeHTML(collection.name)}</span><small>${collection.songs.length} songs</small></label>`).join("")}
+    </div><button type="button" class="vic-secondary-action" id="vicCreateCollectionFromPicker">+ Create a new collection</button>`;
+
+  openModal({
+    title: song ? `Save ${song.title}` : "Choose collections", body,
+    buttons: [
+      { label: "Cancel" },
+      { label: "Done", action: () => {
+          const checked = $$(".vic-check-list input:checked").map(input => input.value);
+          state.collections.forEach(collection => {
+            const has = collectionContains(collection, songId); const wants = checked.includes(songKey(collection.id));
+            if (wants && !has) collection.songs.push(songKey(songId));
+            if (!wants && has) { collection.songs = collection.songs.filter(id => songKey(id) !== songKey(songId)); }
+          });
+          state.collections = state.collections.filter(collection => collection.songs.length);
+          saveCollections(); closeModal();
+        }
+      }
+    ],
+    onOpen: panel => {
+      $("#vicCreateCollectionFromPicker", panel)?.addEventListener("click", () => {
+        askText("Name your collection", "Collection name", "", name => {
+          state.collections.push({ id: makeId(), name, songs: [songKey(songId)] }); saveCollections(); closeModal();
+          openCollectionPicker(songId, [state.collections.at(-1).id]);
+        });
+      });
+    }
+  });
+}
+
+function renderFavorites() {
+  const box = byId("favoriteGrid"); if (!box) return;
+  const count = byId("favoriteCount"); if (count) count.textContent = `${state.collections.length} collection${state.collections.length === 1 ? "" : "s"}`;
+  
+  if (!state.collections.length) { box.innerHTML = `<div class="empty-state"><b>No collections yet</b><span>Tap a song's heart to create your first collection.</span></div>`; return; }
+  
+  const emptyCover = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" rx="18" fill="#04130f"/><circle cx="80" cy="80" r="53" fill="none" stroke="#00f5a0" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="58" fill="#00f5a0">🎵</text></svg>');
+
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = collectionSongs(collection.id)[0];
+    const songCount = collection.songs.length;
+    return `<article class="collection-card">
+        <button class="favorite-card-open collection-open" data-collection-open="${escapeHTML(collection.id)}" aria-label="Open ${escapeHTML(collection.name)}">
+          <img src="${escapeHTML(firstSong?.cover || emptyCover)}" alt="">
+          <div class="collection-card-info">
+            <b>${escapeHTML(collection.name)}</b>
+            <small>${songCount} song${songCount === 1 ? "" : "s"}</small>
+          </div>
+        </button>
+        <button class="collection-card-more" data-collection-menu="${escapeHTML(collection.id)}" aria-label="Collection options">⋮</button>
+      </article>`;
+  }).join("");
+}
+
+function collectionSongs(id) { const collection = state.collections.find(item => songKey(item.id) === songKey(id)); return collection ? collection.songs.map(getSong).filter(Boolean) : []; }
+function openCollection(id) { const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return; state.currentCollection = collection.id; showCollectionSongs(collection); }
+
+function showCollectionSongs(collection) {
+  const songs = collectionSongs(collection.id);
+  const body = `<div class="vic-collection-track-list">${songs.map(song => `<label class="vic-track-choice"><input type="checkbox" value="${escapeHTML(song.id)}" data-remove-song><img src="${escapeHTML(song.cover)}" alt=""><span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></span></label>`).join("")}</div>${songs.length ? "" : `<p class="vic-modal-note">This collection has no songs yet.</p>`}`;
+  openModal({
+    title: collection.name, body,
+    buttons: [
+      { label: "Close" },
+      { label: "Play collection", action: () => { if (!songs.length) { notify("Add music to this collection first."); return; } closeModal(); playFromList(songs, 0, { type: "collection", id: collection.id, label: collection.name }); } },
+      { label: "Remove selected", danger: true, action: () => {
+          const selected = $$("[data-remove-song]:checked").map(input => songKey(input.value));
+          if (!selected.length) { notify("Select at least one song to remove."); return; }
+          collection.songs = collection.songs.filter(id => !selected.includes(songKey(id)));
+          state.collections = state.collections.filter(item => item.songs.length); saveCollections(); closeModal(); notify("Selected songs removed.");
+        }
+      }
+    ]
+  });
+}
+
+function collectionMenu(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  openModal({
+    title: collection.name, body: `<p class="vic-modal-note">Manage this collection.</p>`,
+    buttons: [
+      { label: "Cancel" },
+      { label: "Add songs", action: () => { closeModal(); openAddSongs(collection.id); } },
+      { label: "Remove songs", action: () => { closeModal(); showCollectionSongs(collection); } },
+      { label: "Rename", action: () => { closeModal(); askText("Rename collection", "New collection name", collection.name, name => { collection.name = name; saveCollections(); closeModal(); }); } },
+      { label: "Remove collection", danger: true, action: () => { state.collections = state.collections.filter(item => songKey(item.id) !== songKey(id)); saveCollections(); closeModal(); notify("Collection removed. Your music is safe."); } }
+    ]
+  });
+}
+
+function openAddSongs(collectionId) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(collectionId)); if (!collection) return;
+  const body = `<p class="vic-modal-note">Select one or more songs, then press Done.</p><div class="vic-collection-track-list">${state.songs.map(song => `<label class="vic-track-choice"><input type="checkbox" value="${escapeHTML(song.id)}" ${collectionContains(collection, song.id) ? "checked" : ""}><img src="${escapeHTML(song.cover)}" alt=""><span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></span></label>`).join("")}</div>`;
+  openModal({
+    title: `Add to ${collection.name}`, body,
+    buttons: [
+      { label: "Cancel" },
+      { label: "Done", action: () => {
+          const selected = $$(".vic-collection-track-list input:checked").map(input => songKey(input.value));
+          collection.songs = [...new Set(selected)]; state.collections = state.collections.filter(item => item.songs.length); saveCollections(); closeModal(); notify("Collection updated.");
+        }
+      }
+    ]
+  });
+}
+
+/* =========================================================
+   17. LYRICS
    ========================================================= */
