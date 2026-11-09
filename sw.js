@@ -1,13 +1,6 @@
 /* =========================================================
    VIC-SOUND LISTENER — SERVICE WORKER
-   Version: v4
-
-   IMPORTANT
-   - New worker waits for the listener to press Update.
-   - Only Vic-sound app-shell caches are removed on activation.
-   - Music/audio caches, IndexedDB and local user data are preserved.
-   - Audio/API requests are never answered with an HTML page.
-   - Push requires a real PushSubscription and a trusted backend sender.
+   Version: v5
    ========================================================= */
 
 'use strict';
@@ -29,17 +22,9 @@ const NOTIFICATION_SETTING = 'releaseNotificationsEnabled';
 
 function openPreferencesDB() {
   return new Promise((resolve, reject) => {
-    if (!('indexedDB' in self)) {
-      reject(new Error('IndexedDB is unavailable.'));
-      return;
-    }
+    if (!('indexedDB' in self)) { reject(new Error('IndexedDB is unavailable.')); return; }
     const request = indexedDB.open(PREF_DB, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(PREF_STORE)) {
-        db.createObjectStore(PREF_STORE);
-      }
-    };
+    request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains(PREF_STORE)) { db.createObjectStore(PREF_STORE); } };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
@@ -55,12 +40,7 @@ async function readNotificationPreference() {
       request.onsuccess = () => resolve(request.result === true);
       request.onerror = () => reject(request.error);
     });
-  } catch (error) {
-    // Fail closed: no push notification without a saved opt-in.
-    return false;
-  } finally {
-    db?.close();
-  }
+  } catch (error) { return false; } finally { db?.close(); }
 }
 
 async function writeNotificationPreference(enabled) {
@@ -69,25 +49,20 @@ async function writeNotificationPreference(enabled) {
     await new Promise((resolve, reject) => {
       const tx = db.transaction(PREF_STORE, 'readwrite');
       tx.objectStore(PREF_STORE).put(enabled === true, NOTIFICATION_SETTING);
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
     });
-  } finally {
-    db.close();
-  }
+  } finally { db.close(); }
 }
 
-/* INSTALL: cache the app shell, but do not skip the waiting phase. */
+/* INSTALL */
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await cache.addAll(APP_FILES);
-    // Deliberately no self.skipWaiting() here.
   })());
 });
 
-/* ACTIVATE: remove old shell versions only. Never touch music caches. */
+/* ACTIVATE: Removes old shell versions only. Never touches music caches. */
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
@@ -96,24 +71,17 @@ self.addEventListener('activate', event => {
       .map(name => caches.delete(name)));
     await self.clients.claim();
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of windows) {
-      client.postMessage({ type: 'VIC_SOUND_WORKER_ACTIVATED', version: SHELL_VERSION });
-    }
+    for (const client of windows) { client.postMessage({ type: 'VIC_SOUND_WORKER_ACTIVATED', version: SHELL_VERSION }); }
   })());
 });
 
-/*
- * FETCH RULES
- * - App navigation may use the cached app shell while offline.
- * - App shell files use cache-first.
- * - Audio, API, downloads and all other resources are not intercepted.
- *   In particular, an unavailable audio file can NEVER receive index.html.
- */
+/* FETCH: Network first for shell, bypass for API/Audio */
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
+  
+  // Ignore external requests (like audio from SoundHelix) - handled by app.js cache
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
@@ -128,61 +96,35 @@ self.addEventListener('fetch', event => {
       } catch (error) {
         const cached = await caches.match('./index.html');
         if (cached) return cached;
-        return new Response('Vic-sound app shell is not available offline.', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
+        return new Response('Vic-sound app shell is not available offline.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
       }
     })());
     return;
   }
 
-  const isShellAsset = APP_FILES.some(path =>
-    new URL(path, self.registration.scope).href === url.href
-  );
-
+  const isShellAsset = APP_FILES.some(path => new URL(path, self.registration.scope).href === url.href);
   if (isShellAsset) {
     event.respondWith((async () => {
       const cache = await caches.open(SHELL_CACHE);
       const cached = await cache.match(request);
       if (cached) return cached;
-      // Return the actual network response or its error. Never substitute HTML.
       return fetch(request);
     })());
   }
-  // Deliberately do not handle audio, API, signed media or arbitrary files.
 });
 
-/* PUSH: payload.kind may be 'home' or 'latest'. */
+/* PUSH NOTIFICATIONS */
 self.addEventListener('push', event => {
   event.waitUntil((async () => {
     if (!(await readNotificationPreference())) return;
-
     let payload = {};
-    try {
-      payload = event.data ? event.data.json() : {};
-    } catch (error) {
-      payload = { body: event.data ? event.data.text() : 'New music is available.' };
-    }
-
+    try { payload = event.data ? event.data.json() : {}; } catch (error) { payload = { body: event.data ? event.data.text() : 'New music is available.' }; }
     const kind = payload.kind === 'home' ? 'home' : 'latest';
-    const title = String(payload.title || (kind === 'home'
-      ? 'New music added to Vic-sound'
-      : 'New release on Vic-sound'));
-    const body = String(payload.body || (kind === 'home'
-      ? 'New music is ready in Home.'
-      : 'A new release is waiting in Latest.'));
+    const title = String(payload.title || (kind === 'home' ? 'New music added to Vic-sound' : 'New release on Vic-sound'));
+    const body = String(payload.body || (kind === 'home' ? 'New music is ready in Home.' : 'A new release is waiting in Latest.'));
     const target = kind === 'home' ? './?screen=home' : './?screen=latest';
     const itemId = String(payload.musicId || payload.releaseId || payload.id || kind);
-
-    await self.registration.showNotification(title, {
-      body,
-      icon: './file_000000008d2881f49ddcc5378e7331fa.png',
-      badge: './file_000000008d2881f49ddcc5378e7331fa.png',
-      tag: `vic-sound-${kind}-${itemId}`,
-      renotify: false,
-      data: { url: target, kind, itemId }
-    });
+    await self.registration.showNotification(title, { body, icon: './file_000000008d2881f49ddcc5378e7331fa.png', badge: './file_000000008d2881f49ddcc5378e7331fa.png', tag: `vic-sound-${kind}-${itemId}`, renotify: false, data: { url: target, kind, itemId } });
   })());
 });
 
@@ -192,14 +134,10 @@ self.addEventListener('notificationclick', event => {
     const data = event.notification.data || {};
     const targetURL = new URL(data.url || './?screen=latest', self.registration.scope).href;
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-
     for (const client of windows) {
       if ('focus' in client) {
         await client.focus();
-        client.postMessage({
-          type: data.kind === 'home' ? 'VIC_SOUND_OPEN_HOME' : 'VIC_SOUND_OPEN_LATEST',
-          itemId: data.itemId || null
-        });
+        client.postMessage({ type: data.kind === 'home' ? 'VIC_SOUND_OPEN_HOME' : 'VIC_SOUND_OPEN_LATEST', itemId: data.itemId || null });
         if ('navigate' in client) await client.navigate(targetURL);
         return;
       }
@@ -208,29 +146,15 @@ self.addEventListener('notificationclick', event => {
   })());
 });
 
-/* APP MESSAGES */
+/* MESSAGES */
 self.addEventListener('message', event => {
   const data = event.data || {};
-
-  if (data.type === 'SKIP_WAITING') {
-    // Only the visible Update button should send this message.
-    self.skipWaiting();
-    return;
-  }
-
-  if (data.type === 'SET_RELEASE_NOTIFICATIONS') {
-    event.waitUntil(writeNotificationPreference(data.enabled === true));
-    return;
-  }
-
+  if (data.type === 'SKIP_WAITING') { self.skipWaiting(); return; }
+  if (data.type === 'SET_RELEASE_NOTIFICATIONS') { event.waitUntil(writeNotificationPreference(data.enabled === true)); return; }
   if (data.type === 'CLEAR_OLD_SHELL_CACHES') {
     event.waitUntil((async () => {
       const names = await caches.keys();
-      await Promise.all(names
-        .filter(name => name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE)
-        .map(name => caches.delete(name)));
+      await Promise.all(names.filter(name => name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE).map(name => caches.delete(name)));
     })());
   }
 });
-
-                   
