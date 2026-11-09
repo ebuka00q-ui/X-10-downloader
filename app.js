@@ -312,4 +312,47 @@ function normaliseSong(row = {}) {
 
 function applyTestMusic() {
   if (!VIC_TEST_MODE) return state.songs;
-  const realSongs = state.songs.filter(so
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+  const ids = new Set(realSongs.map(songKey));
+  const tests = VIC_TEST_SONGS.map(normaliseSong).filter(song => !ids.has(songKey(song.id)));
+  state.songs = [...tests, ...realSongs];
+  return state.songs;
+}
+
+async function loadSongs() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.catalogue);
+      state.songs = (result?.songs || result || []).map(normaliseSong);
+      applyTestMusic(); saveLocalData(); renderHome(); return state.songs;
+    } catch (error) {}
+  }
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.songsTable).select("*").eq("published", true).order("created_at", { ascending: false });
+      if (error) throw error;
+      state.songs = (data || []).map(normaliseSong);
+      applyTestMusic(); saveLocalData(); renderHome(); return state.songs;
+    } catch (error) {}
+  }
+  applyTestMusic(); renderHome(); return state.songs;
+}
+
+async function loadReleases() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.releases);
+      state.releases = result?.releases || result || [];
+      saveLocalData(); state.newRelease = state.releases.length > 0; renderLatest(); updateDots(); return state.releases;
+    } catch (error) {}
+  }
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.releasesTable).select("*").eq("published", true).order("created_at", { ascending: false });
+      if (error) throw error;
+      state.releases = data || []; saveLocalData();
+    } catch (error) {}
+  }
+  state.newRelease = state.releases.length > 0;
+  renderLatest(); updateDots(); return state.releases;
+}
