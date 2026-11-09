@@ -1269,6 +1269,117 @@ function back() {
   notify("Press back once more to exit Vic-sound.");
 }
 
+
 /* =========================================================
    24. EVENT LISTENERS
-   ===========================
+   ========================================================= */
+function bindEvents() {
+  $$(".nav-item").forEach(button => button.addEventListener("click", () => go(button.dataset.screen)));
+  byId("searchToggle")?.addEventListener("click", openSearch);
+  byId("searchClose")?.addEventListener("click", closeSearch);
+  byId("searchInput")?.addEventListener("input", event => { state.query = event.target.value; renderHome(); });
+  byId("categoryRow")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-category]"); if (!button) return;
+    state.category = button.dataset.category; $$(".category").forEach(item => item.classList.toggle("active", item === button)); renderHome();
+  });
+  byId("homeMusicList")?.addEventListener("click", event => {
+    const favorite = event.target.closest("[data-fav]"); if (favorite) { toggleFavorite(favorite.dataset.fav); return; }
+    const play = event.target.closest("[data-play]"); if (play) playSongById(play.dataset.play);
+  });
+  byId("favoriteGrid")?.addEventListener("click", event => {
+    const open = event.target.closest("[data-collection-open]"); if (open) { openCollection(open.dataset.collectionOpen); return; }
+    const menu = event.target.closest("[data-collection-menu]"); if (menu) collectionMenu(menu.dataset.collectionMenu);
+  });
+  byId("favoriteDjCover")?.addEventListener("click", openDJ);
+  $(".favorite-dj-card")?.addEventListener("click", event => { if (event.target.closest("#favoriteDjPlay")) return; openDJ(); });
+  byId("favoriteDjPlay")?.addEventListener("click", event => { event.stopPropagation(); speakDJIntro(); });
+  byId("miniOpen")?.addEventListener("click", openPlayer);
+  byId("miniPlay")?.addEventListener("click", toggle);
+  byId("miniPrev")?.addEventListener("click", prev);
+  byId("miniNext")?.addEventListener("click", next);
+  setupPlayerSwipe();
+  byId("playerBack")?.addEventListener("click", back);
+  byId("playPause")?.addEventListener("click", toggle);
+  byId("prev")?.addEventListener("click", prev);
+  byId("next")?.addEventListener("click", next);
+  byId("openQueueFromPlayer")?.addEventListener("click", openQueue);
+  byId("playerFav")?.addEventListener("click", () => { const song = getCurrentSong(); if (song) toggleFavorite(song.id); });
+  byId("shuffle")?.addEventListener("click", toggleShuffle);
+  byId("repeat")?.addEventListener("click", cycleRepeat);
+  byId("playerRepeatTop")?.addEventListener("click", cycleRepeat);
+  byId("progress")?.addEventListener("input", event => { if (audio.duration) audio.currentTime = Number(event.target.value) / 100 * audio.duration; });
+  byId("queueBack")?.addEventListener("click", back);
+  byId("queueClose")?.addEventListener("click", closeQueue);
+  byId("queueFav")?.addEventListener("click", () => { const song = getCurrentSong(); if (song) toggleFavorite(song.id); });
+  byId("queueTimer")?.addEventListener("click", openTimer);
+  byId("queueList")?.addEventListener("click", event => {
+    const fav = event.target.closest("[data-fav]"); if (fav) { toggleFavorite(fav.dataset.fav); return; }
+    const play = event.target.closest("[data-queue-play]"); if (play) { const index = state.queue.findIndex(item => songKey(item.id) === songKey(play.dataset.queuePlay)); if (index >= 0) { state.queueIndex = index; const entry = currentQueueEntry(); if (entry) entry.repeatsLeft = entry.repeatTotal; loadSong(getSong(play.dataset.queuePlay), true, { keepQueue: true }); } return; }
+    const repeat = event.target.closest("[data-queue-repeat]"); if (repeat) { const now = Date.now(); const lastTap = Number(repeat.dataset.lastTap || 0); repeat.dataset.lastTap = String(now); if (now - lastTap <= 350) { const index = Number(repeat.dataset.queueRepeat); const entry = state.queue[index]; if (entry && entry.repeatTotal < 5) setQueueRepeat(index, entry.repeatTotal + 1); } return; }
+    const remove = event.target.closest("[data-queue-remove]"); if (remove) removeQueueSong(Number(remove.dataset.queueRemove));
+  });
+  const queueShuffleButton = $('[aria-label="Shuffle queue"]'); if (queueShuffleButton) { queueShuffleButton.id = "queueShuffle"; queueShuffleButton.addEventListener("click", toggleShuffle); }
+  const queueRepeatButton = $('[aria-label="Repeat queue"]'); if (queueRepeatButton) { queueRepeatButton.id = "queueRepeat"; queueRepeatButton.addEventListener("click", cycleRepeat); }
+  $$(".timer-options button").forEach(button => button.addEventListener("click", () => setTimer(Number(button.dataset.min))));
+  byId("endTrack")?.addEventListener("click", setEndTrackTimer);
+  byId("timerOff")?.addEventListener("click", offTimer);
+  byId("lyricsButton")?.addEventListener("click", openLyrics);
+  byId("lyricsSheet")?.addEventListener("click", event => { if (event.target === byId("lyricsSheet")) closeLyrics(); });
+  byId("djBack")?.addEventListener("click", back);
+  byId("djSend")?.addEventListener("click", () => { const input = byId("djInput"); const value = input?.value || ""; if (input) input.value = ""; command(value); });
+  byId("djInput")?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); byId("djSend")?.click(); } });
+  byId("djMic")?.addEventListener("pointerdown", event => { event.preventDefault(); startVoice(); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(type => byId("djMic")?.addEventListener(type, stopVoice));
+  byId("latestList")?.addEventListener("click", event => { const button = event.target.closest("[data-release-download]"); if (button) downloadRelease(button.dataset.releaseDownload); });
+  byId("latestBell")?.addEventListener("click", () => byId("notificationPopover")?.classList.toggle("hidden"));
+  byId("headerBell")?.addEventListener("click", () => byId("notificationPopover")?.classList.toggle("hidden"));
+  byId("notificationSwitch")?.addEventListener("change", event => setNotifications(event.target.checked));
+  byId("cancelExit")?.addEventListener("click", closeModal);
+  byId("confirmExit")?.addEventListener("click", () => { byId("exitModal")?.classList.add("hidden"); notify("You can now leave Vic-sound using your device controls."); });
+
+  let draggedQueueIndex = null;
+  byId("queueList")?.addEventListener("dragstart", event => { const row = event.target.closest("[data-queue-index]"); if (!row) return; draggedQueueIndex = Number(row.dataset.queueIndex); event.dataTransfer.effectAllowed = "move"; });
+  byId("queueList")?.addEventListener("dragover", event => { if (event.target.closest("[data-queue-index]")) event.preventDefault(); });
+  byId("queueList")?.addEventListener("drop", event => { event.preventDefault(); const row = event.target.closest("[data-queue-index]"); if (!row || draggedQueueIndex === null) return; const targetIndex = Number(row.dataset.queueIndex); const [moved] = state.queue.splice(draggedQueueIndex, 1); state.queue.splice(targetIndex, 0, moved); const currentIndex = state.queue.findIndex(item => songKey(item.id) === songKey(state.currentId)); state.queueIndex = Math.max(0, currentIndex); draggedQueueIndex = null; renderQueue(); });
+}
+
+
+/* =========================================================
+   25. BACK BUTTON SUPPORT
+   ========================================================= */
+function setupBackNavigation() {
+  let lastHomeBackAt = 0; const backTrap = { vicSound: true };
+  history.replaceState(backTrap, "", location.href); history.pushState(backTrap, "", location.href);
+  window.addEventListener("popstate", () => {
+    const panelOpen = state.modalOpen || state.lyricsOpen || state.queueOpen || state.djOpen || state.player || byId("timerSheet")?.classList.contains("open") || byId("searchPanel")?.classList.contains("open") || (byId("notificationPopover") && !byId("notificationPopover").classList.contains("hidden"));
+    if (panelOpen || state.screen !== "home") { history.pushState(backTrap, "", location.href); back(); lastHomeBackAt = 0; return; }
+    const now = Date.now(); if (now - lastHomeBackAt <= 2200) { lastHomeBackAt = 0; return; }
+    lastHomeBackAt = now; history.pushState(backTrap, "", location.href); notify("Press back once more to exit Vic-sound.");
+  });
+}
+
+/* =========================================================
+   26. INITIALISE
+   ========================================================= */
+async function init() {
+  injectVicEnhancementStyles(); getAnonymousId(); loadLocalData(); applyTestMusic(); setupVoice(); bindEvents();
+  renderHome(); renderFavorites(); renderLatest(); updateDots(); updateModeButtons();
+  await getDownloadedSongs(); updateOfflineCount(); applyDJProfile(); await loadDJProfile();
+  if (state.songs.length) { makeQueue(state.songs, { type: "catalogue", label: "Your Music" }); setCurrentSong(state.songs[0]); }
+  await connectBackend(); await loadSongs(); await loadReleases(); await loadMonetizationSettings();
+  if (state.songs.length && !state.currentId) { makeQueue(state.songs, { type: "catalogue", label: "Your Music" }); setCurrentSong(state.songs[0]); }
+  if (navigator.onLine) prepareOfflineMusic();
+  if ("storage" in navigator && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  window.addEventListener("online", () => { loadSongs(); loadReleases(); loadDJProfile(); loadMonetizationSettings(); prepareOfflineMusic(); });
+  window.addEventListener("offline", updateOfflineCount);
+  setupBackNavigation();
+}
+
+window.VicSoundListener = {
+  connectBackend, loadSongs, loadReleases, loadDJProfile, loadMonetizationSettings,
+  applyMonetizationSettings, applyDJProfile, playSongById, playDJNow,
+  toggleFavorite, openCollection, getState: () => state, testMode: VIC_TEST_MODE,
+  clearTestCache: async () => { if ("caches" in window) await caches.delete(VIC_TEST_CONFIG.cacheName); state.downloaded = new Set([...state.downloaded].filter(id => !String(id).startsWith("vic-tst-"))); updateOfflineCount(); }
+};
+
+init();
