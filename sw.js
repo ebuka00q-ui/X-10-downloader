@@ -1,6 +1,6 @@
 /* =========================================================
    VIC-SOUND LISTENER — SERVICE WORKER
-   Version: v5
+   Version: v6
    ========================================================= */
 
 'use strict';
@@ -59,6 +59,7 @@ self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await cache.addAll(APP_FILES);
+    // Do not skip waiting here. The app will show a prompt to the user.
   })());
 });
 
