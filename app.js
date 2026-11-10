@@ -295,4 +295,137 @@ function loadLocalData() {
   state.collections = readJSON(VIC_CONFIG.STORAGE.collections, [])
     .filter(item => item && Array.isArray(item.songs))
     .map(item => ({ id: safe(item.id || makeId()), name: safe(item.name || "My Collection"), songs: [...new Set(item.songs.map(songKey))] }));
-  st
+  state.favorites = new Set(readJSON(VIC_CONFIG.STORAGE.favorites, []).map(songKey));
+  const history = readJSON(VIC_CONFIG.STORAGE.history, {});
+  state.djHistory = Array.isArray(history.history) ? history.history : [];
+  state.skippedSongs = history.skipped || {};
+  state.playedSongs = history.played || {};
+  state.notifications = localStorage.getItem(VIC_CONFIG.STORAGE.notifications) === "true";
+  if (byId("notificationSwitch")) byId("notificationSwitch").checked = state.notifications;
+}
+
+function saveLocalData() {
+  writeJSON(VIC_CONFIG.STORAGE.songs, state.songs.filter(song => !song.isTestTrack));
+  writeJSON(VIC_CONFIG.STORAGE.releases, state.releases);
+  writeJSON(VIC_CONFIG.STORAGE.collections, state.collections);
+  writeJSON(VIC_CONFIG.STORAGE.favorites, [...state.favorites]);
+  writeJSON(VIC_CONFIG.STORAGE.history, { history: state.djHistory.slice(-VIC_CONFIG.DJ.historyLimit), skipped: state.skippedSongs, played: state.playedSongs });
+}
+
+/* =========================================================
+   6. PROVIDER-NEUTRAL REQUEST LAYER
+   ========================================================= */
+function serviceURL(path) { const base = VIC_CONFIG.SERVICES.baseUrl.replace(/\/$/, ""); return `${base}${path}`; }
+async function serviceRequest(path, options = {}) {
+  if (!VIC_CONFIG.SERVICES.baseUrl) throw new Error("Vic-sound service endpoint is not configured.");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), VIC_CONFIG.REQUEST_TIMEOUT);
+  try {
+    const response = await fetch(serviceURL(path), {
+      ...options, signal: controller.signal,
+      headers: { "Content-Type": "application/json", "X-Vic-Listener-ID": state.anonymousId || getAnonymousId(), ...(options.headers || {}) }
+    });
+    if (!response.ok) throw new Error(`Service request failed (${response.status}).`);
+    return response.status === 204 ? null : response.json();
+  } finally { clearTimeout(timeout); }
+}
+
+/* =========================================================
+   7. SUPABASE CONNECTION
+   ========================================================= */
+let supabaseClient = null;
+function loadSupabaseLibrary() {
+  return new Promise((resolve, reject) => {
+    if (window.supabase?.createClient) return resolve(window.supabase);
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    script.onload = () => window.supabase?.createClient ? resolve(window.supabase) : reject(new Error("Supabase library did not load."));
+    script.onerror = () => reject(new Error("Could not load Supabase library."));
+    document.head.appendChild(script);
+  });
+}
+
+async function connectBackend() {
+  const { url, publishableKey } = VIC_CONFIG.SUPABASE;
+  if (!publishableKey || publishableKey.includes("PASTE_")) { state.backendConnected = false; return false; }
+  try {
+    const library = await loadSupabaseLibrary();
+    supabaseClient = library.createClient(url, publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const { error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.songsTable).select("id").limit(1);
+    if (error) throw error;
+    state.backendConnected = true; state.backendError = null; return true;
+  } catch (error) {
+    state.backendConnected = false; state.backendError = error.message; return false;
+  }
+}
+
+function resolveMediaURL(value) {
+  const raw = safe(value).trim(); if (!raw) return "";
+  if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+  const base = VIC_CONFIG.MEDIA.publicDeliveryBaseUrl.replace(/\/$/, "");
+  return base ? `${base}/${raw.replace(/^\/+/, "")}` : raw;
+}
+
+function normaliseSong(row = {}) {
+  const genres = Array.isArray(row.genre) ? row.genre : safe(row.genre || row.cat).split(",").map(x => x.trim()).filter(Boolean);
+  const moods = Array.isArray(row.mood) ? row.mood : safe(row.mood).split(",").map(x => x.trim()).filter(Boolean);
+  return {
+    id: row.id ?? makeId(), title: safe(row.title || "Untitled"), artist: safe(row.artist || "Unknown artist"),
+    album: safe(row.album), audio: resolveMediaURL(row.audio_url || row.audio || row.music_url),
+    cover: resolveMediaURL(row.cover_url || row.cover), duration: Number(row.duration || 0),
+    cat: genres, mood: moods, lyrics: safe(row.lyrics), lyrics_timed: row.lyrics_timed || null,
+    release_date: safe(row.release_date), release_id: row.release_id || null,
+    published: row.published ?? true, isTestTrack: Boolean(row.isTestTrack || row.is_test_track)
+  };
+}
+
+function applyTestMusic() {
+  if (!VIC_TEST_MODE) return state.songs;
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+  const ids = new Set(realSongs.map(songKey));
+  const tests = VIC_TEST_SONGS.map(normaliseSong).filter(song => !ids.has(songKey(song.id)));
+  state.songs = [...tests, ...realSongs];
+  return state.songs;
+}
+
+async function loadSongs() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.catalogue);
+      state.songs = (result?.songs || result || []).map(normaliseSong);
+      applyTestMusic(); saveLocalData(); renderHome(); return state.songs;
+    } catch (error) {}
+  }
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.songsTable).select("*").eq("published", true).order("created_at", { ascending: false });
+      if (error) throw error;
+      state.songs = (data || []).map(normaliseSong);
+      applyTestMusic(); saveLocalData(); renderHome(); return state.songs;
+    } catch (error) {}
+  }
+  applyTestMusic(); renderHome(); return state.songs;
+}
+
+async function loadReleases() {
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const result = await serviceRequest(VIC_CONFIG.SERVICES.releases);
+      state.releases = result?.releases || result || [];
+      saveLocalData(); state.newRelease = state.releases.length > 0; renderLatest(); updateDots(); return state.releases;
+    } catch (error) {}
+  }
+  if (state.backendConnected && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.releasesTable).select("*").eq("published", true).order("created_at", { ascending: false });
+      if (error) throw error;
+      state.releases = data || []; saveLocalData();
+    } catch (error) {}
+  }
+  state.newRelease = state.releases.length > 0;
+  renderLatest(); updateDots(); return state.releases;
+}
+
+/* =========================================================
+   8. MONETIZATION & DJ PROFILE
+   ========================================================= */
