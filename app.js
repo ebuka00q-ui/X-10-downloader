@@ -509,8 +509,276 @@ async function prepareOfflineMusic() {
   } finally { state.downloadBusy = false; updateOfflineCount(); }
 }
 
+
 /* =========================================================
    7. LATEST RELEASES & QUEUE
    ========================================================= */
 const vicReleaseDownloadState = new Map();
+
+function renderLatest() {
+  const box = byId("latestList"); if (!box) return;
+  let displayReleases = [...state.releases];
+  if (VIC_TEST_MODE && !displayReleases.some(r => songKey(r.id) === VIC_TEST_RELEASE_ID)) displayReleases.unshift(VIC_TEST_RELEASE);
+
+  if (!displayReleases.length) { box.innerHTML = `<div class="empty-state"><b>No new releases yet</b><span>New music will appear here.</span></div>`; return; }
+
+  box.innerHTML = displayReleases.map(release => {
+    const progress = vicReleaseDownloadState.get(songKey(release.id));
+    const trackCount = Array.isArray(release.tracks) ? release.tracks.length : Number(release.song_count || release.track_count || 0);
+    const status = progress?.complete ? "complete" : progress?.active ? "active" : "";
+    let action = "";
+    if (status === "complete") {
+      action = `<span style="color:var(--green);font-weight:700;display:inline-flex;align-items:center;gap:5px;margin-top:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Completed</span>`;
+    } else if (status === "active") {
+      const downloadedMB = formatDataSize(progress.bytes || 0);
+      const totalMB = formatDataSize(progress.totalBytes || 0);
+      action = `<div style="width:100%;margin-top:5px;"><div style="width:100%;height:6px;border-radius:99px;background:#203a32;overflow:hidden;margin:5px 0;"><span style="display:block;width:${Math.max(0,Math.min(100,progress.percent || 0))}%;height:100%;background:var(--green);"></span></div><small style="color:var(--muted);font-size:10px;">Downloading — ${downloadedMB} of ${totalMB} (${progress.percent || 0}%)</small></div>`;
+    } else {
+      action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}" style="margin-top:6px;">⇩ Download　›</button>`;
+    }
+    return `<article class="release-card"><img class="release-cover" src="${escapeHTML(release.cover_url || release.cover || "")}" alt=""><div class="release-info"><h3>${escapeHTML(release.title || "Untitled release")}</h3><p>${escapeHTML(release.type || "Release")}</p><p>♬ ${trackCount || "—"} songs</p><p>▣ ${escapeHTML(release.release_date || "")}</p>${action}</div><span style="color:var(--muted);">›</span></article>`;
+  }).join("");
+}
+
+function queueReleaseDownload(id) {
+  const release = (songKey(id) === VIC_TEST_RELEASE_ID) ? VIC_TEST_RELEASE : state.releases.find(r => songKey(r.id) === songKey(id));
+  if (!release) return;
+
+  const songsToDownload = release.tracks.map(tid => getSong(tid)).filter(Boolean);
   
+  if (state.monetization.enabled && state.monetization.provider !== "none") {
+    openModal({
+      title: "Unlock this download",
+      body: `<p>Watch a rewarded advertisement to unlock ${escapeHTML(release.title)}.</p>`,
+      buttons: [
+        { label: "Not now" },
+        { label: "Watch Ad", action: async () => {
+            closeModal();
+            const verified = await requestVerifiedReward(release);
+            if (verified) pushSongsToDownloadQueue(songsToDownload, release.id);
+            else notify("Ad not completed. Download locked.");
+          }
+        }
+      ]
+    });
+  } else {
+    pushSongsToDownloadQueue(songsToDownload, release.id);
+  }
+}
+
+function pushSongsToDownloadQueue(songs, releaseId) {
+  if (!songs.length) return;
+  const progress = { active: true, complete: false, done: 0, total: songs.length, bytes: 0, totalBytes: 0, percent: 0 };
+  vicReleaseDownloadState.set(songKey(releaseId), progress);
+  renderLatest();
+  
+  songs.forEach(s => {
+    if (!state.downloadQueue.includes(s.id)) state.downloadQueue.push(s.id);
+  });
+  
+  processDownloadQueue();
+}
+
+async function processDownloadQueue() {
+  if (state.isDownloading) return;
+  state.isDownloading = true;
+
+  while (state.downloadQueue.length > 0) {
+    if (state.activeDownloads.size >= VIC_CONFIG.DOWNLOAD_WORKERS_LATEST) {
+      await new Promise(r => setTimeout(r, 1000));
+      continue;
+    }
+
+    const songId = state.downloadQueue.shift();
+    const song = getSong(songId);
+    if (!song) continue;
+
+    state.activeDownloads.set(songId, song);
+    downloadTrackStream(song, (received, total) => {
+      // Optional: Update specific download UI if needed
+    }).then(() => {
+      state.downloaded.add(songKey(songId));
+      const existing = state.songs.find(s => songKey(s.id) === songKey(songId));
+      if (!existing) state.songs.unshift(song);
+      saveLocalData(); renderHome(); updateOfflineCount();
+    }).catch(e => {
+      console.warn("Download failed", song.title);
+    }).finally(() => {
+      state.activeDownloads.delete(songId);
+      processDownloadQueue(); 
+    });
+  }
+  state.isDownloading = false;
+}
+
+async function requestVerifiedReward(release) {
+  const adapter = (window.VicSoundAdProviders || {})[state.monetization.provider];
+  if (!state.monetization.enabled || !adapter?.showRewarded) return true;
+  try {
+    const rewardEvent = await adapter.showRewarded({ release });
+    return !!rewardEvent?.eventId;
+  } catch (error) { return false; }
+}
+
+/* =========================================================
+   8. RENDERING & UI
+   ========================================================= */
+function renderHome() {
+  const box = byId("homeMusicList"); if (!box) return;
+  const songs = filteredSongs();
+  if (!songs.length) { box.innerHTML = `<div class="empty-state"><b>No music found</b><span>Try another search or category.</span></div>`; return; }
+  box.innerHTML = songs.map(song => `
+    <article class="music-row ${songKey(song.id) === songKey(state.currentId) && state.playing ? "playing" : ""}">
+      <button class="music-main" data-play="${escapeHTML(song.id)}"><img class="cover" src="${escapeHTML(song.cover)}" alt=""></button>
+      <button class="music-main" data-play="${escapeHTML(song.id)}"><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></button>
+      <span class="playing-bars">▮▮▮</span>
+      <button class="favorite-toggle ${isSongFavorite(song.id) ? "active" : ""}" data-fav="${escapeHTML(song.id)}">${isSongFavorite(song.id) ? "♥" : "♡"}</button>
+    </article>
+  `).join("");
+}
+
+function filteredSongs() {
+  const query = state.query.trim().toLowerCase();
+  return state.songs.filter(song => {
+    const tags = [...song.cat, ...song.mood].map(x => safe(x).toLowerCase());
+    const categoryMatch = state.category === "All" || tags.includes(state.category.toLowerCase());
+    const searchMatch = !query || song.title.toLowerCase().includes(query) || song.artist.toLowerCase().includes(query) || song.album.toLowerCase().includes(query);
+    return categoryMatch && searchMatch;
+  });
+}
+
+function updatePlayer() {
+  const song = getCurrentSong(); if (!song) return;
+  ["playerTitle", "miniTitle"].forEach(id => { if (byId(id)) byId(id).textContent = song.title; });
+  ["playerArtist", "miniArtist"].forEach(id => { if (byId(id)) byId(id).textContent = song.artist; });
+  ["playerCover", "miniCover"].forEach(id => { if (byId(id)) byId(id).src = (state.queueSource?.type === "dj" && state.djProfile.cover) ? state.djProfile.cover : song.cover || ""; });
+  if (byId("playPause")) byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("miniPlay")) byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("currentTime")) byId("currentTime").textContent = formatTime(audio.currentTime);
+  if (byId("duration")) byId("duration").textContent = formatTime(audio.duration || song.duration);
+  if (byId("progress")) byId("progress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  const mini = byId("miniPlayer"); mini?.classList.toggle("visible", Boolean(state.currentId));
+  updateModeButtons(); updateDJPlaybackControls();
+}
+
+audio.addEventListener("play", () => { state.playing = true; updatePlayer(); renderHome(); });
+audio.addEventListener("pause", () => { state.playing = false; updatePlayer(); renderHome(); });
+audio.addEventListener("timeupdate", () => { updatePlayer(); syncLyrics(); });
+audio.addEventListener("ended", () => { if (state.repeatMode === 2) { audio.currentTime = 0; start(); return; } playNextQueueEntry(); });
+
+function updateModeButtons() {
+  const repeatButtons = [byId("repeat"), byId("playerRepeatTop")].filter(Boolean);
+  const repeatSymbol = state.repeatMode === 2 ? "↻¹" : "↻";
+  repeatButtons.forEach(button => { button.textContent = repeatSymbol; button.classList.toggle("active", state.repeatMode !== 0); });
+}
+function cycleRepeat() { state.repeatMode = (state.repeatMode + 1) % 3; updateModeButtons(); notify(["Repeat is off.", "Repeat all is on.", "Repeat one is on."][state.repeatMode]); }
+function toggleShuffle() { state.shuffle = !state.shuffle; notify(state.shuffle ? "Shuffle is on." : "Shuffle is off."); }
+
+function updateLyrics() {
+  const song = getCurrentSong(); if (!song) return;
+  if (byId("lyricsSongTitle")) byId("lyricsSongTitle").textContent = song.title;
+  const box = byId("lyricsContent"); if (!box) return;
+  if (!song.lyrics.trim()) { box.textContent = "Lyrics are not available for this song yet."; return; }
+  if (Array.isArray(song.lyrics_timed) && song.lyrics_timed.length) {
+    box.innerHTML = song.lyrics_timed.map((line, index) => `<p class="lyric-line type-${line.type || 'main'}" data-lyric-time="${Number(line.time) || 0}" data-lyric-index="${index}">${escapeHTML(line.text)}</p>`).join("");
+  } else { box.textContent = song.lyrics; }
+  syncLyrics();
+}
+function syncLyrics() {
+  if (!state.lyricsOpen) return;
+  const lines = $$("[data-lyric-time]"); if (!lines.length) return;
+  let active = -1; lines.forEach((line, index) => { if (audio.currentTime >= Number(line.dataset.lyricTime)) active = index; });
+  lines.forEach((line, index) => { line.classList.toggle("current", index === active); line.classList.toggle("past", index < active); line.classList.toggle("upcoming", index > active); });
+  lines[active]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+function openLyrics() { updateLyrics(); byId("lyricsSheet")?.classList.add("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "false"); state.lyricsOpen = true; }
+function closeLyrics() { byId("lyricsSheet")?.classList.remove("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "true"); state.lyricsOpen = false; }
+
+function openSearch() { byId("searchPanel")?.classList.add("open"); byId("searchPanel")?.setAttribute("aria-hidden", "false"); setTimeout(() => byId("searchInput")?.focus(), 50); }
+function closeSearch() { state.query = ""; if (byId("searchInput")) byId("searchInput").value = ""; byId("searchPanel")?.classList.remove("open"); byId("searchPanel")?.setAttribute("aria-hidden", "true"); renderHome(); }
+
+function back() {
+  if (state.modalOpen) { closeModal(); return; }
+  if (byId("notificationPopover") && !byId("notificationPopover").classList.contains("hidden")) { byId("notificationPopover").classList.add("hidden"); return; }
+  if (state.lyricsOpen) { closeLyrics(); return; }
+  if (byId("timerSheet")?.classList.contains("open")) { closeTimer(); return; }
+  if (byId("searchPanel")?.classList.contains("open")) { closeSearch(); return; }
+  if (state.djOpen) { closeDJ(); return; }
+  if (state.queueOpen) { closeQueue(); return; }
+  if (state.player) { closePlayer(); return; }
+  if (state.screen !== "home") { go("home"); return; }
+  notify("Press back once more to exit Vic-sound.");
+}
+
+function setupBackNavigation() {
+  let lastHomeBackAt = 0; const backTrap = { vicSound: true };
+  history.replaceState(backTrap, "", location.href); history.pushState(backTrap, "", location.href);
+  window.addEventListener("popstate", () => {
+    const panelOpen = state.modalOpen || state.lyricsOpen || state.queueOpen || state.djOpen || state.player || byId("timerSheet")?.classList.contains("open") || byId("searchPanel")?.classList.contains("open") || (byId("notificationPopover") && !byId("notificationPopover").classList.contains("hidden")) || byId("vicCollectionView")?.classList.contains("open");
+    if (panelOpen || state.screen !== "home") { history.pushState(backTrap, "", location.href); back(); lastHomeBackAt = 0; return; }
+    const now = Date.now(); if (now - lastHomeBackAt <= 2200) { lastHomeBackAt = 0; return; }
+    lastHomeBackAt = now; history.pushState(backTrap, "", location.href); notify("Press back once more to exit Vic-sound.");
+  });
+}
+
+
+/* =========================================================
+   9. EVENT LISTENERS & INITIALIZATION
+   ========================================================= */
+function bindEvents() {
+  $$(".nav-item").forEach(button => button.addEventListener("click", () => go(button.dataset.screen)));
+  byId("searchToggle")?.addEventListener("click", openSearch);
+  byId("searchClose")?.addEventListener("click", closeSearch);
+  byId("searchInput")?.addEventListener("input", event => { state.query = event.target.value; renderHome(); });
+  byId("categoryRow")?.addEventListener("click", event => { const button = event.target.closest("[data-category]"); if (!button) return; state.category = button.dataset.category; $$(".category").forEach(item => item.classList.toggle("active", item === button)); renderHome(); });
+  byId("homeMusicList")?.addEventListener("click", event => { const favorite = event.target.closest("[data-fav]"); if (favorite) { toggleFavorite(favorite.dataset.fav); return; } const play = event.target.closest("[data-play]"); if (play) playSongById(play.dataset.play); });
+  byId("favoriteGrid")?.addEventListener("click", event => { const open = event.target.closest("[data-collection-open]"); if (open) { openCollection(open.dataset.collectionOpen); return; } const menu = event.target.closest("[data-collection-menu]"); if (menu) collectionMenu(menu.dataset.collectionMenu); });
+  byId("favoriteDjCover")?.addEventListener("click", openDJ);
+  $(".favorite-dj-card")?.addEventListener("click", event => { if (event.target.closest("#favoriteDjPlay")) return; openDJ(); });
+  byId("favoriteDjPlay")?.addEventListener("click", event => { event.stopPropagation(); speakDJIntro(); });
+  byId("miniOpen")?.addEventListener("click", openPlayer);
+  byId("miniPlay")?.addEventListener("click", toggle);
+  byId("miniPrev")?.addEventListener("click", prev);
+  byId("miniNext")?.addEventListener("click", next);
+  byId("playerBack")?.addEventListener("click", back);
+  byId("playPause")?.addEventListener("click", toggle);
+  byId("prev")?.addEventListener("click", prev);
+  byId("next")?.addEventListener("click", next);
+  byId("openQueueFromPlayer")?.addEventListener("click", openQueue);
+  byId("playerFav")?.addEventListener("click", () => { const song = getCurrentSong(); if (song) toggleFavorite(song.id); });
+  byId("shuffle")?.addEventListener("click", toggleShuffle);
+  byId("repeat")?.addEventListener("click", cycleRepeat);
+  byId("playerRepeatTop")?.addEventListener("click", cycleRepeat);
+  byId("progress")?.addEventListener("input", event => { if (audio.duration) audio.currentTime = Number(event.target.value) / 100 * audio.duration; });
+  byId("queueBack")?.addEventListener("click", back);
+  byId("queueClose")?.addEventListener("click", closeQueue);
+  byId("queueFav")?.addEventListener("click", () => { const song = getCurrentSong(); if (song) toggleFavorite(song.id); });
+  byId("queueTimer")?.addEventListener("click", openTimer);
+  byId("lyricsButton")?.addEventListener("click", openLyrics);
+  byId("lyricsSheet")?.addEventListener("click", event => { if (event.target === byId("lyricsSheet")) closeLyrics(); });
+  byId("djBack")?.addEventListener("click", back);
+  byId("djSend")?.addEventListener("click", () => { const input = byId("djInput"); const value = input?.value || ""; if (input) input.value = ""; command(value); });
+  byId("djInput")?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); byId("djSend")?.click(); } });
+  byId("djMic")?.addEventListener("pointerdown", event => { event.preventDefault(); startVoice(); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(type => byId("djMic")?.addEventListener(type, stopVoice));
+  
+  byId("latestList")?.addEventListener("click", event => { const button = event.target.closest("[data-release-download]"); if (button) queueReleaseDownload(button.dataset.releaseDownload); });
+  byId("latestBell")?.addEventListener("click", () => byId("notificationPopover")?.classList.toggle("hidden"));
+  byId("headerBell")?.addEventListener("click", () => byId("notificationPopover")?.classList.toggle("hidden"));
+  byId("notificationSwitch")?.addEventListener("change", event => setNotifications(event.target.checked));
+  byId("cancelExit")?.addEventListener("click", closeModal);
+  byId("confirmExit")?.addEventListener("click", () => { byId("exitModal")?.classList.add("hidden"); notify("You can now leave Vic-sound using your device controls."); });
+}
+
+async function init() {
+  injectVicEnhancementStyles(); getAnonymousId(); loadLocalData(); applyTestMusic(); setupVoice(); bindEvents();
+  setupServiceWorkerUpdate();
+  renderHome(); renderLatest(); updateDots(); updateModeButtons();
+  await getDownloadedSongs(); updateOfflineCount(); applyDJProfile(); await loadDJProfile();
+  if (state.songs.length) { makeQueue(state.songs, { type: "catalogue", label: "Your Music" }); setCurrentSong(state.songs[0]); }
+  await connectBackend(); await loadSongs(); await loadReleases(); await loadMonetizationSettings();
+  if (navigator.onLine) prepareOfflineMusic();
+  setupBackNavigation();
+}
+
+init();
