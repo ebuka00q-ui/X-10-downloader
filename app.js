@@ -506,5 +506,329 @@ async function prepareOfflineMusic() {
   } finally { state.downloadBusy = false; updateOfflineCount(); }
 }
 
+
 /* =========================================================
-   7. LATEST RELEASES &
+   7. LATEST RELEASES & QUEUE
+   ========================================================= */
+const vicReleaseDownloadState = new Map();
+
+function renderLatest() {
+  const box = byId("latestList"); if (!box) return;
+  let displayReleases = [...state.releases];
+  if (VIC_TEST_MODE) {
+    if (!displayReleases.some(r => songKey(r.id) === VIC_TEST_RELEASE_ID)) displayReleases.push(VIC_TEST_RELEASE);
+    if (!displayReleases.some(r => songKey(r.id) === VIC_TEST_RELEASE_WILLIAMS_ID)) displayReleases.push(VIC_TEST_RELEASE_WILLIAMS);
+  }
+
+  if (!displayReleases.length) { box.innerHTML = `<div class="empty-state"><b>No new releases yet</b><span>New music will appear here.</span></div>`; return; }
+
+  box.innerHTML = displayReleases.map(release => {
+    const progress = vicReleaseDownloadState.get(songKey(release.id));
+    const trackCount = Array.isArray(release.tracks) ? release.tracks.length : Number(release.song_count || release.track_count || 0);
+    const status = progress?.complete ? "complete" : progress?.active ? "active" : "";
+    let action = "";
+    if (status === "complete") {
+      action = `<span style="color:var(--green);font-weight:700;display:inline-flex;align-items:center;gap:5px;margin-top:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Completed</span>`;
+    } else if (status === "active") {
+      const downloadedMB = formatDataSize(progress.bytes || 0);
+      const totalMB = formatDataSize(progress.totalBytes || 0);
+      action = `<div style="width:100%;margin-top:5px;"><div style="width:100%;height:6px;border-radius:99px;background:#203a32;overflow:hidden;margin:5px 0;"><span style="display:block;width:${Math.max(0,Math.min(100,progress.percent || 0))}%;height:100%;background:var(--green);"></span></div><small style="color:var(--muted);font-size:10px;">Downloading — ${downloadedMB} of ${totalMB} (${progress.percent || 0}%)</small></div>`;
+    } else {
+      action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}" style="margin-top:6px;">⇩ Download　›</button>`;
+    }
+    return `<article class="release-card"><img class="release-cover" src="${escapeHTML(release.cover_url || release.cover || "")}" alt=""><div class="release-info"><h3>${escapeHTML(release.title || "Untitled release")}</h3><p>${escapeHTML(release.type || "Release")}</p><p>♬ ${trackCount || "—"} songs</p><p>▣ ${escapeHTML(release.release_date || "")}</p>${action}</div><span style="color:var(--muted);">›</span></article>`;
+  }).join("");
+}
+
+function queueReleaseDownload(id) {
+  const release = (songKey(id) === VIC_TEST_RELEASE_ID) ? VIC_TEST_RELEASE : (songKey(id) === VIC_TEST_RELEASE_WILLIAMS_ID) ? VIC_TEST_RELEASE_WILLIAMS : state.releases.find(r => songKey(r.id) === songKey(id));
+  if (!release) return;
+
+  const songsToDownload = release.tracks.map(tid => getSong(tid)).filter(Boolean);
+  
+  if (state.monetization.enabled && state.monetization.provider !== "none") {
+    openModal({
+      title: "Unlock this download",
+      body: `<p>Watch a rewarded advertisement to unlock ${escapeHTML(release.title)}.</p>`,
+      buttons: [
+        { label: "Not now" },
+        { label: "Watch Ad", action: async () => {
+            closeModal();
+            const verified = await requestVerifiedReward(release);
+            if (verified) pushSongsToDownloadQueue(songsToDownload, release.id);
+            else notify("Ad not completed. Download locked.");
+          }
+        }
+      ]
+    });
+  } else {
+    pushSongsToDownloadQueue(songsToDownload, release.id);
+  }
+}
+
+function pushSongsToDownloadQueue(songs, releaseId) {
+  if (!songs.length) return;
+  const progress = { active: true, complete: false, done: 0, total: songs.length, bytes: 0, totalBytes: 0, percent: 0 };
+  vicReleaseDownloadState.set(songKey(releaseId), progress);
+  renderLatest();
+  
+  songs.forEach(s => {
+    if (!state.downloadQueue.includes(s.id)) state.downloadQueue.push(s.id);
+  });
+  
+  processDownloadQueue();
+}
+
+async function processDownloadQueue() {
+  if (state.isDownloading) return;
+  state.isDownloading = true;
+
+  while (state.downloadQueue.length > 0) {
+    if (state.activeDownloads.size >= VIC_CONFIG.DOWNLOAD_WORKERS_LATEST) {
+      await new Promise(r => setTimeout(r, 1000));
+      continue;
+    }
+
+    const songId = state.downloadQueue.shift();
+    const song = getSong(songId);
+    if (!song) continue;
+
+    state.activeDownloads.set(songId, song);
+    downloadTrackStream(song, (received, total) => {
+      // Update progress if needed
+    }).then(() => {
+      state.downloaded.add(songKey(songId));
+      insertDownloadedSong(song);
+      saveLocalData(); renderHome(); updateOfflineCount();
+    }).catch(e => {
+      console.warn("Download failed", song.title);
+    }).finally(() => {
+      state.activeDownloads.delete(songId);
+      processDownloadQueue(); 
+    });
+  }
+  state.isDownloading = false;
+}
+
+function insertDownloadedSong(song) {
+  if (state.songs.some(s => s.id === song.id)) return;
+  
+  if (!song.release_id) {
+    state.songs.unshift(song);
+    return;
+  }
+  
+  const releaseSongs = state.songs.filter(s => s.release_id === song.release_id);
+  if (releaseSongs.length === 0) {
+    state.songs.unshift(song);
+    return;
+  }
+  
+  const insertIndex = state.songs.findIndex(s => 
+    s.release_id === song.release_id && 
+    (s.track_number || 0) > (song.track_number || 0)
+  );
+  
+  if (insertIndex !== -1) {
+    state.songs.splice(insertIndex, 0, song);
+  } else {
+    const lastIndex = state.songs.map(s => s.release_id).lastIndexOf(song.release_id);
+    state.songs.splice(lastIndex + 1, 0, song);
+  }
+}
+
+async function requestVerifiedReward(release) {
+  const adapter = (window.VicSoundAdProviders || {})[state.monetization.provider];
+  if (!state.monetization.enabled || !adapter?.showRewarded) return true;
+  try {
+    const rewardEvent = await adapter.showRewarded({ release });
+    return !!rewardEvent?.eventId;
+  } catch (error) { return false; }
+}
+
+/* =========================================================
+   8. RENDERING & UI
+   ========================================================= */
+function renderHome() {
+  const box = byId("homeMusicList"); if (!box) return;
+  const songs = filteredSongs();
+  if (!songs.length) { box.innerHTML = `<div class="empty-state"><b>No music found</b><span>Try another search or category.</span></div>`; return; }
+  box.innerHTML = songs.map(song => `
+    <article class="music-row ${songKey(song.id) === songKey(state.currentId) && state.playing ? "playing" : ""}">
+      <button class="music-main" data-play="${escapeHTML(song.id)}"><img class="cover" src="${escapeHTML(song.cover)}" alt=""></button>
+      <button class="music-main" data-play="${escapeHTML(song.id)}"><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></button>
+      <span class="playing-bars">▮▮▮</span>
+      <button class="favorite-toggle ${isSongFavorite(song.id) ? "active" : ""}" data-fav="${escapeHTML(song.id)}">${isSongFavorite(song.id) ? "♥" : "♡"}</button>
+    </article>
+  `).join("");
+}
+
+function filteredSongs() {
+  const query = state.query.trim().toLowerCase();
+  return state.songs.filter(song => {
+    const tags = [...song.cat, ...song.mood].map(x => safe(x).toLowerCase());
+    const categoryMatch = state.category === "All" || tags.includes(state.category.toLowerCase());
+    const searchMatch = !query || song.title.toLowerCase().includes(query) || song.artist.toLowerCase().includes(query) || song.album.toLowerCase().includes(query);
+    return categoryMatch && searchMatch;
+  });
+}
+
+function updatePlayer() {
+  const song = getCurrentSong(); if (!song) return;
+  
+  const isDJ = state.queueSource?.type === "dj";
+  const coverSrc = isDJ && state.djProfile.cover ? state.djProfile.cover : song.cover || "";
+
+  ["playerTitle", "miniTitle"].forEach(id => { if (byId(id)) byId(id).textContent = song.title; });
+  ["playerArtist", "miniArtist"].forEach(id => { if (byId(id)) byId(id).textContent = song.artist; });
+  ["playerCover", "miniCover"].forEach(id => { if (byId(id)) byId(id).src = coverSrc; });
+  
+  if (byId("playPause")) byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("miniPlay")) byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("currentTime")) byId("currentTime").textContent = formatTime(audio.currentTime);
+  if (byId("duration")) byId("duration").textContent = formatTime(audio.duration || song.duration);
+  if (byId("progress")) byId("progress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  const mini = byId("miniPlayer"); mini?.classList.toggle("visible", Boolean(state.currentId));
+  updateModeButtons(); updateDJPlaybackControls();
+  
+  if (byId("lyricsPlayPause")) byId("lyricsPlayPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("lyricsProgress")) byId("lyricsProgress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  if (byId("lyricsCurrentTime")) byId("lyricsCurrentTime").textContent = formatTime(audio.currentTime);
+  if (byId("lyricsDuration")) byId("lyricsDuration").textContent = formatTime(audio.duration || song.duration);
+}
+
+audio.addEventListener("play", () => { state.playing = true; updatePlayer(); renderHome(); });
+audio.addEventListener("pause", () => { state.playing = false; updatePlayer(); renderHome(); });
+audio.addEventListener("timeupdate", () => { updatePlayer(); syncLyrics(); });
+audio.addEventListener("ended", () => { 
+  recordCompletedPlay(); 
+  
+  if (navigator.onLine) {
+    state.interactiveAdCounter++;
+    if (state.interactiveAdCounter >= 10) {
+      state.pendingInteractiveAd = true;
+      state.interactiveAdCounter = 0;
+    }
+  }
+
+  if (state.repeatMode === 2) { audio.currentTime = 0; start(); return; } 
+  playNextQueueEntry(); 
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && state.pendingInteractiveAd) {
+    state.pendingInteractiveAd = false;
+    openModal({
+      title: "Interactive Ad",
+      body: "<p>This is a sponsored interactive ad. Thank you for listening.</p>",
+      buttons: [{ label: "Close", action: () => closeModal() }]
+    });
+  }
+});
+
+function updateModeButtons() {
+  const repeatButtons = [byId("repeat"), byId("playerRepeatTop")].filter(Boolean);
+  const repeatSymbol = state.repeatMode === 2 ? "↻¹" : "↻";
+  repeatButtons.forEach(button => { button.textContent = repeatSymbol; button.classList.toggle("active", state.repeatMode !== 0); });
+}
+function cycleRepeat() { state.repeatMode = (state.repeatMode + 1) % 3; updateModeButtons(); notify(["Repeat is off.", "Repeat all is on.", "Repeat one is on."][state.repeatMode]); }
+function toggleShuffle() { state.shuffle = !state.shuffle; notify(state.shuffle ? "Shuffle is on." : "Shuffle is off."); }
+
+function updateLyrics() {
+  const song = getCurrentSong(); if (!song) return;
+  
+  let header = byId("lyricsHeaderControls");
+  if (!header) {
+    const sheet = byId("lyricsSheet");
+    header = document.createElement("div");
+    header.id = "lyricsHeaderControls";
+    header.innerHTML = `
+      <img id="lyricsCover" src="">
+      <div style="flex:1; min-width:0;">
+        <b id="lyricsTitle"></b>
+        <small id="lyricsArtist"></small>
+      </div>
+      <button id="lyricsPlayPause">▶</button>
+    `;
+    sheet.insertBefore(header, sheet.querySelector(".sheet-title"));
+    
+    const bottom = document.createElement("div");
+    bottom.className = "lyrics-bottom-controls";
+    bottom.innerHTML = `
+      <input type="range" id="lyricsProgress" min="0" max="100" value="0">
+      <div class="time-row">
+        <span id="lyricsCurrentTime">0:00</span>
+        <span id="lyricsDuration">0:00</span>
+      </div>
+    `;
+    sheet.appendChild(bottom);
+    
+    byId("lyricsPlayPause").addEventListener("click", toggle);
+    byId("lyricsProgress").addEventListener("input", e => {
+      if (audio.duration) {
+        audio.currentTime = (e.target.value / 100) * audio.duration;
+        syncLyrics();
+      }
+    });
+  }
+
+  byId("lyricsCover").src = song.cover;
+  byId("lyricsTitle").textContent = song.title;
+  byId("lyricsArtist").textContent = song.artist;
+  byId("lyricsPlayPause").textContent = state.playing ? "Ⅱ" : "▶";
+
+  if (byId("lyricsSongTitle")) byId("lyricsSongTitle").textContent = song.title;
+  const box = byId("lyricsContent"); if (!box) return;
+  if (!song.lyrics || !song.lyrics.trim()) { box.innerHTML = `<p style="color:var(--muted); text-align:center;">Lyrics are not available for this song yet.</p>`; return; }
+  
+  if (Array.isArray(song.lyrics_timed) && song.lyrics_timed.length) {
+    box.innerHTML = song.lyrics_timed.map((line, index) => `<p class="lyric-line type-${line.type || 'main'}" data-lyric-time="${Number(line.time) || 0}" data-lyric-index="${index}">${escapeHTML(line.text)}</p>`).join("");
+  } else { box.textContent = song.lyrics; }
+  syncLyrics();
+}
+
+function syncLyrics() {
+  if (!state.lyricsOpen) return;
+  const lines = $$("[data-lyric-time]"); if (!lines.length) return;
+  let active = -1; lines.forEach((line, index) => { if (audio.currentTime >= Number(line.dataset.lyricTime)) active = index; });
+  lines.forEach((line, index) => { line.classList.toggle("current", index === active); line.classList.toggle("past", index < active); line.classList.toggle("upcoming", index > active); });
+  lines[active]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function openLyrics() { updateLyrics(); byId("lyricsSheet")?.classList.add("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "false"); state.lyricsOpen = true; }
+function closeLyrics() { byId("lyricsSheet")?.classList.remove("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "true"); state.lyricsOpen = false; }
+
+function openSearch() { byId("searchPanel")?.classList.add("open"); byId("searchPanel")?.setAttribute("aria-hidden", "false"); setTimeout(() => byId("searchInput")?.focus(), 50); }
+function closeSearch() { state.query = ""; if (byId("searchInput")) byId("searchInput").value = ""; byId("searchPanel")?.classList.remove("open"); byId("searchPanel")?.setAttribute("aria-hidden", "true"); renderHome(); }
+
+function back() {
+  if (byId("vicCollectionView")?.classList.contains("open")) {
+    byId("vicCollectionView").classList.remove("open");
+    state.currentCollection = null;
+    return;
+  }
+  if (state.modalOpen) { closeModal(); return; }
+  if (byId("notificationPopover") && !byId("notificationPopover").classList.contains("hidden")) { byId("notificationPopover").classList.add("hidden"); return; }
+  if (state.lyricsOpen) { closeLyrics(); return; }
+  if (byId("timerSheet")?.classList.contains("open")) { closeTimer(); return; }
+  if (byId("searchPanel")?.classList.contains("open")) { closeSearch(); return; }
+  if (state.djOpen) { closeDJ(); return; }
+  if (state.queueOpen) { closeQueue(); return; }
+  if (state.player) { closePlayer(); return; }
+  if (state.screen !== "home") { go("home"); return; }
+  notify("Press back once more to exit Vic-sound.");
+}
+
+function setupBackNavigation() {
+  let lastHomeBackAt = 0; const backTrap = { vicSound: true };
+  history.replaceState(backTrap, "", location.href); history.pushState(backTrap, "", location.href);
+  window.addEventListener("popstate", () => {
+    const panelOpen = state.modalOpen || state.lyricsOpen || state.queueOpen || state.djOpen || state.player || byId("timerSheet")?.classList.contains("open") || byId("searchPanel")?.classList.contains("open") || (byId("notificationPopover") && !byId("notificationPopover").classList.contains("hidden")) || byId("vicCollectionView")?.classList.contains("open");
+    if (panelOpen || state.screen !== "home") { history.pushState(backTrap, "", location.href); back(); lastHomeBackAt = 0; return; }
+    const now = Date.now(); if (now - lastHomeBackAt <= 2200) { lastHomeBackAt = 0; return; }
+    lastHomeBackAt = now; history.pushState(backTrap, "", location.href); notify("Press back once more to exit Vic-sound.");
+  });
+}
+
+/* =========================================================
+   9. EVENT LISTENERS &
