@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -10,7 +9,6 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 <main class="app-shell">
 
@@ -199,14 +197,22 @@
   <!-- LYRICS -->
   <section class="bottom-sheet" id="lyricsSheet" aria-hidden="true">
     <div class="handle"></div>
-    <div class="sheet-title">
-      <span>♪</span>
-      <div>
-        <h2>Lyrics</h2>
-        <p id="lyricsSongTitle">Current song</p>
+    <div id="lyricsHeaderControls" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(0,245,160,.1);">
+      <img id="lyricsCover" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+      <div style="flex: 1; min-width: 0;">
+        <b id="lyricsTitle" style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></b>
+        <small id="lyricsArtist" style="font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></small>
       </div>
+      <button id="lyricsPlayPause" style="font-size: 20px; background: transparent; border: none; color: var(--text); cursor: pointer;">▶</button>
     </div>
     <div class="lyrics-content" id="lyricsContent">No lyrics to this song.</div>
+    <div class="lyrics-bottom-controls" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(0,245,160,.2); width: 100%;">
+      <input type="range" id="lyricsProgress" min="0" max="100" value="0" style="width: 100%; accent-color: var(--green);">
+      <div class="time-row" style="display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 5px;">
+        <span id="lyricsCurrentTime">0:00</span>
+        <span id="lyricsDuration">0:00</span>
+      </div>
+    </div>
   </section>
 
   <!-- TIMER -->
