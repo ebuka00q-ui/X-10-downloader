@@ -1,11 +1,11 @@
 /* =========================================================
    VIC-SOUND LISTENER — SERVICE WORKER
-   Version: v8
+   Version: v5
    ========================================================= */
 
 'use strict';
 
-const SHELL_VERSION = 'v10';
+const SHELL_VERSION = 'v5';
 const SHELL_CACHE = `vic-sound-shell-${SHELL_VERSION}`;
 const SHELL_PREFIX = 'vic-sound-shell-';
 const APP_FILES = [
@@ -20,6 +20,9 @@ const PREF_DB = 'vic-sound-sw-preferences';
 const PREF_STORE = 'settings';
 const NOTIFICATION_SETTING = 'releaseNotificationsEnabled';
 
+/* =========================================================
+   NOTIFICATION PREFERENCES (IndexedDB)
+   ========================================================= */
 function openPreferencesDB() {
   return new Promise((resolve, reject) => {
     if (!('indexedDB' in self)) { reject(new Error('IndexedDB is unavailable.')); return; }
@@ -54,18 +57,22 @@ async function writeNotificationPreference(enabled) {
   } finally { db.close(); }
 }
 
-/* INSTALL */
+/* =========================================================
+   INSTALL & ACTIVATE
+   ========================================================= */
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await cache.addAll(APP_FILES);
+    // Do NOT call self.skipWaiting() here. We want the app.js 
+    // to detect this update and show the banner.
   })());
 });
 
-/* ACTIVATE */
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
+    // CRITICAL: Only delete OLD APP SHELLS. Never delete music caches.
     await Promise.all(names
       .filter(name => name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE)
       .map(name => caches.delete(name)));
@@ -75,14 +82,20 @@ self.addEventListener('activate', event => {
   })());
 });
 
-/* FETCH */
+/* =========================================================
+   FETCH LOGIC
+   ========================================================= */
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
   
   const url = new URL(request.url);
+
+  // Ignore external requests (audio streaming, API calls). 
+  // The app's download engine handles this directly.
   if (url.origin !== self.location.origin) return;
 
+  // Navigation (HTML) - Network first, fallback to cache
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
@@ -101,6 +114,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // App Shell Assets (CSS, JS, Manifest) - Cache first
   const isShellAsset = APP_FILES.some(path => new URL(path, self.registration.scope).href === url.href);
   if (isShellAsset) {
     event.respondWith((async () => {
@@ -112,10 +126,14 @@ self.addEventListener('fetch', event => {
   }
 });
 
-/* PUSH */
+/* =========================================================
+   PUSH NOTIFICATIONS
+   ========================================================= */
 self.addEventListener('push', event => {
   event.waitUntil((async () => {
+    // Check if the user has notifications enabled
     if (!(await readNotificationPreference())) return;
+
     let payload = {};
     try { payload = event.data ? event.data.json() : {}; } catch (error) { payload = { body: event.data ? event.data.text() : 'New music is available.' }; }
     
@@ -126,8 +144,12 @@ self.addEventListener('push', event => {
     const itemId = String(payload.musicId || payload.releaseId || payload.id || kind);
 
     await self.registration.showNotification(title, {
-      body, icon: './file_000000008d2881f49ddcc5378e7331fa.png', badge: './file_000000008d2881f49ddcc5378e7331fa.png',
-      tag: `vic-sound-${kind}-${itemId}`, renotify: false, data: { url: target, kind, itemId }
+      body,
+      icon: './file_000000008d2881f49ddcc5378e7331fa.png',
+      badge: './file_000000008d2881f49ddcc5378e7331fa.png',
+      tag: `vic-sound-${kind}-${itemId}`,
+      renotify: false,
+      data: { url: target, kind, itemId }
     });
   })());
 });
@@ -138,6 +160,7 @@ self.addEventListener('notificationclick', event => {
     const data = event.notification.data || {};
     const targetURL = new URL(data.url || './?screen=latest', self.registration.scope).href;
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    
     for (const client of windows) {
       if ('focus' in client) {
         await client.focus();
@@ -150,9 +173,21 @@ self.addEventListener('notificationclick', event => {
   })());
 });
 
-/* MESSAGES */
+/* =========================================================
+   MESSAGES FROM APP.JS
+   ========================================================= */
 self.addEventListener('message', event => {
   const data = event.data || {};
-  if (data.type === 'SKIP_WAITING') { self.skipWaiting(); return; }
-  if (data.type === 'SET_RELEASE_NOTIFICATIONS') { event.waitUntil(writeNotificationPreference(data.enabled === true)); return; }
+  
+  // Triggered when user clicks "Update Available" banner
+  if (data.type === 'SKIP_WAITING') { 
+    self.skipWaiting(); 
+    return; 
+  }
+  
+  // Syncs notification toggle from app UI to Service Worker
+  if (data.type === 'SET_RELEASE_NOTIFICATIONS') { 
+    event.waitUntil(writeNotificationPreference(data.enabled === true)); 
+    return; 
+  }
 });
