@@ -343,4 +343,256 @@ function applyTestMusic() {
 }
 
 async function loadSongs() {
-  if (VIC_CONFIG.SERVICES.baseUrl) { try { const result = await se
+  if (VIC_CONFIG.SERVICES.baseUrl) { try { const result = await serviceRequest(VIC_CONFIG.SERVICES.catalogue); state.songs = (result?.songs || result || []).map(normaliseSong); applyTestMusic(); saveLocalData(); renderHome(); return state.songs; } catch (error) {} }
+  if (state.backendConnected && supabaseClient) { try { const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.songsTable).select("*").eq("published", true).order("created_at", { ascending: false }); if (error) throw error; state.songs = (data || []).map(normaliseSong); applyTestMusic(); saveLocalData(); renderHome(); return state.songs; } catch (error) {} }
+  applyTestMusic(); renderHome(); return state.songs;
+}
+
+async function loadReleases() {
+  if (VIC_CONFIG.SERVICES.baseUrl) { try { const result = await serviceRequest(VIC_CONFIG.SERVICES.releases); const old = state.releases.length; state.releases = result?.releases || result || []; saveLocalData(); if (state.releases.length > old) state.newRelease = true; renderLatest(); updateDots(); return state.releases; } catch (error) {} }
+  if (state.backendConnected && supabaseClient) { try { const { data, error } = await supabaseClient.from(VIC_CONFIG.SUPABASE.releasesTable).select("*").eq("published", true).order("created_at", { ascending: false }); if (error) throw error; const old = state.releases.length; state.releases = data || []; saveLocalData(); if (state.releases.length > old) state.newRelease = true; } catch (error) {} }
+  renderLatest(); updateDots(); return state.releases;
+}
+
+/* =========================================================
+   7. MONETIZATION & DJ PROFILE
+   ========================================================= */
+function safeCssLength(value, fallback = "0px") {
+  const textValue = String(value ?? "").trim();
+  return /^(\d+(\.\d+)?(px|rem|em|vh|vw|%)|0)$/.test(textValue) ? (textValue === "0" ? "0px" : textValue) : fallback;
+}
+
+function applyMonetizationSettings(settings = {}) {
+  const incoming = settings.display || settings;
+  const allowedPlacements = ["bottom", "home-top", "favorites-top", "latest-top"];
+  const placement = allowedPlacements.includes(incoming.placement) ? incoming.placement : "bottom";
+  state.monetization = {
+    enabled: settings.enabled === true, provider: safe(settings.provider || "none").toLowerCase(),
+    format: safe(settings.format || "banner").toLowerCase(), placement,
+    refreshSeconds: Math.max(0, Math.min(3600, Number(settings.refreshSeconds ?? 0))),
+    bannerHeight: safeCssLength(incoming.height ?? settings.bannerHeight, "0px"),
+    maxWidth: /^(100%|\d+(\.\d+)?(px|rem|vw))$/.test(String(incoming.maxWidth || "100%")) ? String(incoming.maxWidth || "100%") : "100%",
+    gap: safeCssLength(incoming.gap ?? settings.gap, "0px"),
+    borderRadius: safeCssLength(incoming.borderRadius ?? settings.borderRadius, "0px")
+  };
+  const slot = byId("bottomAdPlacement");
+  if (slot) {
+    const targets = { "bottom": document.body, "home-top": byId("homeScreen"), "favorites-top": byId("favoritesScreen"), "latest-top": byId("latestScreen") };
+    const target = targets[placement] || document.body;
+    if (placement === "bottom") {
+      document.body.appendChild(slot); slot.classList.remove("ad-inline");
+      slot.style.position = "fixed"; slot.style.left = "50%"; slot.style.bottom = "calc(var(--nav) + env(safe-area-inset-bottom))";
+      slot.style.transform = "translateX(-50%)"; slot.style.width = "min(100%,520px)";
+    } else if (target) {
+      const anchor = placement === "home-top" ? byId("offlineCard") : placement === "favorites-top" ? $(".favorite-dj-card", target) : $(".latest-heading", target);
+      if (anchor) target.insertBefore(slot, anchor); else target.prepend(slot);
+      slot.classList.add("ad-inline"); slot.style.position = "relative"; slot.style.left = "auto"; slot.style.bottom = "auto"; slot.style.transform = "none"; slot.style.width = "100%";
+    }
+    slot.dataset.provider = state.monetization.provider; slot.dataset.format = state.monetization.format; slot.dataset.configuredPlacement = placement;
+    slot.style.height = state.monetization.bannerHeight; slot.style.minHeight = "0px"; slot.style.maxWidth = state.monetization.maxWidth;
+    slot.style.margin = `${state.monetization.gap} auto`; slot.style.borderRadius = state.monetization.borderRadius;
+    slot.hidden = true; document.body.classList.remove("has-ad");
+  }
+  state.monetizationReady = true;
+  const adapters = window.VicSoundAdProviders || {};
+  const adapter = adapters[state.monetization.provider];
+  if (state.monetization.enabled && state.monetization.format === "banner" && adapter?.mountBanner && slot) {
+    Promise.resolve(adapter.mountBanner({ container: slot, settings: state.monetization })).then(result => {
+      const filled = result === true || result?.filled === true;
+      slot.hidden = !filled;
+      if (filled && placement === "bottom") { document.documentElement.style.setProperty("--ad-height", state.monetization.bannerHeight || "54px"); document.body.classList.add("has-ad"); }
+    }).catch(() => { slot.hidden = true; });
+  }
+  return state.monetization;
+}
+
+async function loadMonetizationSettings() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) { applyMonetizationSettings(VIC_CONFIG.MONETIZATION); return state.monetization; }
+  try {
+    const settings = await serviceRequest(VIC_CONFIG.SERVICES.monetization);
+    applyMonetizationSettings(settings || VIC_CONFIG.MONETIZATION);
+  } catch (error) { applyMonetizationSettings(VIC_CONFIG.MONETIZATION); }
+  return state.monetization;
+}
+
+function applyDJProfile(profile = {}) {
+  state.djProfile = { name: safe(profile.name || VIC_CONFIG.DJ.fallbackName), subtitle: safe(profile.subtitle || VIC_CONFIG.DJ.fallbackSubtitle), cover: safe(profile.cover_url || profile.cover || VIC_CONFIG.DJ.fallbackCover) };
+  const small = byId("favoriteDjCover"); const large = byId("djCoverLarge");
+  [small, large].forEach(element => {
+    if (!element) return;
+    element.style.backgroundImage = state.djProfile.cover ? `linear-gradient(0deg,rgba(0,0,0,.12),rgba(0,0,0,.12)),url("${state.djProfile.cover.replace(/["\\]/g, "")}")` : "";
+    element.style.backgroundSize = "cover"; element.style.backgroundPosition = "center"; element.classList.toggle("has-dj-cover", Boolean(state.djProfile.cover));
+  });
+  const cardTitle = $(".favorite-dj-card h2"); const cardSubtitle = $(".favorite-dj-card p");
+  if (cardTitle) cardTitle.textContent = state.djProfile.name; if (cardSubtitle) cardSubtitle.textContent = state.djProfile.subtitle;
+  const djTitle = $("#djOverlay .overlay-head b"); const djSubtitle = $("#djOverlay .overlay-head small");
+  if (djTitle) djTitle.textContent = state.djProfile.name; if (djSubtitle) djSubtitle.textContent = state.djProfile.subtitle;
+}
+
+async function loadDJProfile() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) { applyDJProfile(); return; }
+  try { const profile = await serviceRequest(VIC_CONFIG.SERVICES.djProfile); applyDJProfile(profile || {}); } catch (error) { applyDJProfile(); }
+}
+
+/* =========================================================
+   8. ROBUST DOWNLOAD ENGINE (IndexedDB + Cache API)
+   ========================================================= */
+async function getMusicCache(song = null) { if (!("caches" in window)) return null; const cacheName = song?.isTestTrack ? VIC_TEST_CONFIG.cacheName : VIC_CONFIG.STORAGE.musicCache; return caches.open(cacheName); }
+function formatDataSize(bytes) { const value = Math.max(0, Number(bytes) || 0); if (value < 1024 * 1024) return `${(value / 1024).toFixed(0)} KB`; if (value < 1024 * 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`; return `${(value / (1024 * 1024 * 1024)).toFixed(2)} GB`; }
+
+async function downloadTrackStream(song, onProgress) {
+  const cache = await getMusicCache(song);
+  const url = new URL(song.audio, location.href).href;
+  if (await cache.match(url)) return true;
+
+  const db = await dbPromise;
+  let downloadState = await new Promise(res => {
+    const tx = db.transaction("downloads", "readonly"); const req = tx.objectStore("downloads").get(song.id); req.onsuccess = () => res(req.result || null); req.onerror = () => res(null);
+  });
+
+  let startByte = downloadState ? downloadState.bytes : 0;
+  let totalBytes = downloadState ? downloadState.totalBytes : 0;
+  let chunks = [];
+
+  if (startByte > 0) {
+    chunks = await new Promise(res => {
+      const tx = db.transaction("chunks", "readonly"); const req = tx.objectStore("chunks").getAll(IDBKeyRange.bound([song.id, 0], [song.id, Infinity]));
+      req.onsuccess = () => res(req.result.map(c => c.data));
+      req.onerror = () => res([]);
+    });
+  }
+
+  const headers = {};
+  if (startByte > 0) headers["Range"] = `bytes=${startByte}-`;
+
+  try {
+    const response = await fetch(url, { headers });
+    if (!response.ok && response.status !== 206) throw new Error("Network error");
+    
+    if (startByte > 0 && response.status === 200) {
+      startByte = 0; chunks = [];
+      await new Promise(res => { const tx = db.transaction(["downloads", "chunks"], "readwrite"); tx.objectStore("downloads").delete(song.id); tx.objectStore("chunks").delete(IDBKeyRange.bound([song.id, 0], [song.id, Infinity])); tx.oncomplete = res; });
+    }
+
+    if (!totalBytes) {
+      const contentRange = response.headers.get("content-range");
+      if (contentRange) totalBytes = parseInt(contentRange.split("/")[1], 10);
+      else totalBytes = parseInt(response.headers.get("content-length") || "0", 10);
+    }
+
+    const reader = response.body.getReader();
+    let receivedBytes = startByte;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunkIndex = chunks.length;
+      chunks.push(value);
+      receivedBytes += value.length;
+
+      await new Promise(res => {
+        const tx = db.transaction(["downloads", "chunks"], "readwrite");
+        tx.objectStore("chunks").put({ songId: song.id, index: chunkIndex, data: value });
+        tx.objectStore("downloads").put({ id: song.id, bytes: receivedBytes, totalBytes });
+        tx.oncomplete = res;
+      });
+
+      if (onProgress) onProgress(receivedBytes, totalBytes);
+    }
+
+    const contentType = response.headers.get("content-type") || "audio/mpeg";
+    const blob = new Blob(chunks, { type: contentType });
+    const cacheResponse = new Response(blob, { headers: { "Content-Type": contentType, "Content-Length": blob.size } });
+    await cache.put(url, cacheResponse);
+
+    await new Promise(res => { const tx = db.transaction(["downloads", "chunks"], "readwrite"); tx.objectStore("downloads").delete(song.id); tx.objectStore("chunks").delete(IDBKeyRange.bound([song.id, 0], [song.id, Infinity])); tx.oncomplete = res; });
+    
+    return true;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getDownloadedSongs() {
+  state.downloaded.clear(); if (!("caches" in window)) return state.downloaded;
+  for (const song of state.songs) {
+    if (!song.audio) continue;
+    try { const cache = await getMusicCache(song); const url = new URL(song.audio, location.href).href; if (cache && await cache.match(url)) state.downloaded.add(songKey(song.id)); } catch {}
+  }
+  updateOfflineCount(); return state.downloaded;
+}
+
+function updateOfflineCount() {
+  const count = byId("offlineCount"); const status = byId("offlineStatus"); const message = byId("offlineMessage"); const card = byId("offlineCard");
+  if (!count) return;
+  const total = state.songs.filter(song => song.audio).length; const saved = state.downloaded.size;
+  count.textContent = `${saved} of ${total}`;
+  if (!total) { if (status) status.textContent = "Waiting for music"; if (message) message.textContent = "Music will appear here when it is published."; return; }
+  const percent = Math.round(saved / total * 100);
+  card?.style.setProperty("--offline-progress", `${percent}%`);
+  card?.classList.toggle("is-complete", saved === total);
+  card?.classList.toggle("is-preparing", saved > 0 && saved < total);
+  if (saved === total) { if (status) status.textContent = "Offline ready"; if (message) message.textContent = "Your saved music is ready for offline listening."; }
+  else { if (status) status.textContent = navigator.onLine ? "Offline music" : "Offline"; if (message) message.textContent = navigator.onLine ? "Music can be saved for listening without internet." : "Reconnect to save more music for offline listening."; }
+}
+
+async function prepareOfflineMusic() {
+  if (!navigator.onLine || state.downloadBusy) return;
+  state.downloadBusy = true;
+  try {
+    await getDownloadedSongs();
+    const pending = state.songs.filter(song => song.audio && !song.isTestTrack && !state.downloaded.has(songKey(song.id)));
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < pending.length && navigator.onLine) {
+        const song = pending[cursor++];
+        try {
+          await downloadTrackStream(song);
+          state.downloaded.add(songKey(song.id));
+          updateOfflineCount();
+        } catch (error) { console.warn("Could not cache", song.title, error); }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(VIC_CONFIG.DOWNLOAD_WORKERS_HOME, pending.length) }, worker));
+  } finally { state.downloadBusy = false; updateOfflineCount(); }
+}
+
+/* =========================================================
+   9. LATEST & QUEUE
+   ========================================================= */
+const vicReleaseDownloadState = new Map();
+
+function renderLatest() {
+  const box = byId("latestList"); if (!box) return;
+  let displayReleases = [...state.releases];
+  if (VIC_TEST_MODE) {
+    if (!displayReleases.some(r => songKey(r.id) === VIC_TEST_RELEASE_ID)) displayReleases.push(VIC_TEST_RELEASE);
+    if (!displayReleases.some(r => songKey(r.id) === VIC_TEST_RELEASE_WILLIAMS_ID)) displayReleases.push(VIC_TEST_RELEASE_WILLIAMS);
+  }
+
+  if (!displayReleases.length) { box.innerHTML = `<div class="empty-state"><b>No new releases yet</b><span>New music will appear here.</span></div>`; return; }
+
+  box.innerHTML = displayReleases.map(release => {
+    const progress = vicReleaseDownloadState.get(songKey(release.id));
+    const trackCount = Array.isArray(release.tracks) ? release.tracks.length : Number(release.song_count || release.track_count || 0);
+    const status = progress?.complete ? "complete" : progress?.active ? "active" : "";
+    let action = "";
+    if (status === "complete") {
+      action = `<span style="color:var(--green);font-weight:700;display:inline-flex;align-items:center;gap:5px;margin-top:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Completed</span>`;
+    } else if (status === "active") {
+      const downloadedMB = formatDataSize(progress.bytes || 0);
+      const totalMB = formatDataSize(progress.totalBytes || 0);
+      action = `<div style="width:100%;margin-top:5px;"><div style="width:100%;height:6px;border-radius:99px;background:#203a32;overflow:hidden;margin:5px 0;"><span style="display:block;width:${Math.max(0,Math.min(100,progress.percent || 0))}%;height:100%;background:var(--green);"></span></div><small style="color:var(--muted);font-size:10px;">Downloading — ${downloadedMB} of ${totalMB} (${progress.percent || 0}%)</small></div>`;
+    } else {
+      action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}" style="margin-top:6px;">⇩ Download　›</button>`;
+    }
+    return `<article class="release-card"><img class="release-cover" src="${escapeHTML(release.cover_url || release.cover || "")}" alt=""><div class="release-info"><h3>${escapeHTML(release.title || "Untitled release")}</h3><p>${escapeHTML(release.type || "Release")}</p><p>♬ ${trackCount || "—"} songs</p><p>▣ ${escapeHTML(release.release_date || "")}</p>${action}</div><span style="color:var(--muted);">›</span></article>`;
+  }).join("");
+}
+
+function queueReleaseDownload(id) {
+  const release = (songKey(id) === VIC_TEST_RELEASE_ID) ? VIC_TEST_RELEASE : (songKey(id) === VIC_TEST_RELEASE_WILLIAMS_ID) ? VIC_TEST_RELEASE_WILLIAMS : state.releases.find(r => songKey(r.id) === songKey(id));
+  if (!release) return;
+
+  cons
