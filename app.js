@@ -818,6 +818,118 @@ function prev() {
 function start() { if (!getCurrentSong()) { const songs = filteredSongs(); if (songs.length) playFromList(songs, 0, { type: "catalogue", label: "Your Music" }); return; } audio.play().catch(() => notify("This song could not start.")); }
 function pause() { audio.pause(); }
 function toggle() { audio.paused ? start() : pause(); }
-
 /* =========================================================
    12. PLAYER UI
+   ========================================================= */
+function updatePlayer() {
+  const song = getCurrentSong(); if (!song) return;
+  
+  const isDJ = state.queueSource?.type === "dj";
+  const coverSrc = isDJ && state.djProfile.cover ? state.djProfile.cover : song.cover || "";
+
+  ["playerTitle", "miniTitle"].forEach(id => { if (byId(id)) byId(id).textContent = song.title; });
+  ["playerArtist", "miniArtist"].forEach(id => { if (byId(id)) byId(id).textContent = song.artist; });
+  ["playerCover", "miniCover"].forEach(id => { if (byId(id)) byId(id).src = coverSrc; });
+  
+  if (byId("playPause")) byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("miniPlay")) byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("currentTime")) byId("currentTime").textContent = formatTime(audio.currentTime);
+  if (byId("duration")) byId("duration").textContent = formatTime(audio.duration || song.duration);
+  if (byId("progress")) byId("progress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  
+  const mini = byId("miniPlayer"); mini?.classList.toggle("visible", Boolean(state.currentId));
+  byId("playerOverlay")?.classList.toggle("playing", state.playing);
+
+  updateModeButtons(); updateDJPlaybackControls();
+  
+  if (byId("lyricsPlayPause")) byId("lyricsPlayPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("lyricsProgress")) byId("lyricsProgress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  if (byId("lyricsCurrentTime")) byId("lyricsCurrentTime").textContent = formatTime(audio.currentTime);
+  if (byId("lyricsDuration")) byId("lyricsDuration").textContent = formatTime(audio.duration || song.duration);
+}
+
+function updateMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  const song = getCurrentSong(); if (!song) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: song.title, artist: song.artist, album: song.album || "Vic-sound", artwork: song.cover ? [{ src: song.cover }] : [] });
+    navigator.mediaSession.setActionHandler("play", start); navigator.mediaSession.setActionHandler("pause", pause);
+    navigator.mediaSession.setActionHandler("previoustrack", prev); navigator.mediaSession.setActionHandler("nexttrack", next);
+  } catch (error) {}
+}
+
+function openPlayer() { byId("playerOverlay")?.classList.add("open"); byId("playerOverlay")?.setAttribute("aria-hidden", "false"); state.player = true; updatePlayer(); }
+function closePlayer() { byId("playerOverlay")?.classList.remove("open"); byId("playerOverlay")?.setAttribute("aria-hidden", "true"); state.player = false; }
+
+function setupPlayerSwipe() {
+  const overlay = byId("playerOverlay"); if (!overlay || overlay.dataset.swipeReady === "true") return;
+  overlay.dataset.swipeReady = "true";
+  let startPoint = null;
+  const ignoredGestureTarget = target => Boolean(target?.closest("button, input, textarea, select, a, .progress, .player-actions, .main-controls, [role='slider']"));
+
+  overlay.addEventListener("pointerdown", event => {
+    if (event.pointerType === "mouse" || !state.player || !overlay.classList.contains("open") || state.queueSource?.type === "dj" || ignoredGestureTarget(event.target)) { startPoint = null; return; }
+    startPoint = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+  }, { passive: true });
+
+  overlay.addEventListener("pointerup", event => {
+    if (!startPoint || event.pointerId !== startPoint.pointerId) return;
+    const dx = event.clientX - startPoint.x; const dy = event.clientY - startPoint.y; startPoint = null;
+    if (Math.abs(dx) < 65 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    if (!state.player || !overlay.classList.contains("open") || state.queueSource?.type === "dj" || ignoredGestureTarget(event.target)) return;
+    if (dx < 0) next(); else prev();
+  }, { passive: true });
+  overlay.addEventListener("pointercancel", () => { startPoint = null; }, { passive: true });
+}
+
+audio.addEventListener("play", () => { state.playing = true; updatePlayer(); renderHome(); updateMediaSession(); });
+audio.addEventListener("pause", () => { state.playing = false; updatePlayer(); renderHome(); });
+audio.addEventListener("timeupdate", () => { updatePlayer(); syncLyrics(); });
+audio.addEventListener("loadedmetadata", updatePlayer);
+audio.addEventListener("error", () => { state.playing = false; updatePlayer(); });
+audio.addEventListener("ended", () => { recordCompletedPlay(); if (state.repeatMode === 2) { audio.currentTime = 0; start(); return; } playNextQueueEntry(); });
+
+/* =========================================================
+   13. QUEUE UI
+   ========================================================= */
+function renderQueue() {
+  const box = byId("queueList"); if (!box) return;
+  const count = byId("queueCount"); if (count) count.textContent = `${state.queue.length} songs`;
+  box.innerHTML = state.queue.map((entry, index) => {
+    const song = getSong(entry.id); if (!song) return "";
+    const current = index === state.queueIndex;
+    return `<article class="queue-row ${current ? "current" : ""}" data-queue-index="${index}" draggable="true">
+        <span class="queue-num">${index + 1}</span><img src="${escapeHTML(song.cover)}" alt="">
+        <button class="queue-song" data-queue-play="${escapeHTML(song.id)}"><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></button>
+        <button class="repeat-badge" data-queue-repeat="${index}" aria-label="Double-tap to increase repeat count, currently ${entry.repeatTotal} times">×${entry.repeatTotal}</button>
+        <button class="row-more" data-queue-remove="${index}" aria-label="Remove from queue">×</button></article>`;
+  }).join("");
+  updateModeButtons();
+}
+
+function setQueueRepeat(index, count) { const entry = state.queue[index]; if (!entry) return; entry.repeatTotal = Math.max(1, Math.min(5, count)); entry.repeatsLeft = entry.repeatTotal; renderQueue(); notify(`This song will play ${entry.repeatTotal} time${entry.repeatTotal === 1 ? "" : "s"}.`); }
+function removeQueueSong(index) {
+  if (!state.queue[index]) return; const removedCurrent = index === state.queueIndex; state.queue.splice(index, 1);
+  if (index < state.queueIndex) state.queueIndex -= 1;
+  else if (removedCurrent && state.queue.length) { state.queueIndex = Math.min(index, state.queue.length - 1); const entry = currentQueueEntry(); loadSong(getSong(entry.id), true, { keepQueue: true }); }
+  else if (!state.queue.length) { state.queueIndex = 0; pause(); } renderQueue();
+}
+function openQueue() { byId("queueOverlay")?.classList.add("open"); byId("queueOverlay")?.setAttribute("aria-hidden", "false"); state.queueOpen = true; renderQueue(); }
+function closeQueue() { byId("queueOverlay")?.classList.remove("open"); byId("queueOverlay")?.setAttribute("aria-hidden", "true"); state.queueOpen = false; }
+
+/* =========================================================
+   14. SHUFFLE AND REPEAT (Default: Repeat All)
+   ========================================================= */
+function updateModeButtons() {
+  const shuffleButtons = [byId("shuffle"), byId("queueShuffle")].filter(Boolean);
+  const repeatButtons = [byId("repeat"), byId("playerRepeatTop"), byId("queueRepeat")].filter(Boolean);
+  shuffleButtons.forEach(button => { button.textContent = "⤨"; button.classList.toggle("active", state.shuffle); button.setAttribute("aria-pressed", String(state.shuffle)); });
+  const repeatSymbol = state.repeatMode === 2 ? "↻¹" : "↻";
+  repeatButtons.forEach(button => { button.textContent = repeatSymbol; button.classList.toggle("active", state.repeatMode !== 0); button.dataset.mode = String(state.repeatMode); button.setAttribute("aria-label", ["Repeat off", "Repeat all", "Repeat one"][state.repeatMode]); button.setAttribute("aria-pressed", String(state.repeatMode !== 0)); });
+}
+function toggleShuffle() { state.shuffle = !state.shuffle; updateModeButtons(); notify(state.shuffle ? "Shuffle is on." : "Shuffle is off."); }
+function cycleRepeat() { state.repeatMode = (state.repeatMode + 1) % 3; updateModeButtons(); notify(["Repeat is off.", "Repeat all is on.", "Repeat one is on."][state.repeatMode]); }
+
+/* =========================================================
+   15. FAVORITES AND COLLECTIONS
+   ======================================
