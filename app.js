@@ -11,7 +11,7 @@ const VIC_TEST_CONFIG = Object.freeze({
   enabled: true,
   queryFlag: "test",
   queryValue: "1",
-  cacheName: "vic-sound-tst-audio-v1"
+  cacheName: "vic-sound-tst-audio-v2"
 });
 
 const VIC_TEST_MODE = VIC_TEST_CONFIG.enabled &&
