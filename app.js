@@ -103,7 +103,7 @@ But then when older A & R said :
 Ya can’t sing or play mate
 And yar not right for us
 It’s kinda alright
-But we don’ `ear a chorus
+But we don’ ear a chorus
 So ere’s a small deal and we own wha’ you write
 And we’ll takes ours an’ more before yours mate
 I’m sure that salright !
