@@ -1479,6 +1479,3 @@ window.VicSoundListener = {
 };
 
 init();
-
-
-// Happy birthday once again. This code is complete, robust, and ready.//
