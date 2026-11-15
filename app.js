@@ -94,7 +94,7 @@ const TEST_LYRICS_TIMED = TEST_LYRICS_TEXT.split('\n\n').map((chunk, i) => ({
 }));
 
 // The 5 Test Songs (Already in Home)
-const VIC_TEST_SONGS = Object.freeze([
+const VIC_TEST_SONGS = [
   { id: "vic-tst-1", title: "TST 01 — Sound Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", cover: VIC_TEST_COVERS.one, cat: ["Pop", "Test"], mood: ["Calm", "Test"], duration: 180, isTestTrack: true, track_number: 1, release_id: "vic-tst-ep" },
   { id: "vic-tst-2", title: "TST 02 — Shuffle Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", cover: VIC_TEST_COVERS.two, cat: ["Afrobeats", "Test"], mood: ["Party", "Test"], duration: 150, isTestTrack: true, track_number: 2, release_id: "vic-tst-ep" },
   { id: "vic-tst-3", title: "TST 03 — Bass Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", cover: VIC_TEST_COVERS.one, cat: ["Rap", "Test"], mood: ["Bass", "Test"], duration: 190, isTestTrack: true, track_number: 3, release_id: "vic-tst-ep" },
@@ -117,25 +117,33 @@ const VIC_TEST_RELEASE_WILLIAMS = {
   tracks: ["vic-tst-williams"], isTestRelease: true
 };
 
-const VIC_TEST_SONG_WILLIAMS = {
-  id: "vic-tst-williams", 
-  title: "Dear Mr Williams", 
-  artist: "Loveshadow", 
-  album: "Spoken Word", 
-  audio: "https://cdn.muxiv.com/cmv0kwd08009e3ysptd08chu4/96.ogg", 
-  cover: "https://ccmixter.org/content/Loveshadow/ezgif-82cedba8bd1cbef693x94.gif", 
-  cat: ["Spoken Word", "Test"], 
-  mood: ["Calm", "Test"], 
-  duration: 141, 
-  isTestTrack: true, 
-  lyrics: TEST_LYRICS_TEXT, 
-  lyrics_timed: TEST_LYRICS_TIMED,
-  track_number: 1,
-  release_id: "vic-tst-williams-ep"
-};
+// The Test Songs
+const VIC_TEST_SONGS = [
+  { id: "vic-tst-1", title: "TST 01 — Sound Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", cover: VIC_TEST_COVERS.one, cat: ["Pop", "Test"], mood: ["Calm", "Test"], duration: 180, isTestTrack: true, track_number: 1, release_id: "vic-tst-ep" },
+  { id: "vic-tst-2", title: "TST 02 — Shuffle Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", cover: VIC_TEST_COVERS.two, cat: ["Afrobeats", "Test"], mood: ["Party", "Test"], duration: 150, isTestTrack: true, track_number: 2, release_id: "vic-tst-ep" },
+  { id: "vic-tst-3", title: "TST 03 — Bass Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", cover: VIC_TEST_COVERS.one, cat: ["Rap", "Test"], mood: ["Bass", "Test"], duration: 190, isTestTrack: true, track_number: 3, release_id: "vic-tst-ep" },
+  { id: "vic-tst-4", title: "TST 04 — Rhythm Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", cover: VIC_TEST_COVERS.two, cat: ["Hip-Hop", "Test"], mood: ["Rhythm", "Test"], duration: 200, isTestTrack: true, track_number: 4, release_id: "vic-tst-ep" },
+  { id: "vic-tst-5", title: "TST 05 — Final Check", artist: "Vic-sound Test Music", album: "Temporary Test Tracks", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", cover: VIC_TEST_COVERS.one, cat: ["Trap", "Test"], mood: ["Final", "Test"], duration: 170, isTestTrack: true, track_number: 5, release_id: "vic-tst-ep" },
+  { 
+    id: "vic-tst-williams", 
+    title: "Dear Mr Williams", 
+    artist: "Loveshadow", 
+    album: "Spoken Word", 
+    audio: "https://cdn.muxiv.com/cmv0kwd08009e3ysptd08chu4/96.ogg", 
+    cover: "https://ccmixter.org/content/Loveshadow/ezgif-82cedba8bd1cbef693x94.gif", 
+    cat: ["Spoken Word", "Test"], 
+    mood: ["Calm", "Test"], 
+    duration: 141, 
+    isTestTrack: true, 
+    lyrics: TEST_LYRICS_TEXT, 
+    lyrics_timed: TEST_LYRICS_TIMED,
+    track_number: 1,
+    release_id: "vic-tst-williams-ep"
+  }
+];
 
 // Add the Williams song to the global test pool so it can be found when downloaded
-VIC_TEST_SONGS.push(VIC_TEST_SONG_WILLIAMS);
+
 
 /* =========================================================
    1. SERVICE CONNECTIONS (CONFIGURATION KEYS)
