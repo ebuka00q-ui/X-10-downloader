@@ -48,7 +48,7 @@ But then when older A & R said :
 Ya can’t sing or play mate
 And yar not right for us
 It’s kinda alright
-But we don’ `ear a chorus
+But we don’ ear a chorus
 So ere’s a small deal and we own wha’ you write
 And we’ll takes ours an’ more before yours mate
 I’m sure that salright !
@@ -117,6 +117,14 @@ const VIC_TEST_RELEASE_WILLIAMS = {
 
 
 
+
+window.onerror = function(message, source, lineno, colno, error) {
+  const errorBox = document.createElement("div");
+  errorBox.style.cssText = "position:fixed;top:0;left:0;width:100%;background:red;color:white;padding:20px;z-index:9999;font-family:sans-serif;font-size:14px;";
+  errorBox.innerHTML = `<b>JavaScript Crash Detected:</b><br><br>${message}<br><br>Line: ${lineno}:${colno}`;
+  document.body.appendChild(errorBox);
+  return false;
+};
 
 
 
