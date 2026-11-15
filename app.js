@@ -116,11 +116,6 @@ const VIC_TEST_RELEASE_WILLIAMS = {
 
 
 
-/* =====================================================
-0. TEMPORARY TEST PACKAGE (TST) - REMOVABLE
-   Everything for testing is isolated here. Deleting this block
-   will not affect the rest of the application.
-==================================================== */
 
 
 
