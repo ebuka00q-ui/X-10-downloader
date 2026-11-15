@@ -5,7 +5,7 @@
 
 'use strict';
 
-const SHELL_VERSION = 'v5';
+const SHELL_VERSION = 'v6';
 const SHELL_CACHE = `vic-sound-shell-${SHELL_VERSION}`;
 const SHELL_PREFIX = 'vic-sound-shell-';
 const APP_FILES = [
