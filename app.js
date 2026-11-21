@@ -1691,3 +1691,4 @@ window.VicSoundListener = {
   clearTestCache: async () => { if ("caches" in window) await caches.delete(VIC_TEST_CONFIG.cacheName); state.downloaded = new Set([...state.downloaded].filter(id => !String(id).startsWith("vic-tst-"))); updateOfflineCount(); }
 };
 
+init();
