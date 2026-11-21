@@ -1,145 +1,179 @@
 /* =========================================================
    VIC-SOUND LISTENER — SERVICE WORKER
-   Build: 2026-11-20-01
+   Release version: v8
 
-   Update policy:
-   - New app shell files are checked against the network.
-   - A waiting update is activated only after the user taps Update.
-   - Old shell caches are cleaned up, but music/download caches are NEVER deleted.
-   - Cache Storage used by app.js for downloaded music is left untouched.
+   IMPORTANT RELEASE RULE:
+   Increase RELEASE_VERSION whenever you intentionally publish
+   changed app-shell files (index.html, style.css, app.js,
+   manifest.json, or another file added to APP_FILES).
+
+   The versioned shell cache is replaced as one unit. Music,
+   downloads, IndexedDB, favourites and collections are stored
+   separately and are NEVER deleted by this service worker.
    ========================================================= */
+'use strict';
 
-"use strict";
-
-const SW_VERSION = "2026-11-20-01";
-const SHELL_CACHE = `vic-sound-shell-${SW_VERSION}`;
-const SHELL_PREFIX = "vic-sound-shell-";
-
-// Keep this list limited to app-shell files that are expected to exist.
-// Missing files are ignored during install.
-const APP_SHELL = [
-  "./",
-  "./index.html",
-  "./app.js",
-  "./style.css",
-  "./manifest.json"
+const RELEASE_VERSION = 'v9'; // BUMP THIS to publish an app update.
+const SHELL_PREFIX = 'vic-sound-shell-';
+const SHELL_CACHE = `${SHELL_PREFIX}${RELEASE_VERSION}`;
+const APP_FILES = [
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './manifest.json'
 ];
 
-self.addEventListener("install", event => {
+const PREF_DB = 'vic-sound-sw-preferences';
+const PREF_STORE = 'settings';
+const NOTIFICATION_SETTING = 'releaseNotificationsEnabled';
+
+function openPreferencesDB() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in self)) return reject(new Error('IndexedDB unavailable'));
+    const request = indexedDB.open(PREF_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(PREF_STORE)) request.result.createObjectStore(PREF_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function readNotificationPreference() {
+  let db;
+  try {
+    db = await openPreferencesDB();
+    return await new Promise(resolve => {
+      const tx = db.transaction(PREF_STORE, 'readonly');
+      const request = tx.objectStore(PREF_STORE).get(NOTIFICATION_SETTING);
+      request.onsuccess = () => resolve(request.result === true);
+      request.onerror = () => resolve(false);
+    });
+  } catch { return false; }
+  finally { db?.close(); }
+}
+
+async function writeNotificationPreference(enabled) {
+  const db = await openPreferencesDB();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(PREF_STORE, 'readwrite');
+      tx.objectStore(PREF_STORE).put(enabled === true, NOTIFICATION_SETTING);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally { db.close(); }
+}
+
+self.addEventListener('install', event => {
   event.waitUntil((async () => {
+    // Install the complete, versioned shell. A failed download aborts
+    // installation so the currently working app remains active.
     const cache = await caches.open(SHELL_CACHE);
-    await Promise.all(APP_SHELL.map(async path => {
-      try {
-        const request = new Request(path, { cache: "reload" });
-        const response = await fetch(request);
-        if (response.ok && response.type !== "opaque") {
-          await cache.put(request, response);
-        }
-      } catch (_) {
-        // A missing optional shell file must not prevent installation.
-      }
-    }));
-    // Deliberately do NOT call skipWaiting() here.
-    // The app shows an Update prompt and sends a message after user approval.
+    await cache.addAll(APP_FILES);
+    // Deliberately wait for the Listener's mandatory Update prompt.
   })());
 });
 
-self.addEventListener("message", event => {
-  if (event.data && event.data.type === "VIC_SOUND_SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-self.addEventListener("activate", event => {
+self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
-    await Promise.all(names.map(name => {
-      // Delete only old Vic-sound shell caches. Never touch music, covers,
-      // downloaded tracks, test-track audio, or unrelated app caches.
-      if (name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE) {
-        return caches.delete(name);
-      }
-      return Promise.resolve(false);
-    }));
+    // Only versioned application-shell caches are eligible for deletion.
+    // In particular, do not delete vic-sound-music-v*, vic-sound-tst*,
+    // audio caches, or any IndexedDB database/object store.
+    await Promise.all(names
+      .filter(name => name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE)
+      .map(name => caches.delete(name)));
     await self.clients.claim();
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      client.postMessage({ type: 'VIC_SOUND_WORKER_ACTIVATED', version: RELEASE_VERSION });
+    }
   })());
 });
 
-function isAppShellRequest(url) {
-  return url.origin === self.location.origin &&
-    (url.pathname.endsWith("/app.js") ||
-     url.pathname.endsWith("/style.css") ||
-     url.pathname.endsWith("/index.html") ||
-     url.pathname.endsWith("/manifest.json") ||
-     url.pathname.endsWith("/"));
-}
-
-function isNeverCacheRequest(request, url) {
-  if (request.method !== "GET") return true;
-  if (request.headers.has("range")) return true;
-  if (request.destination === "audio" || request.destination === "video") return true;
-
-  // Do not cache backend/API requests or streamed music.
-  if (/supabase|storage\/v1|\/rest\/v1|\/functions\/v1/i.test(url.href)) return true;
-  if (/\.(mp3|m4a|aac|ogg|wav|flac|mp4|webm)(\?|$)/i.test(url.href)) return true;
-  return false;
-}
-
-async function networkFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  try {
-    const response = await fetch(new Request(request, { cache: "no-store" }));
-    if (response && response.ok && response.type !== "opaque") {
-      await cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    throw error;
-  }
-}
-
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(SHELL_CACHE);
-  const cached = await cache.match(request);
-  const refresh = fetch(request).then(response => {
-    if (response && response.ok && response.type !== "opaque") {
-      cache.put(request, response.clone());
-    }
-    return response;
-  }).catch(() => null);
-
-  return cached || await refresh || Response.error();
-}
-
-self.addEventListener("fetch", event => {
+self.addEventListener('fetch', event => {
   const request = event.request;
-  if (request.method !== "GET") return;
-
+  if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (isNeverCacheRequest(request, url)) return;
+  if (url.origin !== self.location.origin) return;
 
-  if (request.mode === "navigate") {
-    event.respondWith(networkFirst(request, SHELL_CACHE).catch(async () => {
-      const cache = await caches.open(SHELL_CACHE);
-      return (await cache.match("./index.html")) ||
-             (await cache.match("./")) ||
-             Response.error();
-    }));
+  const isShellAsset = APP_FILES.some(path => new URL(path, self.registration.scope).href === url.href);
+  if (!isShellAsset && request.mode !== 'navigate') return;
+
+  event.respondWith((async () => {
+    const cache = await caches.open(SHELL_CACHE);
+    // Cache-first is intentional here: app files changed without a
+    // RELEASE_VERSION bump must not silently reach installed users.
+    const cacheKey = request.mode === 'navigate' ? new URL('./index.html', self.registration.scope).href : request;
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+
+    // This is primarily a first-install/recovery fallback. Normal updates
+    // arrive through a new worker version and a freshly populated shell cache.
+    try {
+      const response = await fetch(request);
+      if (response && response.ok) await cache.put(cacheKey, response.clone());
+      return response;
+    } catch {
+      return new Response('Vic-sound is unavailable offline. Please reconnect and try again.', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
+  })());
+});
+
+self.addEventListener('push', event => {
+  event.waitUntil((async () => {
+    if (!(await readNotificationPreference())) return;
+    let payload = {};
+    try { payload = event.data ? event.data.json() : {}; }
+    catch { payload = { body: event.data ? event.data.text() : 'New music is available.' }; }
+    const kind = payload.kind === 'home' ? 'home' : 'latest';
+    const title = String(payload.title || (kind === 'home' ? 'New music added to Vic-sound' : 'New release on Vic-sound'));
+    const body = String(payload.body || (kind === 'home' ? 'New music is ready in Home.' : 'A new release is waiting in Latest.'));
+    const target = kind === 'home' ? './?screen=home' : './?screen=latest';
+    const itemId = String(payload.musicId || payload.releaseId || payload.id || kind);
+    await self.registration.showNotification(title, {
+      body,
+      icon: './file_000000008d2881f49ddcc5378e7331fa.png',
+      badge: './file_000000008d2881f49ddcc5378e7331fa.png',
+      tag: `vic-sound-${kind}-${itemId}`,
+      renotify: false,
+      data: { url: target, kind, itemId }
+    });
+  })());
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const data = event.notification.data || {};
+    const targetURL = new URL(data.url || './?screen=latest', self.registration.scope).href;
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      if ('focus' in client) {
+        await client.focus();
+        if ('navigate' in client) await client.navigate(targetURL);
+        client.postMessage({ type: data.kind === 'home' ? 'VIC_SOUND_OPEN_HOME' : 'VIC_SOUND_OPEN_LATEST', itemId: data.itemId || null });
+        return;
+      }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(targetURL);
+  })());
+});
+
+self.addEventListener('message', event => {
+  const data = event.data || {};
+  if (data.type === 'SKIP_WAITING') {
+    event.waitUntil(self.skipWaiting());
     return;
   }
-
-  if (isAppShellRequest(url)) {
-    // JS/CSS/HTML always revalidate online; cached copies are offline fallback only.
-    event.respondWith(networkFirst(request, SHELL_CACHE));
-    return;
-  }
-
-  // Covers and other same-origin static images can be refreshed without
-  // interfering with music download caches.
-  if (url.origin === self.location.origin &&
-      ["image", "style", "script", "font"].includes(request.destination)) {
-    event.respondWith(staleWhileRevalidate(request));
+  if (data.type === 'SET_RELEASE_NOTIFICATIONS') {
+    event.waitUntil(writeNotificationPreference(data.enabled === true));
   }
 });
+   
