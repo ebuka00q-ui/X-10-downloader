@@ -1689,4 +1689,120 @@ let boxManualScroll = false;
 function openLyrics() { state.lyricsOpen = true; updateLyrics(); byId("lyricsSheet")?.classList.add("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "false"); }
 function closeLyrics() { byId("lyricsSheet")?.classList.remove("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "true"); state.lyricsOpen = false; }
 
-// UK voice consi
+
+// UK voice consistency comes from a backend TTS provider configured in Creator Catalog.
+// No device-native voice fallback: device voices vary from phone to phone.
+let vicDJVoiceAudio = null;
+let vicDJResumeState = null;
+async function speakDJText(text) {
+  const phrase = safe(text).trim(); if (!phrase) return false;
+  if (!VIC_CONFIG.SERVICES.baseUrl || !navigator.onLine) { if (byId("djReply")) byId("djReply").textContent = phrase; return false; }
+  const wasPlaying = !audio.paused; const position = audio.currentTime; const songId = state.currentId;
+  if (wasPlaying) pause();
+  vicDJResumeState = { wasPlaying, position, songId };
+  try {
+    const result = await serviceRequest(VIC_CREATOR_CONTRACT.djVoiceEndpoint, { method: "POST", body: JSON.stringify({ text: phrase, voice_profile: "creator-configured" }) });
+    const audioUrl = result?.audio_url || result?.url;
+    if (!audioUrl) throw new Error("Voice service did not return audio.");
+    if (vicDJVoiceAudio) { vicDJVoiceAudio.pause(); vicDJVoiceAudio.src = ""; }
+    vicDJVoiceAudio = new Audio(audioUrl);
+    if (byId("djReply")) byId("djReply").textContent = phrase;
+    byId("djCoverLarge")?.classList.add("is-active");
+    await new Promise((resolve, reject) => {
+      vicDJVoiceAudio.onended = resolve;
+      vicDJVoiceAudio.onpause = resolve;
+      vicDJVoiceAudio.onerror = () => reject(new Error("DJ voice playback failed."));
+      vicDJVoiceAudio.play().catch(reject);
+    });
+    byId("djCoverLarge")?.classList.remove("is-active");
+    return true;
+  } catch (error) {
+    byId("djCoverLarge")?.classList.remove("is-active");
+    vicDJResumeState = null;
+    if (byId("djReply")) byId("djReply").textContent = phrase;
+    if (wasPlaying && songId === state.currentId) { audio.currentTime = position; start(); }
+    return false;
+  }
+}
+function resumeAfterDJVoice() {
+  byId("djCoverLarge")?.classList.remove("is-active");
+  const saved = vicDJResumeState; vicDJResumeState = null;
+  if (saved?.wasPlaying && saved.songId === state.currentId) { if (Number.isFinite(saved.position)) audio.currentTime = saved.position; start(); }
+}
+function speakDJIntro() { playDJNow(); }
+function setupVoice() { /* Text-only DJ input by design. */ }
+function startVoice() { /* Microphone input is intentionally disabled. */ }
+function stopVoice() { if (vicDJVoiceAudio) { vicDJVoiceAudio.pause(); } resumeAfterDJVoice(); }
+
+// Keep playback UI state in sync and accumulate only actual forward-playing time.
+audio.addEventListener("play", () => { if (vicListenMeter.songId !== songKey(state.currentId)) resetListenMeter(state.currentId); else vicListenMeter.lastAudioTime = null; });
+audio.addEventListener("pause", () => { vicListenMeter.lastAudioTime = null; });
+audio.addEventListener("seeking", () => { vicListenMeter.lastAudioTime = null; });
+audio.addEventListener("seeked", () => { vicListenMeter.lastAudioTime = audio.paused ? null : audio.currentTime; syncLyrics(); updatePlayer(); });
+window.addEventListener("online", flushVicAnalytics);
+
+// Creator-configurable data can be delivered as a single public configuration document.
+async function loadCreatorConfiguration() {
+  if (!VIC_CONFIG.SERVICES.baseUrl) return null;
+  try {
+    const config = await serviceRequest(VIC_CREATOR_CONTRACT.settingsEndpoint);
+    if (config?.monetization || config?.ads) applyMonetizationSettings(config.monetization || config.ads);
+    if (config?.dj) applyDJProfile(config.dj.profile || config.dj);
+    state.creatorConfiguration = config; return config;
+  } catch (error) { return null; }
+}
+
+// DJ response: speak first (when the configured backend voice is available), then start its selected music.
+const vicLocalDJCommand = command;
+command = async function(text) {
+  const value = safe(text).trim(); if (!value || state.djBusy) return;
+  state.djBusy = true; if (byId("djSend")) byId("djSend").disabled = true;
+  try {
+    let result = null;
+    if (navigator.onLine && VIC_CONFIG.SERVICES.baseUrl) { try { result = await requestOnlineDJ(value); state.djOnline = true; } catch { /* offline rules below */ } }
+    if (!result) { state.djOnline = false; result = localDJReply(value); }
+    const message = result.message || "I've found something for you.";
+    if (byId("djReply")) byId("djReply").textContent = message;
+    if (state.djOnline) await speakDJText(message);
+    if (Array.isArray(result.songs) && result.songs.length) {
+      const songs = result.songs.map(item => typeof item === "object" ? getSong(item.id) || normaliseSong(item) : getSong(item)).filter(Boolean);
+      if (songs.length) { vicDJResumeState = null; playFromList(songs, 0, { type: "dj", label: "Vic-sound DJ" }); state.djLastSuggestedId = songs[0].id; }
+      else resumeAfterDJVoice();
+    } else resumeAfterDJVoice();
+  } finally { state.djBusy = false; if (byId("djSend")) byId("djSend").disabled = false; }
+};
+
+// Reposition the single navigation ad slot when the active screen changes.
+const vicOriginalGo = go;
+go = function(screen) { vicOriginalGo(screen); if (state.monetization?.placement === "top") applyMonetizationSettings(state.monetization); };
+
+// Extend public integration surface for Creator Catalog and backend testing.
+window.VicSoundListener = Object.assign(window.VicSoundListener || {}, {
+  contract: VIC_CREATOR_CONTRACT,
+  loadCreatorConfiguration,
+  emitAnalyticsEvent: emitVicEvent,
+  getAnalyticsSnapshot: () => readAnalytics(),
+  speakDJText,
+  createCollection,
+  openAddSongs,
+  openRemoveSongs,
+  confirmDeleteCollection
+});
+
+// UI event additions; originals remain intact.
+byId("createCollectionButton")?.addEventListener("click", createCollection);
+byId("lyricsBack")?.addEventListener("click", closeLyrics);
+byId("lyricsContent")?.addEventListener("pointerdown", () => { boxManualScroll = true; }, { passive: true });
+byId("lyricsContent")?.addEventListener("pointerup", () => { setTimeout(() => { boxManualScroll = false; syncLyrics(); }, 1800); }, { passive: true });
+byId("lyricsPlayPause")?.addEventListener("click", toggle);
+byId("lyricsProgress")?.addEventListener("input", event => { if (audio.duration) audio.currentTime = Number(event.target.value) / 100 * audio.duration; });
+
+const vicOriginalInsertDownloadedSong = insertDownloadedSong;
+insertDownloadedSong = function(song) { vicOriginalInsertDownloadedSong(song); recordDownloadAnalytics(song); };
+
+if (!vicListenMeter.sessionSent) { vicListenMeter.sessionSent = true; emitVicEvent("session_start", { app_version: "listener-contract-1", screen: state.screen }); }
+
+
+/* =========================================================
+   24. ORDERED, PAUSABLE RELEASE DOWNLOADS
+   =============================
