@@ -1802,7 +1802,144 @@ insertDownloadedSong = function(song) { vicOriginalInsertDownloadedSong(song); r
 
 if (!vicListenMeter.sessionSent) { vicListenMeter.sessionSent = true; emitVicEvent("session_start", { app_version: "listener-contract-1", screen: state.screen }); }
 
-
 /* =========================================================
    24. ORDERED, PAUSABLE RELEASE DOWNLOADS
-   =============================
+   ========================================================= */
+const vicDownloadTasks = new Map();
+const vicDownloadControllers = new Map();
+function releaseSongsFor(release) {
+  const ids = Array.isArray(release.tracks) ? release.tracks : [];
+  const songs = ids.map(id => getSong(typeof id === "object" ? id.id : id)).filter(Boolean);
+  return (songs.length ? songs : state.songs.filter(song => songKey(song.release_id) === songKey(release.id))).filter(song => song.audio);
+}
+function renderLatest() {
+  const box = byId("latestList"); if (!box) return;
+  let releases = [...state.releases];
+  if (VIC_TEST_MODE) {
+    if (!releases.some(item => songKey(item.id) === VIC_TEST_RELEASE_ID)) releases.push(VIC_TEST_RELEASE);
+    if (!releases.some(item => songKey(item.id) === VIC_TEST_RELEASE_WILLIAMS_ID)) releases.push(VIC_TEST_RELEASE_WILLIAMS);
+  }
+  const completedReleaseIds = new Set(readJSON("vic-sound-downloaded-releases-v1", [] ).map(songKey));
+  releases = releases.filter(release => !completedReleaseIds.has(songKey(release.id)));
+  releases.sort((a,b) => new Date(b.release_date || b.created_at || 0) - new Date(a.release_date || a.created_at || 0));
+  if (!releases.length) { box.innerHTML = `<div class="empty-state"><b>No new releases yet</b><span>New music will appear here.</span></div>`; return; }
+  box.innerHTML = releases.map(release => {
+    const task = vicDownloadTasks.get(songKey(release.id));
+    const tracks = releaseSongsFor(release);
+    const trackCount = Number(release.song_count || release.track_count || (Array.isArray(release.tracks) ? release.tracks.length : tracks.length)) || 0;
+    const knownSizes = tracks.map(song => Number(song.file_size || song.size_bytes || song.filesize || 0)).filter(value => value > 0);
+    const totalSize = knownSizes.length === tracks.length && tracks.length ? knownSizes.reduce((a,b) => a+b,0) : 0;
+    let action;
+    if (task?.status === "complete") action = `<span class="release-action" aria-label="Download complete">✓ Completed</span>`;
+    else if (task?.status === "downloading") action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}">Ⅱ Pause</button><small class="download-progress-label">${task.percent || 0}% · ${escapeHTML(task.currentTitle || "Preparing music")}</small>`;
+    else if (task?.status === "queued") action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}">Ⅱ Pause queue</button><small class="download-progress-label">Waiting in download order</small>`;
+    else if (task?.status === "paused") action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}">▶ Resume</button><small class="download-progress-label">Paused · ${task.percent || 0}%</small>`;
+    else if (task?.status === "failed") action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}">↻ Retry</button><small class="download-progress-label">Download stopped. Try again.</small>`;
+    else action = `<button class="release-action" data-release-download="${escapeHTML(release.id)}">⇩ Download</button>`;
+    const type = trackCount > 1 ? `EP · ${trackCount} tracks` : "Single";
+    return `<article class="release-card"><img class="release-cover" src="${escapeHTML(release.cover_url || release.cover || "./vinyl.svg")}" alt=""><div class="release-info"><h3>${escapeHTML(release.title || "Untitled release")}</h3><p>${type}</p><p>▣ ${escapeHTML(release.release_date || "")}</p>${totalSize ? `<p>${formatDataSize(totalSize)}</p>` : ""}${action}</div><span style="color:var(--muted)">›</span></article>`;
+  }).join("");
+}
+async function requestVerifiedReward(release) {
+  const downloadSettings = state.monetization.download || {};
+  if (downloadSettings.enabled !== true) return true;
+  const providerName = safe(downloadSettings.provider || state.monetization.provider || "none").toLowerCase();
+  const adapter = (window.VicSoundAdProviders || {})[providerName];
+  if (!adapter?.showRewarded) return false;
+  try {
+    const reward = await adapter.showRewarded({ release, purpose: "download" });
+    return Boolean(reward?.verified === true && reward?.eventId);
+  } catch { return false; }
+}
+function queueReleaseDownload(id) {
+  const key = songKey(id); const existing = vicDownloadTasks.get(key);
+  if (existing?.status === "failed" && existing.authorized) { existing.status = "queued"; renderLatest(); processDownloadQueue(); return; }
+  if (existing?.status === "downloading" || existing?.status === "queued") { existing.status = "paused"; vicDownloadControllers.get(key)?.abort(); renderLatest(); return; }
+  if (existing?.status === "paused") { existing.status = "queued"; renderLatest(); processDownloadQueue(); return; }
+  if (existing?.status === "complete") return;
+  const release = key === VIC_TEST_RELEASE_ID ? VIC_TEST_RELEASE : key === VIC_TEST_RELEASE_WILLIAMS_ID ? VIC_TEST_RELEASE_WILLIAMS : state.releases.find(item => songKey(item.id) === key);
+  if (!release) return;
+  const songs = releaseSongsFor(release);
+  if (!songs.length) { notify("This release has no playable audio files yet."); return; }
+  const begin = () => {
+    vicDownloadTasks.set(key, { release, songs, index: 0, status: "queued", authorized: true, percent: 0, bytes: 0, totalBytes: 0, currentTitle: "" });
+    renderLatest(); processDownloadQueue();
+  };
+  if (state.monetization.download?.enabled === true) {
+    openModal({ title: "Unlock this download", body: `<p>Watch a rewarded advertisement to unlock ${escapeHTML(release.title)}.</p>`, buttons: [
+      { label: "Not now" },
+      { label: "Watch Ad", action: async () => {
+        const verified = await requestVerifiedReward(release);
+        if (verified) { notify("Successful"); begin(); }
+        else notify("Unsuccessful");
+      } }
+    ] });
+  } else begin();
+}
+async function processDownloadQueue() {
+  if (state.isDownloading) return;
+  state.isDownloading = true;
+  try {
+    for (const [releaseKey, task] of vicDownloadTasks) {
+      if (task.status !== "queued") continue;
+      task.status = "downloading"; renderLatest();
+      while (task.index < task.songs.length && task.status === "downloading") {
+        const song = task.songs[task.index];
+        if (!song?.audio) { task.status = "failed"; break; }
+        const controller = new AbortController(); vicDownloadControllers.set(releaseKey, controller); task.currentTitle = song.title;
+        try {
+          await downloadTrackStream(song, (received, total) => {
+            task.bytes = received; task.totalBytes = total || task.totalBytes;
+            const completedBefore = task.index / task.songs.length * 100;
+            const currentShare = task.totalBytes > 0 ? (received / task.totalBytes) / task.songs.length * 100 : 0;
+            task.percent = Math.min(99, Math.round(completedBefore + currentShare)); renderLatest();
+          }, controller.signal);
+          state.downloaded.add(songKey(song.id)); insertDownloadedSong(song); saveLocalData(); renderHome(); updateOfflineCount();
+          task.index += 1; task.percent = Math.round(task.index / task.songs.length * 100); renderLatest();
+        } catch (error) {
+          if (task.status === "paused" || controller.signal.aborted) break;
+          task.status = "failed"; console.warn("Release download failed", song.title, error); break;
+        } finally { vicDownloadControllers.delete(releaseKey); }
+      }
+      if (task.status === "downloading" && task.index >= task.songs.length) {
+        task.status = "complete"; task.percent = 100; task.completedAt = Date.now();
+        const doneIds = readJSON("vic-sound-downloaded-releases-v1", []); if (!doneIds.map(songKey).includes(songKey(releaseKey))) { doneIds.push(songKey(releaseKey)); writeJSON("vic-sound-downloaded-releases-v1", doneIds); }
+      }
+      if (task.status === "downloading") task.status = "paused";
+      renderLatest();
+    }
+  } finally { state.isDownloading = false; if ([...vicDownloadTasks.values()].some(task => task.status === "queued")) queueMicrotask(processDownloadQueue); }
+}
+
+// One listening interstitial at a time, driven by Creator's time/song-count policy.
+let vicListeningAdBusy = false;
+let vicListeningAdSeconds = 0;
+let vicListeningAdSongs = 0;
+let vicLastListeningAdSong = null;
+let vicListeningAdRetryAfter = 0;
+async function maybeShowListeningAd(delta) {
+  const cfg = state.monetization.listening || {};
+  if (!cfg.enabled || !navigator.onLine || vicListeningAdBusy || !state.playing || Date.now() < vicListeningAdRetryAfter) return;
+  const mode = String(cfg.interval_mode || cfg.mode || "disabled");
+  if (mode === "time") vicListeningAdSeconds += Math.max(0, delta);
+  if (mode === "songs" && state.currentId !== vicLastListeningAdSong) { vicListeningAdSongs += 1; vicLastListeningAdSong = state.currentId; }
+  const due = mode === "time" ? vicListeningAdSeconds >= Math.max(10, Number(cfg.interval_seconds || 0)) : mode === "songs" ? vicListeningAdSongs >= Math.max(1, Number(cfg.song_count || 0)) : false;
+  if (!due) return;
+  const provider = safe(cfg.provider || state.monetization.provider).toLowerCase(); const adapter = (window.VicSoundAdProviders || {})[provider];
+  if (!adapter?.showInterstitial) return;
+  vicListeningAdBusy = true; const wasPlaying = !audio.paused; const position = audio.currentTime; const songId = state.currentId; pause();
+  try { const result = await adapter.showInterstitial({ reason: "listening_interval" }); if (result?.shown === true || result?.completed === true) { vicListeningAdSeconds = 0; vicListeningAdSongs = 0; vicListeningAdRetryAfter = 0; } else vicListeningAdRetryAfter = Date.now() + 30000; }
+  catch { vicListeningAdRetryAfter = Date.now() + 30000; }
+  finally { vicListeningAdBusy = false; if (wasPlaying && songId === state.currentId) { audio.currentTime = position; start(); } }
+}
+const vicBaseMeasurePlayback = measureRealPlayback;
+measureRealPlayback = function() {
+  const previousAudioTime = vicListenMeter.lastAudioTime;
+  const currentAudioTime = audio.currentTime;
+  vicBaseMeasurePlayback();
+  const delta = previousAudioTime !== null && Number.isFinite(currentAudioTime) ? currentAudioTime - previousAudioTime : 0;
+  if (delta > 0 && delta <= 120) maybeShowListeningAd(delta);
+};
+audio.addEventListener("timeupdate", measureRealPlayback);
+
+// Swipe down from the sheet handle/header to dismiss lyrics; manual scrolling remains
