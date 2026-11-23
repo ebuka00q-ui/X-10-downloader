@@ -1456,4 +1456,237 @@ window.VicSoundListener = {
 
 
 /* =========================================================
-   23. VIC-SOUND CREATOR INTEGRATION
+   23. VIC-SOUND CREATOR INTEGRATION + VERIFIED LISTENER FIXES
+   Contract version: 1
+   ========================================================= */
+const VIC_CREATOR_CONTRACT = Object.freeze({
+  version: 1,
+  settingsEndpoint: "/listener/config",
+  eventsEndpoint: "/listener/analytics/events",
+  djVoiceEndpoint: "/listener/dj/voice",
+  settings: ["ads.navigation.placement", "ads.navigation.width", "ads.navigation.height", "ads.navigation.enabled", "ads.download.enabled", "ads.listening.enabled", "ads.listening.interval", "ads.listening.songCount", "dj.voice.provider", "dj.voice.model", "dj.voice.voiceId", "dj.voice.endpoint", "catalogue", "lyrics", "releases"],
+  analytics: { activeUser: "session_start", stream: "listened_60_seconds", download: "download_completed", repeat: "listened_60_seconds with is_repeat_stream=true" }
+});
+
+// Durable analytics queue. It records actual playback deltas, never audio.currentTime jumps.
+const VIC_ANALYTICS_KEY = "vic-sound-analytics-v1";
+const vicListenMeter = { songId: null, lastAudioTime: null, seconds: 0, sessionSent: false, lastFlush: 0 };
+function readAnalytics() { return readJSON(VIC_ANALYTICS_KEY, { totals: { streams: 0, downloads: 0 }, pending: [] }); }
+function saveAnalytics(data) { writeJSON(VIC_ANALYTICS_KEY, data); }
+async function emitVicEvent(type, payload = {}) {
+  const data = readAnalytics();
+  data.pending.push({ event_id: makeId(), type, at: new Date().toISOString(), anonymous_id: state.anonymousId || getAnonymousId(), session_id: vicSessionId, payload });
+  if (data.pending.length > 500) data.pending = data.pending.slice(-500);
+  if (type === "listened_60_seconds") { data.totals.streams = (data.totals.streams || 0) + 1; data.totals.streamsBySong = data.totals.streamsBySong || {}; const songId = safe(payload.song_id); const previous = data.totals.streamsBySong[songId] || 0; data.totals.streamsBySong[songId] = previous + 1; payload.stream_number_for_song = previous + 1; payload.is_repeat_stream = previous > 0; }
+  if (type === "download_completed") data.totals.downloads = (data.totals.downloads || 0) + 1;
+  saveAnalytics(data);
+  flushVicAnalytics();
+}
+const vicSessionId = makeId();
+async function flushVicAnalytics() {
+  if (!navigator.onLine || !VIC_CONFIG.SERVICES.baseUrl) return;
+  const data = readAnalytics(); if (!data.pending.length || Date.now() - vicListenMeter.lastFlush < 4000) return;
+  vicListenMeter.lastFlush = Date.now();
+  const batch = data.pending.slice(0, 40);
+  try {
+    await serviceRequest(VIC_CREATOR_CONTRACT.eventsEndpoint, { method: "POST", body: JSON.stringify({ events: batch }) });
+    const ids = new Set(batch.map(item => item.event_id));
+    data.pending = data.pending.filter(item => !ids.has(item.event_id)); saveAnalytics(data);
+  } catch (error) { /* Keep queued events for the next online attempt. */ }
+}
+function resetListenMeter(songId) { vicListenMeter.songId = songId == null ? null : songKey(songId); vicListenMeter.lastAudioTime = null; vicListenMeter.seconds = 0; }
+function measureRealPlayback() {
+  const song = getCurrentSong();
+  if (!song || audio.paused || !Number.isFinite(audio.currentTime)) { vicListenMeter.lastAudioTime = null; return; }
+  if (vicListenMeter.songId !== songKey(song.id)) resetListenMeter(song.id);
+  const now = audio.currentTime;
+  if (vicListenMeter.lastAudioTime !== null) {
+    const delta = now - vicListenMeter.lastAudioTime;
+    // Only count ordinary forward playback ticks. Seek jumps, buffering and reverse movement are ignored.
+    if (delta > 0 && delta <= 120) vicListenMeter.seconds += delta;
+    if (delta < 0 || delta > 2.25) { /* A seek is not listening time. */ }
+  }
+  vicListenMeter.lastAudioTime = now;
+  while (vicListenMeter.seconds >= 60) {
+    vicListenMeter.seconds -= 60;
+    emitVicEvent("listened_60_seconds", { song_id: song.id, title: song.title, artist: song.artist, listening_seconds: 60, source: state.queueSource?.type || "catalogue" });
+  }
+}
+function recordDownloadAnalytics(song) { if (song) emitVicEvent("download_completed", { song_id: song.id, title: song.title }); }
+
+// Creator-controlled configuration is public display configuration only; private keys never enter this client.
+function applyMonetizationSettings(settings = {}) {
+  const root = settings.monetization || settings.ads || settings;
+  const display = root.navigation || root.display || root;
+  const placementRaw = String(display.placement || root.navigationPlacement || "bottom").toLowerCase();
+  const placement = ["top", "bottom", "off"].includes(placementRaw) ? placementRaw : (placementRaw.endsWith("-top") ? "top" : "bottom");
+  const heightNumber = Number.parseInt(display.height ?? display.bannerHeight ?? 54, 10);
+  const widthNumber = Number.parseInt(display.width ?? display.maxWidth ?? 520, 10);
+  const height = Math.max(40, Math.min(180, Number.isFinite(heightNumber) ? heightNumber : 54));
+  const width = Math.max(180, Math.min(520, Number.isFinite(widthNumber) ? widthNumber : 520));
+  state.monetization = {
+    enabled: root.enabled === true || display.enabled === true,
+    provider: safe(root.provider || display.provider || "none").toLowerCase(),
+    format: safe(root.format || display.format || "banner").toLowerCase(),
+    placement, bannerHeight: `${height}px`, maxWidth: `${width}px`, width, height,
+    refreshSeconds: Math.max(0, Math.min(3600, Number(root.refreshSeconds ?? 0))),
+    gap: safeCssLength(display.gap ?? root.gap, "0px"), borderRadius: safeCssLength(display.borderRadius ?? root.borderRadius, "12px"),
+    download: root.download || settings.download || { enabled: false },
+    listening: root.listening || settings.listening || { enabled: false }
+  };
+  const slot = byId("bottomAdPlacement");
+  if (!slot) return state.monetization;
+  document.body.classList.remove("has-ad");
+  document.documentElement.style.setProperty("--ad-height", "0px");
+  slot.hidden = true; slot.classList.remove("ad-inline", "ad-top", "ad-bottom");
+  slot.style.cssText = "";
+  if (placement === "top") {
+    const screen = byId(state.screen === "favorites" ? "favoritesScreen" : state.screen === "latest" ? "latestScreen" : "homeScreen");
+    if (screen) { screen.insertBefore(slot, screen.firstElementChild); }
+    slot.classList.add("ad-inline", "ad-top");
+    slot.style.position = "relative"; slot.style.width = `min(100%, ${width}px)`; slot.style.height = `${height}px`;
+  } else {
+    document.body.appendChild(slot); slot.classList.add("ad-bottom");
+    slot.style.position = "fixed"; slot.style.left = "50%"; slot.style.bottom = "calc(var(--nav) + env(safe-area-inset-bottom))";
+    slot.style.transform = "translateX(-50%)"; slot.style.width = `min(100%, ${width}px)`; slot.style.height = `${height}px`;
+  }
+  slot.style.maxWidth = `${width}px`; slot.style.margin = `${state.monetization.gap} auto`; slot.style.borderRadius = state.monetization.borderRadius;
+  slot.dataset.provider = state.monetization.provider; slot.dataset.format = state.monetization.format; slot.dataset.configuredPlacement = placement;
+  state.monetizationReady = true;
+  if (!state.monetization.enabled || placement === "off" || !navigator.onLine) return state.monetization;
+  const adapter = (window.VicSoundAdProviders || {})[state.monetization.provider];
+  if (state.monetization.format === "banner" && adapter?.mountBanner) {
+    Promise.resolve(adapter.mountBanner({ container: slot, settings: state.monetization })).then(result => {
+      const filled = result === true || result?.filled === true;
+      slot.hidden = !filled;
+      if (filled && placement === "bottom") { document.documentElement.style.setProperty("--ad-height", `${height}px`); document.body.classList.add("has-ad"); }
+    }).catch(() => { slot.hidden = true; });
+  }
+  return state.monetization;
+}
+async function loadMonetizationSettings() {
+  let settings = VIC_CONFIG.MONETIZATION;
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const config = await serviceRequest(VIC_CREATOR_CONTRACT.settingsEndpoint);
+      state.creatorConfiguration = config || null;
+      if (config?.dj) applyDJProfile(config.dj.profile || config.dj);
+      settings = config?.monetization || config?.ads || config || settings;
+    } catch (error) {
+      try { settings = await serviceRequest(VIC_CONFIG.SERVICES.monetization); } catch {}
+    }
+  }
+  applyMonetizationSettings(settings || VIC_CONFIG.MONETIZATION);
+  return state.monetization;
+}
+
+// Collection actions are separate and explicit: add never removes existing songs; remove has its own checklist.
+function createCollection() {
+  askText("Create a collection", "Collection name", "", name => {
+    if (state.collections.some(item => item.name.trim().toLowerCase() === name.toLowerCase())) { notify("A collection with that name already exists."); return; }
+    state.collections.push({ id: makeId(), name, songs: [] }); saveCollections(); closeModal(); notify(`"${name}" created.`);
+  });
+}
+function collectionMenu(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  openModal({ title: collection.name, body: `<p class="vic-modal-note">Manage this collection.</p>`, buttons: [
+    { label: "Cancel" },
+    { label: "Add songs", action: () => openAddSongs(collection.id) },
+    { label: "Remove songs", action: () => openRemoveSongs(collection.id) },
+    { label: "Rename", action: () => askText("Rename collection", "New collection name", collection.name, name => { collection.name = name; saveCollections(); closeModal(); notify("Collection renamed."); }) },
+    { label: "Delete collection", danger: true, action: () => confirmDeleteCollection(collection.id) }
+  ] });
+}
+function confirmDeleteCollection(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  openModal({ title: "Delete collection?", body: `<p>Delete <b>${escapeHTML(collection.name)}</b>? This only removes the collection. Your downloaded music and songs will remain safe.</p>`, buttons: [
+    { label: "Keep collection" },
+    { label: "Delete", danger: true, action: () => { state.collections = state.collections.filter(item => songKey(item.id) !== songKey(id)); if (songKey(state.currentCollection) === songKey(id)) { byId("vicCollectionView")?.classList.remove("open"); state.currentCollection = null; } saveCollections(); notify("Collection deleted. Your music is safe."); } }
+  ] });
+}
+function renderFavorites() {
+  const box = byId("favoriteGrid"); if (!box) return;
+  const count = byId("favoriteCount"); if (count) count.textContent = `${state.collections.length} collection${state.collections.length === 1 ? "" : "s"}`;
+  const emptyCover = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" rx="18" fill="#04130f"/><circle cx="80" cy="80" r="53" fill="none" stroke="#00f5a0" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="58" fill="#00f5a0">♫</text></svg>');
+  if (!state.collections.length) { box.innerHTML = `<div class="empty-state"><b>No collections yet</b><span>Create a collection with the button above, then add songs.</span></div>`; return; }
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = collectionSongs(collection.id)[0];
+    return `<article class="collection-card"><button class="collection-open" data-collection-open="${escapeHTML(collection.id)}" aria-label="Open ${escapeHTML(collection.name)}"><img src="${escapeHTML(firstSong?.cover || emptyCover)}" alt=""><div class="collection-card-info"><b>${escapeHTML(collection.name)}</b><small>${collection.songs.length} song${collection.songs.length === 1 ? "" : "s"}</small></div></button><button class="collection-card-more" data-collection-menu="${escapeHTML(collection.id)}" aria-label="Collection options">⋮</button></article>`;
+  }).join("");
+}
+function openAddSongs(collectionId) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(collectionId)); if (!collection) return;
+  const candidates = state.songs.filter(song => song.audio);
+  const body = `<p class="vic-modal-note">Choose songs to add. Existing songs will stay in the collection.</p><div class="vic-collection-track-list">${candidates.map(song => `<label class="vic-track-choice"><input type="checkbox" value="${escapeHTML(song.id)}" ${collectionContains(collection, song.id) ? "disabled checked" : ""}><img src="${escapeHTML(song.cover || "")}" alt=""><span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}${collectionContains(collection, song.id) ? " · Already added" : ""}</small></span></label>`).join("")}</div>`;
+  openModal({ title: `Add songs to ${collection.name}`, body, buttons: [ { label: "Cancel" }, { label: "Add selected", action: () => {
+    const selected = $$(".vic-collection-track-list input:checked:not(:disabled)").map(input => songKey(input.value));
+    collection.songs = [...new Set([...collection.songs.map(songKey), ...selected])]; saveCollections(); closeModal(); notify(selected.length ? `${selected.length} song${selected.length === 1 ? "" : "s"} added.` : "No new songs selected.");
+  } } ] });
+}
+function openRemoveSongs(collectionId) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(collectionId)); if (!collection) return;
+  const songs = collectionSongs(collectionId);
+  if (!songs.length) { notify("This collection is already empty."); return; }
+  const body = `<p class="vic-modal-note">Select the songs you want to remove. Your original music files will not be deleted.</p><div class="vic-collection-track-list">${songs.map(song => `<label class="vic-track-choice"><input type="checkbox" value="${escapeHTML(song.id)}"><img src="${escapeHTML(song.cover || "")}" alt=""><span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></span></label>`).join("")}</div>`;
+  openModal({ title: `Remove songs from ${collection.name}`, body, buttons: [ { label: "Cancel" }, { label: "Remove selected", danger: true, action: () => {
+    const remove = new Set($$(".vic-collection-track-list input:checked").map(input => songKey(input.value)));
+    collection.songs = collection.songs.filter(id => !remove.has(songKey(id))); saveCollections(); closeModal();
+    if (state.currentCollection && songKey(state.currentCollection) === songKey(collectionId)) openCollection(collectionId);
+    notify(remove.size ? `${remove.size} song${remove.size === 1 ? "" : "s"} removed from collection.` : "No songs selected.");
+  } } ] });
+}
+function openCollection(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  state.currentCollection = collection.id;
+  let view = byId("vicCollectionView");
+  if (!view) {
+    view = document.createElement("section"); view.id = "vicCollectionView";
+    view.innerHTML = `<div class="vic-col-header"><button class="back-button" id="vicColBack" aria-label="Back">‹</button><h2 id="vicColTitle">Collection</h2><button id="vicColMenu" aria-label="Collection options">⋮</button></div><div class="vic-col-hero"><img id="vicColCover" src="" alt=""></div><div class="vic-col-tracks" id="vicColTracks"></div>`;
+    document.body.appendChild(view);
+    byId("vicColBack").addEventListener("click", () => { view.classList.remove("open"); state.currentCollection = null; });
+    byId("vicColMenu").addEventListener("click", () => { if (state.currentCollection) collectionMenu(state.currentCollection); });
+    view.addEventListener("click", event => {
+      const fav = event.target.closest("[data-vic-track-fav]");
+      if (fav) { event.stopPropagation(); const current = state.collections.find(item => songKey(item.id) === songKey(state.currentCollection)); if (!current) return; current.songs = current.songs.filter(songId => songKey(songId) !== songKey(fav.dataset.vicTrackFav)); saveCollections(); openCollection(current.id); return; }
+      const row = event.target.closest(".vic-track-item"); if (!row) return;
+      const current = state.collections.find(item => songKey(item.id) === songKey(state.currentCollection)); if (!current) return;
+      const list = collectionSongs(current.id); const index = list.findIndex(song => songKey(song.id) === songKey(row.dataset.songId));
+      if (index >= 0) playFromList(list, index, { type: "collection", id: current.id, label: current.name });
+    });
+  }
+  const songs = collectionSongs(id); byId("vicColTitle").textContent = collection.name;
+  const hero = byId("vicColCover"); hero.src = songs[0]?.cover || "./vinyl.svg"; hero.classList.toggle("vinyl-fallback", !songs[0]?.cover); hero.classList.toggle("is-playing", Boolean(!songs[0]?.cover && state.playing && songKey(state.currentId) === songKey(songs[0]?.id)));
+  byId("vicColTracks").innerHTML = songs.length ? songs.map(song => `<div class="vic-track-item" data-song-id="${escapeHTML(song.id)}"><img class="${!song.cover ? "vinyl-fallback" : ""} ${!song.cover && state.playing && songKey(state.currentId) === songKey(song.id) ? "is-playing" : ""}" src="${escapeHTML(song.cover || "./vinyl.svg")}" alt=""><div class="vic-track-info"><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></div><button class="vic-track-fav active" data-vic-track-fav="${escapeHTML(song.id)}" aria-label="Remove from collection">−</button></div>`).join("") : `<p class="empty-state">This collection is empty. Open its menu to add songs.</p>`;
+  view.classList.add("open"); view.setAttribute("aria-hidden", "false");
+}
+
+// Lyrics sheet: exact empty-state wording, no transport controls for songs without lyrics.
+function updateLyrics() {
+  const song = getCurrentSong(); if (!song) return;
+  byId("lyricsCover").src = song.cover || "./vinyl.svg"; byId("lyricsTitle").textContent = song.title; byId("lyricsArtist").textContent = song.artist;
+  const box = byId("lyricsContent"), controls = byId("lyricsBottomControls"); if (!box) return;
+  const hasLyrics = Boolean(song.lyrics && song.lyrics.trim());
+  if (controls) controls.hidden = !hasLyrics;
+  if (!hasLyrics) { box.textContent = "No lyrics yet for this song"; return; }
+  if (Array.isArray(song.lyrics_timed) && song.lyrics_timed.length) box.innerHTML = song.lyrics_timed.map((line, index) => `<p class="lyric-line type-${escapeHTML(line.type || "main")}" data-lyric-time="${Math.max(0, Number(line.time) || 0)}" data-lyric-index="${index}">${escapeHTML(line.text)}</p>`).join("");
+  else box.innerHTML = song.lyrics.split(/\n+/).map(line => `<p>${escapeHTML(line)}</p>`).join("");
+  syncLyrics();
+}
+function syncLyrics() {
+  if (!state.lyricsOpen) return;
+  const progress = byId("lyricsProgress");
+  if (audio.duration) {
+    if (progress && document.activeElement !== progress) progress.value = String(audio.currentTime / audio.duration * 100);
+    if (byId("lyricsCurrentTime")) byId("lyricsCurrentTime").textContent = formatTime(audio.currentTime);
+    if (byId("lyricsRemainingTime")) byId("lyricsRemainingTime").textContent = `-${formatTime(audio.duration - audio.currentTime)}`;
+  }
+  const lines = $$('[data-lyric-time]'); if (!lines.length) return;
+  let active = -1; lines.forEach((line, index) => { if (audio.currentTime >= Number(line.dataset.lyricTime)) active = index; });
+  lines.forEach((line, index) => { line.classList.toggle("current", index === active); line.classList.toggle("past", index < active); line.classList.toggle("upcoming", index > active); });
+  if (active >= 0 && !boxManualScroll) lines[active]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+let boxManualScroll = false;
+function openLyrics() { state.lyricsOpen = true; updateLyrics(); byId("lyricsSheet")?.classList.add("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "false"); }
+function closeLyrics() { byId("lyricsSheet")?.classList.remove("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "true"); state.lyricsOpen = false; }
+
+// UK voice consi
