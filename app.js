@@ -1942,4 +1942,21 @@ measureRealPlayback = function() {
 };
 audio.addEventListener("timeupdate", measureRealPlayback);
 
-// Swipe down from the sheet handle/header to dismiss lyrics; manual scrolling remains
+
+// Swipe down from the sheet handle/header to dismiss lyrics; manual scrolling remains available.
+let vicLyricsSwipeStart = null;
+const lyricsSheetElement = byId("lyricsSheet");
+[byId("lyricsHandle"), byId("lyricsHeaderControls")].forEach(element => {
+  element?.addEventListener("pointerdown", event => { vicLyricsSwipeStart = { y: event.clientY, id: event.pointerId }; }, { passive: true });
+  element?.addEventListener("pointerup", event => { if (!vicLyricsSwipeStart || event.pointerId !== vicLyricsSwipeStart.id) return; const delta = event.clientY - vicLyricsSwipeStart.y; vicLyricsSwipeStart = null; if (delta > 70) closeLyrics(); }, { passive: true });
+  element?.addEventListener("pointercancel", () => { vicLyricsSwipeStart = null; }, { passive: true });
+});
+
+
+// Start only after all Listener and Creator integration declarations are initialized.
+init();
+
+window.addEventListener("offline", () => {
+  const slot = byId("bottomAdPlacement"); if (slot) slot.hidden = true;
+  document.body.classList.remove("has-ad"); document.documentElement.style.setProperty("--ad-height", "0px");
+});
