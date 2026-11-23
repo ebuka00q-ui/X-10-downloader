@@ -911,6 +911,412 @@ audio.addEventListener("loadedmetadata", updatePlayer);
 audio.addEventListener("error", () => { state.playing = false; updatePlayer(); });
 audio.addEventListener("ended", () => { recordCompletedPlay(); if (state.repeatMode === 2) { audio.currentTime = 0; start(); return; } playNextQueueEntry(); });
 
+
 /* =========================================================
    13. QUEUE UI
    ========================================================= */
+function renderQueue() {
+  const box = byId("queueList"); if (!box) return;
+  const count = byId("queueCount"); if (count) count.textContent = `${state.queue.length} songs`;
+  box.innerHTML = state.queue.map((entry, index) => {
+    const song = getSong(entry.id); if (!song) return "";
+    const current = index === state.queueIndex;
+    return `<article class="queue-row ${current ? "current" : ""}" data-queue-index="${index}" draggable="true">
+        <span class="queue-num">${index + 1}</span><img class="${!song.cover ? "vinyl-fallback" : ""} ${!song.cover && current && state.playing ? "is-playing" : ""}" src="${escapeHTML(song.cover || "./vinyl.svg")}" alt="">
+        <button class="queue-song" data-queue-play="${escapeHTML(song.id)}"><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></button>
+        <button class="repeat-badge" data-queue-repeat="${index}" aria-label="Double-tap to increase repeat count, currently ${entry.repeatTotal} times">×${entry.repeatTotal}</button>
+        <button class="row-more" data-queue-remove="${index}" aria-label="Remove from queue">×</button></article>`;
+  }).join("");
+  updateModeButtons();
+}
+
+function setQueueRepeat(index, count) { const entry = state.queue[index]; if (!entry) return; entry.repeatTotal = Math.max(1, Math.min(5, count)); entry.repeatsLeft = entry.repeatTotal; renderQueue(); notify(`This song will play ${entry.repeatTotal} time${entry.repeatTotal === 1 ? "" : "s"}.`); }
+function removeQueueSong(index) {
+  if (!state.queue[index]) return; const removedCurrent = index === state.queueIndex; state.queue.splice(index, 1);
+  if (index < state.queueIndex) state.queueIndex -= 1;
+  else if (removedCurrent && state.queue.length) { state.queueIndex = Math.min(index, state.queue.length - 1); const entry = currentQueueEntry(); loadSong(getSong(entry.id), true, { keepQueue: true }); }
+  else if (!state.queue.length) { state.queueIndex = 0; pause(); } renderQueue();
+}
+function openQueue() { byId("queueOverlay")?.classList.add("open"); byId("queueOverlay")?.setAttribute("aria-hidden", "false"); state.queueOpen = true; renderQueue(); }
+function closeQueue() { byId("queueOverlay")?.classList.remove("open"); byId("queueOverlay")?.setAttribute("aria-hidden", "true"); state.queueOpen = false; }
+
+/* =========================================================
+   14. SHUFFLE AND REPEAT (Default: Repeat All)
+   ========================================================= */
+function updateModeButtons() {
+  const shuffleButtons = [byId("shuffle"), byId("queueShuffle")].filter(Boolean);
+  const repeatButtons = [byId("repeat"), byId("playerRepeatTop"), byId("queueRepeat")].filter(Boolean);
+  shuffleButtons.forEach(button => { button.textContent = "⤨"; button.classList.toggle("active", state.shuffle); button.setAttribute("aria-pressed", String(state.shuffle)); });
+  const repeatSymbol = state.repeatMode === 2 ? "↻¹" : "↻";
+  repeatButtons.forEach(button => { button.textContent = repeatSymbol; button.classList.toggle("active", state.repeatMode !== 0); button.dataset.mode = String(state.repeatMode); button.setAttribute("aria-label", ["Repeat off", "Repeat all", "Repeat one"][state.repeatMode]); button.setAttribute("aria-pressed", String(state.repeatMode !== 0)); });
+}
+function toggleShuffle() { state.shuffle = !state.shuffle; updateModeButtons(); notify(state.shuffle ? "Shuffle is on." : "Shuffle is off."); }
+function cycleRepeat() { state.repeatMode = (state.repeatMode + 1) % 3; updateModeButtons(); notify(["Repeat is off.", "Repeat all is on.", " one is on."][state.repeatMode]); }
+
+/* =========================================================
+   15. FAVORITES AND COLLECTIONS
+   ========================================================= */
+function collectionContains(collection, id) { return collection.songs.some(songId => songKey(songId) === songKey(id)); }
+function isSongFavorite(id) { return state.collections.some(collection => collectionContains(collection, id)); }
+function saveCollections() { writeJSON(VIC_CONFIG.STORAGE.collections, state.collections); renderFavorites(); renderHome(); updatePlayer(); }
+
+function toggleFavorite(id) {
+  const key = songKey(id); const memberships = state.collections.filter(collection => collectionContains(collection, key));
+  if (memberships.length) { openCollectionPicker(key, memberships.map(item => item.id)); }
+  else if (!state.collections.length) { createCollectionForSong(key); }
+  else { openCollectionPicker(key, []); }
+}
+
+function createCollectionForSong(songId) {
+  askText("Name your collection", "Collection name", "", name => {
+    const collection = { id: makeId(), name, songs: [songKey(songId)] };
+    state.collections.push(collection); saveCollections(); closeModal(); notify(`"${name}" has been created.`);
+  });
+}
+
+function openCollectionPicker(songId, selectedIds = []) {
+  const selected = new Set(selectedIds.map(songKey)); const song = getSong(songId);
+  const body = `<p class="vic-modal-note">Choose the collections where this song should appear.</p>
+    <div class="vic-check-list">
+      ${state.collections.map(collection => `<label class="vic-check-row"><input type="checkbox" value="${escapeHTML(collection.id)}" ${selected.has(songKey(collection.id)) ? "checked" : ""}><span>${escapeHTML(collection.name)}</span><small>${collection.songs.length} sounds</small></label>`).join("")}
+    </div><button type="button" class="vic-secondary-action" id="vicCreateCollectionFromPicker">+ Create a new collection</button>`;
+
+  openModal({
+    title: song ? `Save ${song.title}` : "Choose collections", body,
+    buttons: [
+      { label: "Cancel" },
+      { label: "Done", action: () => {
+          const checked = $$(".vic-check-list input:checked").map(input => input.value);
+          state.collections.forEach(collection => {
+            const has = collectionContains(collection, songId); const wants = checked.includes(songKey(collection.id));
+            if (wants && !has) collection.songs.push(songKey(songId));
+            if (!wants && has) { collection.songs = collection.songs.filter(id => songKey(id) !== songKey(songId)); }
+          });
+          saveCollections(); closeModal();
+        }
+      }
+    ],
+    onOpen: panel => {
+      $("#vicCreateCollectionFromPicker", panel)?.addEventListener("click", () => {
+        askText("Name your collection", "Collection name", "", name => {
+          state.collections.push({ id: makeId(), name, songs: [songKey(songId)] }); saveCollections(); closeModal();
+          openCollectionPicker(songId, [state.collections.at(-1).id]);
+        });
+      });
+    }
+  });
+}
+
+function renderFavorites() {
+  const box = byId("favoriteGrid"); if (!box) return;
+  const count = byId("favoriteCount"); if (count) count.textContent = `${state.collections.length} collection${state.collections.length === 1 ? "" : "s"}`;
+  
+  if (!state.collections.length) { box.innerHTML = `<div class="empty-state"><b>No collections yet</b><span>Tap a song's heart to create your first collection.</span></div>`; return; }
+  
+  const emptyCover = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" rx="18" fill="#04130f"/><circle cx="80" cy="80" r="53" fill="none" stroke="#00f5a0" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="58" fill="#00f5a0">🎵</text></svg>');
+
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = collectionSongs(collection.id)[0];
+    const songCount = collection.songs.length;
+    return `<article class="collection-card">
+        <button class="collection-open" data-collection-open="${escapeHTML(collection.id)}" aria-label="Open ${escapeHTML(collection.name)}">
+          <img src="${escapeHTML(firstSong?.cover || emptyCover)}" alt="">
+          <div class="collection-card-info">
+            <b>${escapeHTML(collection.name)}</b>
+            <small>${songCount} sound${songCount === 1 ? "" : "s"}</small>
+          </div>
+        </button>
+        <button class="collection-card-more" data-collection-menu="${escapeHTML(collection.id)}" aria-label="Collection options">⋮</button>
+      </article>`;
+  }).join("");
+}
+
+function collectionSongs(id) { const collection = state.collections.find(item => songKey(item.id) === songKey(id)); return collection ? collection.songs.map(getSong).filter(Boolean) : []; }
+
+function openCollection(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id));
+  if (!collection) return;
+  state.currentCollection = collection.id;
+
+  let view = byId("vicCollectionView");
+  if (!view) {
+    view = document.createElement("section");
+    view.id = "vicCollectionView";
+    view.innerHTML = `
+      <div class="vic-col-header">
+        <button class="back-button" id="vicColBack" style="width:40px; height:40px; background:transparent; border:0; color:var(--text); font-size:28px; transform:rotate(90deg); cursor:pointer;">⌄</button>
+        <h2 id="vicColTitle" style="margin:0; font-size:20px; color:var(--text);">Collection</h2>
+      </div>
+      <div class="vic-col-hero">
+        <img id="vicColCover" src="" alt="">
+      </div>
+      <div class="vic-col-tracks" id="vicColTracks"></div>
+    `;
+    document.body.appendChild(view);
+    
+    byId("vicColBack").addEventListener("click", () => {
+      view.classList.remove("open");
+      state.currentCollection = null;
+    });
+
+    view.addEventListener("click", event => {
+      const trackItem = event.target.closest(".vic-track-item");
+      if (trackItem && !event.target.closest(".vic-track-fav")) {
+        const songId = trackItem.dataset.songId;
+        const songs = collectionSongs(state.currentCollection);
+        playFromList(songs, songs.findIndex(s => songKey(s.id) === songKey(songId)), { type: "collection", id: state.currentCollection, label: collection.name });
+        return;
+      }
+
+      const favBtn = event.target.closest("[data-vic-track-fav]");
+      if (favBtn) {
+        const songId = favBtn.dataset.vicTrackFav;
+        const col = state.collections.find(c => songKey(c.id) === songKey(state.currentCollection));
+        if (col) {
+           col.songs = col.songs.filter(s => songKey(s) !== songKey(songId));
+           saveCollections();
+           openCollection(state.currentCollection); // Re-render view
+        }
+      }
+    });
+  }
+
+  const songs = collectionSongs(id);
+  const emptyCover = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" rx="18" fill="#04130f"/><circle cx="80" cy="80" r="53" fill="none" stroke="#00f5a0" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="58" fill="#00f5a0">🎵</text></svg>');
+
+  byId("vicColTitle").textContent = collection.name;
+  byId("vicColCover").src = songs[0]?.cover || emptyCover;
+  byId("vicColTracks").innerHTML = songs.length ? songs.map(song => `
+    <div class="vic-track-item" data-song-id="${escapeHTML(song.id)}">
+      <img src="${escapeHTML(song.cover || "./vinyl.svg")}" alt="">
+      <div class="vic-track-info">
+        <b>${escapeHTML(song.title)}</b>
+        <small>${escapeHTML(song.artist)}</small>
+      </div>
+      <button class="vic-track-fav active" data-vic-track-fav="${escapeHTML(song.id)}">♥</button>
+    </div>
+  `).join("") : `<p style="color:var(--muted); text-align:center; margin-top:20px;">No songs in this collection.</p>`;
+
+  view.classList.add("open");
+}
+
+function collectionMenu(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  openModal({
+    title: collection.name, body: `<p class="vic-modal-note">Manage this collection.</p>`,
+    buttons: [
+      { label: "Cancel" },
+      { label: "Add songs", action: () => { closeModal(); openAddSongs(collection.id); } },
+      { label: "Remove songs", action: () => { closeModal(); openCollection(collection.id); } }, 
+      { label: "Rename", action: () => { closeModal(); askText("Rename collection", "New collection name", collection.name, name => { collection.name = name; saveCollections(); closeModal(); }); } },
+      { label: "Remove collection", danger: true, action: () => { state.collections = state.collections.filter(item => songKey(item.id) !== songKey(id)); saveCollections(); closeModal(); notify("Collection removed. Your music is safe."); } }
+    ]
+  });
+}
+
+function openAddSongs(collectionId) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(collectionId)); if (!collection) return;
+  const body = `<p class="vic-modal-note">Select one or more songs, then press Done.</p><div class="vic-collection-track-list">${state.songs.map(song => `<label class="vic-track-choice"><input type="checkbox" value="${escapeHTML(song.id)}" ${collectionContains(collection, song.id) ? "checked" : ""}><img src="${escapeHTML(song.cover || "./vinyl.svg")}" alt=""><span><b>${escapeHTML(song.title)}</b><small>${escapeHTML(song.artist)}</small></span></label>`).join("")}</div>`;
+  openModal({
+    title: `Add to ${collection.name}`, body,
+    buttons: [
+      { label: "Cancel" },
+      { label: "Done", action: () => {
+          const selected = $$(".vic-collection-track-list input:checked").map(input => songKey(input.value));
+          collection.songs = [...new Set(selected)]; saveCollections(); closeModal(); notify("Collection updated.");
+        }
+      }
+    ]
+  });
+}
+
+
+/* =========================================================
+   16. LYRICS
+   ========================================================= */
+function updateLyrics() {
+  const song = getCurrentSong(); if (!song) return;
+  
+  byId("lyricsCover").src = song.cover;
+  byId("lyricsTitle").textContent = song.title;
+  byId("lyricsArtist").textContent = song.artist;
+  byId("lyricsPlayPause").textContent = state.playing ? "Ⅱ" : "▶";
+
+  const box = byId("lyricsContent"); if (!box) return;
+  
+  if (!song.lyrics || !song.lyrics.trim()) { 
+    box.innerHTML = `<p style="color:var(--muted); text-align:center; margin-top:20px;">Lyrics are not available for this song yet.</p>`; 
+    return; 
+  }
+  
+  if (Array.isArray(song.lyrics_timed) && song.lyrics_timed.length) {
+    box.innerHTML = song.lyrics_timed.map((line, index) => `<p class="lyric-line type-${line.type || 'main'}" data-lyric-time="${Number(line.time) || 0}" data-lyric-index="${index}">${escapeHTML(line.text)}</p>`).join("");
+  } else { box.textContent = song.lyrics; }
+  syncLyrics();
+}
+
+function syncLyrics() {
+  if (!state.lyricsOpen) return;
+  const lines = $$("[data-lyric-time]"); if (!lines.length) return;
+  let active = -1; lines.forEach((line, index) => { if (audio.currentTime >= Number(line.dataset.lyricTime)) active = index; });
+  lines.forEach((line, index) => { line.classList.toggle("current", index === active); line.classList.toggle("past", index < active); line.classList.toggle("upcoming", index > active); });
+  lines[active]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function openLyrics() { state.lyricsOpen = true; updateLyrics(); byId("lyricsSheet")?.classList.add("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "false"); }
+function closeLyrics() { byId("lyricsSheet")?.classList.remove("open"); byId("lyricsSheet")?.setAttribute("aria-hidden", "true"); state.lyricsOpen = false; }
+
+/* =========================================================
+   17. DJ ENGINE (Offline/Online)
+   ========================================================= */
+function recordCompletedPlay() {
+  const song = getCurrentSong(); if (!song) return;
+  const key = songKey(song.id); state.playedSongs[key] = (state.playedSongs[key] || 0) + 1;
+  state.djHistory.push({ id: key, title: song.title, artist: song.artist, genres: song.cat, moods: song.mood, at: Date.now(), completed: true });
+  state.djHistory = state.djHistory.slice(-VIC_CONFIG.DJ.historyLimit); state.djCompletedSinceSuggestion += 1; saveLocalData();
+  if (state.djCompletedSinceSuggestion >= VIC_CONFIG.DJ.autoSuggestionEvery) { state.djCompletedSinceSuggestion = 0; autoDJRecommendation(); }
+}
+
+function recordSkip(song = getCurrentSong()) { if (!song) return; const key = songKey(song.id); state.skippedSongs[key] = (state.skippedSongs[key] || 0) + 1; saveLocalData(); }
+function recordDJReplayPreference(song = getCurrentSong()) {
+  if (!song) return; const key = songKey(song.id); state.playedSongs[key] = (state.playedSongs[key] || 0) + 1;
+  state.djHistory.push({ id: key, title: song.title, artist: song.artist, genres: song.cat, moods: song.mood, at: Date.now(), replayed: true });
+  state.djHistory = state.djHistory.slice(-VIC_CONFIG.DJ.historyLimit); saveLocalData();
+}
+
+function scoreSongForDJ(song, request = "") {
+  const query = request.toLowerCase(); const tokens = query.split(/\s+/).filter(word => word.length > 2);
+  const tags = [song.title, song.artist, song.album, ...(song.cat || []), ...(song.mood || [])].join(" ").toLowerCase();
+  let score = 0; tokens.forEach(token => { if (tags.includes(token)) score += 3; });
+  const key = songKey(song.id); score += Math.min(5, (state.playedSongs[key] || 0) * 0.5); score -= Math.min(8, (state.skippedSongs[key] || 0) * 1.5);
+  const recentlyPlayed = state.djHistory.slice(-8).some(item => item.id === key); if (recentlyPlayed) score -= 4;
+  if (state.favorites.has(key) || isSongFavorite(key)) score += 2; return score;
+}
+
+function localDJPick(request = "", limit = 8) { return [...state.songs].filter(song => song.audio).map(song => ({ song, score: scoreSongForDJ(song, request) })).sort((a, b) => b.score - a.score).slice(0, limit).map(item => item.song); }
+
+function detectMoodWords(text) {
+  const value = text.toLowerCase();
+  const map = [
+    { words: ["sad", "down", "heartbroken", "cry", "lonely"], tags: ["sad", "calm", "moody"] },
+    { words: ["happy", "party", "dance", "energy", "energetic"], tags: ["party", "upbeat", "afrobeats"] },
+    { words: ["love", "romantic", "girlfriend", "boyfriend"], tags: ["love", "romantic"] },
+    { words: ["sleep", "relax", "calm", "quiet"], tags: ["calm", "soft"] },
+    { words: ["rap", "bars", "flow"], tags: ["rap", "hip-hop"] }
+  ];
+  return map.find(item => item.words.some(word => value.includes(word)))?.tags || [];
+}
+
+function localDJReply(text) {
+  const moodTags = detectMoodWords(text); const request = `${text} ${moodTags.join(" ")}`; const picks = localDJPick(request, 8);
+  if (!picks.length) { return { message: navigator.onLine ? "I'm still getting to know your music taste. Try asking for a genre, mood or artist." : "I'd love to find the right music for you. Reconnect when you can for a more personal DJ experience. I can still use your saved listening history while you're offline.", songs: [] }; }
+  const first = picks[0]; const gentle = moodTags.includes("sad") ? "I hear you. Let's find something that fits the moment." : "Alright, I've got a few songs in mind for you.";
+  return { message: `${gentle} I'm starting with "${first.title}" by ${first.artist}.`, songs: picks };
+}
+
+async function requestOnlineDJ(text) {
+  if (!navigator.onLine || !VIC_CONFIG.SERVICES.baseUrl) throw new Error("DJ online service is unavailable.");
+  return serviceRequest(VIC_CONFIG.SERVICES.djChat, { method: "POST", body: JSON.stringify({ message: text, currentSong: getCurrentSong(), listeningHistory: state.djHistory.slice(-20), skippedSongs: state.skippedSongs, favoriteIds: [...state.favorites], collections: state.collections.map(item => ({ name: item.name, songIds: item.songs })) }) });
+}
+
+async function command(text) {
+  const value = safe(text).trim(); if (!value || state.djBusy) return;
+  state.djBusy = true; if (byId("djSend")) byId("djSend").disabled = true;
+  try {
+    let result = null;
+    if (navigator.onLine && VIC_CONFIG.SERVICES.baseUrl) { try { result = await requestOnlineDJ(value); state.djOnline = true; } catch (error) {} }
+    if (!result) { state.djOnline = false; result = localDJReply(value); if (!navigator.onLine) result.message += " Reconnect to enjoy the DJ's full personalised experience."; }
+    if (byId("djReply")) byId("djReply").textContent = result.message || "I've found something for you.";
+    if (Array.isArray(result.songs) && result.songs.length) {
+      const songs = result.songs.map(item => typeof item === "object" ? getSong(item.id) || normaliseSong(item) : getSong(item)).filter(Boolean);
+      if (songs.length) { vicDJResumeState = null; playFromList(songs, 0, { type: "dj", label: "Vic-sound DJ" }); state.djLastSuggestedId = songs[0].id; }
+      else resumeAfterDJVoice();
+    } else resumeAfterDJVoice();
+  } finally { state.djBusy = false; if (byId("djSend")) byId("djSend").disabled = false; }
+}
+
+async function autoDJRecommendation() {
+  const picks = localDJPick("", 8); if (!picks.length) return;
+  const repeated = Object.entries(state.playedSongs).sort((a, b) => b[1] - a[1])[0]; const repeatedSong = repeated ? getSong(repeated[0]) : null;
+  let message = "I'm switching things up with a fresh selection for you.";
+  if (repeatedSong && (state.playedSongs[songKey(repeatedSong.id)] || 0) >= VIC_CONFIG.DJ.repeatNoticeThreshold) { message = `You've played "${repeatedSong.title}" a lot. Let me bring in something different you may enjoy.`; }
+  else { message = `I've picked something new for you. Let's try "${picks[0].title}".`; }
+  state.lastAutoDJMessageAt = Date.now(); if (state.djOpen && byId("djReply")) byId("djReply").textContent = message;
+  const protectedSource = ["collection", "category", "search"].includes(state.queueSource?.type);
+  if (!protectedSource && picks[0].id !== state.djLastSuggestedId) {
+    const current = getCurrentSong(); const nextSongs = [...(current ? [current] : []), ...picks.filter(song => songKey(song.id) !== songKey(state.currentId))];
+    if (nextSongs.length > 1) { makeQueue(nextSongs, { type: "dj", label: "Vic-sound DJ" }); state.queueIndex = 0; state.djLastSuggestedId = nextSongs[1].id; }
+  }
+}
+
+/* =========================================================
+   18. DJ SCREEN AND VOICE
+   ========================================================= */
+function ensureDJPlaybackControls() {
+  const overlay = byId("djOverlay"); if (!overlay) return;
+  let controls = byId("vicDJPlaybackControls");
+  if (!controls) {
+    controls = document.createElement("div"); controls.id = "vicDJPlaybackControls"; controls.className = "vic-dj-playback"; controls.setAttribute("aria-label", "DJ music controls");
+    controls.innerHTML = `<button type="button" id="vicDJPrevious" aria-label="Play previous DJ song" title="Previous song">⏮</button><button type="button" id="vicDJPlayPause" class="vic-dj-main-play" aria-label="Play music" title="Play or pause">▶</button><button type="button" id="vicDJNext" aria-label="Skip this DJ song and choose another" title="Next DJ song">⏭</button>`;
+    const anchor = byId("djReply") || overlay.querySelector(".overlay-head");
+    if (anchor?.parentNode) anchor.parentNode.insertBefore(controls, anchor.nextSibling); else overlay.appendChild(controls);
+    byId("vicDJPrevious").addEventListener("click", playPreviousDJSong); byId("vicDJPlayPause").addEventListener("click", toggle); byId("vicDJNext").addEventListener("click", playNextDJSong);
+  }
+  updateDJPlaybackControls();
+}
+
+function updateDJPlaybackControls() {
+  const playButton = byId("vicDJPlayPause"); const previousButton = byId("vicDJPrevious"); const nextButton = byId("vicDJNext");
+  if (playButton) { playButton.textContent = state.playing ? "Ⅱ" : "▶"; playButton.setAttribute("aria-label", state.playing ? "Pause music" : "Play music"); }
+  if (previousButton) { previousButton.disabled = !(state.queueSource?.type === "dj" && state.queueIndex > 0); }
+  if (nextButton) { nextButton.disabled = !state.songs.some(song => song.audio && songKey(song.id) !== songKey(state.currentId)); }
+}
+
+function playNextDJSong() {
+  const current = getCurrentSong(); if (!current) { playDJNow(); return; }
+  recordSkip(current);
+  const alternatives = localDJPick("", Math.max(12, state.songs.length)).filter(song => song.audio && songKey(song.id) !== songKey(current.id));
+  if (!alternatives.length) { notify("There isn't another playable song in the DJ catalogue yet."); updateDJPlaybackControls(); return; }
+  makeQueue([current, ...alternatives], { type: "dj", label: "Vic-sound DJ" }); state.queueIndex = 1; state.djLastSuggestedId = alternatives[0].id;
+  if (byId("djReply")) { byId("djReply").textContent = `Let's try something different: "${alternatives[0].title}".`; }
+  loadSong(alternatives[0], true, { keepQueue: true }); updateDJPlaybackControls();
+}
+
+function playPreviousDJSong() {
+  if (state.queueSource?.type !== "dj" || state.queueIndex <= 0) { notify("There is no previous DJ song yet."); return; }
+  state.queueIndex -= 1; const entry = currentQueueEntry(); if (!entry) return;
+  entry.repeatsLeft = entry.repeatTotal; loadSong(getSong(entry.id), true, { keepQueue: true }); updateDJPlaybackControls();
+}
+
+function openDJ() { ensureDJPlaybackControls(); byId("djOverlay")?.classList.add("open"); byId("djOverlay")?.setAttribute("aria-hidden", "false"); state.djOpen = true; }
+function closeDJ() { stopVoice(); clearTimeout(state.djIntroTimer); byId("djOverlay")?.classList.remove("open"); byId("djOverlay")?.setAttribute("aria-hidden", "true"); state.djOpen = false; }
+
+function speakDJIntro() { playDJNow(); }
+
+function playDJNow() {
+  openDJ();
+  const picks = localDJPick("", 12);
+  if (!picks.length) { if (byId("djReply")) byId("djReply").textContent = "Your music will appear here when the catalogue is available."; return; }
+  if (byId("djReply")) byId("djReply").textContent = `Okay, I'm putting together a selection for you. Starting with "${picks[0].title}".`;
+  playFromList(picks, 0, { type: "dj", label: "Vic-sound DJ" });
+}
+
+function setupVoice() { /* Text-only DJ input; voice is provided by the configured backend. */ }
+function startVoice() { /* Microphone input is disabled. */ }
+function stopVoice() { /* No browser speech or microphone session exists. */ }
+function setEndTrackTimer() { clearPlaybackTimer(); state.timerMode = "end"; $$(".timer-options button").forEach(button => button.classList.remove("selected")); byId("endTrack")?.classList.add("selected"); byId("timerOff")?.classList.remove("selected"); closeTimer(); }
+function offTimer() { clearPlaybackTimer(); state.timerMode = "off"; $$(".timer-options button").forEach(button => button.classList.remove("selected")); byId("endTrack")?.classList.remove("selected"); byId("timerOff")?.classList.add("selected"); closeTimer(); }
+
+async function setNotifications(enabled) {
+  if (!enabled) { state.notifications = false; localStorage.setItem(VIC_CONFIG.STORAGE.notifications, "false"); notify("Release notifications turned off."); return; }
+  if (!("Notification" in window)) { if (byId("notificationSwitch")) byId("notificationSwitch").checked = false; notify("This browser does not support notifications."); return; }
+  const permission = await Notification.requestPermission();
+  state.notifications = permission === "granted"; localStorage.setItem(VIC_CONFIG.STORAGE.notifications, String(state.notifications));
+  if (!state.notifications && byId("notificationSwitch")) { byId("notificationSwitch").checked = false; }
+  notify(state.notifications ? "Release notifications enabled." : "Notification permission was not granted.");
+}
+function updateDots() { ["latestDot", "navDot", "headerDot"].forEach(id => { byId(id)?.classList.toggle("show", Boolean(state.newRelease)); }); }
+
+/* =========================================================
+   20. NAVIGATION, SEARCH, BACK
+   ====================================
