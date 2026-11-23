@@ -1,6 +1,6 @@
 /* VIC-SOUND LISTENER SERVICE WORKER — deliberate shell release v11 */
 'use strict';
-const SHELL_VERSION = 'v11';
+const SHELL_VERSION = 'v12';
 const SHELL_CACHE = `vic-sound-shell-${SHELL_VERSION}`;
 const SHELL_PREFIX = 'vic-sound-shell-';
 const APP_FILES = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './vinyl.svg'];
