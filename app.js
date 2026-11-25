@@ -1375,6 +1375,7 @@ function setupBackNavigation() {
   });
 }
 
+
 /* =========================================================
    21. EVENT LISTENERS
    ========================================================= */
@@ -1420,4 +1421,213 @@ function bindEvents() {
   byId("endTrack")?.addEventListener("click", setEndTrackTimer);
   byId("timerOff")?.addEventListener("click", offTimer);
   byId("lyricsButton")?.addEventListener("click", openLyrics);
-  byId
+  byId("lyricsSheet")?.addEventListener("click", event => { if (event.target === byId("lyricsSheet")) closeLyrics(); });
+  byId("djBack")?.addEventListener("click", back);
+  byId("djSend")?.addEventListener("click", () => { const input = byId("djInput"); const value = input?.value || ""; if (input) input.value = ""; command(value); });
+  byId("djInput")?.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); byId("djSend")?.click(); } });
+
+  byId("latestList")?.addEventListener("click", event => { const button = event.target.closest("[data-release-download]"); if (button) queueReleaseDownload(button.dataset.releaseDownload); });
+  byId("latestBell")?.addEventListener("click", () => byId("notificationPopover")?.classList.toggle("hidden"));
+  byId("headerBell")?.addEventListener("click", () => byId("notificationPopover")?.classList.toggle("hidden"));
+  byId("notificationSwitch")?.addEventListener("change", event => setNotifications(event.target.checked));
+  byId("cancelExit")?.addEventListener("click", closeModal);
+  byId("confirmExit")?.addEventListener("click", () => { byId("exitModal")?.classList.add("hidden"); notify("You can now leave Vic-sound using your device controls."); });
+
+  byId("lyricsPlayPause")?.addEventListener("click", toggle);
+  byId("lyricsProgress")?.addEventListener("input", e => {
+    if (audio.duration) {
+      audio.currentTime = (e.target.value / 100) * audio.duration;
+      syncLyrics();
+    }
+  });
+}
+
+/* =========================================================
+   22. INITIALISE
+   ========================================================= */
+async function init() {
+  getAnonymousId(); loadLocalData(); applyTestMusic(); setupVoice(); bindEvents();
+  renderHome(); renderFavorites(); renderLatest(); updateDots(); updateModeButtons();
+  await getDownloadedSongs(); updateOfflineCount(); applyDJProfile(); await loadDJProfile();
+  if (state.songs.length) { makeQueue(state.songs, { type: "catalogue", label: "Your Music" }); setCurrentSong(state.songs[0]); }
+  await connectBackend(); await loadSongs(); await loadReleases(); await loadMonetizationSettings();
+  if (state.songs.length && !state.currentId) { makeQueue(state.songs, { type: "catalogue", label: "Your Music" }); setCurrentSong(state.songs[0]); }
+  if (navigator.onLine) prepareOfflineMusic();
+  if ("storage" in navigator && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  window.addEventListener("online", () => { loadSongs(); loadReleases(); loadDJProfile(); loadMonetizationSettings(); prepareOfflineMusic(); });
+  window.addEventListener("offline", updateOfflineCount);
+  // Refresh the online catalogue when an installed shortcut/app returns to the foreground.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && navigator.onLine) {
+      loadSongs();
+      loadReleases();
+    }
+  });
+  setupBackNavigation();
+}
+
+window.VicSoundListener = {
+  connectBackend, loadSongs, loadReleases, loadDJProfile, loadMonetizationSettings,
+  applyMonetizationSettings, applyDJProfile, playSongById, playDJNow,
+  toggleFavorite, openCollection, getState: () => state, testMode: VIC_TEST_MODE,
+  clearTestCache: async () => { if ("caches" in window) await caches.delete(VIC_TEST_CONFIG.cacheName); state.downloaded = new Set([...state.downloaded].filter(id => !String(id).startsWith("vic-tst-"))); updateOfflineCount(); }
+};
+
+
+/* =========================================================
+   23. VIC-SOUND CREATOR INTEGRATION + VERIFIED LISTENER FIXES
+   Contract version: 1
+   ========================================================= */
+const VIC_CREATOR_CONTRACT = Object.freeze({
+  version: 1,
+  settingsEndpoint: "/listener/config",
+  eventsEndpoint: "/listener/analytics/events",
+  djVoiceEndpoint: "/listener/dj/voice",
+  settings: ["ads.navigation.placement", "ads.navigation.width", "ads.navigation.height", "ads.navigation.enabled", "ads.download.enabled", "ads.listening.enabled", "ads.listening.interval", "ads.listening.songCount", "dj.voice.provider", "dj.voice.model", "dj.voice.voiceId", "dj.voice.endpoint", "catalogue", "lyrics", "releases"],
+  analytics: { activeUser: "session_start", stream: "listened_60_seconds", download: "download_completed", repeat: "listened_60_seconds with is_repeat_stream=true" }
+});
+
+// Durable analytics queue. It records actual playback deltas, never audio.currentTime jumps.
+const VIC_ANALYTICS_KEY = "vic-sound-analytics-v1";
+const vicListenMeter = { songId: null, lastAudioTime: null, seconds: 0, sessionSent: false, lastFlush: 0 };
+function readAnalytics() { return readJSON(VIC_ANALYTICS_KEY, { totals: { streams: 0, downloads: 0 }, pending: [] }); }
+function saveAnalytics(data) { writeJSON(VIC_ANALYTICS_KEY, data); }
+async function emitVicEvent(type, payload = {}) {
+  const data = readAnalytics();
+  data.pending.push({ event_id: makeId(), type, at: new Date().toISOString(), anonymous_id: state.anonymousId || getAnonymousId(), session_id: vicSessionId, payload });
+  if (data.pending.length > 500) data.pending = data.pending.slice(-500);
+  if (type === "listened_60_seconds") { data.totals.streams = (data.totals.streams || 0) + 1; data.totals.streamsBySong = data.totals.streamsBySong || {}; const songId = safe(payload.song_id); const previous = data.totals.streamsBySong[songId] || 0; data.totals.streamsBySong[songId] = previous + 1; payload.stream_number_for_song = previous + 1; payload.is_repeat_stream = previous > 0; }
+  if (type === "download_completed") data.totals.downloads = (data.totals.downloads || 0) + 1;
+  saveAnalytics(data);
+  flushVicAnalytics();
+}
+const vicSessionId = makeId();
+async function flushVicAnalytics() {
+  if (!navigator.onLine || !VIC_CONFIG.SERVICES.baseUrl) return;
+  const data = readAnalytics(); if (!data.pending.length || Date.now() - vicListenMeter.lastFlush < 4000) return;
+  vicListenMeter.lastFlush = Date.now();
+  const batch = data.pending.slice(0, 40);
+  try {
+    await serviceRequest(VIC_CREATOR_CONTRACT.eventsEndpoint, { method: "POST", body: JSON.stringify({ events: batch }) });
+    const ids = new Set(batch.map(item => item.event_id));
+    data.pending = data.pending.filter(item => !ids.has(item.event_id)); saveAnalytics(data);
+  } catch (error) { /* Keep queued events for the next online attempt. */ }
+}
+function resetListenMeter(songId) { vicListenMeter.songId = songId == null ? null : songKey(songId); vicListenMeter.lastAudioTime = null; vicListenMeter.seconds = 0; }
+function measureRealPlayback() {
+  const song = getCurrentSong();
+  if (!song || audio.paused || !Number.isFinite(audio.currentTime)) { vicListenMeter.lastAudioTime = null; return; }
+  if (vicListenMeter.songId !== songKey(song.id)) resetListenMeter(song.id);
+  const now = audio.currentTime;
+  if (vicListenMeter.lastAudioTime !== null) {
+    const delta = now - vicListenMeter.lastAudioTime;
+    // Only count ordinary forward playback ticks. Seek jumps, buffering and reverse movement are ignored.
+    if (delta > 0 && delta <= 120) vicListenMeter.seconds += delta;
+    if (delta < 0 || delta > 2.25) { /* A seek is not listening time. */ }
+  }
+  vicListenMeter.lastAudioTime = now;
+  while (vicListenMeter.seconds >= 60) {
+    vicListenMeter.seconds -= 60;
+    emitVicEvent("listened_60_seconds", { song_id: song.id, title: song.title, artist: song.artist, listening_seconds: 60, source: state.queueSource?.type || "catalogue" });
+  }
+}
+function recordDownloadAnalytics(song) { if (song) emitVicEvent("download_completed", { song_id: song.id, title: song.title }); }
+
+// Creator-controlled configuration is public display configuration only; private keys never enter this client.
+function applyMonetizationSettings(settings = {}) {
+  const root = settings.monetization || settings.ads || settings;
+  const display = root.navigation || root.display || root;
+  const placementRaw = String(display.placement || root.navigationPlacement || "bottom").toLowerCase();
+  const placement = ["top", "bottom", "off"].includes(placementRaw) ? placementRaw : (placementRaw.endsWith("-top") ? "top" : "bottom");
+  const heightNumber = Number.parseInt(display.height ?? display.bannerHeight ?? 54, 10);
+  const widthNumber = Number.parseInt(display.width ?? display.maxWidth ?? 520, 10);
+  const height = Math.max(40, Math.min(180, Number.isFinite(heightNumber) ? heightNumber : 54));
+  const width = Math.max(180, Math.min(520, Number.isFinite(widthNumber) ? widthNumber : 520));
+  state.monetization = {
+    enabled: root.enabled === true || display.enabled === true,
+    provider: safe(root.provider || display.provider || "none").toLowerCase(),
+    format: safe(root.format || display.format || "banner").toLowerCase(),
+    placement, bannerHeight: `${height}px`, maxWidth: `${width}px`, width, height,
+    refreshSeconds: Math.max(0, Math.min(3600, Number(root.refreshSeconds ?? 0))),
+    gap: safeCssLength(display.gap ?? root.gap, "0px"), borderRadius: safeCssLength(display.borderRadius ?? root.borderRadius, "12px"),
+    download: root.download || settings.download || { enabled: false },
+    listening: root.listening || settings.listening || { enabled: false }
+  };
+  const slot = byId("bottomAdPlacement");
+  if (!slot) return state.monetization;
+  document.body.classList.remove("has-ad");
+  document.documentElement.style.setProperty("--ad-height", "0px");
+  slot.hidden = true; slot.classList.remove("ad-inline", "ad-top", "ad-bottom");
+  slot.style.cssText = "";
+  if (placement === "top") {
+    const screen = byId(state.screen === "favorites" ? "favoritesScreen" : state.screen === "latest" ? "latestScreen" : "homeScreen");
+    if (screen) { screen.insertBefore(slot, screen.firstElementChild); }
+    slot.classList.add("ad-inline", "ad-top");
+    slot.style.position = "relative"; slot.style.width = `min(100%, ${width}px)`; slot.style.height = `${height}px`;
+  } else {
+    document.body.appendChild(slot); slot.classList.add("ad-bottom");
+    slot.style.position = "fixed"; slot.style.left = "50%"; slot.style.bottom = "calc(var(--nav) + env(safe-area-inset-bottom))";
+    slot.style.transform = "translateX(-50%)"; slot.style.width = `min(100%, ${width}px)`; slot.style.height = `${height}px`;
+  }
+  slot.style.maxWidth = `${width}px`; slot.style.margin = `${state.monetization.gap} auto`; slot.style.borderRadius = state.monetization.borderRadius;
+  slot.dataset.provider = state.monetization.provider; slot.dataset.format = state.monetization.format; slot.dataset.configuredPlacement = placement;
+  state.monetizationReady = true;
+  if (!state.monetization.enabled || placement === "off" || !navigator.onLine) return state.monetization;
+  const adapter = (window.VicSoundAdProviders || {})[state.monetization.provider];
+  if (state.monetization.format === "banner" && adapter?.mountBanner) {
+    Promise.resolve(adapter.mountBanner({ container: slot, settings: state.monetization })).then(result => {
+      const filled = result === true || result?.filled === true;
+      slot.hidden = !filled;
+      if (filled && placement === "bottom") { document.documentElement.style.setProperty("--ad-height", `${height}px`); document.body.classList.add("has-ad"); }
+    }).catch(() => { slot.hidden = true; });
+  }
+  return state.monetization;
+}
+async function loadMonetizationSettings() {
+  let settings = VIC_CONFIG.MONETIZATION;
+  if (VIC_CONFIG.SERVICES.baseUrl) {
+    try {
+      const config = await serviceRequest(VIC_CREATOR_CONTRACT.settingsEndpoint);
+      state.creatorConfiguration = config || null;
+      if (config?.dj) applyDJProfile(config.dj.profile || config.dj);
+      settings = config?.monetization || config?.ads || config || settings;
+    } catch (error) {
+      try { settings = await serviceRequest(VIC_CONFIG.SERVICES.monetization); } catch {}
+    }
+  }
+  applyMonetizationSettings(settings || VIC_CONFIG.MONETIZATION);
+  return state.monetization;
+}
+
+// Collection actions are separate and explicit: add never removes existing songs; remove has its own checklist.
+function createCollection() {
+  askText("Create a collection", "Collection name", "", name => {
+    if (state.collections.some(item => item.name.trim().toLowerCase() === name.toLowerCase())) { notify("A collection with that name already exists."); return; }
+    state.collections.push({ id: makeId(), name, songs: [] }); saveCollections(); closeModal(); notify(`"${name}" created.`);
+  });
+}
+function collectionMenu(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  openModal({ title: collection.name, body: `<p class="vic-modal-note">Manage this collection.</p>`, buttons: [
+    { label: "Cancel" },
+    { label: "Add songs", action: () => openAddSongs(collection.id) },
+    { label: "Remove songs", action: () => openRemoveSongs(collection.id) },
+    { label: "Rename", action: () => askText("Rename collection", "New collection name", collection.name, name => { collection.name = name; saveCollections(); closeModal(); notify("Collection renamed."); }) },
+    { label: "Delete collection", danger: true, action: () => confirmDeleteCollection(collection.id) }
+  ] });
+}
+function confirmDeleteCollection(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  openModal({ title: "Delete collection?", body: `<p>Delete <b>${escapeHTML(collection.name)}</b>? This only removes the collection. Your downloaded music and songs will remain safe.</p>`, buttons: [
+    { label: "Keep collection" },
+    { label: "Delete", danger: true, action: () => { state.collections = state.collections.filter(item => songKey(item.id) !== songKey(id)); if (songKey(state.currentCollection) === songKey(id)) { byId("vicCollectionView")?.classList.remove("open"); state.currentCollection = null; } saveCollections(); notify("Collection deleted. Your music is safe."); } }
+  ] });
+}
+function renderFavorites() {
+  const box = byId("favoriteGrid"); if (!box) return;
+  const count = byId("favoriteCount"); if (count) count.textContent = `${state.collections.length} collection${state.collections.length === 1 ? "" : "s"}`;
+  const emptyCover = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" rx="18" fill="#04130f"/><circle cx="80" cy="80" r="53" fill="none" stroke="#00f5a0" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="58" fill="#00f5a0">♫</text></svg>');
+  if (!state.collections.length) { box.innerHTML = `<div class="empty-state"><b>No collections yet</b><span>Create a collection with the button above, then add songs.</span></div>`; return; }
+  box.innerHTML = state.collections.map(collection => {
+    const firstSong = collectionSongs(collection.id)[0];
+    return `<article class="collection-card"><button class="collection-open" data-collection-open="${escapeHTML(collection.id)}" aria-label="Open ${escapeHTML(collection.name)}"><img src="${escapeHTML(firstSong?.cover || emptyCover)}" alt=""><div class="collection-card-info"><b>${escapeHTML(collection.name)}</b><small>${collection.songs.length} song${collection.songs.length === 1 ? "" : "s"}</small></div></button><button class="collection-card-more" data
