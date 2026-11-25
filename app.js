@@ -1969,3 +1969,344 @@ audio.addEventListener("timeupdate", measureRealPlayback);
    VIC-SOUND LISTENER — CONSOLIDATED SAFETY / UI PATCH
    These overrides keep the uploaded HTML IDs and CSS class names.
    ========================================================= */
+
+// One explicit switch controls whether temporary test content is injected.
+const VIC_TEST_MODE_FINAL = VIC_TEST_CONFIG.enabled === true;
+
+// Shared missing-cover artwork. Real artwork and the DJ profile cover are untouched.
+const VIC_MISSING_COVER = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700"><defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#020807"/><stop offset="1" stop-color="#073b2d"/></linearGradient><radialGradient id="disc"><stop stop-color="#183d32"/><stop offset=".72" stop-color="#06130f"/><stop offset=".74" stop-color="#00f5a0"/><stop offset=".77" stop-color="#06130f"/></radialGradient></defs><rect width="700" height="700" fill="url(#bg)"/><circle cx="350" cy="330" r="225" fill="url(#disc)" stroke="#00f5a0" stroke-width="5"/><circle cx="350" cy="330" r="35" fill="#00f5a0"/><circle cx="350" cy="330" r="10" fill="#04120d"/><path d="M350 110a220 220 0 0 1 220 220" fill="none" stroke="#b7ffe3" stroke-opacity=".55" stroke-width="5"/><text x="350" y="620" fill="#f3fffb" font-family="Arial,sans-serif" font-size="42" font-weight="700" text-anchor="middle" letter-spacing="5">VIC-SOUND</text><text x="350" y="660" fill="#00f5a0" font-family="Arial,sans-serif" font-size="17" text-anchor="middle" letter-spacing="4">MUSIC. YOUR WAY.</text></svg>'
+);
+function songCover(song, dj = false) {
+  if (dj && state.djProfile?.cover) return state.djProfile.cover;
+  return song?.cover || VIC_MISSING_COVER;
+}
+
+// Replace the old query-flag behavior with the single config switch.
+function applyTestMusic() {
+  if (!VIC_TEST_MODE_FINAL) {
+    state.songs = state.songs.filter(song => !song.isTestTrack);
+    state.releases = state.releases.filter(release => !release.isTestRelease);
+    return state.songs;
+  }
+  const realSongs = state.songs.filter(song => !song.isTestTrack);
+  const ids = new Set(realSongs.map(song => songKey(song.id)));
+  state.songs = [...VIC_TEST_SONGS.map(normaliseSong).filter(song => !ids.has(songKey(song.id))), ...realSongs];
+  return state.songs;
+}
+
+function renderHome() {
+  const box = byId("homeMusicList"); if (!box) return;
+  const songs = filteredSongs();
+  if (!songs.length) {
+    box.innerHTML = `<div class="empty-state"><b>No music found</b><span>Try another search or category.</span></div>`;
+    return;
+  }
+  box.innerHTML = songs.map(song => {
+    const current = songKey(song.id) === songKey(state.currentId);
+    return `<article class="music-row ${current ? "playing" : ""}" data-song-id="${escapeHTML(song.id)}">
+      <button class="music-main" data-play="${escapeHTML(song.id)}" aria-label="Play ${escapeHTML(song.title)}"><img class="cover ${!song.cover ? "vinyl-fallback" : ""}" src="${escapeHTML(songCover(song))}" alt=""></button>
+      <button class="music-main music-text" data-play="${escapeHTML(song.id)}"><b title="${escapeHTML(song.title)}">${escapeHTML(song.title)}</b><small title="${escapeHTML(song.artist)}">${escapeHTML(song.artist)}</small></button>
+      <span class="playing-bars" aria-hidden="true" ${current ? "" : "hidden"}>▮▮▮</span>
+      <button class="favorite-toggle ${isSongFavorite(song.id) ? "active" : ""}" data-fav="${escapeHTML(song.id)}" aria-label="${isSongFavorite(song.id) ? "Manage saved collections" : "Save to collection"}">${isSongFavorite(song.id) ? "♥" : "♡"}</button>
+    </article>`;
+  }).join("");
+}
+
+function updatePlayer() {
+  const song = getCurrentSong();
+  if (!song) {
+    byId("miniPlayer")?.classList.remove("visible");
+    return;
+  }
+  const isDJ = state.queueSource?.type === "dj";
+  const coverSrc = songCover(song, isDJ);
+  ["playerTitle", "miniTitle"].forEach(id => { if (byId(id)) byId(id).textContent = song.title; });
+  ["playerArtist", "miniArtist"].forEach(id => { if (byId(id)) byId(id).textContent = song.artist; });
+  ["playerCover", "miniCover"].forEach(id => {
+    const image = byId(id);
+    if (image) {
+      image.src = coverSrc;
+      image.classList.toggle("vinyl-fallback", !song.cover && !(isDJ && state.djProfile?.cover));
+      image.classList.toggle("is-playing", Boolean(state.playing && !song.cover && !(isDJ && state.djProfile?.cover)));
+    }
+  });
+  const activeFav = isSongFavorite(song.id);
+  ["playerFav", "queueFav"].forEach(id => {
+    const button = byId(id);
+    if (button) { button.textContent = activeFav ? "♥" : "♡"; button.classList.toggle("active", activeFav); button.setAttribute("aria-pressed", String(activeFav)); }
+  });
+  if (byId("playPause")) byId("playPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("miniPlay")) byId("miniPlay").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("currentTime")) byId("currentTime").textContent = formatTime(audio.currentTime);
+  if (byId("duration")) byId("duration").textContent = formatTime(audio.duration || song.duration);
+  if (byId("progress")) byId("progress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  const mini = byId("miniPlayer");
+  mini?.classList.toggle("visible", Boolean(state.currentId && !state.player && !state.djOpen));
+  mini?.setAttribute("aria-hidden", String(!(state.currentId && !state.player && !state.djOpen)));
+  byId("playerOverlay")?.classList.toggle("playing", state.playing);
+  byId("djCoverLarge")?.classList.toggle("is-active", Boolean(isDJ && state.playing));
+  if (byId("lyricsPlayPause")) byId("lyricsPlayPause").textContent = state.playing ? "Ⅱ" : "▶";
+  if (byId("lyricsProgress")) byId("lyricsProgress").value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  if (byId("lyricsCurrentTime")) byId("lyricsCurrentTime").textContent = formatTime(audio.currentTime);
+  updateModeButtons();
+  updateDJPlaybackControls();
+  renderQueueHeader();
+  if (byId("vicCollectionView")?.classList.contains("open")) renderCollectionTracks();
+}
+
+function renderQueueHeader() {
+  const song = getCurrentSong(); if (!song) return;
+  const cover = byId("queueCover");
+  if (cover) cover.src = songCover(song, state.queueSource?.type === "dj");
+  if (byId("queueTitle")) byId("queueTitle").textContent = song.title;
+  if (byId("queueArtist")) byId("queueArtist").textContent = song.artist;
+}
+
+function renderQueue() {
+  const box = byId("queueList"); if (!box) return;
+  const count = byId("queueCount"); if (count) count.textContent = `${state.queue.length} songs`;
+  box.innerHTML = state.queue.map((entry, index) => {
+    const song = getSong(entry.id); if (!song) return "";
+    const current = index === state.queueIndex;
+    return `<article class="queue-row ${current ? "current" : ""}" data-queue-index="${index}" draggable="true">
+      <span class="queue-num">${index + 1}</span><img src="${escapeHTML(songCover(song))}" alt="">
+      <button class="queue-song" data-queue-play="${escapeHTML(song.id)}"><b title="${escapeHTML(song.title)}">${escapeHTML(song.title)}</b><small title="${escapeHTML(song.artist)}">${escapeHTML(song.artist)}</small></button>
+      <button class="repeat-badge" data-queue-repeat="${index}" aria-label="Double-tap to increase repeat count, currently ${entry.repeatTotal} times">×${entry.repeatTotal}</button>
+      <button class="row-more" data-queue-remove="${index}" aria-label="Remove from queue">×</button></article>`;
+  }).join("");
+  renderQueueHeader();
+  updateModeButtons();
+}
+
+function renderCollectionTracks() {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(state.currentCollection));
+  const box = byId("vicColTracks"); if (!collection || !box) return;
+  const songs = collectionSongs(collection.id);
+  box.innerHTML = songs.length ? songs.map(song => {
+    const current = songKey(song.id) === songKey(state.currentId);
+    return `<div class="vic-track-item ${current ? "is-current" : ""}" data-song-id="${escapeHTML(song.id)}">
+      <img src="${escapeHTML(songCover(song))}" alt="">
+      <div class="vic-track-info"><b title="${escapeHTML(song.title)}">${escapeHTML(song.title)}</b><small title="${escapeHTML(song.artist)}">${escapeHTML(song.artist)}</small></div>
+      <span class="vic-playing-wave ${current ? (state.playing ? "is-animating" : "is-paused") : ""}" ${current ? "" : "hidden"} aria-label="${state.playing && current ? "Playing" : "Paused"}"><i></i><i></i><i></i><i></i></span>
+      <button class="vic-track-fav active" data-vic-track-fav="${escapeHTML(song.id)}" aria-label="Remove from collection">−</button>
+    </div>`;
+  }).join("") : `<p class="empty-state">This collection is empty. Open its menu to add songs.</p>`;
+}
+
+function openCollection(id) {
+  const collection = state.collections.find(item => songKey(item.id) === songKey(id)); if (!collection) return;
+  state.currentCollection = collection.id;
+  let view = byId("vicCollectionView");
+  if (!view) {
+    view = document.createElement("section"); view.id = "vicCollectionView";
+    view.innerHTML = `<div class="vic-col-header"><button class="back-button" id="vicColBack" aria-label="Back">‹</button><h2 id="vicColTitle">Collection</h2><button id="vicColMenu" aria-label="Collection options">⋮</button></div><div class="vic-col-hero"><img id="vicColCover" src="" alt=""></div><div class="vic-col-tracks" id="vicColTracks"></div>`;
+    document.body.appendChild(view);
+    byId("vicColBack").addEventListener("click", () => { view.classList.remove("open"); view.setAttribute("aria-hidden", "true"); state.currentCollection = null; });
+    byId("vicColMenu").addEventListener("click", () => { if (state.currentCollection) collectionMenu(state.currentCollection); });
+    view.addEventListener("click", event => {
+      const remove = event.target.closest("[data-vic-track-fav]");
+      if (remove) {
+        event.stopPropagation();
+        const currentCollection = state.collections.find(item => songKey(item.id) === songKey(state.currentCollection));
+        if (!currentCollection) return;
+        currentCollection.songs = currentCollection.songs.filter(songId => songKey(songId) !== songKey(remove.dataset.vicTrackFav));
+        saveCollections(); openCollection(currentCollection.id); return;
+      }
+      const row = event.target.closest(".vic-track-item"); if (!row) return;
+      const activeCollection = state.collections.find(item => songKey(item.id) === songKey(state.currentCollection)); if (!activeCollection) return;
+      const list = collectionSongs(activeCollection.id);
+      const index = list.findIndex(song => songKey(song.id) === songKey(row.dataset.songId));
+      if (index >= 0) playFromList(list, index, { type: "collection", id: activeCollection.id, label: activeCollection.name });
+    });
+  }
+  byId("vicColTitle").textContent = collection.name;
+  const firstSong = collectionSongs(id)[0];
+  const hero = byId("vicColCover");
+  if (hero) hero.src = firstSong ? songCover(firstSong) : VIC_MISSING_COVER;
+  renderCollectionTracks();
+  view.classList.add("open"); view.setAttribute("aria-hidden", "false");
+}
+
+function updateLyrics() {
+  const song = getCurrentSong(); if (!song) return;
+  const cover = byId("lyricsCover"); if (cover) cover.src = songCover(song);
+  if (byId("lyricsTitle")) byId("lyricsTitle").textContent = song.title;
+  if (byId("lyricsArtist")) byId("lyricsArtist").textContent = song.artist;
+  const box = byId("lyricsContent"), controls = byId("lyricsBottomControls"); if (!box) return;
+  const hasLyrics = Boolean(song.lyrics && String(song.lyrics).trim());
+  if (controls) controls.hidden = !hasLyrics;
+  if (!hasLyrics) { box.textContent = "No lyrics yet for this song"; return; }
+  if (Array.isArray(song.lyrics_timed) && song.lyrics_timed.length) {
+    box.innerHTML = song.lyrics_timed.map((line, index) => `<p class="lyric-line type-${escapeHTML(line.type || "main")}" data-lyric-time="${Math.max(0, Number(line.time) || 0)}" data-lyric-index="${index}">${escapeHTML(line.text)}</p>`).join("");
+  } else {
+    box.innerHTML = String(song.lyrics).split(/\r?\n/).map(line => `<p>${escapeHTML(line) || "&nbsp;"}</p>`).join("");
+  }
+  syncLyrics();
+}
+
+function syncLyrics() {
+  if (!state.lyricsOpen) return;
+  const progress = byId("lyricsProgress");
+  if (audio.duration) {
+    if (progress && document.activeElement !== progress) progress.value = String(audio.currentTime / audio.duration * 100);
+    if (byId("lyricsCurrentTime")) byId("lyricsCurrentTime").textContent = formatTime(audio.currentTime);
+    if (byId("lyricsRemainingTime")) byId("lyricsRemainingTime").textContent = `-${formatTime(audio.duration - audio.currentTime)}`;
+  }
+  const lines = $$('[data-lyric-time]'); if (!lines.length) return;
+  let active = -1;
+  lines.forEach((line, index) => { if (audio.currentTime >= Number(line.dataset.lyricTime)) active = index; });
+  lines.forEach((line, index) => {
+    line.classList.toggle("current", index === active);
+    line.classList.toggle("past", index < active);
+    line.classList.toggle("upcoming", index > active);
+  });
+  if (active >= 0 && !boxManualScroll) lines[active]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function openTimer() {
+  byId("timerSheet")?.classList.add("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "false");
+}
+function closeTimer() {
+  byId("timerSheet")?.classList.remove("open");
+  byId("timerSheet")?.setAttribute("aria-hidden", "true");
+}
+function clearPlaybackTimer() {
+  if (state.timerId) clearTimeout(state.timerId);
+  state.timerId = null;
+}
+function setTimer(minutes) {
+  const value = Number(minutes);
+  if (!Number.isFinite(value) || value <= 0) return;
+  clearPlaybackTimer();
+  state.timerMode = "countdown";
+  state.timerId = setTimeout(() => {
+    pause(); state.timerId = null; state.timerMode = "off";
+    notify("Playback timer finished.");
+    $$(".timer-options button").forEach(button => button.classList.remove("selected", "active"));
+  }, value * 60 * 1000);
+  $$(".timer-options button").forEach(button => button.classList.toggle("selected", Number(button.dataset.min) === value));
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.remove("selected");
+  closeTimer();
+  notify(`Playback will stop in ${value} minutes.`);
+}
+
+// Keep timer selection behavior safe when a track ends.
+const vicOriginalPlayNextQueueEntry = playNextQueueEntry;
+playNextQueueEntry = function() {
+  if (state.timerMode === "end") { pause(); state.timerMode = "off"; return; }
+  vicOriginalPlayNextQueueEntry();
+};
+
+// The DJ overlay intentionally has no response transcript or microphone controls.
+function openDJ() {
+  ensureDJPlaybackControls();
+  state.djOpen = true;
+  byId("djOverlay")?.classList.add("open");
+  byId("djOverlay")?.setAttribute("aria-hidden", "false");
+  byId("djReply")?.closest(".dj-reply")?.setAttribute("hidden", "");
+  byId("djInput")?.closest(".dj-input")?.setAttribute("hidden", "");
+  updatePlayer();
+}
+function closeDJ() {
+  stopVoice();
+  clearTimeout(state.djIntroTimer);
+  byId("djOverlay")?.classList.remove("open");
+  byId("djOverlay")?.setAttribute("aria-hidden", "true");
+  state.djOpen = false;
+  updatePlayer();
+}
+function playDJNow() {
+  openDJ();
+  const picks = localDJPick("", 12);
+  if (!picks.length) return;
+  playFromList(picks, 0, { type: "dj", label: "Vic-sound DJ" });
+}
+
+// Permission alone is not a push subscription. Do not describe it as full push setup.
+async function setNotifications(enabled) {
+  const toggle = byId("notificationSwitch");
+  if (!enabled) {
+    state.notifications = false;
+    localStorage.setItem(VIC_CONFIG.STORAGE.notifications, "false");
+    if (toggle) toggle.checked = false;
+    notify("Release notifications turned off.");
+    return;
+  }
+  if (!("Notification" in window)) {
+    if (toggle) toggle.checked = false;
+    notify("This browser does not support notifications.");
+    return;
+  }
+  let permission = Notification.permission;
+  if (permission !== "granted") permission = await Notification.requestPermission();
+  state.notifications = permission === "granted";
+  localStorage.setItem(VIC_CONFIG.STORAGE.notifications, String(state.notifications));
+  if (toggle) toggle.checked = state.notifications;
+  if (state.notifications) {
+    const hasPushBackend = Boolean(VIC_CONFIG.SERVICES.baseUrl);
+    notify(hasPushBackend
+      ? "Notification permission granted. Push delivery still needs a configured subscription service."
+      : "Notification permission granted. Real release alerts need the backend push service.");
+  } else notify("Notification permission was not granted.");
+}
+
+// Queue drag-and-drop reordering (mouse/desktop); touch users retain tap controls.
+function bindQueueReordering() {
+  const box = byId("queueList"); if (!box || box.dataset.reorderReady) return;
+  box.dataset.reorderReady = "true";
+  let from = -1;
+  box.addEventListener("dragstart", event => {
+    const row = event.target.closest(".queue-row"); if (!row) return;
+    from = Number(row.dataset.queueIndex);
+    event.dataTransfer?.setData("text/plain", String(from));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+    row.classList.add("dragging");
+  });
+  box.addEventListener("dragover", event => {
+    if (from < 0) return;
+    event.preventDefault();
+    const target = event.target.closest(".queue-row"); if (target) target.classList.add("drag-target");
+  });
+  box.addEventListener("drop", event => {
+    if (from < 0) return;
+    event.preventDefault();
+    const target = event.target.closest(".queue-row");
+    const to = target ? Number(target.dataset.queueIndex) : -1;
+    if (to >= 0 && to !== from && state.queue[from]) {
+      const [moved] = state.queue.splice(from, 1);
+      state.queue.splice(to, 0, moved);
+      if (state.queueIndex === from) state.queueIndex = to;
+      else if (from < state.queueIndex && to >= state.queueIndex) state.queueIndex--;
+      else if (from > state.queueIndex && to <= state.queueIndex) state.queueIndex++;
+      renderQueue();
+    }
+    from = -1;
+  });
+  box.addEventListener("dragend", () => {
+    from = -1;
+    $$(".queue-row", box).forEach(row => row.classList.remove("dragging", "drag-target"));
+  });
+}
+
+// Run initialization exactly once after the uploaded HTML has loaded.
+let vicSoundInitStarted = false;
+const vicSoundStartApp = () => {
+  if (vicSoundInitStarted) return;
+  vicSoundInitStarted = true;
+  // The header logo is controlled by index.html; leave its image path untouched.
+  byId("endTrack")?.classList.remove("selected");
+  byId("timerOff")?.classList.add("selected");
+  init().catch(error => {
+    console.error("Vic-sound initialisation failed:", error);
+    notify("Vic-sound could not finish starting. Please reload the app.");
+  });
+};
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", vicSoundStartApp, { once: true });
+else vicSoundStartApp();
+
+document.addEventListener("DOMContentLoaded", bindQueueReordering, { once: true });
+window.addEventListener("load", bindQueueReordering, { once: true });
+         
