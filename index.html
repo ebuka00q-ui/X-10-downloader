@@ -322,51 +322,74 @@
 
 <script>
 (() => {
-  if (!('serviceWorker' in navigator)) return;
+  if (!("serviceWorker" in navigator)) return;
+
   let registrationRef = null;
   let updateWorker = null;
-  let reloadOnControllerChange = false;
-  const overlay = document.getElementById('vicMandatoryUpdate');
-  const updateButton = document.getElementById('vicUpdateNow');
-  const showUpdate = worker => {
+  let reloadAfterUpdate = false;
+  const overlay = document.getElementById("vicMandatoryUpdate");
+  const updateButton = document.getElementById("vicUpdateNow");
+
+  function showUpdate(worker) {
     if (!worker || !overlay) return;
     updateWorker = worker;
     overlay.hidden = false;
-    overlay.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('vic-update-locked');
-    updateButton?.focus();
-  };
-  const inspect = () => {
-    if (registrationRef?.waiting && navigator.serviceWorker.controller) showUpdate(registrationRef.waiting);
-  };
-  window.addEventListener('load', async () => {
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.classList.add("vic-update-locked");
+    if (updateButton) updateButton.focus();
+  }
+
+  function askWorkerIfVersionChanged(worker) {
+    if (!worker || !navigator.serviceWorker.controller) return;
+    const channel = new MessageChannel();
+    channel.port1.onmessage = event => {
+      const result = event.data;
+      if (result?.type === "VIC_SOUND_UPDATE_STATUS" && result.updateRequired) {
+        showUpdate(worker);
+      }
+    };
+    worker.postMessage({ type: "CHECK_UPDATE_STATUS" }, [channel.port2]);
+  }
+
+  function inspectRegistration() {
+    if (registrationRef?.waiting && navigator.serviceWorker.controller) {
+      askWorkerIfVersionChanged(registrationRef.waiting);
+    }
+  }
+
+  window.addEventListener("load", async () => {
     try {
-      registrationRef = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
-      inspect();
-      registrationRef.addEventListener('updatefound', () => {
+      registrationRef = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+      inspectRegistration();
+      registrationRef.addEventListener("updatefound", () => {
         const worker = registrationRef.installing;
-        worker?.addEventListener('statechange', () => {
-          if (worker.state === 'installed' && navigator.serviceWorker.controller) showUpdate(worker);
+        worker?.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            askWorkerIfVersionChanged(worker);
+          }
         });
       });
       registrationRef.update().catch(() => {});
-    } catch (error) { console.warn('Vic-sound offline update registration failed.', error); }
+    } catch (error) {
+      console.warn("Vic-sound service worker registration failed.", error);
+    }
   });
-  updateButton?.addEventListener('click', () => {
+
+  updateButton?.addEventListener("click", () => {
     if (!updateWorker) return;
-    reloadOnControllerChange = true;
-    updateWorker.postMessage({ type: 'SKIP_WAITING' });
+    reloadAfterUpdate = true;
+    updateWorker.postMessage({ type: "SKIP_WAITING" });
     updateButton.disabled = true;
-    updateButton.textContent = 'Updating…';
+    updateButton.textContent = "Updating…";
   });
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloadOnControllerChange) window.location.reload();
-  });
-  navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data?.type === 'VIC_SOUND_UPDATE_AVAILABLE') inspect();
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadAfterUpdate) window.location.reload();
   });
 })();
-</script>
+          </script>
+  
+  
 <script src="app.js"></script>
 </body>
         </html>
