@@ -2,7 +2,13 @@
    VIC-SOUND LISTENER — APP.JS
    ========================================================= */
 
-
+window.onerror = function(message, source, lineno, colno, error) {
+  const errorBox = document.createElement("div");
+  errorBox.style.cssText = "position:fixed;top:0;left:0;width:100%;background:red;color:white;padding:20px;z-index:9999;font-family:sans-serif;font-size:14px;";
+  errorBox.innerHTML = `<b>JavaScript Crash Detected:</b><br><br>${message}<br><br>Line: ${lineno}:${colno}`;
+  document.body.appendChild(errorBox);
+  return false;
+};
 
 
 /* =========================================================
