@@ -2,7 +2,7 @@
    Change VERSION only when you intentionally want the in-app update prompt.
    Editing this file or app shell files without changing VERSION installs silently.
 */
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 const SHELL_CACHE_PREFIX = "vic-sound-shell-";
 const SHELL_CACHE = `${SHELL_CACHE_PREFIX}${VERSION}`;
 const MEDIA_CACHE_PREFIX = "vic-sound-media-"; // Reserved: never delete user music caches.
